@@ -123,7 +123,7 @@
     const amountValue = Number(rawTransaction?.amount ?? rawTransaction?.transactionAmount?.amount ?? 0);
     const indicator = String(rawTransaction?.creditDebitIndicator || '').toUpperCase();
     const isIncome = indicator === 'CRDT' || (indicator !== 'DBIT' && amountValue > 0);
-    const descriptor = String(rawTransaction?.description || rawTransaction?.merchantName || rawTransaction?.remittanceInformationUnstructured || '').toLocaleLowerCase('en');
+    const descriptor = String(rawTransaction?.description || rawTransaction?.merchantName || rawTransaction?.remittanceInformationUnstructured || '').toLocaleLowerCase('en').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const expenseIds = new Set((profile?.categories || []).map(category => category.id));
     const incomeIds = new Set((profile?.incomeCategories || []).map(category => category.id));
     const pickExpense = (...ids) => ids.find(id => expenseIds.has(id));
@@ -145,10 +145,12 @@
       return { category: pickIncome('otherIncome') || (profile?.incomeCategories?.[0]?.id ?? 'otherIncome'), confidence: 'fallback', rule: null };
     }
 
-    if (/uber|bolt|zet|ina|petrol|fuel|taxi|autobus|tramvaj/.test(descriptor)) return { category: pickExpense('transport', 'travel', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'transport' };
-    if (/konzum|lidl|spar|supermarket|\bmarket\b|restaurant|restoran|wolt|glovo|pekara/.test(descriptor)) return { category: pickExpense('food', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'food' };
-    if (/netflix|spotify|cinema|kino|steam|playstation/.test(descriptor)) return { category: pickExpense('entertainment', 'software', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'entertainment' };
-    if (/amazon|h&m|dm |zara|shop|store|trgovina/.test(descriptor)) return { category: pickExpense('shopping', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'shopping' };
+    if (/uber|bolt|\bzet\b|\bhz\b|croatia airlines|petrol|\bina\b|shell|lukoil|fuel|taxi|autobus|tramvaj/.test(descriptor)) return { category: pickExpense('transport', 'travel', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'transport' };
+    if (/konzum|lidl|interspar|\bspar\b|plodine|eurospin|studenac|supermarket|\bmarket\b|restaurant|restoran|wolt|glovo|pekara/.test(descriptor)) return { category: pickExpense('food', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'groceries' };
+    if (/(^|\s)dm(\s|$)|muller|bipa|drogerij|pharmacy|ljekarn/.test(descriptor)) return { category: pickExpense('healthBeauty', 'shopping', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'health-beauty' };
+    if (/eventim|entrio|cinestar|caffe|nightclub|netflix|spotify|cinema|kino|steam|playstation/.test(descriptor)) return { category: pickExpense('entertainment', 'software', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'entertainment' };
+    if (/\bhep\b|t-com|hrvatski telekom|\ba1\b|telemach|zagreb holding|komunal|vodovod|utilities/.test(descriptor)) return { category: pickExpense('utilities', 'other', 'office') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'utilities' };
+    if (/amazon|h&m|zara|shop|store|trgovina/.test(descriptor)) return { category: pickExpense('shopping', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'shopping' };
     if (/adobe|microsoft|github|software|hosting|cloud/.test(descriptor)) return { category: pickExpense('software', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'software' };
     if (/google ads|meta ads|marketing|advertising/.test(descriptor)) return { category: pickExpense('marketing', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'marketing' };
     if (/airlines|airways|hotel|booking|travel|putovanje/.test(descriptor)) return { category: pickExpense('travel', 'transport', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'travel' };
@@ -183,8 +185,23 @@
       importHash,
       categoryConfidence: category.confidence,
       categorizationRule: category.rule,
-      needsReview: category.confidence === 'fallback'
+      needsReview: category.confidence === 'fallback',
+      provider: connection.providerId,
+      accountId: connection.accountId,
+      iban: String(rawTransaction.iban || connection.iban || ''),
+      bic: String(rawTransaction.bic || connection.bic || ''),
+      merchantName: String(rawTransaction.merchantName || name),
+      timestamp: String(rawTransaction.timestamp || rawTransaction.bookedAt || rawTransaction.bookingDate || dateValue),
+      currency: String(rawTransaction.currency || rawTransaction.transactionAmount?.currency || connection.currency || 'EUR').toUpperCase()
     };
+  }
+
+  function greetingFor(dateValue = new Date(), language = 'hr', displayName = '') {
+    const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    const hour = Number.isNaN(date.getTime()) ? 12 : date.getHours();
+    const firstName = String(displayName || '').trim().split(/\s+/)[0] || (language === 'en' ? 'there' : 'natrag');
+    if (language === 'en') return `${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}, ${firstName}.`;
+    return `${hour < 12 ? 'Dobro jutro' : hour < 18 ? 'Dobar dan' : 'Dobra večer'}, ${firstName}.`;
   }
 
   function importBankTransactions(profile, connection, rawTransactions) {
@@ -348,7 +365,7 @@
     groupCashflow,
     monthlyExpenseCsv,
     validateSavingsGoal,
-    applySavingsContribution
+    applySavingsContribution,
+    greetingFor
   };
 });
-

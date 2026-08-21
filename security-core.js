@@ -111,4 +111,3 @@
 
   return { bytesToBase32, base32ToBytes, generateSecret, generateTotp, validateTotp, buildOtpAuthUri, generateRecoveryCodes, hashRecoveryCode, createEnrollment, consumeRecoveryCode };
 });
-

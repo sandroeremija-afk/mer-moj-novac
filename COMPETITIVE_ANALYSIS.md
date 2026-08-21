@@ -22,4 +22,3 @@ Imports are only valuable when repeated cleanup becomes unnecessary. Each profil
 ## Deferred opportunity
 
 Shared/family collaboration is valuable, but it requires real identity, invitations, access roles, audit history, and server-side storage. Implementing a cosmetic local version would weaken the strict profile-isolation and security model, so it remains a backend milestone rather than a misleading prototype feature.
-

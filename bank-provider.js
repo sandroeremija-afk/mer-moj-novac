@@ -10,8 +10,8 @@
       region: 'EU Open Banking · Demo',
       color: '#0075eb',
       accounts: [
-        { id: 'rev-eur-4821', name: 'Revolut EUR', mask: '••4821', kind: 'Tekući račun', kindEn: 'Current account' },
-        { id: 'rev-visa-1189', name: 'Revolut Visa', mask: '••1189', kind: 'Kartica', kindEn: 'Card' }
+        { id: 'rev-eur-4821', name: 'Revolut EUR', mask: '••4821', kind: 'Tekući račun', kindEn: 'Current account', iban:'LT121000011101001000', bic:'REVOLT21', currency:'EUR' },
+        { id: 'rev-visa-1189', name: 'Revolut Visa', mask: '••1189', kind: 'Kartica', kindEn: 'Card', iban:'LT121000011101001000', bic:'REVOLT21', currency:'EUR' }
       ]
     },
     {
@@ -20,8 +20,8 @@
       region: 'PSD2 Open Banking · Demo',
       color: '#0d4c92',
       accounts: [
-        { id: 'pbz-current-7730', name: 'PBZ tekući', mask: '••7730', kind: 'Tekući račun', kindEn: 'Current account' },
-        { id: 'pbz-business-2204', name: 'PBZ poslovni', mask: '••2204', kind: 'Poslovni račun', kindEn: 'Business account' }
+        { id: 'pbz-current-7730', name: 'PBZ tekući', mask: '••7730', kind: 'Tekući račun', kindEn: 'Current account', iban:'HR1210010051863000160', bic:'PBZGHR2X', currency:'EUR' },
+        { id: 'pbz-business-2204', name: 'PBZ poslovni', mask: '••2204', kind: 'Poslovni račun', kindEn: 'Business account', iban:'HR5623400091110001234', bic:'PBZGHR2X', currency:'EUR' }
       ]
     }
   ];
@@ -69,6 +69,9 @@
       accountMask: account.mask,
       accountKind: account.kind,
       accountKindEn: account.kindEn,
+      iban: account.iban,
+      bic: account.bic,
+      currency: account.currency,
       profileId: profileId === 'business' ? 'business' : 'personal',
       status: 'connected',
       tokenState: 'active',
@@ -122,4 +125,3 @@
 
   return { getProviders, getProvider, createConnection, fetchTransactions, renewConnection, providerError };
 });
-

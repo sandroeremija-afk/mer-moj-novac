@@ -100,4 +100,3 @@ test('Cycle 1: every imported record receives source and immutable bank identity
   assert.match(transaction.bankTransactionId, /card-1$/);
   assert.match(transaction.importHash, /^tx-/);
 });
-

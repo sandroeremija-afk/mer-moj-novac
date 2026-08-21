@@ -84,4 +84,3 @@ test('Cycle 2: both Insights and Dashboard are re-rendered after premium state c
   assert.match(script, /#overviewView \.goal-panel h2/);
   assert.match(html, /data-view-panel="insights"/);
 });
-

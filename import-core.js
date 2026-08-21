@@ -148,7 +148,7 @@
       const hash = fingerprint(row);
       if (known.has(hash)) { duplicates += 1; return; }
       known.add(hash);
-      imported.push({ id: `import-${Date.now()}-${row.rowNumber}`, type: row.type, name: row.name, amount: Number(row.amount), category: row.category, date: `${row.date}T12:00:00`, source: `Import: ${sourceName}`, sourceType: 'import', importHash: hash, needsReview: Boolean(row.needsReview), categoryConfidence: row.categoryConfidence, categorizationRule: row.categorizationRule || null });
+      imported.push({ id: `import-${Date.now()}-${row.rowNumber}`, type: row.type, name: row.name, amount: Number(row.amount), category: row.category, date: `${row.date}T12:00:00`, source: `Import: ${sourceName}`, sourceType: 'import', importHash: hash, needsReview: Boolean(row.needsReview), categoryConfidence: row.categoryConfidence, categorizationRule: row.categorizationRule || null, iban:row.iban || '', bic:row.bic || '', merchantName:row.merchantName || row.name, timestamp:row.timestamp || `${row.date}T12:00:00`, currency:String(row.currency || 'EUR').toUpperCase() });
     });
     if (imported.length) profile.transactions.unshift(...imported);
     return { imported, duplicates };
@@ -156,4 +156,3 @@
 
   return { parseCsv, detectDelimiter, columnMap, normalizeDate, numberValue, fingerprint, parseRows, parseCsvImport, commitImport };
 });
-

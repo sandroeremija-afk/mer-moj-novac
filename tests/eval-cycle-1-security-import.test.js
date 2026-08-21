@@ -75,4 +75,3 @@ test('Cycle 1: imported incomes and expenses stay segregated by type', () => {
   assert.equal(committed.imported.filter(row => row.type === 'expense').length, 1);
   assert.ok(committed.imported.every(row => row.source === 'Import: history.csv'));
 });
-
