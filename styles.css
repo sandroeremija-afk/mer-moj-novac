@@ -772,3 +772,68 @@ h2 { font-size: 18px; line-height: 1.3; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
+/* Fixed viewport shell and isolated content windows */
+html, body { width:100%; height:100%; overflow:hidden; overscroll-behavior:none; }
+body { height:100vh; height:100dvh; }
+.app-shell { width:100%; height:100vh; height:100dvh; min-height:0; overflow:hidden; }
+.sidebar { height:100vh; height:100dvh; min-height:0; overflow:hidden; }
+.main { height:100vh; height:100dvh; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+.topbar { position:relative; top:auto; flex:0 0 76px; }
+.page { width:100%; max-width:1480px; flex:1 1 auto; min-height:0; overflow:hidden; padding-bottom:28px; }
+.view { height:100%; min-height:0; overflow-x:hidden; overflow-y:auto; padding-right:5px; scrollbar-gutter:stable; }
+#overviewView { display:flex; flex-direction:column; overflow:hidden; }
+#overviewView > .page-heading, #overviewView > .bank-sync-strip, #overviewView > .summary-grid { flex:0 0 auto; }
+#overviewView > .dashboard-grid { flex:1 1 auto; min-height:0; overflow-x:hidden; overflow-y:auto; padding-right:5px; scrollbar-gutter:stable; align-content:start; }
+#activityView { display:flex; flex-direction:column; overflow:hidden; }
+#activityView > .page-heading { flex:0 0 auto; }
+#activityView > .activity-panel { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+.activity-toolbar, .review-queue-banner { flex:0 0 auto; }
+.transaction-list { flex:1 1 auto; min-height:0; overflow-y:auto; scrollbar-gutter:stable; }
+.modal { max-height:calc(100dvh - 24px); overflow-y:auto; overscroll-behavior:contain; }
+.premium-settings[open] { max-height:calc(100dvh - 24px); display:flex; flex-direction:column; overflow:hidden; }
+.premium-settings > .overline, .premium-settings > h2, .premium-settings > .modal-intro, .premium-settings > .settings-tabs { flex:0 0 auto; }
+.settings-pane.active { flex:1 1 auto; min-height:0; overflow-y:auto; padding-right:5px; scrollbar-gutter:stable; }
+.budget-table { max-height:min(38dvh,430px); overflow-y:auto; scrollbar-gutter:stable; }
+.recurring-list, .savings-entry-list, .goal-bucket-grid, .bank-connection-list, .automation-rule-list, .income-category-list, .category-breakdown { max-height:min(42dvh,420px); overflow-y:auto; padding-right:4px; scrollbar-gutter:stable; }
+.notification-list { max-height:min(56dvh,500px); overflow-y:auto; padding-right:4px; scrollbar-gutter:stable; }
+.import-table-wrap { overscroll-behavior:contain; scrollbar-gutter:stable; }
+
+.view, #overviewView > .dashboard-grid, .transaction-list, .settings-pane.active, .budget-table, .recurring-list, .savings-entry-list, .goal-bucket-grid, .bank-connection-list, .automation-rule-list, .income-category-list, .category-breakdown, .notification-list, .import-table-wrap { scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent; }
+.view::-webkit-scrollbar, #overviewView > .dashboard-grid::-webkit-scrollbar, .transaction-list::-webkit-scrollbar, .settings-pane.active::-webkit-scrollbar, .budget-table::-webkit-scrollbar, .recurring-list::-webkit-scrollbar, .savings-entry-list::-webkit-scrollbar, .goal-bucket-grid::-webkit-scrollbar, .bank-connection-list::-webkit-scrollbar, .automation-rule-list::-webkit-scrollbar, .income-category-list::-webkit-scrollbar, .category-breakdown::-webkit-scrollbar, .notification-list::-webkit-scrollbar, .import-table-wrap::-webkit-scrollbar { width:7px; height:7px; }
+.view::-webkit-scrollbar-thumb, #overviewView > .dashboard-grid::-webkit-scrollbar-thumb, .transaction-list::-webkit-scrollbar-thumb, .settings-pane.active::-webkit-scrollbar-thumb, .budget-table::-webkit-scrollbar-thumb, .recurring-list::-webkit-scrollbar-thumb, .savings-entry-list::-webkit-scrollbar-thumb, .goal-bucket-grid::-webkit-scrollbar-thumb, .bank-connection-list::-webkit-scrollbar-thumb, .automation-rule-list::-webkit-scrollbar-thumb, .income-category-list::-webkit-scrollbar-thumb, .category-breakdown::-webkit-scrollbar-thumb, .notification-list::-webkit-scrollbar-thumb, .import-table-wrap::-webkit-scrollbar-thumb { border:2px solid transparent; border-radius:999px; background:var(--line-strong); background-clip:padding-box; }
+
+.data-action-pair { display:inline-flex; align-items:stretch; gap:7px; }
+.data-action-pair > * { min-width:0; }
+.settings-footer.data-action-pair { width:100%; }
+.settings-footer.data-action-pair .settings-export { flex:1 1 0; }
+.upload-icon { transform:rotate(180deg); }
+.bulk-entry-card { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:-5px 0 18px; padding:12px 13px; border:1px solid var(--line); border-radius:9px; background:var(--canvas); }
+.bulk-entry-card > div:first-child { display:flex; min-width:0; flex-direction:column; gap:4px; }
+.bulk-entry-card strong { font-size:10px; }
+.bulk-entry-card small { color:var(--muted); font-size:8px; line-height:1.45; }
+
+@media (max-height:720px) and (min-width:801px) {
+  .sidebar-plan { display:none; }
+  .nav-list { margin-top:28px; }
+  .page { padding-top:22px; padding-bottom:20px; }
+  .page-heading { margin-bottom:18px; }
+  #overviewView > .bank-sync-strip, #overviewView > .summary-grid { margin-bottom:11px; }
+}
+@media (max-width:800px) {
+  .topbar { flex-basis:68px; }
+  .page { padding-bottom:18px; }
+  .view { padding-right:3px; }
+  .page-heading { gap:12px; }
+  .heading-actions { flex-wrap:wrap; justify-content:flex-end; }
+  .data-action-pair { gap:5px; }
+  .data-action-pair .secondary-button { width:40px; min-width:40px; padding:0; }
+  .data-action-pair .secondary-button span { display:none; }
+  .notification-center { max-height:calc(100dvh - 82px); overflow:hidden; }
+}
+@media (max-width:540px) {
+  .bulk-entry-card { align-items:stretch; flex-direction:column; }
+  .bulk-entry-card .data-action-pair { width:100%; }
+  .bulk-entry-card .data-action-pair .secondary-button { width:auto; flex:1; }
+  .bulk-entry-card .data-action-pair .secondary-button span { display:inline; }
+  .settings-footer.data-action-pair { flex-direction:column; }
+}
