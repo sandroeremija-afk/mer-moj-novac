@@ -7,7 +7,7 @@
 
   function createAccountStore(personal, business, options = {}) {
     return {
-      version: 4,
+      version: 5,
       language: options.language === 'en' ? 'en' : 'hr',
       theme: options.theme === 'dark' ? 'dark' : 'light',
       activeAccount: options.activeAccount === 'business' ? 'business' : 'personal',
@@ -107,6 +107,94 @@
 
   function transactionType(transaction) {
     return transaction && transaction.type === 'income' ? 'income' : 'expense';
+  }
+
+  function stableTransactionHash(value) {
+    const text = Array.isArray(value) ? value.join('|') : String(value ?? '');
+    let hash = 2166136261;
+    for (let index = 0; index < text.length; index += 1) {
+      hash ^= text.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return `tx-${(hash >>> 0).toString(16).padStart(8, '0')}`;
+  }
+
+  function autoCategorizeBankTransaction(rawTransaction, profile) {
+    const amountValue = Number(rawTransaction?.amount ?? rawTransaction?.transactionAmount?.amount ?? 0);
+    const indicator = String(rawTransaction?.creditDebitIndicator || '').toUpperCase();
+    const isIncome = indicator === 'CRDT' || (indicator !== 'DBIT' && amountValue > 0);
+    const descriptor = String(rawTransaction?.description || rawTransaction?.merchantName || rawTransaction?.remittanceInformationUnstructured || '').toLocaleLowerCase('en');
+    const expenseIds = new Set((profile?.categories || []).map(category => category.id));
+    const incomeIds = new Set((profile?.incomeCategories || []).map(category => category.id));
+    const pickExpense = (...ids) => ids.find(id => expenseIds.has(id));
+    const pickIncome = (...ids) => ids.find(id => incomeIds.has(id));
+
+    if (isIncome) {
+      if (/pla[cć]a|salary|payroll|wage/.test(descriptor)) return { category: pickIncome('salary') || 'otherIncome', confidence: 'rule', rule: 'salary' };
+      if (/upwork|freelance|invoice|client payment|honorar/.test(descriptor)) return { category: pickIncome('freelance') || 'otherIncome', confidence: 'rule', rule: 'freelance' };
+      if (/gift|dar|poklon/.test(descriptor)) return { category: pickIncome('gift') || 'otherIncome', confidence: 'rule', rule: 'gift' };
+      return { category: pickIncome('otherIncome') || (profile?.incomeCategories?.[0]?.id ?? 'otherIncome'), confidence: 'fallback', rule: null };
+    }
+
+    if (/uber|bolt|zet|ina|petrol|fuel|taxi|autobus|tramvaj/.test(descriptor)) return { category: pickExpense('transport', 'travel', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'transport' };
+    if (/konzum|lidl|spar|supermarket|\bmarket\b|restaurant|restoran|wolt|glovo|pekara/.test(descriptor)) return { category: pickExpense('food', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'food' };
+    if (/netflix|spotify|cinema|kino|steam|playstation/.test(descriptor)) return { category: pickExpense('entertainment', 'software', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'entertainment' };
+    if (/amazon|h&m|dm |zara|shop|store|trgovina/.test(descriptor)) return { category: pickExpense('shopping', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'shopping' };
+    if (/adobe|microsoft|github|software|hosting|cloud/.test(descriptor)) return { category: pickExpense('software', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'software' };
+    if (/google ads|meta ads|marketing|advertising/.test(descriptor)) return { category: pickExpense('marketing', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'marketing' };
+    if (/airlines|airways|hotel|booking|travel|putovanje/.test(descriptor)) return { category: pickExpense('travel', 'transport', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'travel' };
+    return { category: pickExpense('other') || profile?.categories?.[0]?.id, confidence: 'fallback', rule: null };
+  }
+
+  function normalizeBankTransaction(rawTransaction, connection, profile) {
+    if (!rawTransaction || !connection) return null;
+    const rawAmount = Number(rawTransaction.amount ?? rawTransaction.transactionAmount?.amount);
+    if (!Number.isFinite(rawAmount) || rawAmount === 0) return null;
+    const indicator = String(rawTransaction.creditDebitIndicator || '').toUpperCase();
+    const type = indicator === 'CRDT' || (indicator !== 'DBIT' && rawAmount > 0) ? 'income' : 'expense';
+    const amount = Math.abs(rawAmount);
+    const dateValue = String(rawTransaction.bookedAt || rawTransaction.bookingDate || rawTransaction.date || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return null;
+    const name = String(rawTransaction.description || rawTransaction.merchantName || rawTransaction.remittanceInformationUnstructured || 'Bank transaction').trim().slice(0, 100);
+    const externalId = String(rawTransaction.id || rawTransaction.transactionId || '').trim();
+    const identityParts = [connection.providerId, connection.accountId, externalId || dateValue, amount.toFixed(2), name.toLocaleLowerCase('en')];
+    const importHash = stableTransactionHash(identityParts);
+    const category = autoCategorizeBankTransaction({ ...rawTransaction, amount: type === 'income' ? amount : -amount }, profile);
+    return {
+      id: `bank-${connection.id}-${importHash}`,
+      type,
+      name,
+      amount,
+      category: category.category,
+      date: `${dateValue}T12:00:00`,
+      source: `Auto: ${connection.institution}`,
+      sourceType: 'auto',
+      connectionId: connection.id,
+      bankTransactionId: externalId ? `${connection.providerId}:${connection.accountId}:${externalId}` : importHash,
+      importHash,
+      categoryConfidence: category.confidence,
+      categorizationRule: category.rule,
+      needsReview: category.confidence === 'fallback'
+    };
+  }
+
+  function importBankTransactions(profile, connection, rawTransactions) {
+    if (!profile || !connection || !Array.isArray(rawTransactions)) return { imported: [], duplicates: 0, invalid: rawTransactions?.length || 0, uncategorized: 0 };
+    profile.transactions = profile.transactions || [];
+    const knownIds = new Set(profile.transactions.flatMap(transaction => [transaction.bankTransactionId, transaction.importHash].filter(Boolean)));
+    const imported = [];
+    let duplicates = 0;
+    let invalid = 0;
+    rawTransactions.forEach(rawTransaction => {
+      const transaction = normalizeBankTransaction(rawTransaction, connection, profile);
+      if (!transaction) { invalid += 1; return; }
+      if (knownIds.has(transaction.bankTransactionId) || knownIds.has(transaction.importHash)) { duplicates += 1; return; }
+      knownIds.add(transaction.bankTransactionId);
+      knownIds.add(transaction.importHash);
+      imported.push(transaction);
+    });
+    if (imported.length) profile.transactions.unshift(...imported);
+    return { imported, duplicates, invalid, uncategorized: imported.filter(transaction => transaction.needsReview).length };
   }
 
   function filterTransactions(transactions, timeframe = 'monthly', referenceValue = new Date()) {
@@ -219,6 +307,10 @@
     occurrencesBetween,
     validateCategoryLimit,
     transactionType,
+    stableTransactionHash,
+    autoCategorizeBankTransaction,
+    normalizeBankTransaction,
+    importBankTransactions,
     filterTransactions,
     transactionTotals,
     monthOverMonthExpenses,
@@ -227,4 +319,3 @@
     monthlyExpenseCsv
   };
 });
-

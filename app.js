@@ -41,6 +41,14 @@ Object.assign(translations.en, {
   salary:'Salary', gift:'Gift', freelance:'Freelance / side hustle', otherIncome:'Other income', incomeCategoryCreated:'Income category added.', incomeCategoryUpdated:'Income category updated.', incomeCategoryDeleted:'Income category deleted and linked entries moved to Other income.'
 });
 
+Object.assign(translations.hr, {
+  userSettings:'KORISNIČKE POSTAVKE', connectedBanks:'Povezane banke i kartice', connectedBanksIntro:'Povežite račune putem sigurnog demonstracijskog Open Banking sloja i odredite profil za svaku vezu.', profileIsolationTitle:'Odvajanje profila je uključeno', profileIsolationBody:'Sinkronizirane transakcije zapisuju se samo u profil dodijeljen tom računu.', yourConnections:'Vaše veze', addConnection:'Dodaj vezu', noBankConnections:'Još nema povezanih računa', noBankConnectionsBody:'Povežite demo banku kako biste isprobali automatski uvoz bez dijeljenja stvarnih vjerodajnica.', secureDemoConnection:'SIGURNA DEMO VEZA', chooseInstitution:'Odaberite instituciju', chooseAccounts:'Odaberite račune ili kartice', assignProfile:'Dodijeli profilu', demoConsent:'Ovo je modularni demo provider. Ne traži ni ne sprema bankovne lozinke.', connectAndSync:'Poveži i sinkroniziraj', exportCsvHint:'Preuzmite sažetak aktivnog profila.', bankSyncStatus:'Status sinkronizacije banke', bankSyncReady:'Bankovna sinkronizacija', connectBank:'Poveži banku', syncNow:'Sinkroniziraj sada', syncing:'Sinkronizacija…', noConnectedAccounts:'Nema povezanih računa', lastSyncedNow:'Upravo sinkronizirano', lastSyncedMinutes:'Zadnja sinkronizacija prije {count} min', lastSyncedHours:'Zadnja sinkronizacija prije {count} h', neverSynced:'Čeka prvu sinkronizaciju', connectionsSummary:'{count} povezanih računa · aktivni profil: {profile}', connectedAccount:'Povezano', syncFailed:'Sinkronizacija nije uspjela', tokenExpired:'Bankovno odobrenje je isteklo. Ponovno povežite račun.', connectionLost:'Banka više nije dostupna. Ponovno povežite račun.', rateLimited:'Banka je privremeno ograničila sinkronizaciju. Pokušajte za {count} s.', reconnect:'Ponovno poveži', refreshConnection:'Osvježi vezu', unlinkConnection:'Odspoji račun', confirmUnlink:'Potvrdi odspajanje', mappingUpdated:'Račun je premješten u profil {profile}.', connectionUnlinked:'Veza je uklonjena. Prethodno uvezene transakcije ostaju u profilu.', accountsConnected:'Povezano je {count} računa. Uvezeno: {imported}.', syncComplete:'Sinkronizacija dovršena · {imported} novih, {duplicates} duplikata preskočeno.', noNewTransactions:'Nema novih transakcija.', selectAccount:'Odaberite barem jedan račun.', manualSource:'Ručno', autoSource:'Automatski', needsReview:'Potrebna kategorija', needsReviewShort:'za pregled', uncategorizedQueue:'Nekategorizirane transakcije', reviewQueueCopy:'{count} automatskih transakcija treba potvrdu kategorije.', showAllTransactions:'Prikaži sve', categoryApproved:'Kategorija je potvrđena.', alertUncategorizedTitle:'Nove transakcije trebaju pregled', alertUncategorizedBody:'{count} uvezenih transakcija nema sigurnu kategoriju.', reviewCategories:'Pregledaj kategorije', backgroundSync:'Automatska sinkronizacija svakih 5 minuta dok je aplikacija otvorena.'
+});
+
+Object.assign(translations.en, {
+  userSettings:'USER SETTINGS', connectedBanks:'Connected Banks & Cards', connectedBanksIntro:'Connect accounts through a secure demo Open Banking layer and choose a profile for every connection.', profileIsolationTitle:'Profile isolation is on', profileIsolationBody:'Synced transactions are written only to the profile assigned to that account.', yourConnections:'Your connections', addConnection:'Add connection', noBankConnections:'No connected accounts yet', noBankConnectionsBody:'Connect a demo bank to try automatic imports without sharing real banking credentials.', secureDemoConnection:'SECURE DEMO CONNECTION', chooseInstitution:'Choose an institution', chooseAccounts:'Choose accounts or cards', assignProfile:'Assign to profile', demoConsent:'This is a modular demo provider. It never asks for or stores bank passwords.', connectAndSync:'Connect and sync', exportCsvHint:'Download a summary for the active profile.', bankSyncStatus:'Bank sync status', bankSyncReady:'Bank sync', connectBank:'Connect bank', syncNow:'Sync now', syncing:'Syncing…', noConnectedAccounts:'No connected accounts', lastSyncedNow:'Synced just now', lastSyncedMinutes:'Last synced {count} min ago', lastSyncedHours:'Last synced {count} hr ago', neverSynced:'Waiting for first sync', connectionsSummary:'{count} connected accounts · active profile: {profile}', connectedAccount:'Connected', syncFailed:'Sync failed', tokenExpired:'Bank authorization expired. Reconnect this account.', connectionLost:'The bank account is no longer available. Reconnect it.', rateLimited:'The bank temporarily limited syncing. Try again in {count}s.', reconnect:'Reconnect', refreshConnection:'Refresh connection', unlinkConnection:'Unlink account', confirmUnlink:'Confirm unlink', mappingUpdated:'Account moved to the {profile} profile.', connectionUnlinked:'Connection removed. Previously imported transactions remain in the profile.', accountsConnected:'Connected {count} accounts. Imported: {imported}.', syncComplete:'Sync complete · {imported} new, {duplicates} duplicates skipped.', noNewTransactions:'No new transactions.', selectAccount:'Select at least one account.', manualSource:'Manual', autoSource:'Automatic', needsReview:'Needs category', needsReviewShort:'to review', uncategorizedQueue:'Uncategorized transactions', reviewQueueCopy:'{count} automatic transactions need a category check.', showAllTransactions:'Show all', categoryApproved:'Category confirmed.', alertUncategorizedTitle:'New transactions need review', alertUncategorizedBody:'{count} imported transactions do not have a confident category.', reviewCategories:'Review categories', backgroundSync:'Automatic sync runs every 5 minutes while the app is open.'
+});
+
 const categoryMeta = {
   food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
 };
@@ -80,16 +88,20 @@ const businessDefaults = {
 
 let appState;
 try {
-  const stored = JSON.parse(localStorage.getItem('mer-money-v4') || 'null');
+  const stored = JSON.parse(localStorage.getItem('mer-money-v5') || 'null');
+  const versionFour = JSON.parse(localStorage.getItem('mer-money-v4') || 'null');
   const legacy = JSON.parse(localStorage.getItem('mer-money-v3') || 'null');
   const migratedPersonal=legacy?{...structuredClone(personalDefaults),...legacy,accountName:personalDefaults.accountName,accountLabel:personalDefaults.accountLabel,initials:personalDefaults.initials,savingsEntries:legacy.savingsEntries||structuredClone(personalDefaults.savingsEntries),recurring:legacy.recurring||structuredClone(personalDefaults.recurring)}:personalDefaults;
-  appState = stored?.accounts ? stored : MerCore.createAccountStore(migratedPersonal,businessDefaults,{language:legacy?.language||'hr',theme:'light'});
+  appState = stored?.accounts ? stored : versionFour?.accounts ? versionFour : MerCore.createAccountStore(migratedPersonal,businessDefaults,{language:legacy?.language||'hr',theme:'light'});
 } catch { appState = MerCore.createAccountStore(personalDefaults,businessDefaults,{language:'hr',theme:'light'}); }
+appState.version=5;
+appState.bankConnections=Array.isArray(appState.bankConnections)?appState.bankConnections:[];
 function normalizeProfile(profile) {
   profile.transactions=profile.transactions||[];
-  profile.transactions.forEach(transaction=>{transaction.type=MerCore.transactionType(transaction);});
+  profile.transactions.forEach(transaction=>{transaction.type=MerCore.transactionType(transaction);transaction.source=transaction.source||tSourceManual();transaction.sourceType=transaction.sourceType||'manual';transaction.needsReview=Boolean(transaction.needsReview);});
   profile.incomeCategories=profile.incomeCategories?.length?profile.incomeCategories:structuredClone(defaultIncomeCategories);
 }
+function tSourceManual(){return 'Manual';}
 Object.values(appState.accounts).forEach(normalizeProfile);
 let state = appState.accounts[appState.activeAccount];
 let currentLang = appState.language === 'en' ? 'en' : 'hr';
@@ -104,6 +116,9 @@ let editingRecurringId = null;
 let editingIncomeCategoryId = null;
 let transactionType = 'expense';
 let insightsTimeframe = 'monthly';
+let activityReviewOnly = false;
+let selectedBankProviderId = null;
+let bankSyncInProgress = false;
 
 const t = (key, values = {}) => {
   let text = translations[currentLang][key] ?? translations.hr[key] ?? key;
@@ -117,7 +132,7 @@ const categoryName = id => { const cat=state?.categories?.find(item=>item.id===i
 const categoryVisual = cat => categoryMeta[cat.id] || { icon:cat.icon || (cat.name || '?').slice(0,1).toUpperCase(), className:'custom' };
 const incomeCategoryName = id => { const cat=state?.incomeCategories?.find(item=>item.id===id);return cat?.name || t(cat?.nameKey||id); };
 const incomeCategoryVisual = cat => ({icon:cat?.icon||(incomeCategoryName(cat?.id||'otherIncome').slice(0,1).toUpperCase()),className:'income-category'});
-const save = () => { appState.language=currentLang;appState.theme=currentTheme;appState.accounts[appState.activeAccount]=state;localStorage.setItem('mer-money-v4',JSON.stringify(appState)); };
+const save = () => { appState.language=currentLang;appState.theme=currentTheme;appState.accounts[appState.activeAccount]=state;localStorage.setItem('mer-money-v5',JSON.stringify(appState)); };
 
 function getPlan() { return MerCore.calculateBudget(state,12); }
 
@@ -269,6 +284,139 @@ function renderUpcoming() {
   $('#upcomingList').innerHTML = items.map(item => `<div class="upcoming-item"><span class="merchant-icon ${item.style}">${item.icon}</span><div><strong>${item.name}</strong><span>${item.due} · ${item.category}</span></div><strong>−${currency(item.amount)}</strong></div>`).join('');
 }
 
+function bankConnectionsFor(profileId=appState.activeAccount) { return appState.bankConnections.filter(connection=>connection.profileId===profileId); }
+function uncategorizedTransactions(profile=state) { return (profile.transactions||[]).filter(transaction=>transaction.sourceType==='auto'&&transaction.needsReview); }
+
+function lastSyncedLabel(connection) {
+  if(!connection?.lastSyncedAt)return t('neverSynced');
+  const minutes=Math.max(0,Math.floor((Date.now()-new Date(connection.lastSyncedAt).getTime())/60000));
+  if(minutes<1)return t('lastSyncedNow');
+  if(minutes<60)return t('lastSyncedMinutes',{count:minutes});
+  return t('lastSyncedHours',{count:Math.floor(minutes/60)});
+}
+
+function connectionStatusLabel(connection) {
+  if(connection.status!=='error')return {text:lastSyncedLabel(connection),className:''};
+  if(connection.lastErrorCode==='TOKEN_EXPIRED')return {text:t('tokenExpired'),className:'error'};
+  if(connection.lastErrorCode==='DISCONNECTED')return {text:t('connectionLost'),className:'error'};
+  if(connection.lastErrorCode==='RATE_LIMITED')return {text:t('rateLimited',{count:connection.retryAfterSeconds||5}),className:'warning'};
+  return {text:t('syncFailed'),className:'error'};
+}
+
+function renderBankSyncStatus() {
+  const connections=bankConnectionsFor();
+  const reviewCount=uncategorizedTransactions().length;
+  $('#connectedBankCount').textContent=connections.length;
+  $('#uncategorizedCount').textContent=reviewCount;
+  $('#uncategorizedBadge').hidden=reviewCount===0;
+  const status=$('#bankSyncStatus');
+  const button=$('#syncNow');
+  $('.sync-symbol').classList.toggle('syncing',bankSyncInProgress);
+  button.disabled=bankSyncInProgress;
+  $('span',button).textContent=t(bankSyncInProgress?'syncing':connections.length?'syncNow':'connectBank');
+  if(!connections.length){status.textContent=t('noConnectedAccounts');return;}
+  const latest=connections.filter(item=>item.lastSyncedAt).sort((a,b)=>new Date(b.lastSyncedAt)-new Date(a.lastSyncedAt))[0];
+  const error=connections.find(item=>item.status==='error');
+  status.textContent=error?connectionStatusLabel(error).text:`${lastSyncedLabel(latest)} · ${t('backgroundSync')}`;
+}
+
+function renderProviderPicker() {
+  const providers=MerBankProviders.getProviders();
+  $('#providerGrid').innerHTML=providers.map(provider=>`<button type="button" class="provider-option ${selectedBankProviderId===provider.id?'active':''}" data-provider-id="${provider.id}" aria-pressed="${selectedBankProviderId===provider.id}"><span class="institution-mark" style="background:${provider.color}">${escapeHtml(provider.name.slice(0,3))}</span><span><strong>${escapeHtml(provider.name)}</strong><small>${escapeHtml(provider.region)}</small></span></button>`).join('');
+  $$('[data-provider-id]').forEach(button=>button.addEventListener('click',()=>selectBankProvider(button.dataset.providerId)));
+  if(selectedBankProviderId)renderProviderAccounts();
+}
+
+function selectBankProvider(providerId) {
+  selectedBankProviderId=providerId;
+  renderProviderPicker();
+  $('#bankAccountPicker').hidden=false;
+  $('#bankProfileLabel').hidden=false;
+  $('#bankConsentCopy').hidden=false;
+  $('#connectSelectedAccounts').hidden=false;
+}
+
+function renderProviderAccounts() {
+  const provider=MerBankProviders.getProvider(selectedBankProviderId);if(!provider)return;
+  const alreadyConnected=new Set(appState.bankConnections.filter(connection=>connection.providerId===provider.id).map(connection=>connection.accountId));
+  $('#providerAccountList').innerHTML=provider.accounts.map(account=>`<label class="bank-account-choice"><input type="checkbox" name="bankAccount" value="${account.id}" ${alreadyConnected.has(account.id)?'disabled':''}><span><strong>${escapeHtml(account.name)} ${escapeHtml(account.mask)}</strong><small>${escapeHtml(currentLang==='hr'?account.kind:account.kindEn)}${alreadyConnected.has(account.id)?` · ${t('connectedAccount')}`:''}</small></span></label>`).join('');
+}
+
+function renderBankSettings() {
+  const connections=appState.bankConnections;
+  $('#settingsConnectionSummary').textContent=t('connectionsSummary',{count:connections.length,profile:t(state.accountLabel)});
+  $('#bankEmptyState').hidden=connections.length>0;
+  $('#bankConnectionList').innerHTML=connections.map(connection=>{const provider=MerBankProviders.getProvider(connection.providerId);const status=connectionStatusLabel(connection);return `<article class="bank-connection-card"><span class="institution-mark" style="background:${provider?.color||'#16574b'}">${escapeHtml(connection.institution.slice(0,3))}</span><div class="connection-copy"><strong>${escapeHtml(connection.accountName)} ${escapeHtml(connection.accountMask)}</strong><span>${escapeHtml(currentLang==='hr'?connection.accountKind:connection.accountKindEn)}</span><small class="connection-status ${status.className}">${escapeHtml(status.text)}</small></div><label class="connection-mapping"><span>${t('assignProfile')}</span><select data-map-bank="${connection.id}" aria-label="${t('assignProfile')}"><option value="personal" ${connection.profileId==='personal'?'selected':''}>${t('personalAccount')}</option><option value="business" ${connection.profileId==='business'?'selected':''}>${t('businessAccount')}</option></select></label><div class="connection-actions"><button type="button" class="icon-button" data-refresh-bank="${connection.id}" aria-label="${t(connection.lastErrorCode==='TOKEN_EXPIRED'||connection.lastErrorCode==='DISCONNECTED'?'reconnect':'refreshConnection')}"><svg aria-hidden="true"><use href="#icon-refresh"></use></svg></button><button type="button" class="icon-button danger-icon" data-unlink-bank="${connection.id}" aria-label="${t('unlinkConnection')}"><svg aria-hidden="true"><use href="#icon-unlink"></use></svg></button></div></article>`;}).join('');
+  $$('[data-map-bank]').forEach(select=>select.addEventListener('change',()=>mapBankConnection(select.dataset.mapBank,select.value)));
+  $$('[data-refresh-bank]').forEach(button=>button.addEventListener('click',()=>refreshBankConnection(button.dataset.refreshBank)));
+  $$('[data-unlink-bank]').forEach(button=>button.addEventListener('click',()=>requestUnlinkBank(button)));
+  renderProviderPicker();
+}
+
+function openBankSettings() { toggleAccountMenu(false);selectedBankProviderId=null;$('#bankConnectForm').hidden=true;renderBankSettings();openModal($('#bankSettingsModal')); }
+
+function applyTransactionEffectToProfile(profile,transaction,direction=1) {
+  const amount=Math.max(0,Number(transaction.amount)||0)*direction;
+  if(MerCore.transactionType(transaction)==='income'){profile.availableBalance+=amount;return;}
+  profile.availableBalance-=amount;
+  if(String(transaction?.date||'').startsWith('2026-08')){
+    profile.spent=Math.max(0,profile.spent+amount);
+    const category=profile.categories.find(item=>item.id===transaction.category);if(category)category.spent=Math.max(0,category.spent+amount);
+  }
+}
+
+async function syncBankConnection(connection,{silent=false}={}) {
+  const profile=appState.accounts[connection.profileId];if(!profile)return {imported:0,duplicates:0,uncategorized:0,error:'DISCONNECTED'};
+  try{
+    const response=await MerBankProviders.fetchTransactions(connection);
+    const result=MerCore.importBankTransactions(profile,connection,response.transactions);
+    result.imported.forEach(transaction=>applyTransactionEffectToProfile(profile,transaction,1));
+    connection.cursor=response.nextCursor;connection.lastSyncedAt=response.fetchedAt;connection.status='connected';connection.lastErrorCode=null;connection.retryAfterSeconds=null;
+    return {imported:result.imported.length,duplicates:result.duplicates,uncategorized:result.uncategorized,error:null};
+  }catch(error){
+    connection.status='error';connection.lastErrorCode=error.code||'SYNC_FAILED';connection.retryAfterSeconds=error.retryAfterSeconds||null;
+    if(!silent)showToast(connectionStatusLabel(connection).text);
+    return {imported:0,duplicates:0,uncategorized:0,error:connection.lastErrorCode};
+  }
+}
+
+async function syncActiveBankConnections({silent=false}={}) {
+  const connections=bankConnectionsFor();
+  if(!connections.length){openBankSettings();return;}
+  if(bankSyncInProgress)return;
+  bankSyncInProgress=true;renderBankSyncStatus();
+  const results=[];for(const connection of connections)results.push(await syncBankConnection(connection,{silent}));
+  bankSyncInProgress=false;save();renderAll();
+  if(!silent){const imported=results.reduce((sum,result)=>sum+result.imported,0),duplicates=results.reduce((sum,result)=>sum+result.duplicates,0);if(!results.some(result=>result.error))showToast(imported?t('syncComplete',{imported,duplicates}):t('noNewTransactions'));}
+}
+
+async function refreshBankConnection(connectionId) {
+  const connection=appState.bankConnections.find(item=>item.id===connectionId);if(!connection)return;
+  MerBankProviders.renewConnection(connection);bankSyncInProgress=true;renderBankSyncStatus();const result=await syncBankConnection(connection);bankSyncInProgress=false;save();renderAll();renderBankSettings();if(!result.error)showToast(result.imported?t('syncComplete',{imported:result.imported,duplicates:result.duplicates}):t('noNewTransactions'));
+}
+
+async function mapBankConnection(connectionId,profileId) {
+  const connection=appState.bankConnections.find(item=>item.id===connectionId);if(!connection||connection.profileId===profileId)return;
+  const previousProfile=appState.accounts[connection.profileId];
+  const moved=(previousProfile.transactions||[]).filter(transaction=>transaction.connectionId===connection.id);
+  moved.forEach(transaction=>applyTransactionEffectToProfile(previousProfile,transaction,-1));
+  previousProfile.transactions=previousProfile.transactions.filter(transaction=>transaction.connectionId!==connection.id);
+  connection.profileId=profileId==='business'?'business':'personal';connection.cursor=0;connection.lastAttemptAt=null;connection.lastSyncedAt=null;connection.status='connected';connection.lastErrorCode=null;
+  await syncBankConnection(connection,{silent:true});save();state=appState.accounts[appState.activeAccount];renderAll();renderBankSettings();showToast(t('mappingUpdated',{profile:t(appState.accounts[connection.profileId].accountLabel)}));
+}
+
+function requestUnlinkBank(button) {
+  if(button.dataset.confirmUnlink!=='true'){button.dataset.confirmUnlink='true';button.classList.add('confirming');button.setAttribute('aria-label',t('confirmUnlink'));button.innerHTML='<svg aria-hidden="true"><use href="#icon-check"></use></svg>';setTimeout(()=>{if(button.isConnected){button.dataset.confirmUnlink='false';button.classList.remove('confirming');button.setAttribute('aria-label',t('unlinkConnection'));button.innerHTML='<svg aria-hidden="true"><use href="#icon-unlink"></use></svg>'; }},3500);return;}
+  appState.bankConnections=appState.bankConnections.filter(connection=>connection.id!==button.dataset.unlinkBank);save();renderAll();renderBankSettings();showToast(t('connectionUnlinked'));
+}
+
+async function connectSelectedBankAccounts(event) {
+  event.preventDefault();
+  const selected=$$('input[name="bankAccount"]:checked',$('#bankConnectForm')).map(input=>input.value);if(!selected.length){showToast(t('selectAccount'));return;}
+  const profileId=$('#bankProfileSelect').value==='business'?'business':'personal';const connections=selected.map((accountId,index)=>MerBankProviders.createConnection(selectedBankProviderId,accountId,profileId,Date.now()+index));appState.bankConnections.push(...connections);
+  bankSyncInProgress=true;const results=[];for(const connection of connections)results.push(await syncBankConnection(connection,{silent:true}));bankSyncInProgress=false;selectedBankProviderId=null;$('#bankConnectForm').hidden=true;save();renderAll();renderBankSettings();showToast(t('accountsConnected',{count:connections.length,imported:results.reduce((sum,result)=>sum+result.imported,0)}));
+}
+
 function formatIsoDate(value) { return new Intl.DateTimeFormat(locale(),{day:'numeric',month:'short',year:'numeric'}).format(new Date(`${value}T12:00:00`)); }
 
 function renderRecurring() {
@@ -279,6 +427,7 @@ function renderRecurring() {
 
 function buildNotifications() {
   const notifications=[];
+  const reviewCount=uncategorizedTransactions().length;if(reviewCount)notifications.push({type:'warning',icon:'icon-alert',title:t('alertUncategorizedTitle'),body:t('alertUncategorizedBody',{count:reviewCount}),action:t('reviewCategories'),view:'activity',reviewOnly:true});
   state.categories.forEach(cat=>{const threshold=MerCore.budgetThreshold(cat.spent,cat.limit);if(threshold.percent>=80)notifications.push({type:threshold.level==='red'?'danger':'warning',icon:'icon-wallet',title:t('alertBudgetTitle'),body:t('alertBudgetBody',{category:categoryName(cat.id),percent:Math.round(threshold.percent)}),action:t('reviewBudget'),view:'budgets'});});
   (state.recurring||[]).forEach(rule=>{const next=MerCore.nextOccurrence(rule,'2026-08-20');if(next){const days=Math.round((new Date(`${next}T12:00:00`)-new Date('2026-08-20T12:00:00'))/86400000);if(days<=20)notifications.push({type:'info',icon:'icon-calendar',title:t('alertRecurringTitle'),body:t('alertRecurringBody',{name:rule.name,amount:currency(rule.amount),date:formatIsoDate(next)}),action:t('reviewRecurring'),view:'budgets'});}});
   const plan=getPlan();if(plan.monthlyBudget&&plan.safeRemaining/plan.monthlyBudget<.25)notifications.push({type:'warning',icon:'icon-shield',title:t('alertSpendingTitle'),body:t('alertSpendingBody',{amount:currency(plan.safeRemaining)}),action:t('reviewSpending'),view:'activity'});
@@ -290,8 +439,8 @@ function renderNotifications() {
   $('#notificationCount').textContent=notifications.length;
   $('#notificationCount').hidden=notifications.length===0;
   $('#notificationButton').setAttribute('aria-label',t('notificationCount',{count:notifications.length}));
-  $('#notificationList').innerHTML=notifications.length?notifications.map((item,index)=>`<article class="notification-item"><span class="notification-symbol ${item.type}"><svg aria-hidden="true"><use href="#${item.icon}"></use></svg></span><div class="notification-copy"><strong>${item.title}</strong><p>${item.body}</p><button type="button" class="link-button" data-notification-view="${item.view}" data-notification-index="${index}">${item.action}<span aria-hidden="true">→</span></button></div></article>`).join(''):`<div class="notification-empty">${t('noNotifications')}</div>`;
-  $$('[data-notification-view]').forEach(button=>button.addEventListener('click',()=>{showView(button.dataset.notificationView);closeNotifications();}));
+  $('#notificationList').innerHTML=notifications.length?notifications.map((item,index)=>`<article class="notification-item"><span class="notification-symbol ${item.type}"><svg aria-hidden="true"><use href="#${item.icon}"></use></svg></span><div class="notification-copy"><strong>${item.title}</strong><p>${item.body}</p><button type="button" class="link-button" data-notification-view="${item.view}" data-notification-review="${item.reviewOnly?'true':'false'}" data-notification-index="${index}">${item.action}<span aria-hidden="true">→</span></button></div></article>`).join(''):`<div class="notification-empty">${t('noNotifications')}</div>`;
+  $$('[data-notification-view]').forEach(button=>button.addEventListener('click',()=>{activityReviewOnly=button.dataset.notificationReview==='true';showView(button.dataset.notificationView);renderActivity();closeNotifications();}));
 }
 
 function renderCategorySelects() {
@@ -318,10 +467,13 @@ function renderActivity() {
   const search = ($('#activitySearch').value || '').trim().toLocaleLowerCase(locale());
   const filter = $('#activityFilter').value || 'all';
   const typeFilter=$('#activityTypeFilter').value||'all';
+  const reviewCount=uncategorizedTransactions().length;
+  $('#reviewQueueBanner').hidden=!activityReviewOnly;
+  $('#reviewQueueCopy').textContent=t('reviewQueueCopy',{count:reviewCount});
   const filtered = state.transactions.filter(tx => {
     const type=MerCore.transactionType(tx);const name=type==='income'?incomeCategoryName(tx.category):categoryName(tx.category);
     const categoryMatches=filter==='all'||(filter.startsWith('income:')?type==='income'&&tx.category===filter.slice(7):type==='expense'&&tx.category===filter);
-    return categoryMatches&&(typeFilter==='all'||type===typeFilter)&&(!search||tx.name.toLocaleLowerCase(locale()).includes(search)||name.toLocaleLowerCase(locale()).includes(search));
+    return (!activityReviewOnly||tx.needsReview)&&categoryMatches&&(typeFilter==='all'||type===typeFilter)&&(!search||tx.name.toLocaleLowerCase(locale()).includes(search)||name.toLocaleLowerCase(locale()).includes(search));
   }).slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
   $('#activityEmpty').hidden = filtered.length > 0;
   let lastDate = '';
@@ -330,7 +482,8 @@ function renderActivity() {
     const header = dateLabel!==lastDate ? `<div class="transaction-date">${dateLabel}</div>` : '';
     lastDate = dateLabel;
     const type=MerCore.transactionType(tx);const txCategory=type==='income'?state.incomeCategories.find(cat=>cat.id===tx.category):state.categories.find(cat=>cat.id===tx.category);const meta=type==='income'?incomeCategoryVisual(txCategory):(txCategory?categoryVisual(txCategory):categoryMeta.other);const displayCategory=type==='income'?incomeCategoryName(tx.category):categoryName(tx.category);
-    return `${header}<div class="transaction-item ${type}"><span class="category-icon ${meta.className}">${meta.icon}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><small>${new Intl.DateTimeFormat(locale(),{hour:'2-digit',minute:'2-digit'}).format(new Date(tx.date))}</small></div><span class="transaction-category">${displayCategory}</span><span class="transaction-amount ${type}">${type==='income'?'+':'−'}${currency(tx.amount)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
+    const sourceLabel=tx.sourceType==='auto'?tx.source:t('manualSource');
+    return `${header}<div class="transaction-item ${type}"><span class="category-icon ${meta.className}">${meta.icon}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><div class="transaction-meta"><small>${new Intl.DateTimeFormat(locale(),{hour:'2-digit',minute:'2-digit'}).format(new Date(tx.date))}</small><span class="transaction-source ${tx.sourceType==='auto'?'auto':''}">${escapeHtml(sourceLabel)}</span>${tx.needsReview?`<span class="needs-review-tag">${t('needsReview')}</span>`:''}</div></div><span class="transaction-category">${displayCategory}</span><span class="transaction-amount ${type}">${type==='income'?'+':'−'}${currency(tx.amount)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
   }).join('');
   $$('[data-edit-transaction]').forEach(button=>button.addEventListener('click',()=>openTransaction(button.dataset.editTransaction)));
 }
@@ -383,7 +536,7 @@ function renderInsights() {
 }
 
 function renderAll() {
-  renderMonth();renderAccountContext();renderOverview();renderBudgetLists();renderBudgetView();renderSavingsView();renderSavingsEntries();renderUpcoming();renderRecurring();renderCategorySelects();renderActivity();renderInsights();renderNotifications();applyTheme();
+  renderMonth();renderAccountContext();renderOverview();renderBudgetLists();renderBudgetView();renderSavingsView();renderSavingsEntries();renderUpcoming();renderRecurring();renderCategorySelects();renderActivity();renderInsights();renderNotifications();renderBankSyncStatus();if($('#bankSettingsModal').open)renderBankSettings();applyTheme();
 }
 
 function setLanguage(lang) {
@@ -412,12 +565,12 @@ function closeSidebar() { $('#sidebar').classList.remove('open'); $('#sidebarScr
 function toggleAccountMenu(force) { const menu=$('#accountMenu'),willOpen=typeof force==='boolean'?force:menu.hidden;menu.hidden=!willOpen;$('#openSettings').setAttribute('aria-expanded',String(willOpen)); }
 function closeNotifications() { $('#notificationCenter').hidden=true;$('#notificationButton').setAttribute('aria-expanded','false'); }
 function toggleNotifications() { const open=$('#notificationCenter').hidden;$('#notificationCenter').hidden=!open;$('#notificationButton').setAttribute('aria-expanded',String(open));if(open)toggleAccountMenu(false); }
-function switchAccount(accountId) { if(!appState.accounts[accountId]||accountId===appState.activeAccount)return;save();appState.activeAccount=accountId;state=appState.accounts[accountId];processDueRecurring(state);save();renderAll();toggleAccountMenu(false);showView('overview');showToast(t('accountSwitched',{account:state.accountName})); }
+function switchAccount(accountId) { if(!appState.accounts[accountId]||accountId===appState.activeAccount)return;save();appState.activeAccount=accountId;state=appState.accounts[accountId];activityReviewOnly=false;processDueRecurring(state);save();renderAll();toggleAccountMenu(false);showView('overview');showToast(t('accountSwitched',{account:state.accountName})); }
 function toggleTheme() { currentTheme=currentTheme==='dark'?'light':'dark';applyTheme();save(); }
 
 function processDueRecurring(profile) {
   profile.recurring=profile.recurring||[];profile.transactions=profile.transactions||[];
-  profile.recurring.forEach(rule=>{const start=new Date(`${rule.startDate}T12:00:00Z`);const from=rule.lastProcessed||new Date(start.getTime()-86400000).toISOString().slice(0,10);MerCore.occurrencesBetween(rule,from,'2026-08-20').forEach(date=>{const key=`${rule.id}:${date}`;if(profile.transactions.some(tx=>tx.recurringKey===key))return;const cat=profile.categories.find(item=>item.id===rule.category)||profile.categories[0];profile.transactions.unshift({id:`rec-${key}`,type:'expense',name:rule.name,amount:rule.amount,category:cat.id,date:`${date}T08:00:00`,recurringKey:key});profile.spent+=rule.amount;profile.availableBalance-=rule.amount;cat.spent+=rule.amount;});rule.lastProcessed='2026-08-20';});
+  profile.recurring.forEach(rule=>{const start=new Date(`${rule.startDate}T12:00:00Z`);const from=rule.lastProcessed||new Date(start.getTime()-86400000).toISOString().slice(0,10);MerCore.occurrencesBetween(rule,from,'2026-08-20').forEach(date=>{const key=`${rule.id}:${date}`;if(profile.transactions.some(tx=>tx.recurringKey===key))return;const cat=profile.categories.find(item=>item.id===rule.category)||profile.categories[0];profile.transactions.unshift({id:`rec-${key}`,type:'expense',name:rule.name,amount:rule.amount,category:cat.id,date:`${date}T08:00:00`,recurringKey:key,source:'Manual',sourceType:'manual',needsReview:false});profile.spent+=rule.amount;profile.availableBalance-=rule.amount;cat.spent+=rule.amount;});rule.lastProcessed='2026-08-20';});
 }
 
 function exportCsv() {
@@ -435,13 +588,7 @@ function resetTransactionCheck() {
 
 function transactionAffectsCurrentBudget(transaction) { return String(transaction?.date||'').startsWith('2026-08'); }
 function applyTransactionEffect(transaction,direction=1) {
-  const amount=Math.max(0,Number(transaction.amount)||0)*direction;
-  if(MerCore.transactionType(transaction)==='income'){state.availableBalance+=amount;return;}
-  state.availableBalance-=amount;
-  if(transactionAffectsCurrentBudget(transaction)){
-    state.spent=Math.max(0,state.spent+amount);
-    const cat=state.categories.find(item=>item.id===transaction.category);if(cat)cat.spent=Math.max(0,cat.spent+amount);
-  }
+  applyTransactionEffectToProfile(state,transaction,direction);
 }
 
 function setTransactionType(type) {
@@ -556,6 +703,14 @@ $$('[data-open-income]').forEach(button=>button.addEventListener('click',openInc
 $$('[data-open-assessment]').forEach(button=>button.addEventListener('click',openAssessment));
 $$('[data-open-savings]').forEach(button=>button.addEventListener('click',()=>openSavingsDeposit()));
 $('#openSettings').addEventListener('click',event=>{event.stopPropagation();toggleAccountMenu();closeNotifications();}); $('#openPlan').addEventListener('click',()=>openModal($('#breakdownModal'))); $('#safeBreakdown').addEventListener('click',()=>openModal($('#breakdownModal')));
+$('#manageBanks').addEventListener('click',openBankSettings);
+$('#startBankConnection').addEventListener('click',()=>{selectedBankProviderId=null;$('#bankProfileSelect').value=appState.activeAccount;$('#bankConnectForm').hidden=false;$('#bankAccountPicker').hidden=true;$('#bankProfileLabel').hidden=true;$('#bankConsentCopy').hidden=true;$('#connectSelectedAccounts').hidden=true;renderProviderPicker();});
+$('#cancelBankConnection').addEventListener('click',()=>{selectedBankProviderId=null;$('#bankConnectForm').hidden=true;});
+$('#bankConnectForm').addEventListener('submit',connectSelectedBankAccounts);
+$('#syncNow').addEventListener('click',()=>syncActiveBankConnections());
+$('#uncategorizedBadge').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
+$('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;renderActivity();});
+$('#settingsExportCsv').addEventListener('click',exportCsv);
 $('#addCategory').addEventListener('click',()=>openBudgetEditor());
 $('#addRecurring').addEventListener('click',()=>openRecurring());
 $('#addIncomeCategory').addEventListener('click',()=>openIncomeCategoryEditor());
@@ -571,7 +726,7 @@ $('#menuToggle').addEventListener('click',()=>$('#sidebar').classList.contains('
 
 $('#transactionAmount').addEventListener('input',evaluateTransaction); $('#transactionCategory').addEventListener('change',evaluateTransaction);
 $$('[data-transaction-type]').forEach(button=>button.addEventListener('click',()=>setTransactionType(button.dataset.transactionType)));
-$('#transactionForm').addEventListener('submit',event=>{event.preventDefault();if(!evaluateTransaction()){showToast(t(transactionType==='income'?'enterImpact':'transactionBlocked'));return;}const amount=Number($('#transactionAmount').value),category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;if(existing)applyTransactionEffect(existing,-1);const payload={type:transactionType,name:$('#transactionName').value.trim(),amount,category,date:existing?.date||'2026-08-20T12:00:00'};if(existing){Object.assign(existing,payload);applyTransactionEffect(existing,1);}else{const created={id:Date.now(),...payload};state.transactions.unshift(created);applyTransactionEffect(created,1);}save();renderAll();closeModal($('#transactionModal'));showToast(t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded')));editingTransactionId=null;});
+$('#transactionForm').addEventListener('submit',event=>{event.preventDefault();if(!evaluateTransaction()){showToast(t(transactionType==='income'?'enterImpact':'transactionBlocked'));return;}const amount=Number($('#transactionAmount').value),category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;if(existing)applyTransactionEffect(existing,-1);const payload={type:transactionType,name:$('#transactionName').value.trim(),amount,category,date:existing?.date||'2026-08-20T12:00:00'};if(existing){Object.assign(existing,payload);if(existing.sourceType==='auto'){existing.needsReview=false;existing.categoryConfidence='manual';}applyTransactionEffect(existing,1);}else{const created={id:Date.now(),...payload,source:'Manual',sourceType:'manual',needsReview:false};state.transactions.unshift(created);applyTransactionEffect(created,1);}save();renderAll();closeModal($('#transactionModal'));showToast(existing?.sourceType==='auto'?t('categoryApproved'):t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded')));editingTransactionId=null;});
 $('#deleteTransaction').addEventListener('click',()=>{const existing=state.transactions.find(tx=>String(tx.id)===String(editingTransactionId));if(!existing)return;const type=MerCore.transactionType(existing);applyTransactionEffect(existing,-1);state.transactions=state.transactions.filter(tx=>String(tx.id)!==String(editingTransactionId));save();renderAll();closeModal($('#transactionModal'));showToast(t(type==='income'?'incomeDeleted':'expenseDeleted'));editingTransactionId=null;});
 
 $('#assessmentNext').addEventListener('click',()=>{const active=$(`.assessment-step[data-step="${assessmentStep}"]`);const inputs=$$('input[required]',active);if(!inputs.every(input=>input.reportValidity()))return;if(assessmentStep===1&&Number($('#incomeInput').value)<=Number($('#billsInput').value)){showToast(t('planInvalid'));return;}setAssessmentStep(Math.min(3,assessmentStep+1));});
@@ -598,5 +753,7 @@ $$('#insightsFilters [data-timeframe]').forEach(button=>button.addEventListener(
 $('#prevMonth').addEventListener('click',()=>{if(activeMonth>0){activeMonth--;renderMonth();showToast(t('historyUnavailable'));}}); $('#nextMonth').addEventListener('click',()=>{if(activeMonth<7){activeMonth++;renderMonth();showToast(t('viewingMonth',{month:$('#monthLabel').textContent}));}});
 window.addEventListener('resize',()=>{if(window.innerWidth>800)closeSidebar();});
 
-processDueRecurring(state);applyStaticTranslations();applyTheme();renderAll();showView(activeView);save();
+function syncBanksIfStale(){const stale=bankConnectionsFor().some(connection=>!connection.lastSyncedAt||Date.now()-new Date(connection.lastSyncedAt).getTime()>=300000);if(stale)syncActiveBankConnections({silent:true});}
 
+processDueRecurring(state);applyStaticTranslations();applyTheme();renderAll();showView(activeView);save();
+setTimeout(syncBanksIfStale,1200);setInterval(()=>syncActiveBankConnections({silent:true}),300000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncBanksIfStale();});
