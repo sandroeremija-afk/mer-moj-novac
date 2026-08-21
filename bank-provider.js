@@ -122,3 +122,4 @@
 
   return { getProviders, getProvider, createConnection, fetchTransactions, renewConnection, providerError };
 });
+

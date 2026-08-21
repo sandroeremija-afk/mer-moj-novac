@@ -88,18 +88,27 @@ const businessDefaults = {
 
 let appState;
 try {
+  const versionSix = JSON.parse(localStorage.getItem('mer-money-v6') || 'null');
   const stored = JSON.parse(localStorage.getItem('mer-money-v5') || 'null');
   const versionFour = JSON.parse(localStorage.getItem('mer-money-v4') || 'null');
   const legacy = JSON.parse(localStorage.getItem('mer-money-v3') || 'null');
   const migratedPersonal=legacy?{...structuredClone(personalDefaults),...legacy,accountName:personalDefaults.accountName,accountLabel:personalDefaults.accountLabel,initials:personalDefaults.initials,savingsEntries:legacy.savingsEntries||structuredClone(personalDefaults.savingsEntries),recurring:legacy.recurring||structuredClone(personalDefaults.recurring)}:personalDefaults;
-  appState = stored?.accounts ? stored : versionFour?.accounts ? versionFour : MerCore.createAccountStore(migratedPersonal,businessDefaults,{language:legacy?.language||'hr',theme:'light'});
+  appState = versionSix?.accounts ? versionSix : stored?.accounts ? stored : versionFour?.accounts ? versionFour : MerCore.createAccountStore(migratedPersonal,businessDefaults,{language:legacy?.language||'hr',theme:'light'});
 } catch { appState = MerCore.createAccountStore(personalDefaults,businessDefaults,{language:'hr',theme:'light'}); }
-appState.version=5;
+appState.version=6;
 appState.bankConnections=Array.isArray(appState.bankConnections)?appState.bankConnections:[];
+appState.settings={currency:'EUR',dateFormat:'locale',timezone:'Europe/Zagreb',hideBalances:false,...(appState.settings||{})};
+appState.mfa={enabled:false,secret:null,recoveryCodeHashes:[],...(appState.mfa||{})};
 function normalizeProfile(profile) {
   profile.transactions=profile.transactions||[];
   profile.transactions.forEach(transaction=>{transaction.type=MerCore.transactionType(transaction);transaction.source=transaction.source||tSourceManual();transaction.sourceType=transaction.sourceType||'manual';transaction.needsReview=Boolean(transaction.needsReview);});
   profile.incomeCategories=profile.incomeCategories?.length?profile.incomeCategories:structuredClone(defaultIncomeCategories);
+  profile.automationRules=Array.isArray(profile.automationRules)?profile.automationRules:[];
+  profile.goalBuckets=Array.isArray(profile.goalBuckets)&&profile.goalBuckets.length?profile.goalBuckets:[{id:`goal-${profile.accountLabel==='businessAccount'?'business':'personal'}-reserve`,name:profile.accountLabel==='businessAccount'?'Poslovna rezerva':'Fond za hitne slučajeve',target:Number(profile.savingsGoal)||10000,current:Number(profile.savingsBalance)||0,dueDate:'2027-02-01',icon:'◎',primary:true}];
+  profile.goalBuckets.forEach((goal,index)=>{goal.current=Math.max(0,Number(goal.current)||0);goal.target=Math.max(1,Number(goal.target)||1);goal.primary=index===0?goal.primary!==false:Boolean(goal.primary);});
+  if(!profile.goalBuckets.some(goal=>goal.primary))profile.goalBuckets[0].primary=true;
+  profile.savingsEntries=(profile.savingsEntries||[]).map(entry=>({...entry,goalId:entry.goalId||profile.goalBuckets.find(goal=>goal.primary)?.id||profile.goalBuckets[0].id}));
+  profile.savingsBalance=profile.goalBuckets.reduce((sum,goal)=>sum+goal.current,0);
 }
 function tSourceManual(){return 'Manual';}
 Object.values(appState.accounts).forEach(normalizeProfile);
@@ -126,13 +135,13 @@ const t = (key, values = {}) => {
   return text;
 };
 const locale = () => currentLang === 'hr' ? 'hr-HR' : 'en-IE';
-const currency = (value, whole = false) => new Intl.NumberFormat(locale(), { style:'currency', currency:'EUR', minimumFractionDigits:whole ? 0 : 2, maximumFractionDigits:whole ? 0 : 2 }).format(Number(value) || 0);
+const currency = (value, whole = false) => new Intl.NumberFormat(locale(), { style:'currency', currency:appState.settings.currency||'EUR', minimumFractionDigits:whole ? 0 : 2, maximumFractionDigits:whole ? 0 : 2 }).format(Number(value) || 0);
 const number = (value, digits = 1) => new Intl.NumberFormat(locale(), { maximumFractionDigits:digits }).format(value);
 const categoryName = id => { const cat=state?.categories?.find(item=>item.id===id);return cat?.name || t(id); };
 const categoryVisual = cat => categoryMeta[cat.id] || { icon:cat.icon || (cat.name || '?').slice(0,1).toUpperCase(), className:'custom' };
 const incomeCategoryName = id => { const cat=state?.incomeCategories?.find(item=>item.id===id);return cat?.name || t(cat?.nameKey||id); };
 const incomeCategoryVisual = cat => ({icon:cat?.icon||(incomeCategoryName(cat?.id||'otherIncome').slice(0,1).toUpperCase()),className:'income-category'});
-const save = () => { appState.language=currentLang;appState.theme=currentTheme;appState.accounts[appState.activeAccount]=state;localStorage.setItem('mer-money-v5',JSON.stringify(appState)); };
+const save = () => { appState.language=currentLang;appState.theme=currentTheme;appState.accounts[appState.activeAccount]=state;localStorage.setItem('mer-money-v6',JSON.stringify(appState)); };
 
 function getPlan() { return MerCore.calculateBudget(state,12); }
 
@@ -574,7 +583,7 @@ function processDueRecurring(profile) {
 }
 
 function exportCsv() {
-  const csv=MerCore.monthlyExpenseCsv(state,'2026-08');const fileName=t('csvFileName',{account:appState.activeAccount});const blob=new Blob([`\ufeff${csv}`],{type:'text/csv;charset=utf-8'});const link=document.createElement('a');link.download=fileName;link.href=typeof URL.createObjectURL==='function'?URL.createObjectURL(blob):`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;document.body.appendChild(link);link.click();link.remove();if(link.href.startsWith('blob:'))setTimeout(()=>URL.revokeObjectURL(link.href),0);showToast(t('csvExported'));
+  const csv=MerCore.monthlyExpenseCsv(state,'2026-08',appState.settings.currency);const fileName=t('csvFileName',{account:appState.activeAccount});const blob=new Blob([`\ufeff${csv}`],{type:'text/csv;charset=utf-8'});const link=document.createElement('a');link.download=fileName;link.href=typeof URL.createObjectURL==='function'?URL.createObjectURL(blob):`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;document.body.appendChild(link);link.click();link.remove();if(link.href.startsWith('blob:'))setTimeout(()=>URL.revokeObjectURL(link.href),0);showToast(t('csvExported'));
 }
 
 function showTooltip(trigger) { const tip=$('#appTooltip');tip.textContent=t(trigger.dataset.tooltipKey);tip.hidden=false;const rect=trigger.getBoundingClientRect();const width=Math.min(260,window.innerWidth-24);const left=Math.max(12,Math.min(window.innerWidth-width-12,rect.left+rect.width/2-width/2));tip.style.left=`${left}px`;tip.style.top=`${Math.max(8,rect.top-8)}px`;tip.style.transform='translateY(-100%)'; }
@@ -685,7 +694,7 @@ function updateSavingsCheck() {
   $('#savingsSubmit').disabled=blocked||amount<=0; return !blocked&&amount>0;
 }
 
-function openSavingsDeposit(id=null) { editingSavingsId=id===null?null:id;const existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null;$('#savingsNoteInput').value=existing?.note||(currentLang==='hr'?'Uplata u štednju':'Savings deposit');$('#savingsAmountInput').value=existing?.amount||Math.min(state.savingsTarget,Math.max(1,state.availableBalance-state.bills));$('#savingsModalTitle').textContent=t(existing?'editSavingsEntry':'addToEmergencyFund');$('#savingsSubmit').textContent=t(existing?'updateSavings':'confirmDeposit');$('#deleteSavingsEntry').hidden=!existing;updateSavingsCheck();openModal($('#savingsModal'));setTimeout(()=>$('#savingsNoteInput').focus(),50); }
+function openSavingsDeposit(id=null) { editingSavingsId=id===null?null:id;const existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null;const goals=state.goalBuckets||[];$('#savingsGoalInput').innerHTML=goals.map(goal=>`<option value="${goal.id}">${escapeHtml(goal.name)}</option>`).join('');$('#savingsGoalInput').value=existing?.goalId||goals.find(goal=>goal.primary)?.id||goals[0]?.id||'';$('#savingsNoteInput').value=existing?.note||(currentLang==='hr'?'Uplata u štednju':'Savings deposit');$('#savingsAmountInput').value=existing?.amount||Math.min(state.savingsTarget,Math.max(1,state.availableBalance-state.bills));$('#savingsModalTitle').textContent=t(existing?'editSavingsEntry':'addToSavingsGoal');$('#savingsSubmit').textContent=t(existing?'updateSavings':'confirmDeposit');$('#deleteSavingsEntry').hidden=!existing;updateSavingsCheck();openModal($('#savingsModal'));setTimeout(()=>$('#savingsNoteInput').focus(),50); }
 
 function updateRecurringPreview() { const day=Number($('#recurringDayInput').value)||1,start=$('#recurringStartInput').value||'2026-08-20';if(day<1||day>31){$('#recurringPreview').textContent=t('recurringInvalidDay');return false;}const next=MerCore.nextOccurrence({day,startDate:start,enabled:true},'2026-08-20',true);$('#recurringPreview').textContent=`${t('nextCharge',{date:formatIsoDate(next)})} ${t('recurringPreview')}`;return true; }
 function openRecurring(id=null) { editingRecurringId=id===null?null:id;const existing=editingRecurringId!==null?(state.recurring||[]).find(rule=>String(rule.id)===String(editingRecurringId)):null;renderCategorySelects();$('#recurringModalTitle').textContent=t(existing?'editExpense':'scheduleExpense');$('#recurringNameInput').value=existing?.name||'';$('#recurringAmountInput').value=existing?.amount||'';$('#recurringCategoryInput').value=existing?.category||state.categories[0]?.id;$('#recurringDayInput').value=existing?.day||1;$('#recurringStartInput').value=existing?.startDate||'2026-09-01';$('#deleteRecurring').hidden=!existing;updateRecurringPreview();openModal($('#recurringModal'));setTimeout(()=>$('#recurringNameInput').focus(),50); }
@@ -738,8 +747,8 @@ $('#budgetForm').addEventListener('submit',event=>{event.preventDefault();const 
 $('#deleteCategory').addEventListener('click',()=>{const cat=state.categories.find(item=>item.id===editingCategoryId);if(!cat?.isCustom)return;const fallback=fallbackCategory(cat.id);fallback.spent+=cat.spent;fallback.limit+=cat.limit;state.transactions.forEach(tx=>{if(tx.category===cat.id)tx.category=fallback.id;});(state.recurring||[]).forEach(rule=>{if(rule.category===cat.id)rule.category=fallback.id;});state.categories=state.categories.filter(item=>item.id!==cat.id);save();renderAll();closeModal($('#budgetModal'));showToast(t('categoryDeleted'));editingCategoryId=null;});
 
 $('#savingsAmountInput').addEventListener('input',updateSavingsCheck);
-$('#savingsForm').addEventListener('submit',event=>{event.preventDefault();if(!updateSavingsCheck())return;const amount=Number($('#savingsAmountInput').value),note=$('#savingsNoteInput').value.trim(),existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null,difference=amount-(existing?.amount||0);state.savingsBalance+=difference;state.availableBalance-=difference;state.savingsHistory[state.savingsHistory.length-1]+=difference;if(existing){existing.amount=amount;existing.note=note;}else{state.savingsEntries=state.savingsEntries||[];state.savingsEntries.push({id:`s-${Date.now()}`,amount,note,date:'2026-08-20T12:00:00'});}save();renderAll();closeModal($('#savingsModal'));showToast(t(existing?'savingsUpdated':'depositAdded',{amount:currency(amount,true)}));editingSavingsId=null;});
-$('#deleteSavingsEntry').addEventListener('click',()=>{const existing=(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId));if(!existing)return;state.savingsBalance=Math.max(0,state.savingsBalance-existing.amount);state.availableBalance+=existing.amount;state.savingsHistory[state.savingsHistory.length-1]=Math.max(0,state.savingsHistory[state.savingsHistory.length-1]-existing.amount);state.savingsEntries=state.savingsEntries.filter(entry=>String(entry.id)!==String(editingSavingsId));save();renderAll();closeModal($('#savingsModal'));showToast(t('savingsDeleted'));editingSavingsId=null;});
+$('#savingsForm').addEventListener('submit',event=>{event.preventDefault();if(!updateSavingsCheck())return;const amount=Number($('#savingsAmountInput').value),note=$('#savingsNoteInput').value.trim(),goalId=$('#savingsGoalInput').value,existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null,difference=amount-(existing?.amount||0);if(existing){MerCore.applySavingsContribution(state,existing.goalId,existing.amount,-1);MerCore.applySavingsContribution(state,goalId,amount,1);existing.amount=amount;existing.note=note;existing.goalId=goalId;}else{const applied=MerCore.applySavingsContribution(state,goalId,amount,1);if(!applied.valid){showToast(t('goalInvalid'));return;}state.savingsEntries=state.savingsEntries||[];state.savingsEntries.push({id:`s-${Date.now()}`,amount,note,goalId,date:'2026-08-20T12:00:00'});}state.availableBalance-=difference;state.savingsHistory[state.savingsHistory.length-1]+=difference;save();renderAll();closeModal($('#savingsModal'));showToast(t(existing?'savingsUpdated':'depositAdded',{amount:currency(amount,true)}));editingSavingsId=null;});
+$('#deleteSavingsEntry').addEventListener('click',()=>{const existing=(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId));if(!existing)return;MerCore.applySavingsContribution(state,existing.goalId,existing.amount,-1);state.availableBalance+=existing.amount;state.savingsHistory[state.savingsHistory.length-1]=Math.max(0,state.savingsHistory[state.savingsHistory.length-1]-existing.amount);state.savingsEntries=state.savingsEntries.filter(entry=>String(entry.id)!==String(editingSavingsId));save();renderAll();closeModal($('#savingsModal'));showToast(t('savingsDeleted'));editingSavingsId=null;});
 
 $('#recurringDayInput').addEventListener('input',updateRecurringPreview);$('#recurringStartInput').addEventListener('input',updateRecurringPreview);
 $('#recurringForm').addEventListener('submit',event=>{event.preventDefault();if(!updateRecurringPreview())return;const payload={name:$('#recurringNameInput').value.trim(),amount:Number($('#recurringAmountInput').value),category:$('#recurringCategoryInput').value,day:Number($('#recurringDayInput').value),startDate:$('#recurringStartInput').value,enabled:true};if(!payload.name||!Number.isFinite(payload.amount)||payload.amount<=0||payload.day<1||payload.day>31){showToast(t('recurringInvalidDay'));return;}const existing=editingRecurringId!==null?(state.recurring||[]).find(rule=>String(rule.id)===String(editingRecurringId)):null;if(existing)Object.assign(existing,payload);else{state.recurring=state.recurring||[];state.recurring.push({id:`r-${Date.now()}`,...payload,lastProcessed:null});}save();renderAll();closeModal($('#recurringModal'));showToast(t('recurringSaved'));editingRecurringId=null;});
@@ -757,3 +766,4 @@ function syncBanksIfStale(){const stale=bankConnectionsFor().some(connection=>!c
 
 processDueRecurring(state);applyStaticTranslations();applyTheme();renderAll();showView(activeView);save();
 setTimeout(syncBanksIfStale,1200);setInterval(()=>syncActiveBankConnections({silent:true}),300000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncBanksIfStale();});
+

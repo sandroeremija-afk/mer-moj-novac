@@ -129,6 +129,15 @@
     const pickExpense = (...ids) => ids.find(id => expenseIds.has(id));
     const pickIncome = (...ids) => ids.find(id => incomeIds.has(id));
 
+    const customRule = (profile?.automationRules || []).find(rule => {
+      const keyword = String(rule.keyword || '').trim().toLocaleLowerCase('en');
+      return rule.enabled !== false && keyword && descriptor.includes(keyword) && (!rule.type || rule.type === (isIncome ? 'income' : 'expense'));
+    });
+    if (customRule) {
+      const allowed = isIncome ? incomeIds : expenseIds;
+      if (allowed.has(customRule.category)) return { category: customRule.category, confidence: 'custom-rule', rule: customRule.id || customRule.keyword };
+    }
+
     if (isIncome) {
       if (/pla[cć]a|salary|payroll|wage/.test(descriptor)) return { category: pickIncome('salary') || 'otherIncome', confidence: 'rule', rule: 'salary' };
       if (/upwork|freelance|invoice|client payment|honorar/.test(descriptor)) return { category: pickIncome('freelance') || 'otherIncome', confidence: 'rule', rule: 'freelance' };
@@ -289,12 +298,33 @@
     return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
   }
 
-  function monthlyExpenseCsv(profile, monthPrefix = '2026-08') {
-    const rows = [['Date', 'Description', 'Category', 'Amount (EUR)']];
+  function monthlyExpenseCsv(profile, monthPrefix = '2026-08', currency = 'EUR') {
+    const rows = [['Date', 'Description', 'Category', `Amount (${currency})`]];
     (profile.transactions || []).filter(tx => transactionType(tx) === 'expense' && String(tx.date).startsWith(monthPrefix)).forEach(tx => rows.push([String(tx.date).slice(0, 10), tx.name, tx.category, Number(tx.amount).toFixed(2)]));
     const total = rows.slice(1).reduce((sum, row) => sum + Number(row[3]), 0);
     rows.push(['', 'TOTAL', '', total.toFixed(2)]);
     return rows.map(row => row.map(csvEscape).join(',')).join('\r\n');
+  }
+
+  function validateSavingsGoal(goal) {
+    const name = String(goal?.name || '').trim();
+    const target = Number(goal?.target);
+    const current = Number(goal?.current);
+    const dueDate = String(goal?.dueDate || '');
+    if (!name) return { valid: false, reason: 'missing-name' };
+    if (!Number.isFinite(target) || target <= 0) return { valid: false, reason: 'invalid-target' };
+    if (!Number.isFinite(current) || current < 0) return { valid: false, reason: 'invalid-current' };
+    if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return { valid: false, reason: 'invalid-date' };
+    return { valid: true, reason: null, percent: Math.min(100, current / target * 100), remaining: Math.max(0, target - current) };
+  }
+
+  function applySavingsContribution(profile, goalId, amount, direction = 1) {
+    const goal = (profile?.goalBuckets || []).find(item => item.id === goalId);
+    const value = Number(amount) * Number(direction);
+    if (!goal || !Number.isFinite(value) || value === 0 || goal.current + value < 0) return { valid: false, reason: 'invalid-contribution' };
+    goal.current += value;
+    profile.savingsBalance = (profile.goalBuckets || []).reduce((sum, item) => sum + Math.max(0, Number(item.current) || 0), 0);
+    return { valid: true, goal, totalSavings: profile.savingsBalance };
   }
 
   return {
@@ -316,6 +346,9 @@
     monthOverMonthExpenses,
     topExpenseCategory,
     groupCashflow,
-    monthlyExpenseCsv
+    monthlyExpenseCsv,
+    validateSavingsGoal,
+    applySavingsContribution
   };
 });
+

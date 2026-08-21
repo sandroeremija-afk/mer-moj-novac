@@ -85,3 +85,4 @@ test('Cycle 2: sync cursors return only transactions not already fetched', async
   assert.equal(first.transactions.length, 2);
   assert.equal(second.transactions.length, 0);
 });
+
