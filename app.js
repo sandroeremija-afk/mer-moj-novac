@@ -558,7 +558,7 @@ function renderInsights() {
 }
 
 function renderAll() {
-  renderMonth();renderAccountContext();renderOverview();renderBudgetLists();renderBudgetView();renderSavingsView();renderSavingsEntries();renderUpcoming();renderRecurring();renderCategorySelects();renderActivity();renderInsights();renderNotifications();renderBankSyncStatus();if($('#bankSettingsModal').open)renderBankSettings();applyTheme();
+  renderMonth();renderModuleTitle();renderAccountContext();renderOverview();renderBudgetLists();renderBudgetView();renderSavingsView();renderSavingsEntries();renderUpcoming();renderRecurring();renderCategorySelects();renderActivity();renderInsights();renderNotifications();renderBankSyncStatus();if($('#bankSettingsModal').open)renderBankSettings();applyTheme();
 }
 
 function setLanguage(lang) {
@@ -573,10 +573,14 @@ function showToast(message) {
 function openModal(modal) { $('#modalBackdrop').hidden=false; modal.showModal(); }
 function closeModal(modal) { if (modal?.open) modal.close(); $('#modalBackdrop').hidden=true; }
 
+const moduleTitleKeys = {overview:'navOverview',budgets:'navBudgets',savings:'navSavings',activity:'navActivity',insights:'navInsights'};
+function renderModuleTitle() { $('#activeModuleTitle').textContent=t(moduleTitleKeys[activeView]||'navOverview'); }
+
 function showView(view) {
   activeView = view;
   $$('[data-view-panel]').forEach(panel => { const active=panel.dataset.viewPanel===view; panel.hidden=!active; panel.classList.toggle('active',active); });
   $$('.nav-item').forEach(item => { const active=item.dataset.view===view; item.classList.toggle('active',active); if(active)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current'); });
+  renderModuleTitle();
   closeSidebar();
   const activePanel=$(`[data-view-panel="${view}"]`);if(activePanel)activePanel.scrollTop=0;
 }
@@ -720,6 +724,7 @@ function openIncomeCategoryEditor(id=null) {
 $$('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>closeModal(button.closest('dialog'))));
 $$('.modal').forEach(modal=>modal.addEventListener('cancel',event=>{event.preventDefault();closeModal(modal);}));
 $('#modalBackdrop').addEventListener('click',()=>closeModal($('dialog[open]')));
+$$('[data-open-detail]').forEach(button=>button.addEventListener('click',()=>{const modal=$(`#${button.dataset.openDetail}`);if(modal)openModal(modal);}));
 $$('[data-open-transaction]').forEach(button=>button.addEventListener('click',()=>openTransaction()));
 $$('[data-open-income]').forEach(button=>button.addEventListener('click',openIncomeTransaction));
 $$('[data-open-assessment]').forEach(button=>button.addEventListener('click',openAssessment));
@@ -736,7 +741,7 @@ $('#settingsExportCsv').addEventListener('click',exportCsv);
 $('#addCategory').addEventListener('click',()=>openBudgetEditor());
 $('#addRecurring').addEventListener('click',()=>openRecurring());
 $('#addIncomeCategory').addEventListener('click',()=>openIncomeCategoryEditor());
-$('#themeToggle').addEventListener('click',toggleTheme);$$('[data-account]').forEach(button=>button.addEventListener('click',()=>switchAccount(button.dataset.account)));$('#exportCsv').addEventListener('click',exportCsv);
+$('#themeToggle').addEventListener('click',toggleTheme);$$('[data-account]').forEach(button=>button.addEventListener('click',()=>switchAccount(button.dataset.account)));
 $('#notificationButton').addEventListener('click',event=>{event.stopPropagation();toggleNotifications();});$('#closeNotifications').addEventListener('click',closeNotifications);
 $$('[data-tooltip-key]').forEach(trigger=>{trigger.addEventListener('mouseenter',()=>showTooltip(trigger));trigger.addEventListener('mouseleave',hideTooltip);trigger.addEventListener('focus',()=>showTooltip(trigger));trigger.addEventListener('blur',hideTooltip);trigger.addEventListener('click',()=>$('#appTooltip').hidden?showTooltip(trigger):hideTooltip());});
 document.addEventListener('click',event=>{if(!event.target.closest('.sidebar-bottom'))toggleAccountMenu(false);if(!event.target.closest('.notification-wrap'))closeNotifications();});

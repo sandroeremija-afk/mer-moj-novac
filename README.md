@@ -23,8 +23,10 @@ Open `index.html` directly, or serve this folder from any static host. No build 
 - Base-currency, date-format, timezone, dashboard-privacy, and full JSON/CSV portability settings
 - Multiple purpose-based savings goals with progress, deadlines, deposits, editing, and a selectable primary Dashboard goal
 - Profile-isolated custom keyword rules shared by bank sync and file imports
-- Fixed `100dvh` application shell with zero browser-page scrolling and clean, isolated card/view scroll windows
-- Symmetrical CSV/Excel import and transaction export actions in Settings, Activity, Budgets, Insights, and Add Transaction
+- Fixed `100dvh` application shell with zero browser-page scrolling; Activity is the only module with a vertical list scrollbar
+- Progressive-disclosure detail modals for secondary Dashboard, Budget, Savings, and Insights content
+- Contextual CSV/Excel import and transaction export actions in Activity, Budgets, Insights, and Add Transaction
+- Clean Personal/Business account menu and focused Settings tabs without redundant transaction-import actions
 - Central reactive state store that recalculates balances, category totals, budget bars, and reports for both profiles after every mutation
 
 ## Security model
@@ -43,7 +45,7 @@ The demo never asks for or stores real banking credentials. A production Open Ba
 
 ## Reactive one-page architecture
 
-`state-store.js` is the single commit boundary for app data. Every add, edit, delete, sync, import, savings-goal, and settings mutation passes through the store; both account profiles are recalculated before one synchronous UI notification. The app shell, main content, and document root are locked to `100vh`/`100dvh`, while transaction lists, settings panes, import reviews, category lists, notification lists, and dashboard widgets own their scroll state.
+`state-store.js` is the single commit boundary for app data. Every add, edit, delete, sync, import, savings-goal, and settings mutation passes through the store; both account profiles are recalculated before one synchronous UI notification. The app shell, main content, and document root are locked to `100vh`/`100dvh`. Primary modules fit without box scrollbars, secondary information opens in detail modals, and only Activity plus the 500+ row import-review table own vertical scroll state.
 
 ## Run bank evaluations
 
@@ -68,4 +70,4 @@ node tests/eval-cycle-2-fixed-layout.test.js
 
 ## Verification
 
-The complete suite currently passes 43 automated checks across sync/deduplication, MFA/import security, reactive state, goal/rule isolation, UI error handling, and fixed-layout contracts. Interactive browser verification at 1280×720 additionally covered zero outer scroll, internal dashboard/activity/settings/import scroll, a 520-row review flow, Light/Dark mode, profile switching, and instant Dashboard/Budget/Activity recalculation after add, edit, and delete operations.
+The complete suite currently passes 44 automated checks across sync/deduplication, MFA/import security, reactive state, goal/rule isolation, UI error handling, navigation cleanup, and fixed-layout contracts. Interactive browser evaluation at 1920×1080, 1440×900, and the stricter 1280×720 viewport verified zero outer scroll, zero module overflow outside Activity, all four detail modals, focused Settings tabs, header title/date ordering, HR/EN title updates, a 520-row review flow, and an error-free browser console.

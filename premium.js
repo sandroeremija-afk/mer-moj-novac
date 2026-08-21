@@ -14,6 +14,13 @@
     goalBucketsOverline:'PURPOSEFUL SAVING', goalBuckets:'Savings goals', goalBucketsIntro:'Separate your reserve, travel or larger purchases into clear, measurable goals.', newSavingsGoal:'New goal', goalModalIntro:'Add a name, target amount and date to track progress without mixing purposes.', goalName:'Goal name', targetAmount:'Target amount', currentAmount:'Current amount', targetDate:'Target date', setPrimaryGoal:'Show as primary goal', primaryGoalHint:'The primary goal appears on the dashboard.', deleteGoal:'Delete goal', saveGoal:'Save goal', editGoal:'Edit goal', addToSavingsGoal:'Add to a savings goal', savingsGoalLabel:'Savings goal', goalRemaining:'{amount} remaining', goalDue:'Due: {date}', goalNoDate:'No target date', primaryGoal:'Primary goal', goalSaved:'Savings goal saved.', goalDeleted:'Savings goal deleted.', goalInvalid:'Check the goal name, amounts and date.', goalHasBalance:'Set this goal’s current amount to 0 before deleting it.', atLeastOneGoal:'At least one savings goal must remain.'
   });
 
+  Object.assign(translations.hr, {
+    activeModule:'AKTIVNI MODUL', viewDetails:'Detalji', overviewDetailsOverline:'DETALJI PREGLEDA', overviewDetailsTitle:'Trendovi i sljedeći koraci', budgetDetailsOverline:'AUTOMATIZACIJA BUDŽETA', savingsDetailsOverline:'DETALJI ŠTEDNJE', reportDetails:'Detalji izvještaja', insightsDetailsOverline:'DUBINSKA ANALIZA', settingsIntroClean:'Privatnost, sigurnost, pravila i povezane banke na jednom mjestu.'
+  });
+  Object.assign(translations.en, {
+    activeModule:'ACTIVE MODULE', viewDetails:'Details', overviewDetailsOverline:'OVERVIEW DETAILS', overviewDetailsTitle:'Trends and next steps', budgetDetailsOverline:'BUDGET AUTOMATION', savingsDetailsOverline:'SAVINGS DETAILS', reportDetails:'Report details', insightsDetailsOverline:'DEEP-DIVE ANALYSIS', settingsIntroClean:'Privacy, security, rules and connected banks in one place.'
+  });
+
   let selectedSettingsTab = 'general';
   let pendingEnrollment = null;
   let visibleRecoveryCodes = [];
@@ -23,7 +30,7 @@
   const importPageSize = 50;
 
   function selectSettingsTab(tab) {
-    selectedSettingsTab = ['general', 'security', 'import', 'automation', 'banks'].includes(tab) ? tab : 'general';
+    selectedSettingsTab = ['general', 'security', 'automation', 'banks'].includes(tab) ? tab : 'general';
     $$('[data-settings-tab]').forEach(button => { const active=button.dataset.settingsTab===selectedSettingsTab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1; });
     $$('[data-settings-panel]').forEach(panel => { const active=panel.dataset.settingsPanel===selectedSettingsTab;panel.hidden=!active;panel.classList.toggle('active',active); });
     if(selectedSettingsTab==='banks')renderBankSettings();
@@ -116,7 +123,10 @@
 
   function openGlobalImport() {
     if($('#transactionModal').open)closeModal($('#transactionModal'));
-    openSettings('import');
+    if($('#bankSettingsModal').open)closeModal($('#bankSettingsModal'));
+    $('#importProfileBadge').textContent=t(state.accountLabel);
+    renderImportReview();
+    if(!$('#importDataModal').open)openModal($('#importDataModal'));
   }
 
   async function importJsonBackup(file) {
