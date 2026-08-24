@@ -70,9 +70,9 @@
     MerCore.filterTransactions(transactions, timeframe, reference).filter(tx => MerCore.transactionType(tx)==='expense').forEach(tx => {
       const key = normalizedMerchant(tx.merchantName || tx.name) || 'other';
       grouped[key] = grouped[key] || { name:tx.merchantName || tx.name, amount:0, count:0 };
-      grouped[key].amount += Math.max(0, Number(tx.amount)||0); grouped[key].count += 1;
+      grouped[key].amount += MerCore.financialAmount(tx.amount); grouped[key].count += 1;
     });
-    return Object.values(grouped).sort((a,b)=>b.amount-a.amount).slice(0,5);
+    return Object.values(grouped).map(item=>({...item,amount:Math.max(0,MerCore.roundMoney(item.amount))})).filter(item=>item.amount>0).sort((a,b)=>b.amount-a.amount).slice(0,5);
   }
 
   function monthSeries(transactions, reference, count = 6) {
@@ -81,7 +81,8 @@
     for (let offset=count-1; offset>=0; offset-=1) {
       const point = new Date(date.getFullYear(), date.getMonth()-offset, 1);
       const key = `${point.getFullYear()}-${String(point.getMonth()+1).padStart(2,'0')}`;
-      const totals = (transactions||[]).filter(tx=>String(tx.date||'').startsWith(key)).reduce((sum,tx)=>{sum[MerCore.transactionType(tx)==='income'?'income':'expenses']+=Math.max(0,Number(tx.amount)||0);return sum;},{income:0,expenses:0});
+      const totals = (transactions||[]).filter(tx=>String(tx.date||'').startsWith(key)).reduce((sum,tx)=>{sum[MerCore.transactionType(tx)==='income'?'income':'expenses']+=MerCore.financialAmount(tx.amount);return sum;},{income:0,expenses:0});
+      totals.income=Math.max(0,MerCore.roundMoney(totals.income));totals.expenses=Math.max(0,MerCore.roundMoney(totals.expenses));
       result.push({key,...totals});
     }
     return result;

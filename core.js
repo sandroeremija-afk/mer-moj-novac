@@ -30,13 +30,14 @@
       safeRemaining,
       safeDaily: safeRemaining / Math.max(1, Number(daysRemaining) || 1),
       days: Math.max(1, Number(daysRemaining) || 1),
-      spentPercent: monthlyBudget ? spent / monthlyBudget * 100 : 100
+      spentPercent: monthlyBudget ? spent / monthlyBudget * 100 : spent > 0 ? 100 : 0
     };
   }
 
   function budgetThreshold(spent, limit) {
     const safeLimit = Number(limit) || 0;
-    const percent = safeLimit > 0 ? Number(spent || 0) / safeLimit * 100 : 100;
+    const safeSpent = Math.max(0, Number(spent) || 0);
+    const percent = safeLimit > 0 ? safeSpent / safeLimit * 100 : safeSpent > 0 ? 100 : 0;
     return {
       percent,
       level: percent >= 100 ? 'red' : percent >= 80 ? 'yellow' : 'green',
@@ -107,6 +108,23 @@
 
   function transactionType(transaction) {
     return transaction && transaction.type === 'income' ? 'income' : 'expense';
+  }
+
+  function financialAmount(value) {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? amount : 0;
+  }
+
+  function roundMoney(value) {
+    const amount = financialAmount(value);
+    return Math.round((amount + Math.sign(amount) * Number.EPSILON) * 100) / 100;
+  }
+
+  function ratioPercent(value, total, maximum = Infinity) {
+    const safeValue = Math.max(0, financialAmount(value));
+    const safeTotal = Math.max(0, financialAmount(total));
+    if (!safeTotal) return 0;
+    return Math.min(maximum, safeValue / safeTotal * 100);
   }
 
   function stableTransactionHash(value) {
@@ -242,15 +260,92 @@
   function transactionTotals(transactions, timeframe = 'monthly', referenceValue = new Date()) {
     const filtered = filterTransactions(transactions, timeframe, referenceValue);
     const totals = filtered.reduce((result, transaction) => {
-      const amount = Math.max(0, Number(transaction.amount) || 0);
+      const amount = financialAmount(transaction.amount);
       if (transactionType(transaction) === 'income') result.income += amount;
       else result.expenses += amount;
       return result;
     }, { income: 0, expenses: 0 });
+    totals.income = Math.max(0, roundMoney(totals.income));
+    totals.expenses = Math.max(0, roundMoney(totals.expenses));
     totals.net = totals.income - totals.expenses;
+    totals.net = roundMoney(totals.net);
     totals.savingsRate = totals.income > 0 ? totals.net / totals.income * 100 : null;
     totals.count = filtered.length;
     return totals;
+  }
+
+  function categoryExpenseTotals(transactions, timeframe = 'monthly', referenceValue = new Date()) {
+    const signedTotals = {};
+    filterTransactions(transactions, timeframe, referenceValue).forEach(transaction => {
+      if (transactionType(transaction) !== 'expense') return;
+      const category = transaction.category || 'other';
+      signedTotals[category] = (signedTotals[category] || 0) + financialAmount(transaction.amount);
+    });
+    return Object.fromEntries(Object.entries(signedTotals).map(([category, amount]) => [category, Math.max(0, roundMoney(amount))]));
+  }
+
+  function proportionalSegments(entries, valueSelector = entry => entry[1]) {
+    const normalized = (entries || []).map(entry => ({ entry, value:Math.max(0, financialAmount(valueSelector(entry))) })).filter(item => item.value > 0);
+    const total = normalized.reduce((sum, item) => sum + item.value, 0);
+    let cursor = 0;
+    return normalized.map((item, index) => {
+      const start = cursor;
+      const end = index === normalized.length - 1 ? 100 : cursor + item.value / total * 100;
+      cursor = end;
+      return { entry:item.entry, value:item.value, start, end, percent:end - start };
+    });
+  }
+
+  function chartDomain(values, options = {}) {
+    const safeValues = (values || []).map(financialAmount).filter(Number.isFinite);
+    const includeZero = options.includeZero !== false;
+    const padding = Math.max(0, financialAmount(options.padding ?? 0.08));
+    let min = safeValues.length ? Math.min(...safeValues) : 0;
+    let max = safeValues.length ? Math.max(...safeValues) : 0;
+    if (includeZero) { min = Math.min(0, min); max = Math.max(0, max); }
+    if (min === max) {
+      const fallback = Math.max(1, Math.abs(min) * 0.1);
+      min -= includeZero && min >= 0 ? min : fallback;
+      max += fallback;
+    } else {
+      const span = max - min;
+      if (!includeZero || min < 0) min -= span * padding;
+      max += span * padding;
+    }
+    return { min, max, span:Math.max(Number.EPSILON, max - min) };
+  }
+
+  function scaleChartValue(value, domain, size = 100, minimumVisible = 0) {
+    const safeDomain = domain || chartDomain([value]);
+    const safeSize = Math.max(0, financialAmount(size));
+    const amount = financialAmount(value);
+    const ratio = (amount - safeDomain.min) / Math.max(Number.EPSILON, safeDomain.span);
+    const scaled = Math.max(0, Math.min(safeSize, ratio * safeSize));
+    return amount === 0 ? 0 : Math.min(safeSize, Math.max(Math.max(0, financialAmount(minimumVisible)), scaled));
+  }
+
+  function cumulativeSpendingSeries(transactions, referenceValue, monthlyBudget = 0) {
+    const reference = dateOnly(referenceValue);
+    const year = reference.getUTCFullYear();
+    const month = reference.getUTCMonth();
+    const totalDays = daysInMonth(year, month);
+    const throughDay = reference.getUTCDate();
+    const prefix = monthPrefix(year, month);
+    const daily = Array.from({ length:totalDays }, () => 0);
+    (transactions || []).forEach(transaction => {
+      if (transactionType(transaction) !== 'expense') return;
+      const date = String(transaction.date || '').slice(0, 10);
+      if (!date.startsWith(prefix) || date > isoDate(reference)) return;
+      const day = Number(date.slice(8, 10));
+      if (day >= 1 && day <= totalDays) daily[day - 1] += financialAmount(transaction.amount);
+    });
+    let running = 0;
+    const safeBudget = Math.max(0, financialAmount(monthlyBudget));
+    return Array.from({ length:totalDays }, (_, index) => {
+      running = Math.max(0, roundMoney(running + daily[index]));
+      const day = index + 1;
+      return { day, actual:day <= throughDay ? running : null, planned:safeBudget * day / totalDays };
+    });
   }
 
   function monthPrefix(year, monthIndex) {
@@ -265,10 +360,10 @@
     const previousPrefix = monthPrefix(reference.getUTCFullYear(), reference.getUTCMonth() - 1);
     const expenseTotal = prefix => (transactions || []).reduce((sum, transaction) => {
       if (transactionType(transaction) !== 'expense' || !String(transaction.date || '').startsWith(prefix)) return sum;
-      return sum + Math.max(0, Number(transaction.amount) || 0);
+      return sum + financialAmount(transaction.amount);
     }, 0);
-    const current = expenseTotal(currentPrefix);
-    const previous = expenseTotal(previousPrefix);
+    const current = Math.max(0, roundMoney(expenseTotal(currentPrefix)));
+    const previous = Math.max(0, roundMoney(expenseTotal(previousPrefix)));
     const change = current - previous;
     return {
       current,
@@ -280,15 +375,8 @@
   }
 
   function topExpenseCategory(transactions, timeframe = 'monthly', referenceValue = new Date()) {
-    const totals = {};
-    let expenseTotal = 0;
-    filterTransactions(transactions, timeframe, referenceValue).forEach(transaction => {
-      if (transactionType(transaction) !== 'expense') return;
-      const amount = Math.max(0, Number(transaction.amount) || 0);
-      const category = transaction.category || 'other';
-      totals[category] = (totals[category] || 0) + amount;
-      expenseTotal += amount;
-    });
+    const totals = categoryExpenseTotals(transactions, timeframe, referenceValue);
+    const expenseTotal = Object.values(totals).reduce((sum, amount) => sum + amount, 0);
     const result = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
     if (!result) return null;
     return { category: result[0], amount: result[1], share: expenseTotal ? result[1] / expenseTotal * 100 : 0 };
@@ -302,10 +390,14 @@
       const date = String(transaction.date).slice(0, 10);
       const key = normalized === 'all' ? date.slice(0, 4) : normalized === 'ytd' ? date.slice(0, 7) : normalized === 'daily' ? date : date;
       if (!grouped[key]) grouped[key] = { key, income: 0, expenses: 0, net: 0 };
-      const amount = Math.max(0, Number(transaction.amount) || 0);
+      const amount = financialAmount(transaction.amount);
       if (transactionType(transaction) === 'income') grouped[key].income += amount;
       else grouped[key].expenses += amount;
-      grouped[key].net = grouped[key].income - grouped[key].expenses;
+    });
+    Object.values(grouped).forEach(item => {
+      item.income = Math.max(0, roundMoney(item.income));
+      item.expenses = Math.max(0, roundMoney(item.expenses));
+      item.net = roundMoney(item.income - item.expenses);
     });
     return Object.values(grouped).sort((a, b) => a.key.localeCompare(b.key));
   }
@@ -354,12 +446,20 @@
     occurrencesBetween,
     validateCategoryLimit,
     transactionType,
+    financialAmount,
+    roundMoney,
+    ratioPercent,
     stableTransactionHash,
     autoCategorizeBankTransaction,
     normalizeBankTransaction,
     importBankTransactions,
     filterTransactions,
     transactionTotals,
+    categoryExpenseTotals,
+    proportionalSegments,
+    chartDomain,
+    scaleChartValue,
+    cumulativeSpendingSeries,
     monthOverMonthExpenses,
     topExpenseCategory,
     groupCashflow,

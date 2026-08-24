@@ -5,17 +5,22 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function createMerStateStore(MerCore) {
   if (!MerCore) throw new Error('MerCore is required before MerStateStore');
 
-  const finiteAmount = value => Math.max(0, Number(value) || 0);
+  const finiteAmount = value => Math.max(0, MerCore.financialAmount(value));
 
   function savingsTotal(profile) {
-    return (profile.goalBuckets || []).reduce((sum, goal) => sum + finiteAmount(goal.current), 0);
+    return MerCore.roundMoney((profile.goalBuckets || []).reduce((sum, goal) => sum + finiteAmount(goal.current), 0));
   }
 
-  function initializeBalanceAnchor(profile) {
+  function initializeBalanceAnchor(profile, referenceDate) {
     if (Number.isFinite(Number(profile.reactiveBalanceAnchor))) return Number(profile.reactiveBalanceAnchor);
-    const allTime = MerCore.transactionTotals(profile.transactions || [], 'all', '2026-08-20');
-    profile.reactiveBalanceAnchor = finiteAmount(profile.availableBalance) - allTime.income + allTime.expenses + savingsTotal(profile);
+    const allTime = MerCore.transactionTotals(profile.transactions || [], 'all', referenceDate);
+    profile.reactiveBalanceAnchor = MerCore.roundMoney(MerCore.financialAmount(profile.availableBalance) - allTime.income + allTime.expenses + savingsTotal(profile));
     return profile.reactiveBalanceAnchor;
+  }
+
+  function savingsContributions(entries, timeframe, referenceDate) {
+    const total = MerCore.filterTransactions(entries || [], timeframe, referenceDate).reduce((sum, entry) => sum + MerCore.financialAmount(entry.amount), 0);
+    return Math.max(0, MerCore.roundMoney(total));
   }
 
   function recalculateProfile(profile, referenceDate = '2026-08-20') {
@@ -24,26 +29,43 @@
     profile.categories = Array.isArray(profile.categories) ? profile.categories : [];
     profile.goalBuckets = Array.isArray(profile.goalBuckets) ? profile.goalBuckets : [];
 
-    const balanceAnchor = initializeBalanceAnchor(profile);
-    const monthly = MerCore.transactionTotals(profile.transactions, 'monthly', referenceDate);
-    const allTime = MerCore.transactionTotals(profile.transactions, 'all', referenceDate);
-    const categorySpending = profile.transactions.reduce((totals, transaction) => {
-      if (MerCore.transactionType(transaction) !== 'expense' || !String(transaction.date || '').startsWith(String(referenceDate).slice(0, 7))) return totals;
-      const categoryId = transaction.category || 'other';
-      totals[categoryId] = (totals[categoryId] || 0) + finiteAmount(transaction.amount);
-      return totals;
-    }, {});
+    profile.savingsEntries = Array.isArray(profile.savingsEntries) ? profile.savingsEntries : [];
+    const balanceAnchor = initializeBalanceAnchor(profile, referenceDate);
+    const totalsByTimeframe = Object.fromEntries(['daily','monthly','ytd','all'].map(timeframe => [timeframe, MerCore.transactionTotals(profile.transactions, timeframe, referenceDate)]));
+    const monthly = totalsByTimeframe.monthly;
+    const allTime = totalsByTimeframe.all;
+    const categorySpending = MerCore.categoryExpenseTotals(profile.transactions, 'monthly', referenceDate);
 
     profile.categories.forEach(category => { category.spent = categorySpending[category.id] || 0; });
     profile.spent = monthly.expenses;
     profile.savingsBalance = savingsTotal(profile);
     const primaryGoal = profile.goalBuckets.find(goal => goal.primary) || profile.goalBuckets[0];
     if (primaryGoal) profile.savingsGoal = finiteAmount(primaryGoal.target) || 1;
-    profile.availableBalance = balanceAnchor + allTime.income - allTime.expenses - profile.savingsBalance;
+    profile.availableBalance = MerCore.roundMoney(balanceAnchor + allTime.income - allTime.expenses - profile.savingsBalance);
+    const reference = new Date(`${String(referenceDate).slice(0, 10)}T12:00:00Z`);
+    const daysRemaining = Math.max(1, MerCore.daysInMonth(reference.getUTCFullYear(), reference.getUTCMonth()) - reference.getUTCDate() + 1);
+    const budget = MerCore.calculateBudget(profile, daysRemaining);
+    const categoryMetrics = Object.fromEntries(profile.categories.map(category => {
+      const spent = categorySpending[category.id] || 0;
+      const limit = finiteAmount(category.limit);
+      const threshold = MerCore.budgetThreshold(spent, limit);
+      return [category.id, { id:category.id, spent, limit, remaining:Math.max(0, MerCore.roundMoney(limit - spent)), ...threshold }];
+    }));
+    const monthlyContributions = savingsContributions(profile.savingsEntries, 'monthly', referenceDate);
+    const savingsByTimeframe = Object.fromEntries(['daily','monthly','ytd','all'].map(timeframe => [timeframe, savingsContributions(profile.savingsEntries, timeframe, referenceDate)]));
+    const categorySegments = MerCore.proportionalSegments(Object.entries(categorySpending));
     profile.derived = {
       monthly,
       allTime,
+      totalsByTimeframe,
+      budget,
       categorySpending,
+      categoryMetrics,
+      categorySegments,
+      monthlySavings:monthly.net,
+      monthlyContributions,
+      savingsByTimeframe,
+      spendingSeries:MerCore.cumulativeSpendingSeries(profile.transactions, referenceDate, budget.monthlyBudget),
       savingsBalance: profile.savingsBalance,
       availableBalance: profile.availableBalance,
       updatedAt: new Date().toISOString()
@@ -98,8 +120,9 @@
       return {
         accountId,
         profile,
-        totals: MerCore.transactionTotals(profile.transactions || [], timeframe, referenceDate),
-        budget: MerCore.calculateBudget(profile, 12),
+        totals: profile.derived?.totalsByTimeframe?.[timeframe] || MerCore.transactionTotals(profile.transactions || [], timeframe, referenceDate),
+        budget: profile.derived?.budget || MerCore.calculateBudget(profile, 12),
+        derived: profile.derived,
         revision
       };
     }

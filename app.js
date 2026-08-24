@@ -170,7 +170,8 @@ const save = (reason='state-change') => {
   reactiveStore.commit(reason);
 };
 
-function getPlan() { return MerCore.calculateBudget(state,12); }
+function getPlan() { return state.derived?.budget || reactiveStore.snapshot()?.budget || MerCore.calculateBudget(state,12); }
+function derivedTotals(timeframe='monthly') { return state.derived?.totalsByTimeframe?.[timeframe] || MerCore.transactionTotals(state.transactions,timeframe,appReferenceDate); }
 
 function applyStaticTranslations() {
   document.documentElement.lang = currentLang;
@@ -225,12 +226,14 @@ function renderMonth() {
 
 function renderOverview() {
   const plan = getPlan();
-  const percent = plan.monthlyBudget ? Math.round(state.spent / plan.monthlyBudget * 100) : 100;
-  const goalPercent = Math.min(100, Math.round(state.savingsBalance / state.savingsGoal * 100));
+  const percent = Math.round(plan.spentPercent);
+  const goalPercent = Math.round(MerCore.ratioPercent(state.savingsBalance,state.savingsGoal,100));
   const monthName = new Intl.DateTimeFormat(locale(), { month:'long' }).format(new Date(2026, activeMonth, 1));
   $('#availableBalance').textContent = currency(state.availableBalance);
   $('#spentValue').textContent = currency(state.spent);
-  $('#savedValue').textContent = currency(state.savingsTarget);
+  const monthlySavings=state.derived?.monthlySavings||0;
+  $('#savedValue').textContent = currency(monthlySavings);
+  $('#savedValue').classList.toggle('negative-value',monthlySavings<0);
   $('#tipSavings').textContent = currency(state.savingsTarget, true);
   $('#chartSpent').textContent = currency(state.spent, true);
   $('#budgetPercent').textContent = t('budgetOf', { percent, budget:currency(plan.monthlyBudget, true) });
@@ -260,6 +263,37 @@ function renderOverview() {
   $('#calcBudget').textContent = currency(plan.monthlyBudget, true);
   $('#calcSpent').textContent = `−${currency(state.spent)}`;
   $('#calcSafe').textContent = currency(plan.safeRemaining);
+  renderSpendingPaceChart();
+}
+
+function compactChartCurrency(value) {
+  return new Intl.NumberFormat(locale(),{style:'currency',currency:appState.settings.currency||'EUR',notation:'compact',maximumFractionDigits:1}).format(Number(value)||0);
+}
+
+function renderSpendingPaceChart() {
+  const svg=$('#overviewDetailsModal .line-chart svg');if(!svg)return;
+  const plan=getPlan();
+  const series=state.derived?.spendingSeries||MerCore.cumulativeSpendingSeries(state.transactions,appReferenceDate,plan.monthlyBudget);
+  if(!series.length)return;
+  const actual=series.filter(item=>item.actual!==null),values=series.map(item=>item.planned).concat(actual.map(item=>item.actual));
+  const domain=MerCore.chartDomain(values,{padding:.06});
+  const x=day=>48+(day-1)/Math.max(1,series.length-1)*592;
+  const y=value=>189-MerCore.scaleChartValue(value,domain,165);
+  const path=points=>points.map((point,index)=>`${index?'L':'M'}${x(point.day).toFixed(2)} ${y(point.value).toFixed(2)}`).join(' ');
+  const plannedPoints=series.map(item=>({day:item.day,value:item.planned}));
+  const actualPoints=actual.map(item=>({day:item.day,value:item.actual}));
+  $('.planned-line',svg).setAttribute('d',path(plannedPoints));
+  $('.actual-line',svg).setAttribute('d',path(actualPoints));
+  const area=$('.actual-area',svg);area.setAttribute('d',actualPoints.length?`${path(actualPoints)} L${x(actualPoints.at(-1).day).toFixed(2)} 189 L${x(actualPoints[0].day).toFixed(2)} 189 Z`:'');
+  const last=actualPoints.at(-1)||{day:1,value:0},todayX=x(last.day),todayY=y(last.value);
+  const todayLine=$('.today-line',svg),todayDot=$('.today-dot',svg),todayLabel=$('.today-label',svg);
+  todayLine.setAttribute('x1',todayX);todayLine.setAttribute('x2',todayX);todayDot.setAttribute('cx',todayX);todayDot.setAttribute('cy',todayY);todayLabel.setAttribute('x',todayX);
+  const axisLabels=$$('.axis-labels text',svg);
+  [domain.max,domain.max*2/3,domain.max/3].forEach((value,index)=>{if(axisLabels[index])axisLabels[index].textContent=compactChartCurrency(value);});
+  const dayIndexes=[1,Math.max(1,Math.round(series.length*.25)),Math.max(1,Math.round(series.length*.5)),Math.max(1,Math.round(series.length*.75)),series.length];
+  dayIndexes.forEach((day,index)=>{const label=axisLabels[index+3];if(label){label.textContent=`${day}. ${new Date(`${appReferenceDate.slice(0,7)}-01T12:00:00`).getMonth()+1}.`;label.setAttribute('x',Math.max(40,Math.min(606,x(day)-8)));}});
+  const plannedToday=series[last.day-1]?.planned||0,delta=plannedToday-last.value,status=$('#overviewDetailsModal .chart-summary .status-pill');
+  if(status)status.textContent=currentLang==='hr'?`${currency(Math.abs(delta),true)} ${delta>=0?'manje':'više'} od plana`:`${currency(Math.abs(delta),true)} ${delta>=0?'below':'above'} plan`;
 }
 
 function levelClass(percent) { return `threshold-${percent>=100?'red':percent>=80?'yellow':'green'}`; }
@@ -268,7 +302,7 @@ function thresholdMessage(percent) { return percent>=100?t('budgetLimitReached')
 function renderBudgetLists() {
   const overviewCategories = state.categories.slice(0, 3);
   $('#budgetList').innerHTML = overviewCategories.map(cat => {
-    const pct = cat.limit ? Math.round(cat.spent / cat.limit * 100) : 100;
+    const pct = Math.round(state.derived?.categoryMetrics?.[cat.id]?.percent ?? MerCore.budgetThreshold(cat.spent,cat.limit).percent);
     const meta = categoryVisual(cat);
     return `<div class="budget-item"><div class="budget-item-header"><span class="category-icon ${meta.className}">${meta.icon}</span><div><div class="budget-item-title"><strong>${categoryName(cat.id)}</strong><span>${t('usedOf',{spent:currency(cat.spent,true),limit:currency(cat.limit,true)})}</span></div><div class="budget-bar"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div>${pct>=80?`<small class="threshold-warning ${pct>=100?'is-red':''}">${thresholdMessage(pct)}</small>`:''}</div><span class="budget-percent">${pct}%</span></div></div>`;
   }).join('');
@@ -278,7 +312,7 @@ function renderBudgetView() {
   const plan = getPlan();
   const allocated = state.categories.reduce((sum,cat) => sum + cat.limit, 0);
   const difference = plan.monthlyBudget - allocated;
-  const allocationPercent = plan.monthlyBudget ? Math.round(allocated / plan.monthlyBudget * 100) : 100;
+  const allocationPercent = Math.round(MerCore.ratioPercent(allocated,plan.monthlyBudget));
   $('#fullBudgetValue').textContent = currency(plan.monthlyBudget, true);
   $('#fullRemainingValue').textContent = currency(plan.safeRemaining);
   $('#allocatedValue').textContent = currency(allocated, true);
@@ -291,7 +325,7 @@ function renderBudgetView() {
   if($('#budgetCategoriesModal').open)renderBudgetCategoryManager();
 }
 
-function budgetCategoryPercent(cat) { return cat.limit ? Math.round(cat.spent / cat.limit * 100) : (cat.spent ? 100 : 0); }
+function budgetCategoryPercent(cat) { return Math.round(state.derived?.categoryMetrics?.[cat.id]?.percent ?? MerCore.budgetThreshold(cat.spent,cat.limit).percent); }
 
 function budgetCategoryRow(cat, manager=false) {
   const pct=budgetCategoryPercent(cat),meta=categoryVisual(cat),remaining=Math.max(0,cat.limit-cat.spent),name=categoryName(cat.id),safeId=escapeHtml(cat.id),safeName=escapeHtml(name);
@@ -326,7 +360,7 @@ function savingsFinishDate() {
 }
 
 function renderSavingsView() {
-  const pct = Math.min(100, Math.round(state.savingsBalance / state.savingsGoal * 100));
+  const pct = Math.round(MerCore.ratioPercent(state.savingsBalance,state.savingsGoal,100));
   $('#savingsHeroCurrent').textContent = currency(state.savingsBalance, true);
   $('#savingsHeroTarget').textContent = t('goalTargetOf',{target:currency(state.savingsGoal,true)});
   $('#savingsHeroProgress').style.width = `${pct}%`;
@@ -337,10 +371,10 @@ function renderSavingsView() {
   const sum = state.savingsHistory.reduce((a,b)=>a+b,0);
   $('#yearSaved').textContent = currency(sum,true);
   $('#chartTotalSaved').textContent=currency(sum);
-  const max = Math.max(...state.savingsHistory,1);
+  const savingsDomain=MerCore.chartDomain(state.savingsHistory,{padding:.05});
   const monthsHr = ['sij','velj','ožu','tra','svi','lip','srp','kol'];
   const monthsEn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
-  $('#contributionChart').innerHTML = state.savingsHistory.map((amount,index) => `<div class="contribution-column ${index===state.savingsHistory.length-1?'current':''}" aria-label="${(currentLang==='hr'?monthsHr:monthsEn)[index]}: ${currency(amount)}"><b>${currency(amount,true)}</b><span style="height:${Math.max(4,amount/max*125)}px"></span><small>${(currentLang==='hr'?monthsHr:monthsEn)[index]}</small></div>`).join('');
+  $('#contributionChart').innerHTML = state.savingsHistory.map((amount,index) => `<div class="contribution-column ${index===state.savingsHistory.length-1?'current':''}" aria-label="${(currentLang==='hr'?monthsHr:monthsEn)[index]}: ${currency(amount)}"><b>${currency(amount,true)}</b><span style="height:${MerCore.scaleChartValue(amount,savingsDomain,125,4)}px"></span><small>${(currentLang==='hr'?monthsHr:monthsEn)[index]}</small></div>`).join('');
 }
 
 function renderSavingsEntries() {
@@ -429,22 +463,12 @@ function renderBankSettings() {
 
 function openBankSettings() { toggleAccountMenu(false);selectedBankProviderId=null;$('#bankConnectForm').hidden=true;renderBankSettings();openModal($('#bankSettingsModal')); }
 
-function applyTransactionEffectToProfile(profile,transaction,direction=1) {
-  const amount=Math.max(0,Number(transaction.amount)||0)*direction;
-  if(MerCore.transactionType(transaction)==='income'){profile.availableBalance+=amount;return;}
-  profile.availableBalance-=amount;
-  if(String(transaction?.date||'').startsWith('2026-08')){
-    profile.spent=Math.max(0,profile.spent+amount);
-    const category=profile.categories.find(item=>item.id===transaction.category);if(category)category.spent=Math.max(0,category.spent+amount);
-  }
-}
-
 async function syncBankConnection(connection,{silent=false}={}) {
   const profile=appState.accounts[connection.profileId];if(!profile)return {imported:0,duplicates:0,uncategorized:0,error:'DISCONNECTED'};
   try{
     const response=await MerBankProviders.fetchTransactions(connection);
     const result=MerCore.importBankTransactions(profile,connection,response.transactions);
-    result.imported.forEach(transaction=>{applyTransactionEffectToProfile(profile,transaction,1);MerAccounting.applyRoundUp(profile,transaction);});
+    result.imported.forEach(transaction=>MerAccounting.applyRoundUp(profile,transaction));
     connection.cursor=response.nextCursor;connection.lastSyncedAt=response.fetchedAt;connection.status='connected';connection.lastErrorCode=null;connection.retryAfterSeconds=null;
     return {imported:result.imported.length,duplicates:result.duplicates,uncategorized:result.uncategorized,error:null};
   }catch(error){
@@ -473,7 +497,7 @@ async function mapBankConnection(connectionId,profileId) {
   const connection=appState.bankConnections.find(item=>item.id===connectionId);if(!connection||connection.profileId===profileId)return;
   const previousProfile=appState.accounts[connection.profileId];
   const moved=(previousProfile.transactions||[]).filter(transaction=>transaction.connectionId===connection.id);
-  moved.forEach(transaction=>{MerAccounting.undoRoundUp(previousProfile,transaction);applyTransactionEffectToProfile(previousProfile,transaction,-1);});
+  moved.forEach(transaction=>MerAccounting.undoRoundUp(previousProfile,transaction));
   previousProfile.transactions=previousProfile.transactions.filter(transaction=>transaction.connectionId!==connection.id);
   connection.profileId=profileId==='business'?'business':'personal';connection.cursor=0;connection.lastAttemptAt=null;connection.lastSyncedAt=null;connection.status='connected';connection.lastErrorCode=null;
   await syncBankConnection(connection,{silent:true});save('bank-profile-map');renderBankSettings();showToast(t('mappingUpdated',{profile:t(appState.accounts[connection.profileId].accountLabel)}));
@@ -586,7 +610,7 @@ function renderIncomeCategories() {
 function renderInsights() {
   const reference=appReferenceDate;
   const filtered=MerCore.filterTransactions(state.transactions,insightsTimeframe,reference);
-  const totals=MerCore.transactionTotals(state.transactions,insightsTimeframe,reference);
+  const totals=derivedTotals(insightsTimeframe);
   const incomeCount=filtered.filter(tx=>MerCore.transactionType(tx)==='income').length;
   const expenseCount=filtered.length-incomeCount;
   $('#netTotalValue').textContent=`${totals.net<0?'−':''}${currency(Math.abs(totals.net))}`;
@@ -610,17 +634,17 @@ function renderInsights() {
 
   const groups=MerCore.groupCashflow(state.transactions,insightsTimeframe,reference);const chartEmpty=groups.length===0;
   $('#cashflowEmpty').hidden=!chartEmpty;$('#cashflowChart').hidden=chartEmpty;
-  if(!chartEmpty){const max=Math.max(...groups.flatMap(group=>[group.income,group.expenses]),1);$('#cashflowChart').innerHTML=groups.map(group=>`<div class="cashflow-column" aria-label="${cashflowLabel(group.key)}: ${t('income')} ${currency(group.income)}, ${t('expense')} ${currency(group.expenses)}"><div class="cashflow-bars"><span class="income-bar" style="height:${Math.max(group.income?8:0,group.income/max*150)}px"><b>${group.income?currency(group.income,true):''}</b></span><span class="expense-bar" style="height:${Math.max(group.expenses?8:0,group.expenses/max*150)}px"><b>${group.expenses?currency(group.expenses,true):''}</b></span></div><small>${cashflowLabel(group.key)}</small></div>`).join('');}
-  const expenses=filtered.filter(tx=>MerCore.transactionType(tx)==='expense');const expenseTotal=expenses.reduce((sum,tx)=>sum+Number(tx.amount||0),0);const byCategory={};expenses.forEach(tx=>{byCategory[tx.category]=(byCategory[tx.category]||0)+Number(tx.amount||0);});const breakdown=Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
-  $('#categoryBreakdown').innerHTML=breakdown.length?breakdown.map(([id,amount])=>{const pct=expenseTotal?amount/expenseTotal*100:0;return `<div class="breakdown-row"><div><strong>${categoryName(id)}</strong><span>${currency(amount)}</span></div><div class="breakdown-track"><span style="width:${pct}%"></span></div><small>${number(pct,0)}%</small></div>`;}).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
-  const palette=['#16574b','#00a9e4','#a7c83f','#f2b544','#e66d65','#755bb4','#8fa39e'];let cursor=0;
-  const segments=breakdown.map(([id,amount],index)=>{const start=cursor,end=cursor+(expenseTotal?amount/expenseTotal*100:0);cursor=end;return {id,amount,start,end,color:palette[index%palette.length]};});
+  if(!chartEmpty){const cashflowDomain=MerCore.chartDomain(groups.flatMap(group=>[group.income,group.expenses]));$('#cashflowChart').innerHTML=groups.map(group=>`<div class="cashflow-column" aria-label="${cashflowLabel(group.key)}: ${t('income')} ${currency(group.income)}, ${t('expense')} ${currency(group.expenses)}"><div class="cashflow-bars"><span class="income-bar" style="height:${MerCore.scaleChartValue(group.income,cashflowDomain,150,8)}px"><b>${group.income?currency(group.income,true):''}</b></span><span class="expense-bar" style="height:${MerCore.scaleChartValue(group.expenses,cashflowDomain,150,8)}px"><b>${group.expenses?currency(group.expenses,true):''}</b></span></div><small>${cashflowLabel(group.key)}</small></div>`).join('');}
+  const expenses=filtered.filter(tx=>MerCore.transactionType(tx)==='expense');const byCategory=MerCore.categoryExpenseTotals(state.transactions,insightsTimeframe,reference);const breakdown=Object.entries(byCategory).filter(([,amount])=>amount>0).sort((a,b)=>b[1]-a[1]);const expenseTotal=breakdown.reduce((sum,[,amount])=>sum+amount,0);
+  $('#categoryBreakdown').innerHTML=breakdown.length?breakdown.map(([id,amount])=>{const pct=MerCore.ratioPercent(amount,expenseTotal,100);return `<div class="breakdown-row"><div><strong>${categoryName(id)}</strong><span>${currency(amount)}</span></div><div class="breakdown-track"><span style="width:${pct}%"></span></div><small>${number(pct,0)}%</small></div>`;}).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
+  const palette=['#16574b','#00a9e4','#a7c83f','#f2b544','#e66d65','#755bb4','#8fa39e'];
+  const segments=MerCore.proportionalSegments(breakdown).map((segment,index)=>({id:segment.entry[0],amount:segment.value,start:segment.start,end:segment.end,color:palette[index%palette.length]}));
   $('#categoryDonut').style.background=segments.length?`conic-gradient(${segments.map(segment=>`${segment.color} ${segment.start}% ${segment.end}%`).join(',')})`:'var(--canvas)';
   $('#donutTotal').textContent=currency(expenseTotal,true);$('#categoryDonutLegend').innerHTML=segments.slice(0,4).map(segment=>`<span><i style="background:${segment.color}"></i><b>${escapeHtml(categoryName(segment.id))}</b><small>${number(segment.end-segment.start,0)}%</small></span>`).join('')||`<small>${t('noExpensesPeriod')}</small>`;
   const gaugePercent=totals.savingsRate===null?0:Math.max(0,Math.min(100,totals.savingsRate));$('#savingsGauge').style.setProperty('--gauge-value',`${gaugePercent*1.8}deg`);
-  const series=MerAccounting.monthSeries(state.transactions,reference,6),seriesMax=Math.max(...series.flatMap(item=>[item.income,item.expenses]),1);
-  $('#monthlyBarChart').innerHTML=series.map(item=>`<div class="month-bar-group"><div><span class="income-month-bar" style="height:${Math.max(item.income?5:0,item.income/seriesMax*96)}px" title="${t('income')}: ${currency(item.income)}"></span><span class="expense-month-bar" style="height:${Math.max(item.expenses?5:0,item.expenses/seriesMax*96)}px" title="${t('expense')}: ${currency(item.expenses)}"></span></div><small>${new Intl.DateTimeFormat(locale(),{month:'short'}).format(new Date(`${item.key}-01T12:00:00`))}</small></div>`).join('');
-  const merchants=MerAccounting.topMerchants(state.transactions,insightsTimeframe,reference),merchantMax=Math.max(...merchants.map(item=>item.amount),1);$('#topMerchantsList').innerHTML=merchants.length?merchants.map((item,index)=>`<div class="merchant-row"><b>${index+1}</b><span><strong>${escapeHtml(item.name)}</strong><i><em style="width:${item.amount/merchantMax*100}%"></em></i></span><small>${currency(item.amount,true)}</small></div>`).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
+  const series=MerAccounting.monthSeries(state.transactions,reference,6),seriesDomain=MerCore.chartDomain(series.flatMap(item=>[item.income,item.expenses]));
+  $('#monthlyBarChart').innerHTML=series.map(item=>`<div class="month-bar-group"><div><span class="income-month-bar" style="height:${MerCore.scaleChartValue(item.income,seriesDomain,96,5)}px" title="${t('income')}: ${currency(item.income)}"></span><span class="expense-month-bar" style="height:${MerCore.scaleChartValue(item.expenses,seriesDomain,96,5)}px" title="${t('expense')}: ${currency(item.expenses)}"></span></div><small>${new Intl.DateTimeFormat(locale(),{month:'short'}).format(new Date(`${item.key}-01T12:00:00`))}</small></div>`).join('');
+  const merchants=MerAccounting.topMerchants(state.transactions,insightsTimeframe,reference),merchantDomain=MerCore.chartDomain(merchants.map(item=>item.amount));$('#topMerchantsList').innerHTML=merchants.length?merchants.map((item,index)=>`<div class="merchant-row"><b>${index+1}</b><span><strong>${escapeHtml(item.name)}</strong><i><em style="width:${MerCore.scaleChartValue(item.amount,merchantDomain,100,2)}%"></em></i></span><small>${currency(item.amount,true)}</small></div>`).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
   $$('[data-insight-detail]').forEach(card=>card.setAttribute('aria-label',`${card.querySelector('h2,.card-label span')?.textContent||t('reportDetails')} · ${currentLang==='hr'?'otvori detaljni prikaz':'open detailed view'}`));
   if($('#insightChartModal')?.open&&activeInsightDetail)renderInsightDetail(activeInsightDetail);
   renderIncomeCategories();
@@ -668,10 +692,10 @@ function expandedNotes(items) {
 
 function expandedMonthChart(series,mode,copy) {
   const values=series.flatMap(item=>mode==='income'?[item.income]:mode==='expenses'?[item.expenses]:[item.income,item.expenses]);
-  const max=Math.max(...values,0);
-  if(max<=0)return `<div class="notification-empty">${escapeHtml(copy.noData)}</div>`;
+  const domain=MerCore.chartDomain(values);
+  if(!values.some(value=>value>0))return `<div class="notification-empty">${escapeHtml(copy.noData)}</div>`;
   return `<div class="expanded-month-chart" role="img" aria-label="${escapeHtml(copy.period)}">${series.map(item=>{
-    const incomeHeight=Math.max(item.income?5:0,item.income/max*168),expenseHeight=Math.max(item.expenses?5:0,item.expenses/max*168);
+    const incomeHeight=MerCore.scaleChartValue(item.income,domain,168,5),expenseHeight=MerCore.scaleChartValue(item.expenses,domain,168,5);
     const bars=mode==='income'?`<i class="income" style="height:${incomeHeight}px" title="${escapeHtml(copy.income)}: ${currency(item.income)}"></i>`:mode==='expenses'?`<i class="expense" style="height:${expenseHeight}px" title="${escapeHtml(copy.expenses)}: ${currency(item.expenses)}"></i>`:`<i class="income" style="height:${incomeHeight}px" title="${escapeHtml(copy.income)}: ${currency(item.income)}"></i><i class="expense" style="height:${expenseHeight}px" title="${escapeHtml(copy.expenses)}: ${currency(item.expenses)}"></i>`;
     return `<div class="expanded-month-column" aria-label="${escapeHtml(insightMonthLabel(item.key,true))}: ${copy.income} ${currency(item.income)}, ${copy.expenses} ${currency(item.expenses)}"><div class="expanded-month-bars">${bars}</div><small>${escapeHtml(insightMonthLabel(item.key))}</small></div>`;
   }).join('')}</div>`;
@@ -681,14 +705,14 @@ function renderInsightDetail(kind) {
   const modal=$('#insightChartModal');if(!modal)return;
   const copy=insightDetailCopy[currentLang];
   const filtered=MerCore.filterTransactions(state.transactions,insightsTimeframe,appReferenceDate);
-  const totals=MerCore.transactionTotals(state.transactions,insightsTimeframe,appReferenceDate);
+  const totals=derivedTotals(insightsTimeframe);
   const incomes=filtered.filter(tx=>MerCore.transactionType(tx)==='income');
   const expenses=filtered.filter(tx=>MerCore.transactionType(tx)==='expense');
   const series=MerAccounting.monthSeries(state.transactions,appReferenceDate,12);
   const merchants=MerAccounting.topMerchants(state.transactions,insightsTimeframe,appReferenceDate);
-  const byCategory={};expenses.forEach(tx=>{byCategory[tx.category]=(byCategory[tx.category]||0)+Math.max(0,Number(tx.amount)||0);});
-  const categories=Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
-  const expenseTotal=expenses.reduce((sum,tx)=>sum+Math.max(0,Number(tx.amount)||0),0);
+  const byCategory=MerCore.categoryExpenseTotals(state.transactions,insightsTimeframe,appReferenceDate);
+  const categories=Object.entries(byCategory).filter(([,amount])=>amount>0).sort((a,b)=>b[1]-a[1]);
+  const expenseTotal=categories.reduce((sum,[,amount])=>sum+amount,0);
   const palette=['#16574b','#00a9e4','#93c841','#f49727','#ff5259','#7b6eb4','#65c4b2'];
   const viewKey={net:'netView',income:'incomeView',expenses:'expensesView',category:'categoryView',cashflow:'cashflowView',merchants:'merchantsView','savings-rate':'savingsView'}[kind]||'cashflowView';
   const viewCopy=copy[viewKey];
@@ -714,14 +738,14 @@ function renderInsightDetail(kind) {
     chart=expandedMonthChart(series,'expenses',copy);notes=historyNotes;
   }else if(kind==='category'){
     metrics=[{label:copy.expenses,value:currency(expenseTotal)},{label:copy.categories,value:categories.length},{label:copy.topCategory,value:categories[0]?categoryName(categories[0][0]):'—'}];
-    let cursor=0;const segments=categories.map(([id,amount],index)=>{const start=cursor,end=cursor+(expenseTotal?amount/expenseTotal*100:0);cursor=end;return{id,amount,start,end,color:palette[index%palette.length]};});
+    const segments=MerCore.proportionalSegments(categories).map((segment,index)=>({id:segment.entry[0],amount:segment.value,start:segment.start,end:segment.end,color:palette[index%palette.length]}));
     const gradient=segments.length?`conic-gradient(${segments.map(segment=>`${segment.color} ${segment.start}% ${segment.end}%`).join(',')})`:'var(--line)';
     chart=`<div class="expanded-donut-layout"><div class="expanded-donut" style="background:${gradient}"><span><strong>${currency(expenseTotal,true)}</strong><small>${escapeHtml(copy.expenses)}</small></span></div><div class="expanded-ranked-list">${segments.slice(0,6).map(segment=>{const share=segment.end-segment.start;return `<div class="expanded-ranked-row"><span><i style="background:${segment.color}"></i>${escapeHtml(categoryName(segment.id))}</span><strong>${currency(segment.amount,true)} · ${number(share,0)}%</strong><div class="expanded-ranked-track"><i style="width:${share}%;background:${segment.color}"></i></div></div>`;}).join('')||`<div class="notification-empty">${escapeHtml(copy.noData)}</div>`}</div></div>`;
     notes=segments.slice(0,3).map(segment=>({label:categoryName(segment.id),value:`${currency(segment.amount)} · ${number(segment.end-segment.start,0)}% ${copy.ofExpenses}`}));
   }else if(kind==='merchants'){
-    const merchantTotal=merchants.reduce((sum,item)=>sum+item.amount,0),merchantMax=Math.max(...merchants.map(item=>item.amount),1);
+    const merchantTotal=merchants.reduce((sum,item)=>sum+item.amount,0),merchantDomain=MerCore.chartDomain(merchants.map(item=>item.amount));
     metrics=[{label:copy.expenses,value:currency(totals.expenses)},{label:copy.merchants,value:merchants.length},{label:copy.topMerchant,value:merchants[0]?.name||'—'}];
-    chart=`<div class="expanded-ranked-list">${merchants.map((item,index)=>`<div class="expanded-ranked-row"><span><i style="background:${palette[index%palette.length]}"></i>${escapeHtml(item.name)}</span><strong>${currency(item.amount)} · ${item.count} ${escapeHtml(copy.payments)}</strong><div class="expanded-ranked-track"><i style="width:${item.amount/merchantMax*100}%;background:${palette[index%palette.length]}"></i></div></div>`).join('')||`<div class="notification-empty">${escapeHtml(copy.noData)}</div>`}</div>`;
+    chart=`<div class="expanded-ranked-list">${merchants.map((item,index)=>`<div class="expanded-ranked-row"><span><i style="background:${palette[index%palette.length]}"></i>${escapeHtml(item.name)}</span><strong>${currency(item.amount)} · ${item.count} ${escapeHtml(copy.payments)}</strong><div class="expanded-ranked-track"><i style="width:${MerCore.scaleChartValue(item.amount,merchantDomain,100,2)}%;background:${palette[index%palette.length]}"></i></div></div>`).join('')||`<div class="notification-empty">${escapeHtml(copy.noData)}</div>`}</div>`;
     notes=(merchants.slice(0,3).map(item=>({label:item.name,value:`${currency(item.amount)} · ${item.count} ${copy.payments}`})));if(!notes.length)notes=historyNotes;
   }else if(kind==='savings-rate'){
     const rate=totals.savingsRate,monthlyRates=series.map(item=>({...item,rate:item.income>0?(item.income-item.expenses)/item.income*100:null}));
@@ -825,7 +849,7 @@ function toggleTheme() { currentTheme=currentTheme==='dark'?'light':'dark';apply
 
 function processDueRecurring(profile) {
   profile.recurring=profile.recurring||[];profile.transactions=profile.transactions||[];
-  profile.recurring.forEach(rule=>{const start=new Date(`${rule.startDate}T12:00:00Z`);const from=rule.lastProcessed||new Date(start.getTime()-86400000).toISOString().slice(0,10);MerCore.occurrencesBetween(rule,from,'2026-08-20').forEach(date=>{const key=`${rule.id}:${date}`;if(profile.transactions.some(tx=>tx.recurringKey===key))return;const cat=profile.categories.find(item=>item.id===rule.category)||profile.categories[0];profile.transactions.unshift({id:`rec-${key}`,type:'expense',name:rule.name,amount:rule.amount,category:cat.id,date:`${date}T08:00:00`,recurringKey:key,source:'Manual',sourceType:'manual',needsReview:false});profile.spent+=rule.amount;profile.availableBalance-=rule.amount;cat.spent+=rule.amount;});rule.lastProcessed='2026-08-20';});
+  profile.recurring.forEach(rule=>{const start=new Date(`${rule.startDate}T12:00:00Z`);const from=rule.lastProcessed||new Date(start.getTime()-86400000).toISOString().slice(0,10);MerCore.occurrencesBetween(rule,from,appReferenceDate).forEach(date=>{const key=`${rule.id}:${date}`;if(profile.transactions.some(tx=>tx.recurringKey===key))return;const cat=profile.categories.find(item=>item.id===rule.category)||profile.categories[0];profile.transactions.unshift({id:`rec-${key}`,type:'expense',name:rule.name,amount:rule.amount,category:cat.id,date:`${date}T08:00:00`,recurringKey:key,source:'Manual',sourceType:'manual',needsReview:false});});rule.lastProcessed=appReferenceDate;});
 }
 
 function exportCsv() {
@@ -842,9 +866,6 @@ function resetTransactionCheck() {
 }
 
 function transactionAffectsCurrentBudget(transaction) { return String(transaction?.date||'').startsWith(appReferenceDate.slice(0,7)); }
-function applyTransactionEffect(transaction,direction=1) {
-  applyTransactionEffectToProfile(state,transaction,direction);
-}
 
 function setTransactionType(type) {
   transactionType=type==='income'?'income':'expense';
@@ -1004,8 +1025,8 @@ $('#menuToggle').addEventListener('click',()=>$('#sidebar').classList.contains('
 
 $('#transactionAmount').addEventListener('input',evaluateTransaction); $('#transactionCategory').addEventListener('change',evaluateTransaction);
 $$('[data-transaction-type]').forEach(button=>button.addEventListener('click',()=>setTransactionType(button.dataset.transactionType)));
-$('#transactionForm').addEventListener('submit',event=>{event.preventDefault();if(!evaluateTransaction()){showToast(t(transactionType==='income'?'enterImpact':'transactionBlocked'));return;}const amount=Number($('#transactionAmount').value),category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;if(existing){MerAccounting.undoRoundUp(state,existing);applyTransactionEffect(existing,-1);}const payload={type:transactionType,name:$('#transactionName').value.trim(),amount,category,date:existing?.date||new Date().toISOString()};if(existing){Object.assign(existing,payload);if(existing.sourceType==='auto'){existing.needsReview=false;existing.categoryConfidence='manual';}applyTransactionEffect(existing,1);MerAccounting.applyRoundUp(state,existing);}else{const created={id:Date.now(),...payload,source:'Manual',sourceType:'manual',needsReview:false,merchantName:payload.name,timestamp:payload.date,currency:appState.settings.currency};state.transactions.unshift(created);applyTransactionEffect(created,1);MerAccounting.applyRoundUp(state,created);}save(existing?'transaction-edit':'transaction-add');closeModal($('#transactionModal'));showToast(existing?.sourceType==='auto'?t('categoryApproved'):t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded')));editingTransactionId=null;});
-$('#deleteTransaction').addEventListener('click',()=>{const existing=state.transactions.find(tx=>String(tx.id)===String(editingTransactionId));if(!existing)return;const type=MerCore.transactionType(existing);MerAccounting.undoRoundUp(state,existing);applyTransactionEffect(existing,-1);state.transactions=state.transactions.filter(tx=>String(tx.id)!==String(editingTransactionId));save('transaction-delete');closeModal($('#transactionModal'));showToast(t(type==='income'?'incomeDeleted':'expenseDeleted'));editingTransactionId=null;});
+$('#transactionForm').addEventListener('submit',event=>{event.preventDefault();if(!evaluateTransaction()){showToast(t(transactionType==='income'?'enterImpact':'transactionBlocked'));return;}const amount=Number($('#transactionAmount').value),category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;if(existing)MerAccounting.undoRoundUp(state,existing);const payload={type:transactionType,name:$('#transactionName').value.trim(),amount,category,date:existing?.date||new Date().toISOString()};if(existing){Object.assign(existing,payload);if(existing.sourceType==='auto'){existing.needsReview=false;existing.categoryConfidence='manual';}MerAccounting.applyRoundUp(state,existing);}else{const created={id:Date.now(),...payload,source:'Manual',sourceType:'manual',needsReview:false,merchantName:payload.name,timestamp:payload.date,currency:appState.settings.currency};state.transactions.unshift(created);MerAccounting.applyRoundUp(state,created);}save(existing?'transaction-edit':'transaction-add');closeModal($('#transactionModal'));showToast(existing?.sourceType==='auto'?t('categoryApproved'):t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded')));editingTransactionId=null;});
+$('#deleteTransaction').addEventListener('click',()=>{const existing=state.transactions.find(tx=>String(tx.id)===String(editingTransactionId));if(!existing)return;const type=MerCore.transactionType(existing);MerAccounting.undoRoundUp(state,existing);state.transactions=state.transactions.filter(tx=>String(tx.id)!==String(editingTransactionId));save('transaction-delete');closeModal($('#transactionModal'));showToast(t(type==='income'?'incomeDeleted':'expenseDeleted'));editingTransactionId=null;});
 
 $('#assessmentNext').addEventListener('click',()=>{const active=$(`.assessment-step[data-step="${assessmentStep}"]`);const inputs=$$('input[required]',active);if(!inputs.every(input=>input.reportValidity()))return;if(assessmentStep===1&&Number($('#incomeInput').value)<=Number($('#billsInput').value)){showToast(t('planInvalid'));return;}setAssessmentStep(Math.min(3,assessmentStep+1));});
 $('#assessmentBack').addEventListener('click',()=>setAssessmentStep(Math.max(1,assessmentStep-1)));
