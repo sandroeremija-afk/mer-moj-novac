@@ -136,6 +136,7 @@ let editingRecurringId = null;
 let editingIncomeCategoryId = null;
 let transactionType = 'expense';
 let insightsTimeframe = 'monthly';
+let activeInsightDetail = null;
 let activityReviewOnly = false;
 let selectedBankProviderId = null;
 let bankSyncInProgress = false;
@@ -587,8 +588,129 @@ function renderInsights() {
   const series=MerAccounting.monthSeries(state.transactions,reference,6),seriesMax=Math.max(...series.flatMap(item=>[item.income,item.expenses]),1);
   $('#monthlyBarChart').innerHTML=series.map(item=>`<div class="month-bar-group"><div><span class="income-month-bar" style="height:${Math.max(item.income?5:0,item.income/seriesMax*96)}px" title="${t('income')}: ${currency(item.income)}"></span><span class="expense-month-bar" style="height:${Math.max(item.expenses?5:0,item.expenses/seriesMax*96)}px" title="${t('expense')}: ${currency(item.expenses)}"></span></div><small>${new Intl.DateTimeFormat(locale(),{month:'short'}).format(new Date(`${item.key}-01T12:00:00`))}</small></div>`).join('');
   const merchants=MerAccounting.topMerchants(state.transactions,insightsTimeframe,reference),merchantMax=Math.max(...merchants.map(item=>item.amount),1);$('#topMerchantsList').innerHTML=merchants.length?merchants.map((item,index)=>`<div class="merchant-row"><b>${index+1}</b><span><strong>${escapeHtml(item.name)}</strong><i><em style="width:${item.amount/merchantMax*100}%"></em></i></span><small>${currency(item.amount,true)}</small></div>`).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
+  $$('[data-insight-detail]').forEach(card=>card.setAttribute('aria-label',`${card.querySelector('h2,.card-label span')?.textContent||t('reportDetails')} · ${currentLang==='hr'?'otvori detaljni prikaz':'open detailed view'}`));
+  if($('#insightChartModal')?.open&&activeInsightDetail)renderInsightDetail(activeInsightDetail);
   renderIncomeCategories();
   renderSubscriptions();
+}
+
+const insightDetailCopy = {
+  hr: {
+    overline:'PROŠIRENI UVID',
+    noData:'Još nema podataka za odabrano razdoblje.',
+    income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto rezultat',transactions:'Broj transakcija',average:'Prosječna transakcija',categories:'Aktivne kategorije',merchants:'Broj trgovaca',topCategory:'Najveća kategorija',topMerchant:'Najveći primatelj',monthlyAverage:'Mjesečni prosjek',latestMonth:'Zadnji mjesec',bestMonth:'Najbolji mjesec',savingsRate:'Stopa štednje',period:'Odabrano razdoblje',ofExpenses:'udjela u troškovima',payments:'plaćanja',ofIncome:'od prihoda',
+    netView:{title:'Neto rezultat',intro:'Odnos prihoda i troškova kroz 12 mjeseci pokazuje koliko novca stvarno ostaje na raspolaganju.'},
+    incomeView:{title:'Trend prihoda',intro:'Prošireni pregled svih izvora prihoda, njihove učestalosti i kretanja kroz vrijeme.'},
+    expensesView:{title:'Trend potrošnje',intro:'Detaljan pregled ukupne potrošnje i mjesečnog ritma odlaznih transakcija.'},
+    categoryView:{title:'Potrošnja po kategoriji',intro:'Struktura troškova pokazuje gdje odlazi najveći dio budžeta i koliki je udio svake kategorije.'},
+    cashflowView:{title:'Prihodi i troškovi',intro:'Usporedite mjesečne priljeve i odljeve te brzo prepoznajte promjene u novčanom toku.'},
+    merchantsView:{title:'Najveći primatelji',intro:'Rangirani pregled trgovaca i usluga prema ukupnoj potrošnji u odabranom razdoblju.'},
+    savingsView:{title:'Stopa štednje',intro:'Pratite koliki dio prihoda ostaje nakon troškova i kako se stopa mijenja iz mjeseca u mjesec.'}
+  },
+  en: {
+    overline:'EXPANDED INSIGHT',
+    noData:'There is no data for the selected period yet.',
+    income:'Total income',expenses:'Total expenses',net:'Net result',transactions:'Transaction count',average:'Average transaction',categories:'Active categories',merchants:'Merchant count',topCategory:'Largest category',topMerchant:'Largest recipient',monthlyAverage:'Monthly average',latestMonth:'Latest month',bestMonth:'Best month',savingsRate:'Savings rate',period:'Selected period',ofExpenses:'of expenses',payments:'payments',ofIncome:'of income',
+    netView:{title:'Net result',intro:'The 12-month income and expense relationship shows how much money is actually left available.'},
+    incomeView:{title:'Income trend',intro:'An expanded view of every income source, its frequency, and movement over time.'},
+    expensesView:{title:'Spending trend',intro:'A detailed view of total spending and the monthly rhythm of outgoing transactions.'},
+    categoryView:{title:'Spending by category',intro:'The spending mix shows where most of the budget goes and the share held by each category.'},
+    cashflowView:{title:'Income and expenses',intro:'Compare monthly inflows and outflows and quickly identify changes in cash flow.'},
+    merchantsView:{title:'Largest recipients',intro:'A ranked view of merchants and services by total spend during the selected period.'},
+    savingsView:{title:'Savings rate',intro:'Track how much income remains after expenses and how the rate changes from month to month.'}
+  }
+};
+
+function insightMonthLabel(key,long=false) {
+  return new Intl.DateTimeFormat(locale(),{month:long?'long':'short',year:long?'numeric':undefined}).format(new Date(`${key}-01T12:00:00`));
+}
+
+function expandedMetric(label,value) {
+  return `<div class="insight-expanded-metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>`;
+}
+
+function expandedNotes(items) {
+  return items.map(item=>`<div class="insight-detail-note"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(String(item.value))}</strong></div>`).join('');
+}
+
+function expandedMonthChart(series,mode,copy) {
+  const values=series.flatMap(item=>mode==='income'?[item.income]:mode==='expenses'?[item.expenses]:[item.income,item.expenses]);
+  const max=Math.max(...values,0);
+  if(max<=0)return `<div class="notification-empty">${escapeHtml(copy.noData)}</div>`;
+  return `<div class="expanded-month-chart" role="img" aria-label="${escapeHtml(copy.period)}">${series.map(item=>{
+    const incomeHeight=Math.max(item.income?5:0,item.income/max*168),expenseHeight=Math.max(item.expenses?5:0,item.expenses/max*168);
+    const bars=mode==='income'?`<i class="income" style="height:${incomeHeight}px" title="${escapeHtml(copy.income)}: ${currency(item.income)}"></i>`:mode==='expenses'?`<i class="expense" style="height:${expenseHeight}px" title="${escapeHtml(copy.expenses)}: ${currency(item.expenses)}"></i>`:`<i class="income" style="height:${incomeHeight}px" title="${escapeHtml(copy.income)}: ${currency(item.income)}"></i><i class="expense" style="height:${expenseHeight}px" title="${escapeHtml(copy.expenses)}: ${currency(item.expenses)}"></i>`;
+    return `<div class="expanded-month-column" aria-label="${escapeHtml(insightMonthLabel(item.key,true))}: ${copy.income} ${currency(item.income)}, ${copy.expenses} ${currency(item.expenses)}"><div class="expanded-month-bars">${bars}</div><small>${escapeHtml(insightMonthLabel(item.key))}</small></div>`;
+  }).join('')}</div>`;
+}
+
+function renderInsightDetail(kind) {
+  const modal=$('#insightChartModal');if(!modal)return;
+  const copy=insightDetailCopy[currentLang];
+  const filtered=MerCore.filterTransactions(state.transactions,insightsTimeframe,appReferenceDate);
+  const totals=MerCore.transactionTotals(state.transactions,insightsTimeframe,appReferenceDate);
+  const incomes=filtered.filter(tx=>MerCore.transactionType(tx)==='income');
+  const expenses=filtered.filter(tx=>MerCore.transactionType(tx)==='expense');
+  const series=MerAccounting.monthSeries(state.transactions,appReferenceDate,12);
+  const merchants=MerAccounting.topMerchants(state.transactions,insightsTimeframe,appReferenceDate);
+  const byCategory={};expenses.forEach(tx=>{byCategory[tx.category]=(byCategory[tx.category]||0)+Math.max(0,Number(tx.amount)||0);});
+  const categories=Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
+  const expenseTotal=expenses.reduce((sum,tx)=>sum+Math.max(0,Number(tx.amount)||0),0);
+  const palette=['#16574b','#00a9e4','#93c841','#f49727','#ff5259','#7b6eb4','#65c4b2'];
+  const viewKey={net:'netView',income:'incomeView',expenses:'expensesView',category:'categoryView',cashflow:'cashflowView',merchants:'merchantsView','savings-rate':'savingsView'}[kind]||'cashflowView';
+  const viewCopy=copy[viewKey];
+  $('#insightChartOverline').textContent=copy.overline;
+  $('#insightChartTitle').textContent=viewCopy.title;
+  $('#insightChartIntro').textContent=viewCopy.intro;
+
+  let metrics=[];let chart='';let notes=[];
+  const latest=series.at(-1)||{key:appReferenceDate.slice(0,7),income:0,expenses:0};
+  const best=series.reduce((chosen,item)=>(item.income-item.expenses)>(chosen.income-chosen.expenses)?item:chosen,series[0]||latest);
+  const monthlyExpenseAverage=series.reduce((sum,item)=>sum+item.expenses,0)/Math.max(1,series.length);
+  const historyNotes=[
+    {label:copy.latestMonth,value:`${insightMonthLabel(latest.key,true)} · ${currency(latest.income-latest.expenses)}`},
+    {label:copy.monthlyAverage,value:currency(monthlyExpenseAverage)},
+    {label:copy.bestMonth,value:`${insightMonthLabel(best.key,true)} · ${currency(best.income-best.expenses)}`}
+  ];
+
+  if(kind==='income'){
+    metrics=[{label:copy.income,value:currency(totals.income)},{label:copy.average,value:currency(incomes.length?totals.income/incomes.length:0)},{label:copy.transactions,value:incomes.length}];
+    chart=expandedMonthChart(series,'income',copy);notes=historyNotes;
+  }else if(kind==='expenses'){
+    metrics=[{label:copy.expenses,value:currency(totals.expenses)},{label:copy.average,value:currency(expenses.length?totals.expenses/expenses.length:0)},{label:copy.transactions,value:expenses.length}];
+    chart=expandedMonthChart(series,'expenses',copy);notes=historyNotes;
+  }else if(kind==='category'){
+    metrics=[{label:copy.expenses,value:currency(expenseTotal)},{label:copy.categories,value:categories.length},{label:copy.topCategory,value:categories[0]?categoryName(categories[0][0]):'—'}];
+    let cursor=0;const segments=categories.map(([id,amount],index)=>{const start=cursor,end=cursor+(expenseTotal?amount/expenseTotal*100:0);cursor=end;return{id,amount,start,end,color:palette[index%palette.length]};});
+    const gradient=segments.length?`conic-gradient(${segments.map(segment=>`${segment.color} ${segment.start}% ${segment.end}%`).join(',')})`:'var(--line)';
+    chart=`<div class="expanded-donut-layout"><div class="expanded-donut" style="background:${gradient}"><span><strong>${currency(expenseTotal,true)}</strong><small>${escapeHtml(copy.expenses)}</small></span></div><div class="expanded-ranked-list">${segments.slice(0,6).map(segment=>{const share=segment.end-segment.start;return `<div class="expanded-ranked-row"><span><i style="background:${segment.color}"></i>${escapeHtml(categoryName(segment.id))}</span><strong>${currency(segment.amount,true)} · ${number(share,0)}%</strong><div class="expanded-ranked-track"><i style="width:${share}%;background:${segment.color}"></i></div></div>`;}).join('')||`<div class="notification-empty">${escapeHtml(copy.noData)}</div>`}</div></div>`;
+    notes=segments.slice(0,3).map(segment=>({label:categoryName(segment.id),value:`${currency(segment.amount)} · ${number(segment.end-segment.start,0)}% ${copy.ofExpenses}`}));
+  }else if(kind==='merchants'){
+    const merchantTotal=merchants.reduce((sum,item)=>sum+item.amount,0),merchantMax=Math.max(...merchants.map(item=>item.amount),1);
+    metrics=[{label:copy.expenses,value:currency(totals.expenses)},{label:copy.merchants,value:merchants.length},{label:copy.topMerchant,value:merchants[0]?.name||'—'}];
+    chart=`<div class="expanded-ranked-list">${merchants.map((item,index)=>`<div class="expanded-ranked-row"><span><i style="background:${palette[index%palette.length]}"></i>${escapeHtml(item.name)}</span><strong>${currency(item.amount)} · ${item.count} ${escapeHtml(copy.payments)}</strong><div class="expanded-ranked-track"><i style="width:${item.amount/merchantMax*100}%;background:${palette[index%palette.length]}"></i></div></div>`).join('')||`<div class="notification-empty">${escapeHtml(copy.noData)}</div>`}</div>`;
+    notes=(merchants.slice(0,3).map(item=>({label:item.name,value:`${currency(item.amount)} · ${item.count} ${copy.payments}`})));if(!notes.length)notes=historyNotes;
+  }else if(kind==='savings-rate'){
+    const rate=totals.savingsRate,monthlyRates=series.map(item=>({...item,rate:item.income>0?(item.income-item.expenses)/item.income*100:null}));
+    const validRates=monthlyRates.filter(item=>item.rate!==null),rateMax=Math.max(...validRates.map(item=>Math.max(0,item.rate)),1);
+    metrics=[{label:copy.savingsRate,value:rate===null?'—':`${number(rate,1)}%`},{label:copy.net,value:currency(totals.net)},{label:copy.income,value:currency(totals.income)}];
+    const ringValue=Math.max(0,Math.min(100,rate||0))*3.6;
+    chart=`<div class="expanded-savings-layout"><div class="expanded-savings-ring" style="--expanded-progress:${ringValue}deg"><span><strong>${rate===null?'—':`${number(rate,1)}%`}</strong><small>${escapeHtml(copy.ofIncome)}</small></span></div><div class="expanded-ranked-list">${monthlyRates.slice(-6).map(item=>`<div class="expanded-ranked-row"><span>${escapeHtml(insightMonthLabel(item.key,true))}</span><strong>${item.rate===null?'—':`${number(item.rate,1)}%`}</strong><div class="expanded-ranked-track"><i style="width:${item.rate===null?0:Math.max(0,item.rate)/rateMax*100}%;background:${item.rate!==null&&item.rate<0?'var(--red)':'var(--green)'}"></i></div></div>`).join('')}</div></div>`;
+    const averageRate=validRates.length?validRates.reduce((sum,item)=>sum+item.rate,0)/validRates.length:null,bestRate=validRates.reduce((chosen,item)=>!chosen||item.rate>chosen.rate?item:chosen,null);
+    notes=[{label:copy.monthlyAverage,value:averageRate===null?'—':`${number(averageRate,1)}%`},{label:copy.bestMonth,value:bestRate?`${insightMonthLabel(bestRate.key,true)} · ${number(bestRate.rate,1)}%`:'—'},{label:copy.latestMonth,value:latest.income?`${number((latest.income-latest.expenses)/latest.income*100,1)}%`:'—'}];
+  }else{
+    metrics=[{label:copy.net,value:currency(totals.net)},{label:copy.income,value:currency(totals.income)},{label:copy.expenses,value:currency(totals.expenses)}];
+    chart=expandedMonthChart(series,'cashflow',copy);notes=historyNotes;
+  }
+  $('#insightExpandedMetrics').innerHTML=metrics.map(item=>expandedMetric(item.label,item.value)).join('');
+  $('#insightExpandedChart').innerHTML=chart;
+  $('#insightExpandedBreakdown').innerHTML=expandedNotes(notes.slice(0,3));
+}
+
+function openInsightDetail(kind) {
+  activeInsightDetail=kind;
+  renderInsightDetail(kind);
+  openModal($('#insightChartModal'));
 }
 
 function renderAll() {
@@ -604,13 +726,53 @@ function showToast(message) {
   const toast = $('#toast'); $('span',toast).textContent = message; toast.classList.add('show'); clearTimeout(showToast.timer); showToast.timer=setTimeout(()=>toast.classList.remove('show'),2600);
 }
 
-function openModal(modal) { $('#modalBackdrop').hidden=false; modal.showModal(); }
-function closeModal(modal) { if (modal?.open) modal.close(); $('#modalBackdrop').hidden=true; }
+function closeCardMenus(exceptId=null) {
+  $$('[data-card-menu]').forEach(trigger=>{
+    const keepOpen=trigger.dataset.cardMenu===exceptId;
+    const menu=$(`#${trigger.dataset.cardMenu}`);
+    if(menu)menu.hidden=!keepOpen;
+    trigger.setAttribute('aria-expanded',String(keepOpen));
+  });
+}
+
+function syncModalLayer() {
+  const hasOpenModal=Boolean($('.modal[open]'));
+  $('#modalBackdrop').hidden=true;
+  document.body.classList.toggle('modal-active',hasOpenModal);
+  if(!hasOpenModal)hideTooltip();
+}
+
+function closeAllOverlays() {
+  $$('.modal[open]').forEach(modal=>modal.close());
+  closeCardMenus();
+  closeNotifications();
+  toggleAccountMenu(false);
+  $('#modalBackdrop').hidden=true;
+  document.body.classList.remove('modal-active');
+  hideTooltip();
+}
+
+function openModal(modal) {
+  if(!modal||modal.open)return;
+  $$('.modal[open]').forEach(openDialog=>{if(openDialog!==modal)openDialog.close();});
+  closeCardMenus();
+  closeNotifications();
+  toggleAccountMenu(false);
+  $('#modalBackdrop').hidden=true;
+  modal.showModal();
+  document.body.classList.add('modal-active');
+}
+
+function closeModal(modal) {
+  if(modal?.open)modal.close();
+  syncModalLayer();
+}
 
 const moduleTitleKeys = {overview:'navOverview',budgets:'navBudgets',savings:'navSavings',activity:'navActivity',insights:'navInsights'};
 function renderModuleTitle() { $('#activeModuleTitle').textContent=t(moduleTitleKeys[activeView]||'navOverview'); }
 
 function showView(view) {
+  closeAllOverlays();
   activeView = view;
   $$('[data-view-panel]').forEach(panel => { const active=panel.dataset.viewPanel===view; panel.hidden=!active; panel.classList.toggle('active',active); });
   $$('.nav-item').forEach(item => { const active=item.dataset.view===view; item.classList.toggle('active',active); if(active)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current'); });
@@ -756,8 +918,17 @@ function openIncomeCategoryEditor(id=null) {
 }
 
 $$('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>closeModal(button.closest('dialog'))));
-$$('.modal').forEach(modal=>modal.addEventListener('cancel',event=>{event.preventDefault();closeModal(modal);}));
-$('#modalBackdrop').addEventListener('click',()=>closeModal($('dialog[open]')));
+$$('.modal').forEach(modal=>{
+  modal.addEventListener('cancel',event=>{event.preventDefault();closeModal(modal);});
+  modal.addEventListener('close',()=>{if(modal.id==='insightChartModal')activeInsightDetail=null;syncModalLayer();});
+  modal.addEventListener('click',event=>{
+    if(event.target!==modal)return;
+    const rect=modal.getBoundingClientRect();
+    const outside=event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom;
+    if(outside)closeModal(modal);
+  });
+});
+$('#modalBackdrop').addEventListener('click',closeAllOverlays);
 $$('[data-open-detail]').forEach(button=>button.addEventListener('click',()=>{const modal=$(`#${button.dataset.openDetail}`);if(modal)openModal(modal);}));
 $$('[data-open-transaction]').forEach(button=>button.addEventListener('click',()=>openTransaction()));
 $$('[data-open-income]').forEach(button=>button.addEventListener('click',openIncomeTransaction));
@@ -778,7 +949,13 @@ $('#addIncomeCategory').addEventListener('click',()=>openIncomeCategoryEditor())
 $('#themeToggle').addEventListener('click',toggleTheme);$$('[data-account]').forEach(button=>button.addEventListener('click',()=>switchAccount(button.dataset.account)));
 $('#notificationButton').addEventListener('click',event=>{event.stopPropagation();toggleNotifications();});$('#closeNotifications').addEventListener('click',closeNotifications);
 $$('[data-tooltip-key]').forEach(trigger=>{trigger.addEventListener('mouseenter',()=>showTooltip(trigger));trigger.addEventListener('mouseleave',hideTooltip);trigger.addEventListener('focus',()=>showTooltip(trigger));trigger.addEventListener('blur',hideTooltip);trigger.addEventListener('click',()=>$('#appTooltip').hidden?showTooltip(trigger):hideTooltip());});
-document.addEventListener('click',event=>{if(!event.target.closest('.sidebar-bottom'))toggleAccountMenu(false);if(!event.target.closest('.notification-wrap'))closeNotifications();});
+$$('[data-insight-detail]').forEach(card=>{
+  card.addEventListener('click',event=>{if(event.target.closest('button,a'))return;openInsightDetail(card.dataset.insightDetail);});
+  card.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a')){event.preventDefault();openInsightDetail(card.dataset.insightDetail);}});
+});
+$$('[data-card-menu]').forEach(trigger=>trigger.addEventListener('click',event=>{event.stopPropagation();const menuId=trigger.dataset.cardMenu;closeCardMenus(trigger.getAttribute('aria-expanded')==='true'?null:menuId);}));
+document.addEventListener('click',event=>{if(!event.target.closest('.sidebar-bottom'))toggleAccountMenu(false);if(!event.target.closest('.notification-wrap'))closeNotifications();if(!event.target.closest('.card-action-wrap'))closeCardMenus();});
+document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const modal=$('.modal[open]');if(modal){event.preventDefault();closeModal(modal);}closeCardMenus();});
 $$('.nav-item').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
 $$('[data-go-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.goView)));
 $('[data-home]').addEventListener('click',event=>{event.preventDefault();showView('overview');});

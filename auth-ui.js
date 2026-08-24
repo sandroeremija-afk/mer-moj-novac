@@ -160,6 +160,12 @@
   document.getElementById('closePasswordReset').addEventListener('click', closePasswordReset);
   document.getElementById('passwordResetDone').addEventListener('click', closePasswordReset);
   passwordResetModal.addEventListener('cancel', event => { event.preventDefault(); closePasswordReset(); });
+  passwordResetModal.addEventListener('click', event => {
+    if (event.target !== passwordResetModal) return;
+    const rect = passwordResetModal.getBoundingClientRect();
+    const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+    if (outside) closePasswordReset();
+  });
   passwordResetForm.addEventListener('submit', async event => {
     event.preventDefault();
     const result = await provider.requestPasswordReset({ email: document.getElementById('passwordResetEmail').value });
