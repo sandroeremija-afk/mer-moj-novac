@@ -200,7 +200,14 @@ function renderAccountContext() {
 
 function renderSystemDate(now=new Date()) {
   const timezone=appState.settings.timezone||'Europe/Zagreb';
-  const dateLabel=new Intl.DateTimeFormat(locale(),{weekday:'short',day:'numeric',month:'long',year:'numeric',timeZone:timezone}).format(now);
+  const compactDate=window.matchMedia('(max-width:560px)').matches;
+  const tabletDate=!compactDate&&window.matchMedia('(max-width:1024px)').matches;
+  const dateOptions=compactDate
+    ? {day:'2-digit',month:'2-digit',year:'2-digit',timeZone:timezone}
+    : tabletDate
+      ? {day:'numeric',month:'short',year:'numeric',timeZone:timezone}
+      : {weekday:'short',day:'numeric',month:'long',year:'numeric',timeZone:timezone};
+  const dateLabel=new Intl.DateTimeFormat(locale(),dateOptions).format(now);
   $('#systemDate').textContent=dateLabel;$('#systemDate').dateTime=now.toISOString();
   activeMonth=Number(new Intl.DateTimeFormat('en-US',{month:'numeric',timeZone:timezone}).format(now))-1;
   $('#greetingHeading').textContent=MerCore.greetingFor(now,currentLang,window.MerAuthProvider?.currentSession?.()?.name||state.accountName);
@@ -989,7 +996,7 @@ $('#deleteIncomeCategory').addEventListener('click',()=>{const existing=state.in
 $('#activitySearch').addEventListener('input',renderActivity); $('#activityFilter').addEventListener('change',renderActivity);$('#activityTypeFilter').addEventListener('change',renderActivity);
 $$('#insightsFilters [data-timeframe]').forEach(button=>button.addEventListener('click',()=>{insightsTimeframe=button.dataset.timeframe;renderInsights();}));
 setInterval(()=>renderSystemDate(new Date()),60000);
-window.addEventListener('resize',()=>{if(window.innerWidth>800)closeSidebar();});
+window.addEventListener('resize',()=>{if(window.innerWidth>=768)closeSidebar();renderSystemDate(new Date());});
 
 function syncBanksIfStale(){const stale=bankConnectionsFor().some(connection=>!connection.lastSyncedAt||Date.now()-new Date(connection.lastSyncedAt).getTime()>=300000);if(stale)syncActiveBankConnections({silent:true});}
 

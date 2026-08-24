@@ -38,7 +38,7 @@ test('cycle 1: secondary content uses progressive disclosure while the large imp
   }
   assert.match(app, /\$\$\('\[data-open-detail\]'\)/);
   assert.match(css, /@media \(max-height:720px\)/);
-  assert.match(css, /@media \(max-width:800px\)/);
+  assert.match(css, /@media \(max-width:767px\)/);
   assert.match(css, /@media \(max-width:540px\)/);
 });
 

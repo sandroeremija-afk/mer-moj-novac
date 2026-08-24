@@ -683,7 +683,7 @@ h2 { font-size: 18px; line-height: 1.3; }
   .summary-card { padding: 18px; }
   .goal-bucket-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
-@media (max-width: 800px) {
+@media (max-width: 767px) {
   .sidebar { width: 252px; transform: translateX(-100%); transition: transform .22s ease; box-shadow: 14px 0 40px rgba(5,24,18,.2); }
   .sidebar.open { transform: translateX(0); }
   .main { margin-left: 0; }
@@ -902,7 +902,7 @@ body { height:100vh; height:100dvh; }
 .insight-detail-note span { color:var(--muted); font-size:.625rem; }
 .insight-detail-note strong { margin-top:4px; font-size:.75rem; }
 
-@media (max-width:800px) {
+@media (max-width:767px) {
   .overview-detail-grid { grid-template-columns:1fr; }
   .insight-expanded-modal[open] { overflow:auto; }
   .insight-expanded-metrics,.insight-expanded-breakdown { grid-template-columns:1fr; }
@@ -937,7 +937,7 @@ body { height:100vh; height:100dvh; }
   .page-heading .secondary-button { width:40px; min-width:40px; padding:0; }
   .page-heading .secondary-button span { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
 }
-@media (max-width:800px) {
+@media (max-width:767px) {
   .topbar { flex-basis:68px; }
   .page { padding-bottom:18px; }
   .view { padding-right:3px; }
@@ -1060,7 +1060,7 @@ body { height:100vh; height:100dvh; }
   #budgetsView .budget-summary { margin-bottom:11px; }
   #budgetsView .summary-card { padding:14px 16px; }
 }
-@media (max-width:800px) {
+@media (max-width:767px) {
   .auth-shell { grid-template-columns:1fr; overflow:hidden; }
   .auth-brand-panel { display:none; }.auth-form-panel { min-height:0; padding:18px; overflow-y:auto; }.auth-card { padding:26px; }
   .system-datetime { display:none; }.advanced-insights-grid { grid-template-columns:1fr; }.insight-visual-card { min-height:220px; }
@@ -1235,4 +1235,329 @@ body { font-size:var(--type-body); line-height:var(--leading-body); }
   #savingsView .goal-metric-grid { gap:5px; margin:5px 0; }
   #savingsView .goal-metric-grid > span { padding:5px 6px; }
   #savingsView .roundup-toggle { min-height:36px; padding:5px 7px; }
+}
+
+/* Cross-device layout: desktop keeps the one-pager, touch-sized screens flow naturally. */
+@media (max-width:1024px) {
+  html {
+    height:auto;
+    min-height:100%;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior-x:none;
+    overscroll-behavior-y:auto;
+  }
+  body {
+    height:auto;
+    min-height:100dvh;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior-x:none;
+    overscroll-behavior-y:auto;
+  }
+  .app-shell {
+    height:auto;
+    min-height:100dvh;
+    overflow:visible;
+  }
+  .main {
+    height:auto;
+    min-height:100dvh;
+    overflow:visible;
+  }
+  .topbar {
+    position:sticky;
+    top:0;
+    flex:0 0 76px;
+  }
+  .page {
+    height:auto;
+    min-height:calc(100dvh - 76px);
+    flex:none;
+    overflow:visible;
+    padding:24px 24px 44px;
+  }
+  .view,
+  #overviewView,
+  #activityView,
+  #savingsView {
+    height:auto;
+    min-height:0;
+    display:block;
+    overflow:visible;
+  }
+  #overviewView > .dashboard-grid,
+  #activityView > .activity-panel,
+  #savingsView > .goal-buckets-panel {
+    min-height:0;
+    display:block;
+    overflow:visible;
+  }
+  #savingsView > .savings-layout,
+  #savingsView > .goal-buckets-panel {
+    flex:none;
+  }
+  #savingsView .goal-bucket-grid { display:grid; }
+  #savingsView .goal-bucket-card { height:auto; }
+  .transaction-list {
+    max-height:none;
+    overflow:visible;
+    scrollbar-gutter:auto;
+  }
+  .page-heading {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    align-items:start;
+    gap:16px;
+    margin-bottom:22px;
+  }
+  .heading-actions {
+    width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-start;
+    gap:8px;
+  }
+  .summary-grid,
+  .insights-kpis,
+  .advanced-insights-grid,
+  .goal-bucket-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .dashboard-grid,
+  .savings-layout,
+  .insights-layout,
+  .savings-detail-grid {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .budget-row {
+    grid-template-columns:minmax(140px,1.2fr) minmax(120px,1.5fr) 44px;
+    gap:12px;
+  }
+  .budget-row-value { display:none; }
+  .insight-visual-card { min-height:240px; }
+  .modal {
+    max-height:calc(100dvh - 24px);
+    overflow-y:auto;
+  }
+  .premium-settings[open] { overflow-y:auto; }
+  .settings-pane.active { flex:none; }
+  .auth-shell {
+    position:absolute;
+    height:auto;
+    min-height:100dvh;
+    overflow:visible;
+  }
+  .auth-brand-panel,
+  .auth-form-panel {
+    height:auto;
+    min-height:100dvh;
+  }
+  .auth-form-panel {
+    overflow:visible;
+    scrollbar-gutter:auto;
+  }
+  .system-datetime {
+    min-width:112px;
+    max-width:150px;
+  }
+  .date-switcher { padding-right:10px; }
+  .top-actions,
+  .header-action-cluster { gap:8px; }
+}
+
+@media (max-width:1024px), (pointer:coarse) {
+  button,
+  .primary-button,
+  .secondary-button,
+  .link-button,
+  .nav-item,
+  .profile-button,
+  .account-option,
+  .settings-option { min-height:44px; }
+  .icon-button,
+  .info-button,
+  .modal-close,
+  .edit-budget,
+  .transaction-action,
+  .card-action-trigger {
+    width:44px;
+    min-width:44px;
+    height:44px;
+    min-height:44px;
+  }
+  .language-switch button {
+    width:44px;
+    min-width:44px;
+    height:44px;
+  }
+  .card-action-menu button { min-height:44px; }
+}
+
+@media (max-width:767px) {
+  .sidebar {
+    width:min(86vw,300px);
+    height:100dvh;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  .main { margin-left:0; }
+  .topbar {
+    min-height:68px;
+    height:auto;
+    padding:10px 14px;
+    gap:9px;
+  }
+  .menu-button { display:grid; flex:0 0 44px; }
+  .module-heading { font-size:clamp(1.05rem,4.5vw,1.25rem); }
+  .top-actions { min-width:0; margin-left:auto; }
+  .system-datetime {
+    min-width:76px;
+    max-width:96px;
+    display:flex;
+  }
+  .system-datetime time { font-size:.625rem; }
+  .date-switcher { min-width:0; margin-left:0; padding-right:8px; }
+  .header-action-cluster { flex:0 0 auto; gap:6px; }
+  .notification-button { display:grid; }
+  .page {
+    min-height:calc(100dvh - 68px);
+    padding:20px 16px calc(40px + env(safe-area-inset-bottom));
+  }
+  .summary-grid,
+  .insights-kpis,
+  .advanced-insights-grid,
+  .goal-bucket-grid,
+  .insight-widget-grid {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    overflow:visible;
+    margin-right:0;
+    padding-right:0;
+  }
+  .summary-card,
+  .insights-kpis .summary-card { min-width:0; }
+  .page-heading { gap:14px; }
+  .heading-actions { justify-content:flex-start; }
+  .heading-actions .primary-button,
+  .heading-actions .secondary-button,
+  .data-action-pair .secondary-button {
+    width:44px;
+    min-width:44px;
+    height:44px;
+    padding:0;
+  }
+  .activity-toolbar {
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .activity-toolbar > * { width:100%; }
+  .budget-row { min-width:0; }
+  .modal,
+  .settings-modal,
+  .detail-modal,
+  .import-data-modal,
+  .insight-expanded-modal,
+  .subscriptions-modal,
+  .auth-reset-modal {
+    inset:0;
+    width:100vw;
+    max-width:none;
+    height:100dvh;
+    max-height:100dvh;
+    margin:0;
+    padding:calc(64px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+    border-radius:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+  }
+  .modal-close {
+    top:calc(10px + env(safe-area-inset-top));
+    right:14px;
+  }
+  .detail-modal-grid,
+  .overview-detail-grid,
+  .expanded-donut-layout,
+  .expanded-savings-layout {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .insight-expanded-modal[open] {
+    min-height:100dvh;
+    grid-template-rows:auto auto auto auto auto auto;
+  }
+  .insight-expanded-chart { min-height:260px; }
+  .expanded-month-chart {
+    min-width:620px;
+  }
+  .insight-expanded-chart:has(.expanded-month-chart) {
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+  }
+  .premium-settings[open] {
+    height:100dvh;
+    max-height:100dvh;
+    overflow-y:auto;
+  }
+  .import-data-modal[open] { overflow:hidden; }
+  .import-data-modal .import-table-wrap { overflow:auto; }
+  .notification-center {
+    position:fixed;
+    top:78px;
+    right:12px;
+    left:12px;
+    width:auto;
+    max-height:calc(100dvh - 90px);
+    overflow-y:auto;
+  }
+  .auth-shell { grid-template-columns:minmax(0,1fr); }
+  .auth-brand-panel { display:none; }
+  .auth-form-panel {
+    min-height:100dvh;
+    padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .auth-card {
+    width:min(440px,100%);
+    margin:auto;
+    padding:clamp(24px,7vw,34px);
+  }
+}
+
+@media (max-width:560px) {
+  .topbar {
+    flex:0 0 auto;
+    display:grid;
+    grid-template-columns:44px minmax(0,1fr);
+    grid-template-areas:
+      "menu title"
+      "actions actions";
+    align-items:center;
+  }
+  .menu-button { grid-area:menu; }
+  .module-heading { grid-area:title; }
+  .top-actions {
+    width:100%;
+    grid-area:actions;
+    justify-content:space-between;
+    margin:0;
+  }
+  .date-switcher { flex:1 1 auto; }
+  .system-datetime {
+    min-width:0;
+    max-width:none;
+    justify-content:flex-start;
+  }
+  .page { min-height:calc(100dvh - 122px); }
+  .notification-center { top:126px; max-height:calc(100dvh - 138px); }
+  .donut-layout { grid-template-columns:minmax(100px,132px) minmax(0,1fr); }
+  .savings-facts { grid-template-columns:minmax(0,1fr); }
+}
+
+@media (min-width:1921px) {
+  .page { max-width:1800px; }
+  .summary-grid,
+  .dashboard-grid,
+  .savings-layout,
+  .advanced-insights-grid { gap:20px; }
 }
