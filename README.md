@@ -32,6 +32,8 @@ Open `index.html` directly, or serve this folder from any static host. No build 
 - Dense Insights canvas with category donut, six-month income/expense bars, top-five merchants, and savings-rate gauge
 - Profile-isolated custom keyword rules shared by bank sync and file imports
 - Fixed `100dvh` application shell with zero browser-page scrolling; Activity is the only module with a vertical list scrollbar
+- Brand-book-compliant adaptive wordmarks that switch between positive and negative variants by surface and theme while preserving the 9:4 aspect ratio
+- A stationary auth hero with an independently scrollable form column, a repaired fixed-height Savings canvas, and a semantic responsive type scale
 - Progressive-disclosure detail modals for secondary Dashboard, Budget, Savings, and Insights content
 - Contextual CSV/Excel import and transaction export actions in Activity, Budgets, Insights, and Add Transaction
 - Clean Personal/Business account menu and focused Settings tabs without redundant transaction-import actions
@@ -80,4 +82,4 @@ node tests/eval-cycle-2-fixed-layout.test.js
 
 ## Verification
 
-The complete suite currently passes 57 automated checks across auth/session security, CSV/Excel/CAMT parsing, Croatian merchant categorization, PSD2 contracts, sync/deduplication, MFA, reactive state, round-up/profile isolation, goal/rule isolation, UI error handling, navigation, and fixed-layout contracts. Interactive browser evaluation at 1920×1080 and 1440×900 verified zero outer scroll and zero module clipping outside Activity, auth registration/session/logout, live HR/EN header updates, theme response, all five modules, a 520-row paginated review flow, subscription management, Personal/Business isolation, and instant transaction recalculation across Budget, Savings, and Insights.
+The complete suite currently passes 63 automated checks across auth/session security, CSV/Excel/CAMT parsing, Croatian merchant categorization, PSD2 contracts, sync/deduplication, MFA, reactive state, round-up/profile isolation, goal/rule isolation, adaptive logos, idle behavior, typography, navigation, and fixed-layout contracts. Interactive browser evaluation at 1920×1080, 1440×900, 1366×768, and 1440×720 verified zero outer scroll and zero module clipping outside Activity, a zero-pixel Login/Register hero shift, correct light/dark logo variants, an intact Savings bottom card, explicit-only Settings opening, no runtime errors, and harmonious semantic typography across all five modules.

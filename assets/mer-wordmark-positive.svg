@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 240" role="img" aria-label="mer">
+  <defs>
+    <filter id="invert-threshold" color-interpolation-filters="sRGB">
+      <feColorMatrix values="-1 0 0 0 1  0 -1 0 0 1  0 0 -1 0 1  0 0 0 1 0"/>
+      <feComponentTransfer>
+        <feFuncR type="linear" slope="5" intercept="-1"/>
+        <feFuncG type="linear" slope="5" intercept="-1"/>
+        <feFuncB type="linear" slope="5" intercept="-1"/>
+      </feComponentTransfer>
+    </filter>
+    <mask id="wordmark" mask-type="luminance">
+      <image href="mer-wordmark-positive.png" width="540" height="240" filter="url(#invert-threshold)"/>
+    </mask>
+  </defs>
+  <rect width="540" height="240" fill="#000" mask="url(#wordmark)"/>
+</svg>

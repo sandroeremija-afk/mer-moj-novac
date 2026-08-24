@@ -419,7 +419,7 @@ async function syncBankConnection(connection,{silent=false}={}) {
 
 async function syncActiveBankConnections({silent=false}={}) {
   const connections=bankConnectionsFor();
-  if(!connections.length){openBankSettings();return;}
+  if(!connections.length){if(!silent)openBankSettings();return {skipped:'no-connections'};}
   if(bankSyncInProgress)return;
   bankSyncInProgress=true;renderBankSyncStatus();
   const results=[];for(const connection of connections)results.push(await syncBankConnection(connection,{silent}));

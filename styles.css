@@ -979,7 +979,174 @@ body { height:100vh; height:100dvh; }
   #budgetsView .summary-card { padding:14px 16px; }
 }
 @media (max-width:800px) {
-  .auth-shell { grid-template-columns:1fr; overflow-y:auto; }
-  .auth-brand-panel { display:none; }.auth-form-panel { min-height:100dvh; padding:18px; }.auth-card { padding:26px; }
+  .auth-shell { grid-template-columns:1fr; overflow:hidden; }
+  .auth-brand-panel { display:none; }.auth-form-panel { min-height:0; padding:18px; overflow-y:auto; }.auth-card { padding:26px; }
   .system-datetime { display:none; }.advanced-insights-grid { grid-template-columns:1fr; }.insight-visual-card { min-height:220px; }
+}
+
+/* Adaptive secondary logotype system - brand book positive/negative rules. */
+.adaptive-logo {
+  position:relative;
+  display:inline-grid;
+  flex:0 0 auto;
+  min-width:0;
+  min-height:0;
+  aspect-ratio:9 / 4;
+  overflow:hidden;
+}
+.adaptive-logo img {
+  grid-area:1 / 1;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  object-position:center;
+  filter:contrast(3);
+}
+.adaptive-logo .logo-positive { content:url("assets/mer-wordmark-positive.svg"); }
+.adaptive-logo .logo-negative { display:none; content:url("assets/mer-wordmark-negative.svg"); }
+.adaptive-logo[data-logo-surface="dark"] .logo-positive,
+[data-theme="dark"] .adaptive-logo[data-logo-surface="theme"] .logo-positive { display:none; }
+.adaptive-logo[data-logo-surface="dark"] .logo-negative,
+[data-theme="dark"] .adaptive-logo[data-logo-surface="theme"] .logo-negative { display:block; }
+.auth-hero-logo { z-index:2; width:91px; height:40.44px; }
+.auth-card-logo { width:78px; height:34.67px; margin-bottom:26px; }
+.brand-wordmark-image,
+.assessment-logo { width:75px; height:33.33px; }
+.lock-logo { width:76px; height:33.78px; margin:0 auto 20px; }
+
+/* Auth panels stay locked to the viewport; only the form column may scroll. */
+.auth-shell {
+  width:100%;
+  height:100vh;
+  height:100dvh;
+  min-height:0;
+  grid-template-rows:minmax(0,1fr);
+  align-content:stretch;
+  overflow:hidden;
+}
+.auth-brand-panel,
+.auth-form-panel { height:100%; min-height:0; }
+.auth-brand-panel { contain:layout paint; }
+.auth-form-panel {
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.auth-card { flex:0 0 auto; margin-block:auto; transition:box-shadow .2s ease; }
+.auth-form:not([hidden]) { animation:auth-form-swap .18s ease both; }
+@keyframes auth-form-swap { from { opacity:0; transform:translateY(5px); } }
+
+/* Savings is a fixed-height canvas; the final card owns the remaining space. */
+#savingsView { display:flex; min-height:0; flex-direction:column; overflow:hidden; }
+#savingsView > .page-heading { flex:0 0 auto; }
+#savingsView > .savings-layout { min-height:0; flex:0 1 auto; }
+#savingsView > .goal-buckets-panel {
+  min-height:0;
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  overflow:hidden;
+  margin-bottom:1px;
+}
+#savingsView .goal-bucket-grid { min-height:0; flex:1 1 auto; align-items:stretch; }
+#savingsView .goal-bucket-card { height:100%; }
+
+/* Unified type scale for the dense financial workspace. */
+:root {
+  --type-page:clamp(1.25rem,1.45vw,1.5rem);
+  --type-card:clamp(.875rem,1vw,1rem);
+  --type-body:.8125rem;
+  --type-label:.75rem;
+  --type-caption:.625rem;
+  --type-button:.75rem;
+  --type-metric:clamp(1.5rem,2.1vw,2rem);
+  --leading-tight:1.2;
+  --leading-body:1.5;
+}
+body { font-size:var(--type-body); line-height:var(--leading-body); }
+.module-heading { font-size:var(--type-page); line-height:var(--leading-tight); font-weight:700; }
+.panel-heading h2,
+.recommendation-panel h2,
+.settings-pane-heading h3,
+.notification-head h2 { font-size:var(--type-card); line-height:1.3; font-weight:700; }
+.summary-value { font-size:var(--type-metric); line-height:1.12; }
+.card-label,
+.metric-note,
+.safe-copy p,
+.safe-copy > span,
+.goal-meta small,
+.savings-facts small { font-size:var(--type-label); line-height:1.35; }
+.subtitle,
+.panel-intro,
+.recommendation-panel > p:not(.overline),
+.auth-brand-panel p:not(.overline) { font-size:var(--type-body); line-height:var(--leading-body); }
+.overline,
+.status-pill,
+.auth-security-note,
+.auth-intro { font-size:var(--type-caption); line-height:1.4; }
+.primary-button,
+.secondary-button,
+.link-button,
+.nav-item,
+.theme-toggle { font-size:var(--type-button); line-height:1.2; }
+.goal-bucket-head strong { font-size:.75rem; line-height:1.25; }
+.goal-bucket-head small,
+.goal-bucket-values span,
+.goal-metric-grid small,
+.roundup-toggle small { font-size:.625rem; line-height:1.3; }
+.goal-metric-grid strong,
+.roundup-toggle strong { font-size:.6875rem; line-height:1.25; }
+.insight-visual-card .panel-heading h2 { font-size:.875rem; }
+.donut-legend b,
+.donut-legend small,
+.insight-caption span,
+.month-bar-group small,
+.merchant-row > b,
+.merchant-row strong,
+.merchant-row > small,
+.savings-gauge small,
+.gauge-card > p { font-size:.625rem; line-height:1.35; }
+.insight-caption strong { font-size:.75rem; }
+.auth-tabs button,
+.auth-form input { font-size:.75rem; }
+.auth-form label { font-size:.6875rem; }
+.auth-form > small,
+.auth-error,
+.auth-divider { font-size:.625rem; }
+
+@media (max-height:820px) and (min-width:801px) {
+  #savingsView > .page-heading { margin-bottom:12px; }
+  #savingsView > .savings-layout { gap:10px; margin-bottom:10px; }
+  #savingsView .savings-hero,
+  #savingsView .recommendation-panel,
+  #savingsView > .goal-buckets-panel { padding:15px 17px; }
+  #savingsView .savings-hero-head { grid-template-columns:44px 1fr auto; gap:10px; }
+  #savingsView .goal-icon.large { width:44px; height:44px; }
+  #savingsView .savings-number { margin-top:13px; }
+  #savingsView .savings-number strong { font-size:1.9rem; }
+  #savingsView .goal-track.tall { margin-top:9px; }
+  #savingsView .savings-facts { gap:10px; margin-top:10px; padding-top:9px; }
+  #savingsView .recommendation-icon { margin-bottom:9px; }
+  #savingsView .recommendation-panel > p:not(.overline) {
+    display:-webkit-box;
+    overflow:hidden;
+    margin:8px 0 10px;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+  }
+  #savingsView .recommendation-stat { margin:9px 0; padding:10px; }
+  #savingsView > .goal-buckets-panel .panel-intro { display:none; }
+  #savingsView .goal-bucket-grid { gap:8px; margin-top:10px; }
+  #savingsView .rich-goal-card { padding:9px; }
+  #savingsView .rich-goal-card .goal-bucket-head { grid-template-columns:40px minmax(0,1fr) 28px; gap:7px; }
+  #savingsView .goal-progress-ring { width:40px; height:40px; }
+  #savingsView .rich-goal-card .goal-bucket-values { margin:7px 0 5px; }
+  #savingsView .goal-bucket-values strong { font-size:.95rem; }
+  #savingsView .goal-metric-grid { gap:5px; margin:5px 0; }
+  #savingsView .goal-metric-grid > span { padding:5px 6px; }
+  #savingsView .roundup-toggle { min-height:36px; padding:5px 7px; }
 }
