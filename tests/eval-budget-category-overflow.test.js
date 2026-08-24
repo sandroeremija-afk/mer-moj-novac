@@ -40,3 +40,14 @@ test('evaluation cycle 2: category mutations commit to the central store and ret
   assert.match(app, /if\(\$\('#budgetCategoriesModal'\)\.open\)renderBudgetCategoryManager\(\)/);
   assert.match(app, /modal\.addEventListener\('click',event=>[\s\S]*?if\(outside\)closeModal\(modal\)/);
 });
+
+test('search alignment cycle 1: manager search reserves a clean icon and text lane', () => {
+  assert.match(css, /\.budget-manager-toolbar \.search-field > svg \{[^}]*position:absolute;[^}]*top:50%;[^}]*left:14px;[^}]*pointer-events:none;[^}]*transform:translateY\(-50%\);/s);
+  assert.match(css, /\.budget-manager-toolbar \.search-field > input \{[^}]*padding:0 14px 0 46px;[^}]*line-height:44px;/s);
+});
+
+test('search alignment cycle 2: manager search remains wired to reactive filtering', () => {
+  assert.match(html, /id="budgetCategorySearch" type="search"/);
+  assert.match(app, /budgetCategorySearch'\)\.addEventListener\('input',renderBudgetCategoryManager\)/);
+  assert.match(app, /categoryName\(cat\.id\)\.toLocaleLowerCase\(locale\(\)\)\.includes\(query\)/);
+});

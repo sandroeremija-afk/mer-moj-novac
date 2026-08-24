@@ -1603,6 +1603,21 @@ body { font-size:var(--type-body); line-height:var(--leading-body); }
 .budget-manager-heading h2 { margin-top:5px; font-size:1.5rem; }
 .budget-manager-heading .modal-intro { margin:6px 0 0; }
 .budget-manager-toolbar { display:grid; grid-template-columns:minmax(280px,1fr) minmax(190px,.34fr); gap:10px; margin-top:22px; }
+.budget-manager-toolbar .search-field { position:relative; min-width:0; }
+.budget-manager-toolbar .search-field > svg {
+  position:absolute;
+  z-index:1;
+  top:50%;
+  left:14px;
+  width:16px;
+  height:16px;
+  pointer-events:none;
+  transform:translateY(-50%);
+}
+.budget-manager-toolbar .search-field > input {
+  padding:0 14px 0 46px;
+  line-height:44px;
+}
 .budget-manager-meta { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:15px 0 8px; color:var(--muted); font-size:.6875rem; }
 .budget-manager-meta strong { color:var(--ink); font-size:.75rem; }
 .budget-manager-table-head,
