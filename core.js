@@ -45,6 +45,38 @@
     };
   }
 
+  function assessExpenseImpact(input = {}) {
+    const amount = Math.max(0, financialAmount(input.amount));
+    const editingAmount = Math.max(0, financialAmount(input.editingAmount));
+    const currentSpent = Math.max(0, financialAmount(input.currentSpent) - editingAmount);
+    const monthlyBudget = Math.max(0, financialAmount(input.monthlyBudget));
+    const categorySpent = Math.max(0, financialAmount(input.categorySpent) - (input.editingSameCategory ? editingAmount : 0));
+    const categoryLimit = Math.max(0, financialAmount(input.categoryLimit));
+    const dailyBudget = Math.max(0, financialAmount(input.dailyBudget));
+    const monthlyAfter = roundMoney(currentSpent + amount);
+    const categoryAfter = roundMoney(categorySpent + amount);
+    const monthlyOver = Math.max(0, roundMoney(monthlyAfter - monthlyBudget));
+    const categoryOver = Math.max(0, roundMoney(categoryAfter - categoryLimit));
+    const dailyOver = dailyBudget > 0 ? Math.max(0, roundMoney(amount - dailyBudget)) : 0;
+    const categoryThreshold = budgetThreshold(categoryAfter, categoryLimit);
+    const warning = monthlyOver > 0 ? 'monthly-over' : categoryOver > 0 ? 'category-over' : dailyOver > 0 ? 'daily-over' : categoryThreshold.warning ? 'category-near' : null;
+    return {
+      valid: amount > 0,
+      allowed: amount > 0,
+      amount,
+      monthlyAfter,
+      categoryAfter,
+      monthlyRemaining:Math.max(0, roundMoney(monthlyBudget - monthlyAfter)),
+      categoryRemaining:Math.max(0, roundMoney(categoryLimit - categoryAfter)),
+      monthlyOver,
+      categoryOver,
+      dailyOver,
+      categoryPercent:categoryThreshold.percent,
+      warning,
+      level:warning === 'monthly-over' || warning === 'category-over' ? 'danger' : warning ? 'warning' : amount > 0 ? 'success' : ''
+    };
+  }
+
   function daysInMonth(year, monthIndex) {
     return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
   }
@@ -441,6 +473,7 @@
     createAccountStore,
     calculateBudget,
     budgetThreshold,
+    assessExpenseImpact,
     daysInMonth,
     nextOccurrence,
     occurrencesBetween,
