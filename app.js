@@ -988,7 +988,6 @@ $('#deleteIncomeCategory').addEventListener('click',()=>{const existing=state.in
 
 $('#activitySearch').addEventListener('input',renderActivity); $('#activityFilter').addEventListener('change',renderActivity);$('#activityTypeFilter').addEventListener('change',renderActivity);
 $$('#insightsFilters [data-timeframe]').forEach(button=>button.addEventListener('click',()=>{insightsTimeframe=button.dataset.timeframe;renderInsights();}));
-$('#openSubscriptions').addEventListener('click',()=>{renderSubscriptions();openModal($('#subscriptionsModal'));});
 setInterval(()=>renderSystemDate(new Date()),60000);
 window.addEventListener('resize',()=>{if(window.innerWidth>800)closeSidebar();});
 
