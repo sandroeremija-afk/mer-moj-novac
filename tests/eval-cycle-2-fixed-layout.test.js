@@ -78,7 +78,7 @@ test('cycle 2: Settings removes the redundant CSV import section but keeps data 
   assert.match(html, /id="importFile"/);
 });
 
-test('cycle 2: account dropdown is clean and the module title/date order is stable', () => {
+test('cycle 2: account dropdown is clean and the sidebar/header order is stable', () => {
   const accountStart = html.indexOf('id="accountMenu"');
   const accountEnd = html.indexOf('</div>', accountStart);
   const accountMenu = html.slice(accountStart, accountEnd);
@@ -86,19 +86,27 @@ test('cycle 2: account dropdown is clean and the module title/date order is stab
   assert.doesNotMatch(accountMenu, /id="exportCsv"/);
   assert.match(accountMenu, /data-account="personal"/);
   assert.match(accountMenu, /data-account="business"/);
+  const sidebarIndex = html.indexOf('id="sidebar"');
+  const brandIndex = html.indexOf('class="brand"', sidebarIndex);
+  const sidebarTransactionIndex = html.indexOf('class="primary-button sidebar-transaction-button"', brandIndex);
+  const navIndex = html.indexOf('class="nav-list"', sidebarTransactionIndex);
+  assert.ok(sidebarIndex < brandIndex && brandIndex < sidebarTransactionIndex && sidebarTransactionIndex < navIndex);
   const moduleIndex = html.indexOf('id="activeModuleTitle"');
   const actionsIndex = html.indexOf('class="top-actions"', moduleIndex);
-  const dateIndex = html.indexOf('class="date-switcher"', actionsIndex);
   const languageIndex = html.indexOf('class="language-switch"', actionsIndex);
+  const notificationIndex = html.indexOf('class="notification-wrap"', languageIndex);
+  const dateIndex = html.indexOf('class="date-switcher"', notificationIndex);
   assert.ok(moduleIndex > 0 && moduleIndex < actionsIndex);
-  assert.ok(dateIndex > actionsIndex && dateIndex < languageIndex);
+  assert.ok(actionsIndex < languageIndex && languageIndex < notificationIndex && notificationIndex < dateIndex);
+  assert.doesNotMatch(html.slice(actionsIndex, html.indexOf('</header>', actionsIndex)), /data-open-transaction/);
+  assert.doesNotMatch(html, /id="systemTime"/);
   assert.match(app, /const moduleTitleKeys = \{overview:'navOverview',budgets:'navBudgets',savings:'navSavings',activity:'navActivity',insights:'navInsights'\}/);
   assert.match(app, /function renderModuleTitle\(\)/);
 });
 
 test('cycle 2: centralized store loads before application bootstrap', () => {
   const storeIndex = html.indexOf('<script src="state-store.js"></script>');
-  const appIndex = html.indexOf('<script src="app.js"></script>');
+  const appIndex = html.indexOf('<script src="app.js?v=20260824-brand2"></script>');
   assert.ok(storeIndex > 0);
   assert.ok(storeIndex < appIndex);
 });

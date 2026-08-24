@@ -31,14 +31,13 @@ test('cycle 2: the outer document and every main application module remain viewp
   assert.match(css, /\.view \{[^}]*height:100%[^}]*overflow:hidden/s);
 });
 
-test('cycle 2: logo geometry is stable and theme-adaptive across auth and application states', () => {
-  assert.match(css, /\.auth-hero-logo \{[^}]*width:91px[^}]*height:40\.44px/s);
-  assert.match(css, /\.auth-card-logo \{[^}]*width:78px[^}]*height:34\.67px/s);
-  assert.match(css, /\.header-logo \{[^}]*width:56px[^}]*height:24\.89px/s);
-  assert.match(css, /\.settings-logo \{[^}]*width:62px[^}]*height:27\.56px/s);
-  assert.match(css, /mer-logo\[tone="dark"\] \{ --logo-color:#fff; \}/);
-  assert.match(css, /mer-logo\[tone="light"\],[\s\S]*--logo-color:#050706/);
+test('cycle 2: official logo geometry is stable and theme-adaptive in its two allowed locations', () => {
+  assert.match(css, /\.brand-wordmark-image \{ width:132px; height:39\.78px; \}/);
+  assert.match(css, /\.auth-card-logo \{ width:128px; height:38\.58px/);
+  assert.match(css, /mer-logo\[variant="negative"\] \{ --logo-wordmark:#fff; \}/);
+  assert.match(css, /mer-logo\[variant="positive"\],[\s\S]*--logo-wordmark:#040606/);
   assert.match(css, /mer-logo:not\(:defined\)|mer-logo \{/);
-  assert.match(html, /class="auth-card-logo" tone="theme"/);
-  assert.match(html, /class="header-logo" tone="theme"/);
+  assert.equal((html.match(/<mer-logo\b/g) || []).length, 2);
+  assert.match(html, /class="auth-card-logo" variant="auto"/);
+  assert.match(html, /class="brand-wordmark-image" variant="negative"/);
 });

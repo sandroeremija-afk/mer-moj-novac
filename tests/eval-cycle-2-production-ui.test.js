@@ -5,8 +5,8 @@ test('cycle 2: authentication landing, registration, persistent session and logo
   assert.match(html,/id="authShell"/);assert.match(html,/id="loginForm"/);assert.match(html,/id="registerForm"/);assert.match(html,/id="demoLogin"/);assert.match(html,/id="logoutButton"/);assert.match(html,/auth-core\.js/);assert.match(html,/auth-ui\.js/);assert.match(css,/\.auth-shell \{[^}]*position:fixed/);assert.doesNotMatch(html,/type="password"[^>]*value=/);
 });
 
-test('cycle 2: header owns the section title and renders live date/time next to language',()=>{
-  const title=html.indexOf('id="activeModuleTitle"'),actions=html.indexOf('class="top-actions"',title),date=html.indexOf('id="systemDate"',actions),language=html.indexOf('class="language-switch"',actions);assert.ok(title<actions&&actions<date&&date<language);assert.match(app,/function renderSystemClock\(now=new Date\(\)\)/);assert.match(app,/setInterval\(\(\)=>renderSystemClock\(new Date\(\)\),30000\)/);assert.match(app,/MerCore\.greetingFor\(new Date\(\),currentLang/);assert.match(css,/\.page-heading h1 \{ display:none; \}/);
+test('cycle 2: header owns the title and ends with a compact date-only display',()=>{
+  const title=html.indexOf('id="activeModuleTitle"'),actions=html.indexOf('class="top-actions"',title),language=html.indexOf('class="language-switch"',actions),notification=html.indexOf('class="notification-wrap"',language),date=html.indexOf('id="systemDate"',notification);assert.ok(title<actions&&actions<language&&language<notification&&notification<date);assert.doesNotMatch(html,/id="systemTime"/);assert.match(app,/function renderSystemDate\(now=new Date\(\)\)/);assert.match(app,/setInterval\(\(\)=>renderSystemDate\(new Date\(\)\),60000\)/);assert.doesNotMatch(app,/timeLabel/);assert.match(app,/MerCore\.greetingFor\(new Date\(\),currentLang/);assert.match(css,/\.system-datetime time \{[^}]*font-size:\.5rem/);assert.match(css,/\.page-heading h1 \{ display:none; \}/);
 });
 
 test('cycle 2: Insights contains all four requested analytical visuals without a card scrollbar',()=>{

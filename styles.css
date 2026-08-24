@@ -39,12 +39,13 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 
 .app-shell { min-height: 100vh; }
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 252px; display: flex; flex-direction: column; padding: 30px 20px 22px; color: #fff; background: #010605; }
-.brand { display: flex; align-items: center; gap: 12px; padding: 0 10px; color: #fff; text-decoration: none; }
-.brand-wordmark-image { width: 75px; height: 33.33px; }
+.brand { display:flex; align-items:flex-start; flex-direction:column; gap:8px; padding:0 10px; color:#fff; text-decoration:none; }
+.brand-wordmark-image { width:132px; height:39.78px; }
 .mer-wordmark { font-size: 31px; line-height: 1; font-weight: 700; letter-spacing: -2.5px; }
 .mer-wordmark.dark { color: #000; }
-.product-name { padding-left: 12px; border-left: 1px solid rgba(255,255,255,.3); color: rgba(255,255,255,.82); font-size: 12px; font-weight: 600; letter-spacing: -.2px; }
-.nav-list { display: grid; gap: 6px; margin-top: 50px; }
+.product-name { color:rgba(255,255,255,.78); font-size:12px; font-weight:600; letter-spacing:.01em; }
+.sidebar-transaction-button { width:calc(100% - 20px); min-height:44px; justify-content:flex-start; margin:22px 10px 0; padding-inline:14px; box-shadow:0 8px 22px rgba(0,169,228,.18); }
+.nav-list { display:grid; gap:6px; margin-top:20px; }
 .nav-item { appearance: none; width: 100%; display: flex; align-items: center; gap: 13px; padding: 12px 14px; border: 0; border-radius: 8px; color: rgba(255,255,255,.68); background: transparent; cursor: pointer; text-align: left; font-size: 13px; font-weight: 600; transition: color .18s ease, background .18s ease; }
 .nav-item:hover { color: #fff; background: rgba(255,255,255,.07); }
 .nav-item.active { color: #fff; background: rgba(255,255,255,.12); box-shadow: inset 3px 0 var(--blue); }
@@ -67,8 +68,6 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .topbar { position: sticky; top: 0; z-index: 20; height: 76px; display: flex; align-items: center; justify-content: space-between; padding: 0 42px; border-bottom: 1px solid var(--line); background: rgba(245,247,246,.92); backdrop-filter: blur(15px); }
 .date-switcher, .top-actions { display: flex; align-items: center; gap: 8px; }
 .top-actions { gap: 12px; }
-.topbar-brand-context { min-width:0; display:flex; flex:1 1 auto; align-items:center; gap:14px; overflow:hidden; }
-.header-logo { width:56px; height:24.89px; padding-right:13px; border-right:1px solid var(--line-strong); }
 .module-heading { min-width: 0; display: flex; flex: 1 1 auto; flex-direction: column; gap: 3px; }
 .module-heading strong { overflow: hidden; font-size: 18px; line-height: 1.15; letter-spacing: -.35px; text-overflow: ellipsis; white-space: nowrap; }
 .month-label { min-width: 130px; text-align: center; font-size: 12px; font-weight: 700; }
@@ -307,7 +306,7 @@ h2 { font-size: 18px; line-height: 1.3; }
 .spend-check div { display: flex; flex-direction: column; }
 .spend-check strong { font-size: 10px; }
 .spend-check span { margin-top: 3px; color: inherit; opacity: .78; font-size: 9px; line-height: 1.4; }
-.assessment-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.assessment-head { display:flex; align-items:center; justify-content:flex-end; margin-bottom:28px; }
 .step-dots { display: flex; gap: 5px; }
 .step-dots span { width: 22px; height: 4px; border-radius: 8px; background: #e5eae8; }
 .step-dots span.active { background: var(--blue); }
@@ -627,7 +626,6 @@ h2 { font-size: 18px; line-height: 1.3; }
 .mfa-lock-screen[hidden] { display:none; }
 .mfa-locked .app-shell { visibility:hidden; }
 .lock-card { width:min(400px,100%); padding:34px; border-radius:16px; background:var(--panel); box-shadow:0 30px 80px rgba(0,0,0,.28); text-align:center; }
-.lock-card > img { width:76px; height:auto; margin-bottom:20px; }
 .lock-card h1 { margin-top:4px; font-size:22px; }
 .lock-card > p:not(.overline) { margin:8px 0 19px; color:var(--muted); font-size:9px; line-height:1.55; }
 .lock-card form { display:flex; flex-direction:column; gap:12px; text-align:left; }
@@ -693,8 +691,6 @@ h2 { font-size: 18px; line-height: 1.3; }
   .month-arrow, .notification-button { display: none; }
   .month-label { min-width: 0; font-size: 10px; }
   .top-actions { gap: 8px; }
-  .top-actions > .primary-button { width: 40px; padding: 0; }
-  .top-actions > .primary-button span { display: none; }
   .page { padding: 25px 16px 44px; }
   .page-heading { align-items: flex-start; margin-bottom: 24px; }
   .page-heading .secondary-button { width: 40px; min-width: 40px; padding: 0; }
@@ -769,7 +765,6 @@ h2 { font-size: 18px; line-height: 1.3; }
 @media (max-width: 380px) {
   .language-switch { padding: 2px; }
   .language-switch button { width: 26px; height: 28px; }
-  .top-actions > .primary-button { width: 36px; min-height: 36px; }
   .safe-ring { width: 102px; height: 102px; }
   .safe-ring strong { font-size: 21px; }
   .safe-copy > strong { font-size: 19px; }
@@ -835,7 +830,8 @@ body { height:100vh; height:100dvh; }
 
 @media (max-height:720px) and (min-width:801px) {
   .sidebar-plan { display:none; }
-  .nav-list { margin-top:28px; }
+  .nav-list { margin-top:15px; }
+  .sidebar-transaction-button { margin-top:15px; }
   .page { padding-top:22px; padding-bottom:20px; }
   .page-heading { margin-bottom:18px; }
   .page-heading .subtitle { display:none; }
@@ -882,8 +878,7 @@ body { height:100vh; height:100dvh; }
 [hidden] { display:none !important; }
 .auth-pending .auth-shell { visibility:hidden; }
 .auth-shell { position:fixed; z-index:2000; inset:0; min-height:100vh; min-height:100dvh; display:grid; grid-template-columns:minmax(360px,.95fr) minmax(440px,1.05fr); overflow:hidden; background:var(--panel); }
-.auth-brand-panel { position:relative; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; padding:48px 56px; color:#fff; background:linear-gradient(150deg,#092f27 0%,#16574b 58%,#0a8b78 100%); }
-.auth-brand-panel > .auth-hero-logo { position:relative; z-index:2; }
+.auth-brand-panel { position:relative; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden; padding:48px 56px; color:#fff; background:linear-gradient(150deg,#092f27 0%,#16574b 58%,#0a8b78 100%); }
 .auth-brand-panel > div { position:relative; z-index:2; max-width:560px; }
 .auth-brand-panel .overline { color:#bce982; }
 .auth-brand-panel h1 { max-width:520px; margin:12px 0 18px; font-size:clamp(32px,4vw,58px); line-height:1.02; letter-spacing:-.045em; }
@@ -895,7 +890,6 @@ body { height:100vh; height:100dvh; }
 .orbit-two { width:320px; height:320px; right:-80px; top:-70px; box-shadow:0 0 0 70px rgba(255,255,255,.025); }
 .auth-form-panel { display:grid; place-items:center; min-width:0; padding:34px; background:linear-gradient(135deg,var(--canvas),var(--panel)); }
 .auth-card { width:min(420px,100%); padding:38px; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:0 28px 80px rgba(11,48,40,.12); }
-.auth-card > img { width:78px; margin-bottom:26px; }
 .auth-card h2 { margin:7px 0 8px; font-size:24px; line-height:1.18; letter-spacing:-.03em; }
 .auth-intro,.auth-security-note { color:var(--muted); font-size:9px; line-height:1.55; }
 .auth-tabs { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin:24px 0 18px; padding:4px; border-radius:9px; background:var(--canvas); }
@@ -911,9 +905,9 @@ body { height:100vh; height:100dvh; }
 .auth-security-note { margin:12px 0 0; text-align:center; }
 .logout-option { margin-top:4px; color:#ffc5c7 !important; }
 .module-heading { flex:1 1 auto; min-width:0; margin:0; overflow:hidden; font-size:20px; line-height:1.1; letter-spacing:-.035em; text-overflow:ellipsis; white-space:nowrap; }
-.system-datetime { min-width:165px; display:flex; flex-direction:column; align-items:flex-end; gap:2px; padding-right:5px; }
-.system-datetime time { color:var(--ink); font-size:9px; font-weight:700; text-transform:capitalize; }
-.system-datetime span { color:var(--muted); font-size:8px; font-variant-numeric:tabular-nums; }
+.date-switcher { margin-left:2px; }
+.system-datetime { min-width:132px; max-width:150px; display:flex; align-items:center; justify-content:flex-end; }
+.system-datetime time { overflow:hidden; color:var(--muted); font-size:.5rem; line-height:1.25; font-weight:600; letter-spacing:.01em; text-align:right; text-overflow:ellipsis; text-transform:capitalize; white-space:nowrap; }
 .page-heading h1 { display:none; }
 .compact-page-heading { align-items:center; margin-bottom:16px; }
 .compact-page-heading #greetingHeading { margin:0 0 4px; font-size:20px; }
@@ -988,16 +982,15 @@ body { height:100vh; height:100dvh; }
 
 /* Fail-safe logo hosts: dimensions and readable fallback exist before JS upgrade. */
 mer-logo {
-  --logo-color:#050706;
+  --logo-wordmark:#040606;
   position:relative;
   display:inline-grid;
   place-items:center;
   flex:0 0 auto;
   min-width:0;
   min-height:0;
-  aspect-ratio:9 / 4;
+  aspect-ratio:531.352 / 160.076;
   overflow:hidden;
-  color:var(--logo-color);
   font-family:var(--font);
   font-size:24px;
   font-weight:700;
@@ -1005,20 +998,12 @@ mer-logo {
   line-height:1;
   contain:layout paint;
 }
-mer-logo[tone="dark"] { --logo-color:#fff; }
-mer-logo[tone="light"],
-mer-logo[tone="theme"] { --logo-color:#050706; }
-[data-theme="dark"] mer-logo[tone="theme"] { --logo-color:#fff; }
+mer-logo[variant="negative"] { --logo-wordmark:#fff; }
+mer-logo[variant="positive"],
+mer-logo[variant="auto"] { --logo-wordmark:#040606; }
+[data-theme="dark"] mer-logo[variant="auto"] { --logo-wordmark:#fff; }
 mer-logo:defined { font-size:0; letter-spacing:normal; }
-.auth-hero-logo { z-index:2; width:91px; height:40.44px; }
-.auth-card-logo { width:78px; height:34.67px; margin-bottom:26px; }
-.brand-wordmark-image,
-.assessment-logo { width:75px; height:33.33px; }
-.lock-logo { width:76px; height:33.78px; margin:0 auto 20px; }
-.settings-brand { display:flex; align-items:center; gap:11px; margin:0 42px 8px 0; }
-.settings-brand > span { width:1px; height:24px; background:var(--line-strong); }
-.settings-brand .overline { margin:0; }
-.settings-logo { width:62px; height:27.56px; }
+.auth-card-logo { width:128px; height:38.58px; margin-bottom:26px; }
 
 /* Auth panels stay locked to the viewport; only the form column may scroll. */
 .auth-shell {

@@ -193,11 +193,10 @@ function renderAccountContext() {
   $('#greetingHeading').textContent=MerCore.greetingFor(new Date(),currentLang,session?.name||state.accountName);
 }
 
-function renderSystemClock(now=new Date()) {
+function renderSystemDate(now=new Date()) {
   const timezone=appState.settings.timezone||'Europe/Zagreb';
   const dateLabel=new Intl.DateTimeFormat(locale(),{weekday:'short',day:'numeric',month:'long',year:'numeric',timeZone:timezone}).format(now);
-  const timeLabel=new Intl.DateTimeFormat(locale(),{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:timezone}).format(now);
-  $('#systemDate').textContent=dateLabel;$('#systemDate').dateTime=now.toISOString();$('#systemTime').textContent=timeLabel;
+  $('#systemDate').textContent=dateLabel;$('#systemDate').dateTime=now.toISOString();
   activeMonth=Number(new Intl.DateTimeFormat('en-US',{month:'numeric',timeZone:timezone}).format(now))-1;
   $('#greetingHeading').textContent=MerCore.greetingFor(now,currentLang,window.MerAuthProvider?.currentSession?.()?.name||state.accountName);
 }
@@ -205,7 +204,7 @@ function renderSystemClock(now=new Date()) {
 function renderMonth() {
   const date = new Date(new Date().getFullYear(), activeMonth, 1);
   $('#budgetMonthOverline').textContent = new Intl.DateTimeFormat(locale(), { month:'long' }).format(date).toUpperCase();
-  renderSystemClock();
+  renderSystemDate();
 }
 
 function renderOverview() {
@@ -809,7 +808,7 @@ $('#deleteIncomeCategory').addEventListener('click',()=>{const existing=state.in
 $('#activitySearch').addEventListener('input',renderActivity); $('#activityFilter').addEventListener('change',renderActivity);$('#activityTypeFilter').addEventListener('change',renderActivity);
 $$('#insightsFilters [data-timeframe]').forEach(button=>button.addEventListener('click',()=>{insightsTimeframe=button.dataset.timeframe;renderInsights();}));
 $('#openSubscriptions').addEventListener('click',()=>{renderSubscriptions();openModal($('#subscriptionsModal'));});
-setInterval(()=>renderSystemClock(new Date()),30000);
+setInterval(()=>renderSystemDate(new Date()),60000);
 window.addEventListener('resize',()=>{if(window.innerWidth>800)closeSidebar();});
 
 function syncBanksIfStale(){const stale=bankConnectionsFor().some(connection=>!connection.lastSyncedAt||Date.now()-new Date(connection.lastSyncedAt).getTime()>=300000);if(stale)syncActiveBankConnections({silent:true});}
