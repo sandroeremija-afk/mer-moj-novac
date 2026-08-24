@@ -41,6 +41,7 @@
     const sessionStorage = options.sessionStorage || globalThis.sessionStorage;
     const now = options.now || (() => Date.now());
     const sessionDurationMs = options.sessionDurationMs || 12 * 60 * 60 * 1000;
+    const passwordResetHandler = options.passwordResetHandler || (async () => ({ delivery: 'local-demo' }));
 
     const users = () => readJson(usersStorage, USERS_KEY, []);
     const saveUsers = records => usersStorage.setItem(USERS_KEY, JSON.stringify(records));
@@ -75,6 +76,18 @@
       return { ok: true, session: createSession(user, false) };
     }
 
+    async function requestPasswordReset({ email }) {
+      const cleanEmail = normalizeEmail(email);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return { ok: false, code: 'INVALID_EMAIL' };
+      const user = users().find(record => record.email === cleanEmail);
+      try {
+        const result = await passwordResetHandler({ email: cleanEmail, userId: user?.id || null });
+        return { ok: true, requestId: result?.requestId || null, delivery: result?.delivery || 'accepted' };
+      } catch {
+        return { ok: false, code: 'RESET_UNAVAILABLE' };
+      }
+    }
+
     function startDemo(name = 'Alex Morgan') {
       return createSession({ id: 'demo-user', name, email: 'demo@mer.local' }, true);
     }
@@ -90,7 +103,7 @@
 
     function signOut() { sessionStorage?.removeItem(SESSION_KEY); }
 
-    return { register, signIn, signOut, startDemo, currentSession, normalizeEmail };
+    return { register, signIn, requestPasswordReset, signOut, startDemo, currentSession, normalizeEmail };
   }
 
   return { USERS_KEY, SESSION_KEY, ITERATIONS, derivePassword, createLocalProvider, normalizeEmail };

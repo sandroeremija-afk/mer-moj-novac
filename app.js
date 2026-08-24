@@ -180,8 +180,12 @@ function applyStaticTranslations() {
 
 function applyTheme() {
   document.documentElement.dataset.theme=currentTheme;
-  $('#themeToggle').setAttribute('aria-pressed',String(currentTheme==='dark'));
-  $('#themeToggle span').textContent=t(currentTheme==='dark'?'lightMode':'darkMode');
+  const themeToggle=$('#themeToggle');
+  const themeLabel=t(currentTheme==='dark'?'lightMode':'darkMode');
+  themeToggle.setAttribute('aria-pressed',String(currentTheme==='dark'));
+  themeToggle.setAttribute('aria-label',themeLabel);
+  themeToggle.setAttribute('title',themeLabel);
+  $('span',themeToggle).textContent=themeLabel;
 }
 
 function renderAccountContext() {

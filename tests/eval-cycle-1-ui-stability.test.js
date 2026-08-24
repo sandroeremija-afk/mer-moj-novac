@@ -21,7 +21,7 @@ test('cycle 1: login and registration share a fixed-height auth grid', () => {
   assert.match(css, /\.auth-brand-panel,\s*\.auth-form-panel \{ height:100%; min-height:0; \}/);
   assert.match(css, /\.auth-form-panel \{[^}]*overflow-y:auto/s);
   assert.match(css, /\.auth-card \{[^}]*margin-block:auto/s);
-  assert.match(auth, /authShell\.dataset\.authMode=register\?'register':'login'/);
+  assert.match(auth, /authShell\.dataset\.authMode = register \? 'register' : 'login'/);
 });
 
 test('cycle 1: official brand-book vectors power one Auth logo and one sidebar logo', () => {
@@ -42,19 +42,34 @@ test('cycle 1: official brand-book vectors power one Auth logo and one sidebar l
   assert.doesNotMatch(logo, /(?:src=|href=|fetch\(|\.png|\.svg)/);
   assert.match(logo, /\.mark-blue \{ fill: #49a6e2; \}/);
   assert.match(logo, /\.mark-green \{ fill: #79c440; \}/);
+  assert.match(logo, /class="wordmark wordmark-e" fill-rule="evenodd" clip-rule="evenodd"/);
+  assert.equal((logo.match(/M419\.169 89\.377/g) || []).length, 1);
   assert.match(css, /mer-logo \{[^}]*aspect-ratio:531\.352 \/ 160\.076[^}]*overflow:hidden/s);
   assert.match(css, /\[data-theme="dark"\] mer-logo\[variant="auto"\] \{ --logo-wordmark:#fff; \}/);
   assert.doesNotMatch(html, /mer-wordmark-(?:positive|negative)\.(?:png|svg)/);
   assert.doesNotMatch(css, /content:url\([^)]*mer-wordmark/);
-  assert.ok(html.indexOf('<script src="logo.js?v=20260824-brand2"></script>') < html.indexOf('<script src="app.js?v=20260824-brand2"></script>'));
+  assert.ok(html.indexOf('<script src="logo.js?v=20260824-header3"></script>') < html.indexOf('<script src="app.js?v=20260824-header3"></script>'));
   assert.match(html, /<link rel="icon" type="image\/svg\+xml" href="assets\/mer-mark-full-color\.svg">/);
   for (const file of ['mer-logo-positive.svg', 'mer-logo-negative.svg', 'mer-mark-full-color.svg']) {
     const asset = fs.readFileSync(path.join(root, 'assets', file), 'utf8');
     assert.match(asset, /#49a6e2/);
     assert.match(asset, /#79c440/);
+    if (file !== 'mer-mark-full-color.svg') assert.match(asset, /fill-rule="evenodd" clip-rule="evenodd"/);
   }
   assert.match(fs.readFileSync(path.join(root, 'assets', 'mer-logo-positive.svg'), 'utf8'), /fill="#040606"/);
   assert.match(fs.readFileSync(path.join(root, 'assets', 'mer-logo-negative.svg'), 'utf8'), /fill="#fff"/);
+});
+
+test('cycle 1: Auth removes the old subtitle and exposes a localized password recovery dialog', () => {
+  assert.doesNotMatch(html, /Nastavite ondje gdje ste stali\.|Continue exactly where you left off\./);
+  assert.doesNotMatch(html, /class="auth-intro"/);
+  assert.match(html, /id="forgotPassword"[^>]*href="#password-reset"[^>]*aria-controls="passwordResetModal"/);
+  for (const id of ['passwordResetModal', 'passwordResetForm', 'passwordResetEmail', 'passwordResetSuccess', 'passwordResetDone']) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(auth, /provider\.requestPasswordReset/);
+  assert.match(auth, /passwordResetModal\.showModal\(\)/);
+  assert.match(css, /\.auth-reset-modal::backdrop/);
 });
 
 test('cycle 1: module headings and settings remain free of logo artifacts', () => {

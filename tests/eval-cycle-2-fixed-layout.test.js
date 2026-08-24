@@ -93,11 +93,15 @@ test('cycle 2: account dropdown is clean and the sidebar/header order is stable'
   assert.ok(sidebarIndex < brandIndex && brandIndex < sidebarTransactionIndex && sidebarTransactionIndex < navIndex);
   const moduleIndex = html.indexOf('id="activeModuleTitle"');
   const actionsIndex = html.indexOf('class="top-actions"', moduleIndex);
-  const languageIndex = html.indexOf('class="language-switch"', actionsIndex);
-  const notificationIndex = html.indexOf('class="notification-wrap"', languageIndex);
-  const dateIndex = html.indexOf('class="date-switcher"', notificationIndex);
+  const dateIndex = html.indexOf('class="date-switcher"', actionsIndex);
+  const clusterIndex = html.indexOf('class="header-action-cluster"', dateIndex);
+  const themeIndex = html.indexOf('id="themeToggle"', clusterIndex);
+  const notificationIndex = html.indexOf('class="notification-wrap"', themeIndex);
+  const languageIndex = html.indexOf('class="language-switch"', notificationIndex);
   assert.ok(moduleIndex > 0 && moduleIndex < actionsIndex);
-  assert.ok(actionsIndex < languageIndex && languageIndex < notificationIndex && notificationIndex < dateIndex);
+  assert.ok(actionsIndex < dateIndex && dateIndex < clusterIndex && clusterIndex < themeIndex && themeIndex < notificationIndex && notificationIndex < languageIndex);
+  const sidebarMarkup = html.slice(sidebarIndex, html.indexOf('</aside>', sidebarIndex));
+  assert.doesNotMatch(sidebarMarkup, /id="themeToggle"/);
   assert.doesNotMatch(html.slice(actionsIndex, html.indexOf('</header>', actionsIndex)), /data-open-transaction/);
   assert.doesNotMatch(html, /id="systemTime"/);
   assert.match(app, /const moduleTitleKeys = \{overview:'navOverview',budgets:'navBudgets',savings:'navSavings',activity:'navActivity',insights:'navInsights'\}/);
@@ -106,7 +110,7 @@ test('cycle 2: account dropdown is clean and the sidebar/header order is stable'
 
 test('cycle 2: centralized store loads before application bootstrap', () => {
   const storeIndex = html.indexOf('<script src="state-store.js"></script>');
-  const appIndex = html.indexOf('<script src="app.js?v=20260824-brand2"></script>');
+  const appIndex = html.indexOf('<script src="app.js?v=20260824-header3"></script>');
   assert.ok(storeIndex > 0);
   assert.ok(storeIndex < appIndex);
 });

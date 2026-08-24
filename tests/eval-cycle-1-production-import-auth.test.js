@@ -34,6 +34,18 @@ test('cycle 1: demo and logout affect session state without deleting local finan
   const provider=MerAuth.createLocalProvider({usersStorage,sessionStorage});provider.startDemo('Alex Morgan');assert.equal(provider.currentSession().demo,true);provider.signOut();assert.equal(provider.currentSession(),null);assert.equal(usersStorage.getItem('mer-money-v6'),'financial-state');
 });
 
+test('cycle 1: password recovery validates email and never reveals whether an account exists',async()=>{
+  const usersStorage=new MemoryStorage(),sessionStorage=new MemoryStorage(),requests=[];
+  const provider=MerAuth.createLocalProvider({usersStorage,sessionStorage,passwordResetHandler:async request=>{requests.push(request);return {requestId:`reset-${requests.length}`,delivery:'queued'};}});
+  await provider.register({name:'Ana Horvat',email:'ana@example.com',password:'sigurna-lozinka-2026'});
+  const existing=await provider.requestPasswordReset({email:' ANA@example.com '});
+  const missing=await provider.requestPasswordReset({email:'missing@example.com'});
+  const invalid=await provider.requestPasswordReset({email:'not-an-email'});
+  assert.equal(existing.ok,true);assert.equal(missing.ok,true);assert.equal(invalid.ok,false);assert.equal(invalid.code,'INVALID_EMAIL');
+  assert.equal(requests[0].email,'ana@example.com');assert.ok(requests[0].userId);assert.equal(requests[1].userId,null);
+  assert.deepEqual(Object.keys(existing).sort(),Object.keys(missing).sort());
+});
+
 test('cycle 1: Croatian merchant macros categorize every requested vendor family',()=>{
   const current=profile();
   const cases=[['Uber Zagreb','transport'],['HŽ Putnički prijevoz','transport'],['Croatia Airlines','transport'],['Lidl Hrvatska','food'],['Interspar Arena','food'],['Müller Zagreb','healthBeauty'],['Bipa 044','healthBeauty'],['Entrio ulaznice','entertainment'],['CineStar','entertainment'],['HEP Opskrba','utilities'],['Zagreb Holding','utilities']];
