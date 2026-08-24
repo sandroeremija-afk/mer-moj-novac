@@ -40,7 +40,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .app-shell { min-height: 100vh; }
 .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 252px; display: flex; flex-direction: column; padding: 30px 20px 22px; color: #fff; background: #010605; }
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 10px; color: #fff; text-decoration: none; }
-.brand-wordmark-image { display: block; width: 75px; height: auto; }
+.brand-wordmark-image { width: 75px; height: 33.33px; }
 .mer-wordmark { font-size: 31px; line-height: 1; font-weight: 700; letter-spacing: -2.5px; }
 .mer-wordmark.dark { color: #000; }
 .product-name { padding-left: 12px; border-left: 1px solid rgba(255,255,255,.3); color: rgba(255,255,255,.82); font-size: 12px; font-weight: 600; letter-spacing: -.2px; }
@@ -67,6 +67,8 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .topbar { position: sticky; top: 0; z-index: 20; height: 76px; display: flex; align-items: center; justify-content: space-between; padding: 0 42px; border-bottom: 1px solid var(--line); background: rgba(245,247,246,.92); backdrop-filter: blur(15px); }
 .date-switcher, .top-actions { display: flex; align-items: center; gap: 8px; }
 .top-actions { gap: 12px; }
+.topbar-brand-context { min-width:0; display:flex; flex:1 1 auto; align-items:center; gap:14px; overflow:hidden; }
+.header-logo { width:56px; height:24.89px; padding-right:13px; border-right:1px solid var(--line-strong); }
 .module-heading { min-width: 0; display: flex; flex: 1 1 auto; flex-direction: column; gap: 3px; }
 .module-heading strong { overflow: hidden; font-size: 18px; line-height: 1.15; letter-spacing: -.35px; text-overflow: ellipsis; white-space: nowrap; }
 .month-label { min-width: 130px; text-align: center; font-size: 12px; font-weight: 700; }
@@ -881,7 +883,7 @@ body { height:100vh; height:100dvh; }
 .auth-pending .auth-shell { visibility:hidden; }
 .auth-shell { position:fixed; z-index:2000; inset:0; min-height:100vh; min-height:100dvh; display:grid; grid-template-columns:minmax(360px,.95fr) minmax(440px,1.05fr); overflow:hidden; background:var(--panel); }
 .auth-brand-panel { position:relative; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden; padding:48px 56px; color:#fff; background:linear-gradient(150deg,#092f27 0%,#16574b 58%,#0a8b78 100%); }
-.auth-brand-panel > img { position:relative; z-index:2; width:91px; }
+.auth-brand-panel > .auth-hero-logo { position:relative; z-index:2; }
 .auth-brand-panel > div { position:relative; z-index:2; max-width:560px; }
 .auth-brand-panel .overline { color:#bce982; }
 .auth-brand-panel h1 { max-width:520px; margin:12px 0 18px; font-size:clamp(32px,4vw,58px); line-height:1.02; letter-spacing:-.045em; }
@@ -984,36 +986,39 @@ body { height:100vh; height:100dvh; }
   .system-datetime { display:none; }.advanced-insights-grid { grid-template-columns:1fr; }.insight-visual-card { min-height:220px; }
 }
 
-/* Adaptive secondary logotype system - brand book positive/negative rules. */
-.adaptive-logo {
+/* Fail-safe logo hosts: dimensions and readable fallback exist before JS upgrade. */
+mer-logo {
+  --logo-color:#050706;
   position:relative;
   display:inline-grid;
+  place-items:center;
   flex:0 0 auto;
   min-width:0;
   min-height:0;
   aspect-ratio:9 / 4;
   overflow:hidden;
+  color:var(--logo-color);
+  font-family:var(--font);
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:-.14em;
+  line-height:1;
+  contain:layout paint;
 }
-.adaptive-logo img {
-  grid-area:1 / 1;
-  width:100%;
-  height:100%;
-  display:block;
-  object-fit:contain;
-  object-position:center;
-  filter:contrast(3);
-}
-.adaptive-logo .logo-positive { content:url("assets/mer-wordmark-positive.svg"); }
-.adaptive-logo .logo-negative { display:none; content:url("assets/mer-wordmark-negative.svg"); }
-.adaptive-logo[data-logo-surface="dark"] .logo-positive,
-[data-theme="dark"] .adaptive-logo[data-logo-surface="theme"] .logo-positive { display:none; }
-.adaptive-logo[data-logo-surface="dark"] .logo-negative,
-[data-theme="dark"] .adaptive-logo[data-logo-surface="theme"] .logo-negative { display:block; }
+mer-logo[tone="dark"] { --logo-color:#fff; }
+mer-logo[tone="light"],
+mer-logo[tone="theme"] { --logo-color:#050706; }
+[data-theme="dark"] mer-logo[tone="theme"] { --logo-color:#fff; }
+mer-logo:defined { font-size:0; letter-spacing:normal; }
 .auth-hero-logo { z-index:2; width:91px; height:40.44px; }
 .auth-card-logo { width:78px; height:34.67px; margin-bottom:26px; }
 .brand-wordmark-image,
 .assessment-logo { width:75px; height:33.33px; }
 .lock-logo { width:76px; height:33.78px; margin:0 auto 20px; }
+.settings-brand { display:flex; align-items:center; gap:11px; margin:0 42px 8px 0; }
+.settings-brand > span { width:1px; height:24px; background:var(--line-strong); }
+.settings-brand .overline { margin:0; }
+.settings-logo { width:62px; height:27.56px; }
 
 /* Auth panels stay locked to the viewport; only the form column may scroll. */
 .auth-shell {

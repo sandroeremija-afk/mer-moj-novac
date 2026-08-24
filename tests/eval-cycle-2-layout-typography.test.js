@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const css = fs.readFileSync(path.join(__dirname, '..', 'styles.css'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
 test('cycle 2: Savings uses the remaining fixed viewport without a nested scrollbar', () => {
   assert.match(css, /#savingsView \{[^}]*display:flex[^}]*flex-direction:column[^}]*overflow:hidden/s);
@@ -30,3 +31,14 @@ test('cycle 2: the outer document and every main application module remain viewp
   assert.match(css, /\.view \{[^}]*height:100%[^}]*overflow:hidden/s);
 });
 
+test('cycle 2: logo geometry is stable and theme-adaptive across auth and application states', () => {
+  assert.match(css, /\.auth-hero-logo \{[^}]*width:91px[^}]*height:40\.44px/s);
+  assert.match(css, /\.auth-card-logo \{[^}]*width:78px[^}]*height:34\.67px/s);
+  assert.match(css, /\.header-logo \{[^}]*width:56px[^}]*height:24\.89px/s);
+  assert.match(css, /\.settings-logo \{[^}]*width:62px[^}]*height:27\.56px/s);
+  assert.match(css, /mer-logo\[tone="dark"\] \{ --logo-color:#fff; \}/);
+  assert.match(css, /mer-logo\[tone="light"\],[\s\S]*--logo-color:#050706/);
+  assert.match(css, /mer-logo:not\(:defined\)|mer-logo \{/);
+  assert.match(html, /class="auth-card-logo" tone="theme"/);
+  assert.match(html, /class="header-logo" tone="theme"/);
+});
