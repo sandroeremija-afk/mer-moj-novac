@@ -110,7 +110,7 @@ test('cycle 2: account dropdown is clean and the sidebar/header order is stable'
 
 test('cycle 2: centralized store loads before application bootstrap', () => {
   const storeIndex = html.indexOf('<script src="state-store.js"></script>');
-  const appIndex = html.indexOf('<script src="app.js?v=20260824-header3"></script>');
+  const appIndex = html.search(/<script src="app\.js(?:\?[^\"]*)?"><\/script>/);
   assert.ok(storeIndex > 0);
   assert.ok(storeIndex < appIndex);
 });

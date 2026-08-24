@@ -48,7 +48,9 @@ test('cycle 1: official brand-book vectors power one Auth logo and one sidebar l
   assert.match(css, /\[data-theme="dark"\] mer-logo\[variant="auto"\] \{ --logo-wordmark:#fff; \}/);
   assert.doesNotMatch(html, /mer-wordmark-(?:positive|negative)\.(?:png|svg)/);
   assert.doesNotMatch(css, /content:url\([^)]*mer-wordmark/);
-  assert.ok(html.indexOf('<script src="logo.js?v=20260824-header3"></script>') < html.indexOf('<script src="app.js?v=20260824-header3"></script>'));
+  const logoScriptIndex=html.search(/<script src="logo\.js(?:\?[^\"]*)?"><\/script>/);
+  const appScriptIndex=html.search(/<script src="app\.js(?:\?[^\"]*)?"><\/script>/);
+  assert.ok(logoScriptIndex>=0&&logoScriptIndex<appScriptIndex);
   assert.match(html, /<link rel="icon" type="image\/svg\+xml" href="assets\/mer-mark-full-color\.svg">/);
   for (const file of ['mer-logo-positive.svg', 'mer-logo-negative.svg', 'mer-mark-full-color.svg']) {
     const asset = fs.readFileSync(path.join(root, 'assets', file), 'utf8');

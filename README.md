@@ -35,6 +35,7 @@ Open `index.html` directly, or serve this folder from any static host. No build 
 - Brand-book-compliant adaptive wordmarks that switch between positive and negative variants by surface and theme while preserving the 9:4 aspect ratio
 - A stationary auth hero with an independently scrollable form column, a repaired fixed-height Savings canvas, and a semantic responsive type scale
 - Progressive-disclosure detail modals for secondary Dashboard, Budget, Savings, and Insights content
+- A volume-safe Budget category card with a bounded desktop list, subtle scrollbar, and searchable all-category manager with direct add/edit actions
 - Contextual CSV/Excel import and transaction export actions in Activity, Budgets, Insights, and Add Transaction
 - Clean Personal/Business account menu and focused Settings tabs without redundant transaction-import actions
 - Central reactive state store that recalculates balances, category totals, budget bars, and reports for both profiles after every mutation
@@ -57,7 +58,7 @@ The demo never asks for or stores real banking credentials. A production Open Ba
 
 ## Reactive one-page architecture
 
-`state-store.js` is the single commit boundary for app data. Every add, edit, delete, sync, import, savings-goal, and settings mutation passes through the store; both account profiles are recalculated before one synchronous UI notification. The app shell, main content, and document root are locked to `100vh`/`100dvh`. Primary modules fit without box scrollbars, secondary information opens in detail modals, and only Activity plus the 500+ row import-review table own vertical scroll state.
+`state-store.js` is the single commit boundary for app data. Every add, edit, delete, sync, import, savings-goal, and settings mutation passes through the store; both account profiles are recalculated before one synchronous UI notification. The app shell, main content, and document root are locked to `100vh`/`100dvh` on desktop. Primary modules stay inside that canvas, while Activity, the bounded Budget category list, and the 500+ row import-review table own intentional vertical scroll state. Secondary information opens in detail modals. Tablet and mobile layouts use natural vertical flow so cards remain readable.
 
 ## Run bank evaluations
 
@@ -82,4 +83,4 @@ node tests/eval-cycle-2-fixed-layout.test.js
 
 ## Verification
 
-The complete suite currently passes 63 automated checks across auth/session security, CSV/Excel/CAMT parsing, Croatian merchant categorization, PSD2 contracts, sync/deduplication, MFA, reactive state, round-up/profile isolation, goal/rule isolation, adaptive logos, idle behavior, typography, navigation, and fixed-layout contracts. Interactive browser evaluation at 1920×1080, 1440×900, 1366×768, and 1440×720 verified zero outer scroll and zero module clipping outside Activity, a zero-pixel Login/Register hero shift, correct light/dark logo variants, an intact Savings bottom card, explicit-only Settings opening, no runtime errors, and harmonious semantic typography across all five modules.
+The complete suite currently passes 84 automated checks across auth/session security, CSV/Excel/CAMT parsing, Croatian merchant categorization, PSD2 contracts, sync/deduplication, MFA, reactive state, round-up/profile isolation, goal/rule isolation, adaptive logos, idle behavior, typography, navigation, responsive layouts, modal routing, and fixed-layout contracts. Interactive browser evaluation with 16 Budget categories verified a fixed root canvas, a bounded internally scrollable category card, search and status filtering, real-time limit synchronization, clean close/backdrop behavior, and no runtime errors.

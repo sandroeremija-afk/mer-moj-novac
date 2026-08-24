@@ -52,6 +52,9 @@ Object.assign(translations.en, {
 Object.assign(translations.hr,{logout:'Odjava',healthBeauty:'Drogerija i osobna njega',advancedInsights:'Napredni financijski uvidi',categoryDonutTitle:'Potrošnja po kategoriji',expensesShort:'troškovi',merchantBreakdown:'TOP TRGOVCI',topFiveMerchants:'Najveći primatelji',manageSubscriptions:'Upravljaj pretplatama',savingsHealth:'ZDRAVLJE ŠTEDNJE',ofIncome:'od prihoda',subscriptionManager:'UPRAVLJANJE PRETPLATAMA',recurringSubscriptions:'Ponavljajuće pretplate',subscriptionIntro:'Mer prepoznaje poznate servise i mjesečni ritam naplate. Prije obnove provjerite iznos i kategoriju.',detectedSubscriptions:'Otkrivene pretplate',monthlySubscriptionCost:'Procijenjeni mjesečni trošak',renewsIn:'Obnova za {days} dana',noSubscriptions:'Nema otkrivenih pretplata.',roundUps:'Zaokruživanje',roundUpsHint:'Razlika do sljedećeg punog eura ide u ovaj trezor.',monthlyRequired:'Potrebno mjesečno',daysToGoal:'{days} dana do cilja',openBankingArchitecture:'PSD2 adapteri spremni'});
 Object.assign(translations.en,{logout:'Log out',healthBeauty:'Health & beauty',advancedInsights:'Advanced financial insights',categoryDonutTitle:'Category spending',expensesShort:'expenses',merchantBreakdown:'TOP MERCHANTS',topFiveMerchants:'Largest recipients',manageSubscriptions:'Manage subscriptions',savingsHealth:'SAVINGS HEALTH',ofIncome:'of income',subscriptionManager:'SUBSCRIPTION MANAGER',recurringSubscriptions:'Recurring subscriptions',subscriptionIntro:'Mer detects known services and monthly payment cadence. Review the amount and category before renewal.',detectedSubscriptions:'Detected subscriptions',monthlySubscriptionCost:'Estimated monthly cost',renewsIn:'Renews in {days} days',noSubscriptions:'No subscriptions detected.',roundUps:'Spare change round-ups',roundUpsHint:'The difference to the next whole euro moves into this vault.',monthlyRequired:'Required monthly',daysToGoal:'{days} days to goal',openBankingArchitecture:'PSD2 adapters ready'});
 
+Object.assign(translations.hr,{budgetCategoryList:'Popis budžetskih kategorija',showAllCategories:'Prikaži sve',manageBudgetCategories:'Upravljaj kategorijama',budgetManagerIntro:'Pretražite sve kategorije, provjerite potrošnju i uredite mjesečne limite.',addBudget:'Dodaj budžet',searchBudgetCategories:'Pretraži kategorije',filterBudgetStatus:'Filtriraj po statusu budžeta',allBudgetStatuses:'Svi statusi',withinBudgetStatus:'Dostupno',nearLimitStatus:'Blizu limita',limitReachedStatus:'Dosegnut limit',editBudgetHint:'Odaberite olovku za izravno uređivanje limita.',usage:'Iskorištenost',spentVsLimit:'Potrošeno / limit',actions:'Radnje',noBudgetCategories:'Nema odgovarajućih kategorija',tryDifferentBudgetFilter:'Pokušajte s drugim pojmom ili statusom.',budgetCategoryCount:'Prikazano {visible} od {total} kategorija'});
+Object.assign(translations.en,{budgetCategoryList:'Budget category list',showAllCategories:'Show all',manageBudgetCategories:'Manage categories',budgetManagerIntro:'Search every category, review spending, and edit monthly limits.',addBudget:'Add budget',searchBudgetCategories:'Search categories',filterBudgetStatus:'Filter by budget status',allBudgetStatuses:'All statuses',withinBudgetStatus:'Available',nearLimitStatus:'Near limit',limitReachedStatus:'Limit reached',editBudgetHint:'Select the pencil to edit a limit directly.',usage:'Usage',spentVsLimit:'Spent / limit',actions:'Actions',noBudgetCategories:'No matching categories',tryDifferentBudgetFilter:'Try another search term or status.',budgetCategoryCount:'Showing {visible} of {total} categories'});
+
 const categoryMeta = {
   food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, healthBeauty:{icon:'N',className:'shopping'}, utilities:{icon:'R',className:'other'}, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
 };
@@ -140,6 +143,7 @@ let activeInsightDetail = null;
 let activityReviewOnly = false;
 let selectedBankProviderId = null;
 let bankSyncInProgress = false;
+let returnToBudgetManager = false;
 
 const t = (key, values = {}) => {
   let text = translations[currentLang][key] ?? translations.hr[key] ?? key;
@@ -283,13 +287,35 @@ function renderBudgetView() {
   $('#allocationProgress').style.width = `${Math.min(100,allocationPercent)}%`;
   $('.allocation-bar').classList.toggle('over', allocationPercent > 100);
   $('#allocationCopy').textContent = t('allocationCopy',{allocated:currency(allocated,true),budget:currency(plan.monthlyBudget,true)});
-  $('#budgetTable').innerHTML = state.categories.map(cat => {
-    const pct = cat.limit ? Math.round(cat.spent / cat.limit * 100) : 100;
-    const meta = categoryVisual(cat);
-    const remaining = Math.max(0, cat.limit - cat.spent);
-    return `<div class="budget-row"><div class="budget-category"><span class="category-icon ${meta.className}">${meta.icon}</span><div><strong>${categoryName(cat.id)}</strong><small class="${pct>=80?'threshold-warning':''}">${pct>=80?thresholdMessage(pct):`${currency(remaining,true)} ${currentLang==='hr'?'preostalo':'remaining'}`}</small></div></div><div class="budget-row-progress"><div class="budget-bar"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div><span class="budget-percent">${pct}%</span></div><div class="budget-row-value">${currency(cat.spent,true)} / ${currency(cat.limit,true)}</div><button class="icon-button small edit-budget" data-edit-budget="${cat.id}" aria-label="${currentLang === 'hr' ? 'Uredi budžet za' : 'Edit budget for'} ${categoryName(cat.id)}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
-  }).join('');
-  $$('[data-edit-budget]').forEach(button => button.addEventListener('click', () => openBudgetEditor(button.dataset.editBudget)));
+  $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
+  if($('#budgetCategoriesModal').open)renderBudgetCategoryManager();
+}
+
+function budgetCategoryPercent(cat) { return cat.limit ? Math.round(cat.spent / cat.limit * 100) : (cat.spent ? 100 : 0); }
+
+function budgetCategoryRow(cat, manager=false) {
+  const pct=budgetCategoryPercent(cat),meta=categoryVisual(cat),remaining=Math.max(0,cat.limit-cat.spent),name=categoryName(cat.id),safeId=escapeHtml(cat.id),safeName=escapeHtml(name);
+  return `<div class="budget-row${manager?' budget-manager-row':''}"><div class="budget-category"><span class="category-icon ${meta.className}">${escapeHtml(meta.icon)}</span><div><strong>${safeName}</strong><small class="${pct>=80?'threshold-warning':''}">${pct>=80?thresholdMessage(pct):`${currency(remaining,true)} ${currentLang==='hr'?'preostalo':'remaining'}`}</small></div></div><div class="budget-row-progress"><div class="budget-bar"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div><span class="budget-percent">${pct}%</span></div><div class="budget-row-value">${currency(cat.spent,true)} / ${currency(cat.limit,true)}</div><button type="button" class="icon-button small edit-budget" data-edit-budget="${safeId}" aria-label="${currentLang==='hr'?'Uredi budžet za':'Edit budget for'} ${safeName}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
+}
+
+function budgetCategoryMatchesStatus(cat,status) {
+  const pct=budgetCategoryPercent(cat);
+  return status==='all'||(status==='available'&&pct<80)||(status==='warning'&&pct>=80&&pct<100)||(status==='exceeded'&&pct>=100);
+}
+
+function renderBudgetCategoryManager() {
+  const query=$('#budgetCategorySearch').value.trim().toLocaleLowerCase(locale()),status=$('#budgetCategoryStatusFilter').value;
+  const filtered=state.categories.filter(cat=>categoryName(cat.id).toLocaleLowerCase(locale()).includes(query)&&budgetCategoryMatchesStatus(cat,status));
+  $('#budgetCategoryResultCount').textContent=t('budgetCategoryCount',{visible:filtered.length,total:state.categories.length});
+  $('#budgetCategoryModalList').innerHTML=filtered.map(cat=>budgetCategoryRow(cat,true)).join('');
+  $('#budgetCategoryManagerEmpty').hidden=filtered.length>0;
+}
+
+function openBudgetCategoryManager({reset=false}={}) {
+  if(reset){$('#budgetCategorySearch').value='';$('#budgetCategoryStatusFilter').value='all';}
+  renderBudgetCategoryManager();
+  openModal($('#budgetCategoriesModal'));
+  setTimeout(()=>$('#budgetCategorySearch').focus(),50);
 }
 
 function savingsFinishDate() {
@@ -950,7 +976,14 @@ $('#syncNow').addEventListener('click',()=>syncActiveBankConnections());
 $('#uncategorizedBadge').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
 $('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;renderActivity();});
 $('#settingsExportCsv').addEventListener('click',exportCsv);
-$('#addCategory').addEventListener('click',()=>openBudgetEditor());
+$('#addCategory').addEventListener('click',()=>{returnToBudgetManager=false;openBudgetEditor();});
+$('#manageBudgetCategories').addEventListener('click',()=>openBudgetCategoryManager({reset:true}));
+$('#budgetCategoryManagerAdd').addEventListener('click',()=>{returnToBudgetManager=true;openBudgetEditor();});
+$('#budgetCategorySearch').addEventListener('input',renderBudgetCategoryManager);
+$('#budgetCategoryStatusFilter').addEventListener('change',renderBudgetCategoryManager);
+const handleBudgetEdit=event=>{const button=event.target.closest('[data-edit-budget]');if(!button)return;returnToBudgetManager=Boolean(button.closest('#budgetCategoriesModal'));openBudgetEditor(button.dataset.editBudget);};
+$('#budgetTable').addEventListener('click',handleBudgetEdit);
+$('#budgetCategoryModalList').addEventListener('click',handleBudgetEdit);
 $('#addRecurring').addEventListener('click',()=>openRecurring());
 $('#addIncomeCategory').addEventListener('click',()=>openIncomeCategoryEditor());
 $('#themeToggle').addEventListener('click',toggleTheme);$$('[data-account]').forEach(button=>button.addEventListener('click',()=>switchAccount(button.dataset.account)));
@@ -979,8 +1012,8 @@ $('#assessmentBack').addEventListener('click',()=>setAssessmentStep(Math.max(1,a
 $$('#assessmentForm input').forEach(input=>input.addEventListener('input',()=>{if(assessmentStep===3)updateRecommendation();}));
 $('#assessmentForm').addEventListener('submit',event=>{event.preventDefault();const income=Number($('#incomeInput').value),bills=Number($('#billsInput').value),savings=Number($('#savingsInput').value),balance=Number($('#savingsBalanceInput').value),guard=Number($('input[name="guard"]:checked').value);const newBudget=income-bills-savings-income*guard;if(newBudget<state.spent||newBudget<=0){showToast(t('planInvalid'));return;}state.income=income;state.bills=bills;state.savingsTarget=savings;state.guard=guard;const primaryGoal=state.goalBuckets?.find(goal=>goal.primary)||state.goalBuckets?.[0];if(primaryGoal)primaryGoal.current=balance;const allocated=state.categories.reduce((sum,cat)=>sum+cat.limit,0);if(allocated>newBudget)scaleCategoryLimits(newBudget);save('plan-update');closeModal($('#assessmentModal'));showToast(t('planReady'));});
 
-$('#budgetForm').addEventListener('submit',event=>{event.preventDefault();const cat=editingCategoryId?state.categories.find(item=>item.id===editingCategoryId):null,name=$('#categoryNameInput').value.trim(),value=Number($('#budgetLimitInput').value),plan=getPlan(),otherAllocated=state.categories.reduce((sum,item)=>sum+item.limit,0)-(cat?.limit||0),validation=MerCore.validateCategoryLimit(value,cat?.spent||0,otherAllocated,plan.monthlyBudget);if(!name){showToast(t('categoryNameRequired'));return;}if(state.categories.some(item=>item.id!==editingCategoryId&&categoryName(item.id).toLocaleLowerCase(locale())===name.toLocaleLowerCase(locale()))){showToast(t('duplicateCategory'));return;}if(!validation.valid){showToast(t(validation.reason==='below-spent'?'limitTooLow':'allocationTooHigh'));return;}if(cat){if(cat.isCustom){cat.name=name;cat.icon=$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase();}cat.limit=value;}else{state.categories.push({id:`custom-${Date.now()}`,name,icon:$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase(),spent:0,limit:value,isCustom:true});}save(cat?'category-edit':'category-add');closeModal($('#budgetModal'));showToast(t(cat?'categoryUpdated':'categoryCreated'));});
-$('#deleteCategory').addEventListener('click',()=>{const cat=state.categories.find(item=>item.id===editingCategoryId);if(!cat?.isCustom)return;const fallback=fallbackCategory(cat.id);fallback.spent+=cat.spent;fallback.limit+=cat.limit;state.transactions.forEach(tx=>{if(tx.category===cat.id)tx.category=fallback.id;});(state.recurring||[]).forEach(rule=>{if(rule.category===cat.id)rule.category=fallback.id;});state.categories=state.categories.filter(item=>item.id!==cat.id);save('category-delete');closeModal($('#budgetModal'));showToast(t('categoryDeleted'));editingCategoryId=null;});
+$('#budgetForm').addEventListener('submit',event=>{event.preventDefault();const cat=editingCategoryId?state.categories.find(item=>item.id===editingCategoryId):null,name=$('#categoryNameInput').value.trim(),value=Number($('#budgetLimitInput').value),plan=getPlan(),otherAllocated=state.categories.reduce((sum,item)=>sum+item.limit,0)-(cat?.limit||0),validation=MerCore.validateCategoryLimit(value,cat?.spent||0,otherAllocated,plan.monthlyBudget);if(!name){showToast(t('categoryNameRequired'));return;}if(state.categories.some(item=>item.id!==editingCategoryId&&categoryName(item.id).toLocaleLowerCase(locale())===name.toLocaleLowerCase(locale()))){showToast(t('duplicateCategory'));return;}if(!validation.valid){showToast(t(validation.reason==='below-spent'?'limitTooLow':'allocationTooHigh'));return;}if(cat){if(cat.isCustom){cat.name=name;cat.icon=$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase();}cat.limit=value;}else{state.categories.push({id:`custom-${Date.now()}`,name,icon:$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase(),spent:0,limit:value,isCustom:true});}save(cat?'category-edit':'category-add');closeModal($('#budgetModal'));showToast(t(cat?'categoryUpdated':'categoryCreated'));if(returnToBudgetManager){returnToBudgetManager=false;openBudgetCategoryManager();}});
+$('#deleteCategory').addEventListener('click',()=>{const cat=state.categories.find(item=>item.id===editingCategoryId);if(!cat?.isCustom)return;const fallback=fallbackCategory(cat.id);fallback.spent+=cat.spent;fallback.limit+=cat.limit;state.transactions.forEach(tx=>{if(tx.category===cat.id)tx.category=fallback.id;});(state.recurring||[]).forEach(rule=>{if(rule.category===cat.id)rule.category=fallback.id;});state.categories=state.categories.filter(item=>item.id!==cat.id);save('category-delete');closeModal($('#budgetModal'));showToast(t('categoryDeleted'));editingCategoryId=null;if(returnToBudgetManager){returnToBudgetManager=false;openBudgetCategoryManager();}});
 
 $('#savingsAmountInput').addEventListener('input',updateSavingsCheck);
 $('#savingsForm').addEventListener('submit',event=>{event.preventDefault();if(!updateSavingsCheck())return;const amount=Number($('#savingsAmountInput').value),note=$('#savingsNoteInput').value.trim(),goalId=$('#savingsGoalInput').value,existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null,difference=amount-(existing?.amount||0);if(existing){MerCore.applySavingsContribution(state,existing.goalId,existing.amount,-1);MerCore.applySavingsContribution(state,goalId,amount,1);existing.amount=amount;existing.note=note;existing.goalId=goalId;}else{const applied=MerCore.applySavingsContribution(state,goalId,amount,1);if(!applied.valid){showToast(t('goalInvalid'));return;}state.savingsEntries=state.savingsEntries||[];state.savingsEntries.push({id:`s-${Date.now()}`,amount,note,goalId,date:'2026-08-20T12:00:00'});}state.savingsHistory[state.savingsHistory.length-1]+=difference;save(existing?'savings-edit':'savings-add');closeModal($('#savingsModal'));showToast(t(existing?'savingsUpdated':'depositAdded',{amount:currency(amount,true)}));editingSavingsId=null;});
