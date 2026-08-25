@@ -167,8 +167,21 @@
     </section>
 
     <section class="settings-pane" data-settings-panel="automation" hidden>
-      <div class="settings-pane-heading"><div><p class="overline" data-i18n="smartRules">PAMETNA PRAVILA</p><h3 data-i18n="automationRules">Automatska kategorizacija</h3></div><span class="status-pill" id="rulesProfileBadge">Osobni račun</span></div><p class="modal-intro" data-i18n="automationIntro">Prvo pravilo čiji je pojam pronađen u opisu automatski određuje vrstu i kategoriju budućih uvoza i bankovnih transakcija.</p>
-      <form class="rule-form" id="automationRuleForm"><label><span data-i18n="descriptionContains">Opis sadrži</span><input id="ruleKeyword" type="text" maxlength="40" required placeholder="npr. Uber"></label><label><span data-i18n="type">Vrsta</span><select id="ruleType"><option value="expense" data-i18n="expense">Trošak</option><option value="income" data-i18n="income">Prihod</option></select></label><label><span data-i18n="category">Kategorija</span><select id="ruleCategory"></select></label><button type="submit" class="primary-button compact-button" data-i18n="addRule">Dodaj pravilo</button></form><div class="automation-rule-list" id="automationRuleList"></div>
+      <div class="settings-pane-heading"><div><p class="overline" data-i18n="smartRules">AUTO-KATEGORIZACIJA</p><h3 data-i18n="automationRules">Pravila za uvezene transakcije</h3></div><span class="status-pill" id="rulesProfileBadge">Osobni račun</span></div>
+      <p class="rules-subtitle" data-i18n="automationSubtitle">Automatski dodijelite kategorije uvezenim bankovnim transakcijama na temelju ključnih riječi.</p>
+      <form class="rule-builder" id="automationRuleForm">
+        <div class="rule-builder-step">
+          <span class="rule-step-badge" data-i18n="ruleIf">AKO</span>
+          <label><span data-i18n="ruleIfContains">Naziv transakcije sadrži</span><input id="ruleKeyword" type="text" maxlength="40" required placeholder="npr. Uber" data-i18n-placeholder="ruleKeywordPlaceholder"></label>
+        </div>
+        <span class="rule-builder-arrow" aria-hidden="true">→</span>
+        <div class="rule-builder-step">
+          <span class="rule-step-badge then" data-i18n="ruleThen">ONDA</span>
+          <div class="rule-result-fields"><label><span data-i18n="type">Vrsta</span><select id="ruleType"><option value="expense" data-i18n="expense">Trošak</option><option value="income" data-i18n="income">Prihod</option></select></label><label><span data-i18n="ruleAssignCategory">Dodijeli kategoriju</span><select id="ruleCategory"></select></label></div>
+        </div>
+        <button type="submit" class="primary-button rule-builder-submit" data-i18n="addRule">Dodaj pravilo</button>
+      </form>
+      <div class="automation-rule-list" id="automationRuleList" aria-live="polite"></div>
     </section>
 
     <section class="settings-pane" data-settings-panel="banks" hidden>

@@ -517,7 +517,14 @@ function renderBankSettings() {
   renderProviderPicker();
 }
 
-function openBankSettings() { toggleAccountMenu(false);selectedBankProviderId=null;$('#bankConnectForm').hidden=true;renderBankSettings();openModal($('#bankSettingsModal')); }
+function openBankSettings() {
+  selectedBankProviderId=null;
+  $('#bankConnectForm').hidden=true;
+  if(window.MerSettings?.open){window.MerSettings.open('banks');return;}
+  toggleAccountMenu(false);
+  renderBankSettings();
+  openModal($('#bankSettingsModal'));
+}
 
 async function syncBankConnection(connection,{silent=false}={}) {
   const profile=appState.accounts[connection.profileId];if(!profile)return {imported:0,duplicates:0,uncategorized:0,error:'DISCONNECTED'};
