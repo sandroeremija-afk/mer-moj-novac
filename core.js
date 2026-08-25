@@ -306,6 +306,65 @@
     return totals;
   }
 
+  function calculateFinancials(profile, referenceValue = new Date(), options = {}) {
+    const reference = dateOnly(referenceValue);
+    const transactions = Array.isArray(profile?.transactions) ? profile.transactions : [];
+    const monthly = transactionTotals(transactions, 'monthly', reference);
+    const allTime = transactionTotals(transactions, 'all', reference);
+    const plannedIncome = Math.max(0, financialAmount(profile?.income));
+    const bills = Math.max(0, financialAmount(profile?.bills));
+    const savingsTarget = Math.max(0, financialAmount(profile?.savingsTarget));
+    const guard = Math.max(0, Math.min(1, financialAmount(profile?.guard)));
+    const buffer = roundMoney(plannedIncome * guard);
+    const protectedCommitments = roundMoney(bills + savingsTarget + buffer);
+    const incomeAdjustment = roundMoney(monthly.income - plannedIncome);
+    const spendablePool = roundMoney(monthly.income - protectedCommitments);
+    const monthlyBudget = Math.max(0, spendablePool);
+    const safeToSpend = roundMoney(spendablePool - monthly.expenses);
+    const configuredDays = Number(options.daysRemaining);
+    const days = Number.isFinite(configuredDays) && configuredDays > 0
+      ? Math.max(1, Math.floor(configuredDays))
+      : Math.max(1, daysInMonth(reference.getUTCFullYear(), reference.getUTCMonth()) - reference.getUTCDate() + 1);
+    const safeDaily = roundMoney(safeToSpend / days);
+    const openingBalance = financialAmount(options.openingBalance ?? profile?.financialOpeningBalance ?? profile?.reactiveBalanceAnchor);
+    const savingsBalance = Math.max(0, financialAmount(options.savingsBalance ?? profile?.savingsBalance));
+    const availableBalance = roundMoney(openingBalance + allTime.net - savingsBalance);
+    const allocatedBudget = roundMoney((profile?.categories || []).reduce((sum, category) => sum + Math.max(0, financialAmount(category.limit)), 0));
+    const unallocatedBudget = roundMoney(monthlyBudget - allocatedBudget);
+    const spentPercent = monthlyBudget > 0 ? monthly.expenses / monthlyBudget * 100 : monthly.expenses > 0 ? 100 : 0;
+    const safePercent = monthlyBudget > 0 ? Math.max(0, Math.min(100, safeToSpend / monthlyBudget * 100)) : 0;
+    return {
+      monthly,
+      allTime,
+      availableBalance,
+      openingBalance,
+      savingsBalance,
+      plannedIncome,
+      monthlyIncome:monthly.income,
+      monthlyExpenses:monthly.expenses,
+      cashFlowNet:monthly.net,
+      bills,
+      savingsTarget,
+      guard,
+      buffer,
+      protectedCommitments,
+      incomeAdjustment,
+      spendablePool,
+      monthlyBudget,
+      allocatedBudget,
+      unallocatedBudget,
+      safeToSpend,
+      safeRemaining:safeToSpend,
+      safeDaily,
+      days,
+      spentPercent,
+      safePercent,
+      overBudget:Math.max(0, roundMoney(-safeToSpend))
+    };
+  }
+
+  const FinancialEngine = Object.freeze({ calculate:calculateFinancials });
+
   function categoryExpenseTotals(transactions, timeframe = 'monthly', referenceValue = new Date()) {
     const signedTotals = {};
     filterTransactions(transactions, timeframe, referenceValue).forEach(transaction => {
@@ -488,6 +547,8 @@
     importBankTransactions,
     filterTransactions,
     transactionTotals,
+    calculateFinancials,
+    FinancialEngine,
     categoryExpenseTotals,
     proportionalSegments,
     chartDomain,

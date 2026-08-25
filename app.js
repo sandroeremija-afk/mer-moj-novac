@@ -53,6 +53,8 @@ Object.assign(translations.hr,{logout:'Odjava',healthBeauty:'Drogerija i osobna 
 Object.assign(translations.en,{logout:'Log out',healthBeauty:'Health & beauty',advancedInsights:'Advanced financial insights',categoryDonutTitle:'Category spending',expensesShort:'expenses',merchantBreakdown:'TOP MERCHANTS',topFiveMerchants:'Largest recipients',manageSubscriptions:'Manage subscriptions',savingsHealth:'SAVINGS HEALTH',ofIncome:'of income',subscriptionManager:'SUBSCRIPTION MANAGER',recurringSubscriptions:'Recurring subscriptions',subscriptionIntro:'Mer detects known services and monthly payment cadence. Review the amount and category before renewal.',detectedSubscriptions:'Detected subscriptions',monthlySubscriptionCost:'Estimated monthly cost',renewsIn:'Renews in {days} days',noSubscriptions:'No subscriptions detected.',roundUps:'Spare change round-ups',roundUpsHint:'The difference to the next whole euro moves into this vault.',monthlyRequired:'Required monthly',daysToGoal:'{days} days to goal',openBankingArchitecture:'PSD2 adapters ready'});
 Object.assign(translations.hr,{transactionTotalBlocked:'Ova transakcija premašuje mjesečni budžet',reduceBy:'Unos će biti spremljen, a budžet prikazan kao prekoračen za {amount}.',transactionCategoryBlocked:'Ova transakcija premašuje budžet kategorije',categoryOverBy:'Unos će biti spremljen. {category} će biti {amount} iznad limita.',transactionDailyWarning:'Iznos je veći od dnevnog plana',transactionDailySoftNote:'Unos će biti spremljen. Dnevni plan iznosi {amount}.',transactionAddedOverBudget:'Transakcija je spremljena. Budžet je prekoračen za {amount}.'});
 Object.assign(translations.en,{transactionTotalBlocked:'This transaction exceeds the monthly budget',reduceBy:'The entry will be saved and the budget will show an overage of {amount}.',transactionCategoryBlocked:'This transaction exceeds the category budget',categoryOverBy:'The entry will be saved. {category} will be {amount} over its limit.',transactionDailyWarning:'The amount is above the daily plan',transactionDailySoftNote:'The entry will be saved. The daily plan is {amount}.',transactionAddedOverBudget:'Transaction saved. The budget is over by {amount}.'});
+Object.assign(translations.hr,{incomeImpact:'Raspoloživo stanje povećat će se na {balance}, a sigurno za potrošiti na {safe}.'});
+Object.assign(translations.en,{incomeImpact:'Available balance will increase to {balance}, and safe to spend to {safe}.'});
 
 Object.assign(translations.hr,{budgetCategoryList:'Popis budžetskih kategorija',showAllCategories:'Prikaži sve',manageBudgetCategories:'Upravljaj kategorijama',budgetManagerIntro:'Pretražite sve kategorije, provjerite potrošnju i uredite mjesečne limite.',addBudget:'Dodaj budžet',searchBudgetCategories:'Pretraži kategorije',filterBudgetStatus:'Filtriraj po statusu budžeta',allBudgetStatuses:'Svi statusi',withinBudgetStatus:'Dostupno',nearLimitStatus:'Blizu limita',limitReachedStatus:'Dosegnut limit',editBudgetHint:'Odaberite olovku za izravno uređivanje limita.',usage:'Iskorištenost',spentVsLimit:'Potrošeno / limit',actions:'Radnje',noBudgetCategories:'Nema odgovarajućih kategorija',tryDifferentBudgetFilter:'Pokušajte s drugim pojmom ili statusom.',budgetCategoryCount:'Prikazano {visible} od {total} kategorija'});
 Object.assign(translations.en,{budgetCategoryList:'Budget category list',showAllCategories:'Show all',manageBudgetCategories:'Manage categories',budgetManagerIntro:'Search every category, review spending, and edit monthly limits.',addBudget:'Add budget',searchBudgetCategories:'Search categories',filterBudgetStatus:'Filter by budget status',allBudgetStatuses:'All statuses',withinBudgetStatus:'Available',nearLimitStatus:'Near limit',limitReachedStatus:'Limit reached',editBudgetHint:'Select the pencil to edit a limit directly.',usage:'Usage',spentVsLimit:'Spent / limit',actions:'Actions',noBudgetCategories:'No matching categories',tryDifferentBudgetFilter:'Try another search term or status.',budgetCategoryCount:'Showing {visible} of {total} categories'});
@@ -172,7 +174,7 @@ const save = (reason='state-change') => {
   reactiveStore.commit(reason);
 };
 
-function getPlan() { return state.derived?.budget || reactiveStore.snapshot()?.budget || MerCore.calculateBudget(state,12); }
+function getPlan() { return state.derived?.financials || reactiveStore.snapshot()?.derived?.financials || MerCore.FinancialEngine.calculate(state,appReferenceDate,{openingBalance:state.financialOpeningBalance,savingsBalance:state.savingsBalance}); }
 function derivedTotals(timeframe='monthly') { return state.derived?.totalsByTimeframe?.[timeframe] || MerCore.transactionTotals(state.transactions,timeframe,appReferenceDate); }
 
 function applyStaticTranslations() {
@@ -246,12 +248,15 @@ function renderOverview() {
   $('#budgetProgressTrack').className=`progress-track threshold-${totalThreshold.level}`;
   $('#safeDaily').textContent = currency(plan.safeDaily, true);
   $('#safeRemaining').textContent = currency(plan.safeRemaining);
+  $('#safeDaily').classList.toggle('negative-value',plan.safeDaily<0);
+  $('#safeRemaining').classList.toggle('negative-value',plan.safeRemaining<0);
   $('#safePeriod').textContent = t('untilEndMonth', { month:monthName });
   $('#daysRemaining').textContent = t('daysRemaining', { days:plan.days });
-  $('#safeRing').style.setProperty('--ring-value', Math.max(0, Math.min(100, 100 - percent)));
+  $('#safeRing').style.setProperty('--ring-value', plan.safePercent);
+  $('#safeRing').classList.toggle('danger',plan.safeRemaining<0);
   const guard = $('#guardStatus');
-  guard.classList.toggle('danger', percent > 100);
-  $('strong', guard).textContent = t(percent > 100 ? 'overBudget' : 'withinBudget');
+  guard.classList.toggle('danger', plan.safeRemaining<0);
+  $('strong', guard).textContent = t(plan.safeRemaining<0 ? 'overBudget' : 'withinBudget');
   $('#goalCurrent').textContent = currency(state.savingsBalance, true);
   $('#goalOf').textContent = t('goalOf', { target:currency(state.savingsGoal, true) });
   $('#goalPercent').textContent = `${goalPercent}%`;
@@ -259,11 +264,11 @@ function renderOverview() {
   $('#goalProgressTrack').setAttribute('aria-valuenow', goalPercent);
   $('#goalDeposit').textContent = currency(state.savingsTarget, true);
   $('#goalFinish').textContent = savingsFinishDate();
-  $('#calcIncome').textContent = currency(state.income, true);
+  $('#calcIncome').textContent = currency(plan.monthlyIncome, true);
   $('#calcBills').textContent = `−${currency(state.bills, true)}`;
   $('#calcSavings').textContent = `−${currency(state.savingsTarget, true)}`;
   $('#calcBuffer').textContent = `−${currency(plan.buffer, true)}`;
-  $('#calcBudget').textContent = currency(plan.monthlyBudget, true);
+  $('#calcBudget').textContent = currency(plan.spendablePool, true);
   $('#calcSpent').textContent = `−${currency(state.spent)}`;
   $('#calcSafe').textContent = currency(plan.safeRemaining);
   renderSpendingPaceChart();
@@ -318,6 +323,9 @@ function renderBudgetView() {
   const allocationPercent = Math.round(MerCore.ratioPercent(allocated,plan.monthlyBudget));
   $('#fullBudgetValue').textContent = currency(plan.monthlyBudget, true);
   $('#fullRemainingValue').textContent = currency(plan.safeRemaining);
+  $('#fullRemainingValue').classList.toggle('negative-value',plan.safeRemaining<0);
+  $('#remainingStatus').className=`delta ${plan.safeRemaining<0?'danger':'positive'}`;
+  $('#remainingStatus span').textContent=t(plan.safeRemaining<0?'overBudget':'protectedCommitments');
   $('#allocatedValue').textContent = currency(allocated, true);
   $('#unallocatedValue').textContent = difference >= 0 ? t('allocated',{amount:currency(difference,true)}) : t('overAllocated',{amount:currency(Math.abs(difference),true)});
   $('#allocationStatus').textContent = t('allocationPercent',{percent:allocationPercent});
@@ -890,7 +898,9 @@ function evaluateTransaction() {
     check.className='spend-check success';
     check.dataset.budgetWarning='';check.dataset.monthlyOver='0';check.dataset.categoryOver='0';
     const existingAdjustment=existing?(MerCore.transactionType(existing)==='income'?-existing.amount:existing.amount):0;
-    check.innerHTML=`<svg aria-hidden="true"><use href="#icon-up"></use></svg><div><strong>${t('incomeReady')}</strong><span>${amount>0?t('balanceIncrease',{amount:currency(state.availableBalance+existingAdjustment+amount)}):t('enterImpact')}</span></div>`;
+    const existingSafeAdjustment=existing?(MerCore.transactionType(existing)==='income'?-existing.amount:existing.amount):0;
+    const projectedSafe=getPlan().safeRemaining+existingSafeAdjustment+amount;
+    check.innerHTML=`<svg aria-hidden="true"><use href="#icon-up"></use></svg><div><strong>${t('incomeReady')}</strong><span>${amount>0?t('incomeImpact',{balance:currency(state.availableBalance+existingAdjustment+amount),safe:currency(projectedSafe)}):t('enterImpact')}</span></div>`;
     $('#transactionSubmit').disabled=amount<=0;return amount>0;
   }
   const cat=state.categories.find(item=>item.id===$('#transactionCategory').value) || state.categories[0];
