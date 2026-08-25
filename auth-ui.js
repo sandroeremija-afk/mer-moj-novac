@@ -32,6 +32,7 @@
       weakPassword: 'Lozinka mora imati najmanje 10 znakova.',
       invalidEmail: 'Unesite valjanu e-mail adresu.',
       resetUnavailable: 'Oporavak trenutačno nije dostupan. Pokušajte ponovno.',
+      serviceUnavailable: 'Usluga trenutačno nije dostupna. Pokušajte ponovno.',
       invalidForm: 'Provjerite unesene podatke.'
     },
     en: {
@@ -66,6 +67,7 @@
       weakPassword: 'Use at least 10 characters.',
       invalidEmail: 'Enter a valid email address.',
       resetUnavailable: 'Recovery is temporarily unavailable. Please try again.',
+      serviceUnavailable: 'The service is temporarily unavailable. Please try again.',
       invalidForm: 'Check the information and try again.'
     }
   };
@@ -130,7 +132,7 @@
   }
   function closePasswordReset() {
     if (passwordResetModal.open) passwordResetModal.close();
-    document.getElementById('forgotPassword').focus();
+    const trigger=document.getElementById('forgotPassword');if(trigger?.isConnected)trigger.focus();
   }
   function openPasswordReset(event) {
     event?.preventDefault();
@@ -138,7 +140,7 @@
     passwordResetSuccess.hidden = true;
     document.getElementById('passwordResetError').textContent = '';
     document.getElementById('passwordResetEmail').value = document.getElementById('loginEmail').value.trim();
-    passwordResetModal.showModal();
+    if(!passwordResetModal.open)passwordResetModal.showModal();
     setTimeout(() => document.getElementById('passwordResetEmail').focus(), 30);
   }
 
@@ -152,7 +154,15 @@
           ? copy[lang()].invalidEmail
           : code === 'RESET_UNAVAILABLE'
             ? copy[lang()].resetUnavailable
+            : code === 'UNAVAILABLE'
+              ? copy[lang()].serviceUnavailable
             : copy[lang()].invalidForm;
+
+  async function runAuthAction(form,errorId,action) {
+    const submit=form?.querySelector('[type="submit"]');if(submit?.disabled)return;
+    if(submit)submit.disabled=true;
+    try{return await action();}catch(error){window.MerRuntime?.report?.(error,{silent:true});const target=document.getElementById(errorId);if(target)target.textContent=messageFor('UNAVAILABLE');return null;}finally{if(submit)submit.disabled=false;}
+  }
 
   document.getElementById('authLoginTab').addEventListener('click', () => selectMode('login'));
   document.getElementById('authRegisterTab').addEventListener('click', () => selectMode('register'));
@@ -166,9 +176,12 @@
     const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
     if (outside) closePasswordReset();
   });
+  passwordResetModal.setAttribute('aria-modal','true');
+  passwordResetModal.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const focusable=[...passwordResetModal.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(element=>!element.hidden&&element.getClientRects().length>0);if(!focusable.length){event.preventDefault();passwordResetModal.focus();return;}const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
   passwordResetForm.addEventListener('submit', async event => {
     event.preventDefault();
-    const result = await provider.requestPasswordReset({ email: document.getElementById('passwordResetEmail').value });
+    const result = await runAuthAction(passwordResetForm,'passwordResetError',()=>provider.requestPasswordReset({ email: document.getElementById('passwordResetEmail').value }));
+    if(!result)return;
     document.getElementById('passwordResetError').textContent = result.ok ? '' : messageFor(result.code);
     if (result.ok) {
       passwordResetForm.hidden = true;
@@ -176,16 +189,18 @@
       document.getElementById('passwordResetDone').focus();
     }
   });
-  document.getElementById('demoLogin').addEventListener('click', () => enterApp(provider.startDemo(appState.accounts.personal.accountName)));
+  document.getElementById('demoLogin').addEventListener('click', () => {try{enterApp(provider.startDemo(appState.accounts.personal.accountName));}catch(error){window.MerRuntime?.report?.(error);}});
   document.getElementById('loginForm').addEventListener('submit', async event => {
     event.preventDefault();
-    const result = await provider.signIn({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
+    const form=event.currentTarget,result = await runAuthAction(form,'loginError',()=>provider.signIn({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value }));
+    if(!result)return;
     document.getElementById('loginError').textContent = result.ok ? '' : messageFor(result.code);
     if (result.ok) enterApp(result.session);
   });
   document.getElementById('registerForm').addEventListener('submit', async event => {
     event.preventDefault();
-    const result = await provider.register({ name: document.getElementById('registerName').value, email: document.getElementById('registerEmail').value, password: document.getElementById('registerPassword').value });
+    const form=event.currentTarget,result = await runAuthAction(form,'registerError',()=>provider.register({ name: document.getElementById('registerName').value, email: document.getElementById('registerEmail').value, password: document.getElementById('registerPassword').value }));
+    if(!result)return;
     document.getElementById('registerError').textContent = result.ok ? '' : messageFor(result.code);
     if (result.ok) enterApp(result.session);
   });

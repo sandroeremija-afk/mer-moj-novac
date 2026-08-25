@@ -45,6 +45,7 @@
 
   function preferredDate(value, includeTime=false) {
     const iso=String(value||'').slice(0,10);
+    if(!validStoredDate(iso))return '—';
     if(appState.settings.dateFormat==='iso'&&!includeTime)return iso;
     const date=new Date(String(value).includes('T')?value:`${iso}T12:00:00`);
     const options=includeTime?{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}:{day:'numeric',month:appState.settings.dateFormat==='us'?'numeric':'short',year:'numeric'};
@@ -55,7 +56,8 @@
   formatIsoDate = value => preferredDate(value);
   formatTransactionDate = function premiumTransactionDate(iso) {
     const dateKey=String(iso).slice(0,10);
-    const key=dateKey==='2026-08-20'?'dateToday':dateKey==='2026-08-19'?'dateYesterday':null;
+    const yesterdayDate=new Date(`${appReferenceDate}T12:00:00Z`);yesterdayDate.setUTCDate(yesterdayDate.getUTCDate()-1);
+    const key=dateKey===appReferenceDate?'dateToday':dateKey===yesterdayDate.toISOString().slice(0,10)?'dateYesterday':null;
     return key?t(key):preferredDate(iso);
   };
 
@@ -104,20 +106,20 @@
   }
 
   function safePortableState() {
-    return {version:appState.version,exportedAt:new Date().toISOString(),language:appState.language,theme:appState.theme,settings:{...appState.settings},bankConnections:appState.bankConnections.map(({token,...connection})=>connection),accounts:structuredClone(appState.accounts)};
+    return {version:appState.version,exportedAt:new Date().toISOString(),language:appState.language,theme:appState.theme,settings:{...appState.settings},bankConnections:(appState.bankConnections||[]).map(({token,...connection})=>connection),accounts:structuredClone(appState.accounts)};
   }
 
   function exportAllJson() { downloadFile('mer-moj-novac-data.json',JSON.stringify(safePortableState(),null,2),'application/json;charset=utf-8');showToast(t('dataExported')); }
   function csvCell(value){const text=String(value??'');return /[",\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text;}
   function exportAllCsv() {
     const rows=[['Profile','Date','Description','Type','Category','Amount', 'Currency','Source']];
-    Object.entries(appState.accounts).forEach(([profileId,profile])=>(profile.transactions||[]).forEach(tx=>rows.push([profileId,String(tx.date).slice(0,10),tx.name,MerCore.transactionType(tx),tx.category,Number(tx.amount).toFixed(2),appState.settings.currency,tx.source||'Manual'])));
+    Object.entries(appState.accounts).forEach(([profileId,profile])=>(profile.transactions||[]).filter(tx=>tx&&Number.isFinite(Number(tx.amount))).forEach(tx=>rows.push([profileId,String(tx.date||'').slice(0,10),tx.name||'',MerCore.transactionType(tx),tx.category||'',Number(tx.amount).toFixed(2),appState.settings.currency,tx.source||'Manual'])));
     downloadFile('mer-moj-novac-all-transactions.csv',`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
   }
 
   function exportActiveProfileCsv() {
     const rows=[['Date','Description','Type','Category','Amount','Currency','Source']];
-    (state.transactions||[]).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(tx=>rows.push([String(tx.date).slice(0,10),tx.name,MerCore.transactionType(tx),tx.category,Number(tx.amount).toFixed(2),appState.settings.currency,tx.source||'Manual']));
+    (state.transactions||[]).filter(tx=>tx&&Number.isFinite(Number(tx.amount))).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(tx=>rows.push([String(tx.date||'').slice(0,10),tx.name||'',MerCore.transactionType(tx),tx.category||'',Number(tx.amount).toFixed(2),appState.settings.currency,tx.source||'Manual']));
     downloadFile(`mer-${appState.activeAccount}-transactions.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
   }
 
@@ -131,13 +133,14 @@
 
   async function importJsonBackup(file) {
     try {
+      if(!file||file.size>MerImport.MAX_TEXT_LENGTH)throw new Error('backup-too-large');
       const backup=JSON.parse(await file.text());
-      if(!backup?.accounts?.personal||!backup?.accounts?.business)throw new Error('invalid-backup');
+      if(!backup?.accounts?.personal||!backup?.accounts?.business||typeof backup.accounts.personal!=='object'||typeof backup.accounts.business!=='object')throw new Error('invalid-backup');
       const nextAccounts=structuredClone(backup.accounts);
-      Object.values(nextAccounts).forEach(normalizeProfile);
+      nextAccounts.personal=normalizeProfile(nextAccounts.personal,personalDefaults);nextAccounts.business=normalizeProfile(nextAccounts.business,businessDefaults);
       appState.accounts=nextAccounts;
       appState.activeAccount=backup.activeAccount==='business'?'business':'personal';
-      appState.settings={...appState.settings,...(backup.settings||{})};
+      appState.settings=normalizeAppSettings({...appState.settings,...(backup.settings&&typeof backup.settings==='object'?backup.settings:{})});
       currentLang=backup.language==='en'?'en':'hr';
       currentTheme=backup.theme==='dark'?'dark':'light';
       state=appState.accounts[appState.activeAccount];
@@ -146,7 +149,7 @@
       selectSettingsTab('general');
       showToast(t('dataImported'));
     } catch(error) {
-      console.error(error);
+      window.MerRuntime?.report?.(error,{silent:true});
       showToast(t('invalidBackup'));
     } finally {
       $('#settingsImportJsonFile').value='';
@@ -182,19 +185,20 @@
 
   async function readImportFile(file) {
     try {
+      if(!file||file.size>MerImport.MAX_TEXT_LENGTH)throw new Error('file-too-large');
       let result;
       if(/\.xlsx?$/i.test(file.name)){
         if(!window.XLSX){showToast(t('excelUnavailable'));return;}
-        const workbook=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});const sheet=workbook.Sheets[workbook.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(sheet,{header:1,raw:true,defval:''});result=MerImport.parseRows(rows,state,{dateFormat:appState.settings.dateFormat});
+        const workbook=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true,sheetRows:MerImport.MAX_IMPORT_ROWS+2});const sheet=workbook.Sheets[workbook.SheetNames[0]];if(!sheet)throw new Error('empty-workbook');const rows=XLSX.utils.sheet_to_json(sheet,{header:1,raw:true,defval:''});result=MerImport.parseRows(rows,state,{dateFormat:appState.settings.dateFormat});
       }else if(/\.(xml|camt)$/i.test(file.name))result=MerAccounting.parseCamt053(await file.text(),state);
       else result=MerImport.parseCsvImport(await file.text(),state,{dateFormat:appState.settings.dateFormat});
       stageImport(result,file.name);
-    }catch(error){console.error(error);showToast(t('importFailed'));}
+    }catch(error){window.MerRuntime?.report?.(error,{silent:true});showToast(t('importFailed'));}
   }
 
   function loadLargeSample() {
     const rows=[['Date','Description','Amount','Type']];
-    for(let index=1;index<=520;index+=1){const day=String(index%28+1).padStart(2,'0'),income=index%13===0;const names=income?`Freelance client ${index}`:[`Konzum Market ${index}`,`Uber ride ${index}`,`Netflix plan ${index}`,`Unknown vendor ${index}`][index%4];rows.push([`2026-08-${day}`,names,income?500+index:-(5+(index%73)),income?'Income':'Expense']);}
+    for(let index=1;index<=520;index+=1){const day=String(index%28+1).padStart(2,'0'),income=index%13===0;const names=income?`Freelance client ${index}`:[`Konzum Market ${index}`,`Uber ride ${index}`,`Netflix plan ${index}`,`Unknown vendor ${index}`][index%4];rows.push([`${appReferenceDate.slice(0,7)}-${day}`,names,income?500+index:-(5+(index%73)),income?'Income':'Expense']);}
     stageImport(MerImport.parseRows(rows,state,{dateFormat:appState.settings.dateFormat}),'mer-demo-520.csv');
   }
 
@@ -210,13 +214,12 @@
   function primaryGoal(){return state.goalBuckets.find(goal=>goal.primary)||state.goalBuckets[0];}
   function renderGoals() {
     const goals=state.goalBuckets||[];const primary=primaryGoal();if(!primary)return;
-    state.savingsBalance=goals.reduce((sum,goal)=>sum+goal.current,0);state.savingsGoal=primary.target;
     const primaryResult=MerCore.validateSavingsGoal(primary),pct=Math.round(primaryResult.percent||0);
     $('#overviewView .goal-panel h2').textContent=primary.name;$('#goalCurrent').textContent=currency(primary.current,true);$('#goalOf').textContent=t('goalOf',{target:currency(primary.target,true)});$('#goalPercent').textContent=`${pct}%`;$('#goalProgress').style.width=`${pct}%`;$('#goalProgressTrack').setAttribute('aria-valuenow',String(pct));
     $('#savingsView .savings-hero h2').textContent=primary.name;$('#savingsHeroCurrent').textContent=currency(primary.current,true);$('#savingsHeroTarget').textContent=t('goalTargetOf',{target:currency(primary.target,true)});$('#savingsHeroProgress').style.width=`${pct}%`;$('#stillNeeded').textContent=currency(primaryResult.remaining,true);if(primary.dueDate)$('#savingsFinish').textContent=preferredDate(primary.dueDate);
-    $('#goalBucketGrid').innerHTML=goals.map(goal=>{const result=MerCore.validateSavingsGoal(goal),percent=Math.round(result.percent||0),metrics=MerAccounting.goalMetrics(goal,'2026-08-20');return `<article class="goal-bucket-card rich-goal-card"><div class="goal-bucket-head"><div class="goal-progress-ring" style="--goal-progress:${percent*3.6}deg"><span>${percent}%</span></div><div><strong>${escapeHtml(goal.name)}</strong><small>${goal.primary?t('primaryGoal'):(goal.dueDate?t('goalDue',{date:preferredDate(goal.dueDate)}):t('goalNoDate'))}</small></div><button type="button" class="icon-button small" data-edit-goal="${goal.id}" aria-label="${t('editGoal')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div><div class="goal-bucket-values"><strong>${currency(goal.current,true)}</strong><span>${t('goalOf',{target:currency(goal.target,true)})}</span></div><div class="goal-metric-grid"><span><small>${t('monthlyRequired')}</small><strong>${metrics.monthlyRequired===null?'—':currency(metrics.monthlyRequired,true)}</strong></span><span><small>${goal.dueDate?t('daysToGoal',{days:metrics.daysRemaining}):t('goalNoDate')}</small><strong>${currency(result.remaining,true)}</strong></span></div><button type="button" class="roundup-toggle ${goal.roundUpsEnabled?'active':''}" data-toggle-roundup="${goal.id}" aria-pressed="${Boolean(goal.roundUpsEnabled)}"><span><strong>${t('roundUps')}</strong><small>${t('roundUpsHint')}</small></span><i></i></button></article>`;}).join('');
+    $('#goalBucketGrid').innerHTML=goals.map(goal=>{const result=MerCore.validateSavingsGoal(goal),percent=Math.round(result.percent||0),metrics=MerAccounting.goalMetrics(goal,appReferenceDate);return `<article class="goal-bucket-card rich-goal-card"><div class="goal-bucket-head"><div class="goal-progress-ring" style="--goal-progress:${percent*3.6}deg"><span>${percent}%</span></div><div><strong>${escapeHtml(goal.name)}</strong><small>${goal.primary?t('primaryGoal'):(goal.dueDate?t('goalDue',{date:preferredDate(goal.dueDate)}):t('goalNoDate'))}</small></div><button type="button" class="icon-button small" data-edit-goal="${goal.id}" aria-label="${t('editGoal')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div><div class="goal-bucket-values"><strong>${currency(goal.current,true)}</strong><span>${t('goalOf',{target:currency(goal.target,true)})}</span></div><div class="goal-metric-grid"><span><small>${t('monthlyRequired')}</small><strong>${metrics.monthlyRequired===null?'—':currency(metrics.monthlyRequired,true)}</strong></span><span><small>${goal.dueDate?t('daysToGoal',{days:metrics.daysRemaining??0}):t('goalNoDate')}</small><strong>${currency(result.remaining,true)}</strong></span></div><button type="button" class="roundup-toggle ${goal.roundUpsEnabled?'active':''}" data-toggle-roundup="${goal.id}" aria-pressed="${Boolean(goal.roundUpsEnabled)}"><span><strong>${t('roundUps')}</strong><small>${t('roundUpsHint')}</small></span><i></i></button></article>`;}).join('');
     $$('[data-edit-goal]').forEach(button=>button.addEventListener('click',()=>openGoalEditor(button.dataset.editGoal)));
-    $$('[data-toggle-roundup]').forEach(button=>button.addEventListener('click',()=>{const chosen=state.goalBuckets.find(goal=>goal.id===button.dataset.toggleRoundup),enable=!chosen.roundUpsEnabled;state.goalBuckets.forEach(goal=>{goal.roundUpsEnabled=false;});chosen.roundUpsEnabled=enable;save('roundup-goal-toggle');showToast(t('settingsSaved'));}));
+    $$('[data-toggle-roundup]').forEach(button=>button.addEventListener('click',()=>{const chosen=state.goalBuckets.find(goal=>goal.id===button.dataset.toggleRoundup);if(!chosen)return;const enable=!chosen.roundUpsEnabled;state.goalBuckets.forEach(goal=>{goal.roundUpsEnabled=false;});chosen.roundUpsEnabled=enable;save('roundup-goal-toggle');showToast(t('settingsSaved'));}));
   }
 
   function openGoalEditor(id=null) {
@@ -238,21 +241,21 @@
   $('#settingsImportJson').addEventListener('click',()=>$('#settingsImportJsonFile').click());
   $('#settingsImportJsonFile').addEventListener('change',()=>{const file=$('#settingsImportJsonFile').files?.[0];if(file)importJsonBackup(file);});
 
-  $('#startMfa').addEventListener('click',async()=>{pendingEnrollment=await MerSecurity.createEnrollment(state.accountName);visibleRecoveryCodes=[];renderMfa();});
-  $('#copyMfaSecret').addEventListener('click',async()=>{if(!pendingEnrollment)return;await navigator.clipboard?.writeText(pendingEnrollment.secret);showToast(t('secretCopied'));});
-  $('#confirmMfa').addEventListener('click',async()=>{if(!pendingEnrollment||!await MerSecurity.validateTotp(pendingEnrollment.secret,$('#mfaVerificationCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa={enabled:true,secret:pendingEnrollment.secret,recoveryCodeHashes:pendingEnrollment.recoveryCodeHashes,enabledAt:new Date().toISOString()};visibleRecoveryCodes=pendingEnrollment.recoveryCodes;pendingEnrollment=null;sessionStorage.setItem('mer-mfa-unlocked','true');save();renderMfa();showToast(t('mfaReady'));});
+  $('#startMfa').addEventListener('click',()=>runAsyncAction(async()=>{pendingEnrollment=await MerSecurity.createEnrollment(state.accountName);visibleRecoveryCodes=[];renderMfa();},'mfaInvalid'));
+  $('#copyMfaSecret').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingEnrollment)return;if(!navigator.clipboard?.writeText)throw new Error('clipboard-unavailable');await navigator.clipboard.writeText(pendingEnrollment.secret);showToast(t('secretCopied'));},'mfaInvalid'));
+  $('#confirmMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingEnrollment||!await MerSecurity.validateTotp(pendingEnrollment.secret,$('#mfaVerificationCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa={enabled:true,secret:pendingEnrollment.secret,recoveryCodeHashes:pendingEnrollment.recoveryCodeHashes,enabledAt:new Date().toISOString()};visibleRecoveryCodes=pendingEnrollment.recoveryCodes;pendingEnrollment=null;sessionStorage.setItem('mer-mfa-unlocked','true');save();renderMfa();showToast(t('mfaReady'));},'mfaInvalid'));
   $('#downloadRecoveryCodes').addEventListener('click',()=>downloadFile('mer-recovery-codes.txt',visibleRecoveryCodes.join('\r\n'),'text/plain;charset=utf-8'));
-  $('#disableMfa').addEventListener('click',async()=>{if(!await verifyMfaCode($('#mfaDisableCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa={enabled:false,secret:null,recoveryCodeHashes:[]};sessionStorage.removeItem('mer-mfa-unlocked');visibleRecoveryCodes=[];save();renderMfa();showToast(t('mfaRemoved'));});
-  $('#mfaUnlockForm').addEventListener('submit',async event=>{event.preventDefault();if(!await verifyMfaCode($('#mfaUnlockCode').value)){ $('#mfaUnlockError').textContent=t('unlockError');return;}sessionStorage.setItem('mer-mfa-unlocked','true');$('#mfaLockScreen').hidden=true;document.body.classList.remove('mfa-locked');});
+  $('#disableMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!await verifyMfaCode($('#mfaDisableCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa={enabled:false,secret:null,recoveryCodeHashes:[]};sessionStorage.removeItem('mer-mfa-unlocked');visibleRecoveryCodes=[];save();renderMfa();showToast(t('mfaRemoved'));},'mfaInvalid'));
+  $('#mfaUnlockForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(async()=>{if(!await verifyMfaCode($('#mfaUnlockCode').value)){ $('#mfaUnlockError').textContent=t('unlockError');return;}sessionStorage.setItem('mer-mfa-unlocked','true');$('#mfaLockScreen').hidden=true;document.body.classList.remove('mfa-locked');},'mfaInvalid');});
 
   $('#importFile').addEventListener('change',()=>{const file=$('#importFile').files?.[0];if(file)readImportFile(file);});$('#loadImportSample').addEventListener('click',loadLargeSample);$('#importPrev').addEventListener('click',()=>{importPage=Math.max(0,importPage-1);renderImportReview();});$('#importNext').addEventListener('click',()=>{importPage+=1;renderImportReview();});
   $('#bulkImportType').addEventListener('change',()=>{$('#bulkImportCategory').innerHTML=categoryOptions($('#bulkImportType').value);});
   $('#applyBulkImport').addEventListener('click',()=>{if(!importStage)return;const type=$('#bulkImportType').value,category=$('#bulkImportCategory').value;importStage.reviewRows.filter(row=>!row.excluded).forEach(row=>{row.type=type;row.category=category;row.needsReview=false;});renderImportReview();});
   $('#confirmImport').addEventListener('click',()=>{if(!importStage)return;const result=MerImport.commitImport(state,importStage.reviewRows,importStage.fileName);result.imported.forEach(tx=>MerAccounting.applyRoundUp(state,tx));const duplicates=(importStage.duplicates||0)+result.duplicates;importStage=null;save('bulk-import');showToast(t('importFinished',{count:result.imported.length,duplicates}));});
 
-  $('#ruleType').addEventListener('change',renderRuleCategorySelect);$('#automationRuleForm').addEventListener('submit',event=>{event.preventDefault();const keyword=$('#ruleKeyword').value.trim();if(state.automationRules.some(rule=>rule.keyword.toLocaleLowerCase()===keyword.toLocaleLowerCase())){showToast(t('ruleExists'));return;}state.automationRules.push({id:`rule-${Date.now()}`,keyword,type:$('#ruleType').value,category:$('#ruleCategory').value,enabled:true});save();event.target.reset();renderAutomationRules();showToast(t('ruleSaved'));});
+  $('#ruleType').addEventListener('change',renderRuleCategorySelect);$('#automationRuleForm').addEventListener('submit',event=>{event.preventDefault();const keyword=$('#ruleKeyword').value.trim();if(!keyword){showToast(t('categoryNameRequired'));return;}if(state.automationRules.some(rule=>rule.keyword.toLocaleLowerCase()===keyword.toLocaleLowerCase())){showToast(t('ruleExists'));return;}state.automationRules.push({id:uniqueId('rule'),keyword:keyword.slice(0,60),type:$('#ruleType').value==='income'?'income':'expense',category:$('#ruleCategory').value,enabled:true});save();event.target.reset();renderAutomationRules();showToast(t('ruleSaved'));});
 
-  $('#addSavingsGoal').addEventListener('click',()=>openGoalEditor());$('#goalForm').addEventListener('submit',event=>{event.preventDefault();const payload={name:$('#goalNameInput').value.trim(),target:Number($('#goalTargetInput').value),current:Number($('#goalCurrentInput').value),dueDate:$('#goalDueDateInput').value,primary:$('#goalPrimaryInput').checked,icon:'◎'};const validation=MerCore.validateSavingsGoal(payload);if(!validation.valid){showToast(t('goalInvalid'));return;}if(payload.primary)state.goalBuckets.forEach(goal=>{goal.primary=false;});const existing=editingGoalId?state.goalBuckets.find(goal=>goal.id===editingGoalId):null;if(existing)Object.assign(existing,payload);else state.goalBuckets.push({id:`goal-${Date.now()}`,...payload});if(!state.goalBuckets.some(goal=>goal.primary))state.goalBuckets[0].primary=true;save(existing?'savings-goal-edit':'savings-goal-add');closeModal($('#goalModal'));showToast(t('goalSaved'));editingGoalId=null;});
+  $('#addSavingsGoal').addEventListener('click',()=>openGoalEditor());$('#goalForm').addEventListener('submit',event=>{event.preventDefault();const payload={name:$('#goalNameInput').value.trim(),target:Number($('#goalTargetInput').value),current:Number($('#goalCurrentInput').value),dueDate:$('#goalDueDateInput').value,primary:$('#goalPrimaryInput').checked,icon:'◎'};const validation=MerCore.validateSavingsGoal(payload);if(!validation.valid){showToast(t('goalInvalid'));return;}if(payload.primary)state.goalBuckets.forEach(goal=>{goal.primary=false;});const existing=editingGoalId?state.goalBuckets.find(goal=>goal.id===editingGoalId):null;if(existing)Object.assign(existing,payload);else state.goalBuckets.push({id:uniqueId('goal'),...payload});if(!state.goalBuckets.some(goal=>goal.primary))state.goalBuckets[0].primary=true;save(existing?'savings-goal-edit':'savings-goal-add');closeModal($('#goalModal'));showToast(t('goalSaved'));editingGoalId=null;});
   $('#deleteSavingsGoal').addEventListener('click',()=>{const goal=state.goalBuckets.find(item=>item.id===editingGoalId);if(!goal)return;if(state.goalBuckets.length===1){showToast(t('atLeastOneGoal'));return;}if(goal.current>0){showToast(t('goalHasBalance'));return;}state.goalBuckets=state.goalBuckets.filter(item=>item.id!==goal.id);state.savingsEntries=state.savingsEntries.filter(entry=>entry.goalId!==goal.id);if(goal.primary)state.goalBuckets[0].primary=true;save('savings-goal-delete');closeModal($('#goalModal'));showToast(t('goalDeleted'));editingGoalId=null;});
 
   applyStaticTranslations();renderAll();selectSettingsTab(selectedSettingsTab);

@@ -4,6 +4,8 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.MerImport = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function createMerImport(MerCore) {
+  const MAX_IMPORT_ROWS = 10000;
+  const MAX_TEXT_LENGTH = 10 * 1024 * 1024;
   const normalizeHeader = value => String(value || '').trim().toLocaleLowerCase('en').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
   const aliases = {
     date: ['date', 'datum', 'bookingdate', 'transactiondate', 'valuedate'],
@@ -17,6 +19,7 @@
 
   function parseCsv(text, delimiter) {
     const source = String(text ?? '').replace(/^\uFEFF/, '');
+    if (source.length > MAX_TEXT_LENGTH) return { rows: [], delimiter: delimiter || ',', unterminatedQuote: false, tooLarge: true };
     const detected = delimiter || detectDelimiter(source);
     const rows = [];
     let row = [], field = '', quoted = false;
@@ -63,7 +66,7 @@
     if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
     if (typeof value === 'number' && value > 0) {
       const date = new Date(Date.UTC(1899, 11, 30) + Math.round(value * 86400000));
-      return date.toISOString().slice(0, 10);
+      return Number.isNaN(date.getTime()) || date.getUTCFullYear() < 1900 || date.getUTCFullYear() > 9999 ? null : date.toISOString().slice(0, 10);
     }
     const text = String(value ?? '').trim().replace(/\.$/, '');
     let match = text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
@@ -107,7 +110,7 @@
     const known = new Set((profile?.transactions || []).map(transaction => transaction.importHash || fingerprint(transaction)));
     const reviewRows = [], invalidRows = [];
     let duplicates = 0;
-    rows.slice(1).forEach((row, offset) => {
+    rows.slice(1, MAX_IMPORT_ROWS + 1).forEach((row, offset) => {
       const rowNumber = offset + 2;
       if (!Array.isArray(row) || row.every(cell => String(cell ?? '').trim() === '')) return;
       const date = normalizeDate(row[map.date], options.dateFormat);
@@ -128,31 +131,51 @@
       known.add(transaction.importHash);
       reviewRows.push(transaction);
     });
-    return { reviewRows, invalidRows, duplicates, totalRows: Math.max(0, rows.length - 1) };
+    if (rows.length - 1 > MAX_IMPORT_ROWS) invalidRows.push({ row:MAX_IMPORT_ROWS + 2, reason:'row-limit' });
+    return { reviewRows, invalidRows, duplicates, totalRows: Math.min(MAX_IMPORT_ROWS, Math.max(0, rows.length - 1)) };
   }
 
   function parseCsvImport(text, profile, options = {}) {
     const parsed = parseCsv(text, options.delimiter);
+    if (parsed.tooLarge) return { reviewRows:[], invalidRows:[{row:1,reason:'file-too-large'}], duplicates:0, totalRows:0, delimiter:parsed.delimiter };
     const result = parseRows(parsed.rows, profile, options);
     if (parsed.unterminatedQuote) result.invalidRows.push({ row: parsed.rows.length, reason: 'unterminated-quote' });
     return { ...result, delimiter: parsed.delimiter };
   }
 
   function commitImport(profile, reviewRows, sourceName = 'import.csv') {
-    profile.transactions = profile.transactions || [];
+    if (!profile || typeof profile !== 'object') return { imported:[], duplicates:0, invalid: Array.isArray(reviewRows) ? reviewRows.length : 0 };
+    profile.transactions = Array.isArray(profile.transactions) ? profile.transactions : [];
     const imported = [];
     const known = new Set(profile.transactions.map(transaction => transaction.importHash || fingerprint(transaction)));
-    let duplicates = 0;
-    (reviewRows || []).forEach(row => {
-      if (row.excluded) return;
-      const hash = fingerprint(row);
+    let duplicates = 0, invalid = 0;
+    const safeSource=String(sourceName||'import.csv').replace(/[\r\n]/g,' ').trim().slice(0,80)||'import.csv';
+    (Array.isArray(reviewRows) ? reviewRows.slice(0,MAX_IMPORT_ROWS) : []).forEach(row => {
+      if (!row || typeof row !== 'object' || row.excluded) return;
+      const type=row.type==='income'?'income':row.type==='expense'?'expense':null;
+      const date=normalizeDate(row.date,'iso');
+      const name=String(row.name||'').trim().slice(0,100);
+      const amount=Math.abs(Number(row.amount));
+      if(!type||!date||!name||!Number.isFinite(amount)||amount<=0){invalid+=1;return;}
+      const available=type==='income'?(profile.incomeCategories||[]):(profile.categories||[]);
+      const suggested=MerCore.autoCategorizeBankTransaction({description:name,amount:type==='income'?amount:-amount,creditDebitIndicator:type==='income'?'CRDT':'DBIT'},profile);
+      const category=available.some(item=>item?.id===row.category)?row.category:suggested.category||available[0]?.id||null;
+      if(!category){invalid+=1;return;}
+      const normalized={...row,type,date,name,amount,category};
+      const hash = fingerprint(normalized);
       if (known.has(hash)) { duplicates += 1; return; }
       known.add(hash);
-      imported.push({ id: `import-${Date.now()}-${row.rowNumber}`, type: row.type, name: row.name, amount: Number(row.amount), category: row.category, date: `${row.date}T12:00:00`, source: `Import: ${sourceName}`, sourceType: 'import', importHash: hash, needsReview: Boolean(row.needsReview), categoryConfidence: row.categoryConfidence, categorizationRule: row.categorizationRule || null, iban:row.iban || '', bic:row.bic || '', merchantName:row.merchantName || row.name, timestamp:row.timestamp || `${row.date}T12:00:00`, currency:String(row.currency || 'EUR').toUpperCase() });
+      const currency=/^[A-Z]{3}$/.test(String(row.currency||'').toUpperCase())?String(row.currency).toUpperCase():'EUR';
+      imported.push({ id: `import-${hash}`, type, name, amount, category, date: `${date}T12:00:00`, source: `Import: ${safeSource}`, sourceType: 'import', importHash: hash, needsReview: Boolean(row.needsReview)||category!==row.category, categoryConfidence: category===row.category?row.categoryConfidence:suggested.confidence, categorizationRule: category===row.category?(row.categorizationRule || null):suggested.rule, iban:String(row.iban||'').slice(0,34), bic:String(row.bic||'').slice(0,11), merchantName:String(row.merchantName||name).slice(0,100), timestamp:validTimestamp(row.timestamp,date), currency });
     });
     if (imported.length) profile.transactions.unshift(...imported);
-    return { imported, duplicates };
+    return { imported, duplicates, invalid };
   }
 
-  return { parseCsv, detectDelimiter, columnMap, normalizeDate, numberValue, fingerprint, parseRows, parseCsvImport, commitImport };
+  function validTimestamp(value, fallbackDate) {
+    const text=String(value||'');
+    return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(text)&&normalizeDate(text.slice(0,10),'iso')?text.slice(0,35):`${fallbackDate}T12:00:00`;
+  }
+
+  return { MAX_IMPORT_ROWS, MAX_TEXT_LENGTH, parseCsv, detectDelimiter, columnMap, normalizeDate, numberValue, fingerprint, parseRows, parseCsvImport, commitImport };
 });

@@ -13,10 +13,17 @@
   ]);
   const PROVIDERS = Object.freeze(['gocardless','nordigen','saltedge','tink']);
   const clean = value => String(value ?? '').trim();
+  const validDate = value => {
+    const match = clean(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);
+    const date=new Date(Date.UTC(year,month-1,day));
+    return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day?match[0]:null;
+  };
   const dateValue = value => {
     const text = clean(value);
-    const match = text.match(/^\d{4}-\d{2}-\d{2}/);
-    return match ? `${match[0]}T${text.includes('T') ? text.split('T')[1].replace(/Z$/, '').slice(0, 8) || '12:00:00' : '12:00:00'}` : null;
+    const iso = validDate(text);
+    return iso ? `${iso}T${text.includes('T') ? text.split('T')[1].replace(/Z$/, '').slice(0, 8) || '12:00:00' : '12:00:00'}` : null;
   };
 
   function normalizePsd2Transaction(provider, payload, account = {}) {
@@ -51,7 +58,7 @@
     const reviewRows = [], invalidRows = [];
     entriesFromXml(source).forEach((entry, index) => {
       const rawAmount = Number(textFrom(entry, ['Amt']).replace(/\s/g, '').replace(',', '.'));
-      const bookingDate = textFrom(entry, ['BookgDt','DtTm','Dt']).match(/\d{4}-\d{2}-\d{2}/)?.[0];
+      const bookingDate = validDate(textFrom(entry, ['BookgDt','DtTm','Dt']));
       const indicator = textFrom(entry, ['CdtDbtInd']).toUpperCase();
       const name = (textFrom(entry, ['Ustrd']) || textFrom(entry, ['Nm']) || textFrom(entry, ['AddtlNtryInf']) || 'Bank transaction').slice(0, 100);
       if (!Number.isFinite(rawAmount) || rawAmount <= 0 || !bookingDate) { invalidRows.push({ row:index + 1, reason:!bookingDate?'invalid-date':'invalid-amount' }); return; }
@@ -76,9 +83,11 @@
   }
 
   function monthSeries(transactions, reference, count = 6) {
-    const date = new Date(`${String(reference).slice(0,10)}T12:00:00`);
+    const referenceIso=validDate(reference);
+    const date = referenceIso ? new Date(`${referenceIso}T12:00:00`) : new Date();
     const result = [];
-    for (let offset=count-1; offset>=0; offset-=1) {
+    const safeCount=Math.max(1,Math.min(36,Math.floor(Number(count)||6)));
+    for (let offset=safeCount-1; offset>=0; offset-=1) {
       const point = new Date(date.getFullYear(), date.getMonth()-offset, 1);
       const key = `${point.getFullYear()}-${String(point.getMonth()+1).padStart(2,'0')}`;
       const totals = (transactions||[]).filter(tx=>String(tx.date||'').startsWith(key)).reduce((sum,tx)=>{sum[MerCore.transactionType(tx)==='income'?'income':'expenses']+=MerCore.financialAmount(tx.amount);return sum;},{income:0,expenses:0});
@@ -90,10 +99,11 @@
 
   function detectSubscriptions(transactions, reference = new Date()) {
     const known = /netflix|spotify|gym|teretana|icloud|google one|dropbox|adobe|microsoft 365|youtube premium|hbo|max|disney/i;
-    const expenses = (transactions||[]).filter(tx=>MerCore.transactionType(tx)==='expense').slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const expenses = (transactions||[]).filter(tx=>MerCore.transactionType(tx)==='expense'&&validDate(tx?.date)).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
     const grouped = {};
     expenses.forEach(tx=>{const key=normalizedMerchant(tx.merchantName||tx.name);if(!key)return;(grouped[key] ||= []).push(tx);});
-    const referenceDate = new Date(String(reference).includes('T') ? reference : `${String(reference).slice(0,10)}T12:00:00`);
+    const referenceIso=validDate(reference)||validDate(new Date().toISOString());
+    const referenceDate = new Date(`${referenceIso}T12:00:00`);
     return Object.values(grouped).filter(group=>{
       if(known.test(group[0].name))return true;
       const cadence=group.slice(1).filter((tx,index)=>{const previous=group[index],days=(new Date(tx.date)-new Date(previous.date))/86400000,baseline=Math.max(1,Number(previous.amount)||0);return Math.abs(days-30)<=5&&Math.abs((Number(tx.amount)||0)-baseline)/baseline<=.15;});
@@ -105,9 +115,10 @@
   }
 
   function goalMetrics(goal, reference = new Date()) {
-    const remaining=Math.max(0,Number(goal.target||0)-Number(goal.current||0));
-    if(!goal.dueDate)return {remaining,daysRemaining:null,monthsRemaining:null,monthlyRequired:null};
-    const start=new Date(String(reference).includes('T')?reference:`${String(reference).slice(0,10)}T12:00:00`),due=new Date(`${goal.dueDate}T12:00:00`);
+    const remaining=Math.max(0,(Number.isFinite(Number(goal?.target))?Number(goal.target):0)-(Number.isFinite(Number(goal?.current))?Number(goal.current):0));
+    const startIso=validDate(reference),dueIso=validDate(goal?.dueDate);
+    if(!startIso||!dueIso)return {remaining,daysRemaining:null,monthsRemaining:null,monthlyRequired:null};
+    const start=new Date(`${startIso}T12:00:00`),due=new Date(`${dueIso}T12:00:00`);
     const daysRemaining=Math.max(0,Math.ceil((due-start)/86400000)),monthsRemaining=Math.max(1,Math.ceil(daysRemaining/30.4375));
     return {remaining,daysRemaining,monthsRemaining,monthlyRequired:remaining/monthsRemaining};
   }

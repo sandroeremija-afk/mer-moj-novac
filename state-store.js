@@ -6,9 +6,15 @@
   if (!MerCore) throw new Error('MerCore is required before MerStateStore');
 
   const finiteAmount = value => Math.max(0, MerCore.financialAmount(value));
+  const safeReferenceDate = value => {
+    const match=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!match)return null;
+    const date=new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3])));
+    return date.getUTCFullYear()===Number(match[1])&&date.getUTCMonth()===Number(match[2])-1&&date.getUTCDate()===Number(match[3])?match[0]:null;
+  };
 
   function savingsTotal(profile) {
-    return MerCore.roundMoney((profile.goalBuckets || []).reduce((sum, goal) => sum + finiteAmount(goal.current), 0));
+    return MerCore.roundMoney((profile.goalBuckets || []).reduce((sum, goal) => sum + finiteAmount(goal?.current), 0));
   }
 
   function initializeBalanceAnchor(profile, referenceDate, currentSavings) {
@@ -28,11 +34,11 @@
     return Math.max(0, MerCore.roundMoney(total));
   }
 
-  function recalculateProfile(profile, referenceDate = '2026-08-20') {
+  function recalculateProfile(profile, referenceDate = new Date().toISOString().slice(0,10)) {
     if (!profile) return null;
     profile.transactions = Array.isArray(profile.transactions) ? profile.transactions : [];
-    profile.categories = Array.isArray(profile.categories) ? profile.categories : [];
-    profile.goalBuckets = Array.isArray(profile.goalBuckets) ? profile.goalBuckets : [];
+    profile.categories = Array.isArray(profile.categories) ? profile.categories.filter(category=>category&&typeof category==='object'&&category.id) : [];
+    profile.goalBuckets = Array.isArray(profile.goalBuckets) ? profile.goalBuckets.filter(goal=>goal&&typeof goal==='object') : [];
 
     profile.savingsEntries = Array.isArray(profile.savingsEntries) ? profile.savingsEntries : [];
     profile.savingsBalance = savingsTotal(profile);
@@ -83,7 +89,7 @@
     let state = initialState;
     let revision = 0;
     const listeners = new Set();
-    const referenceDate = options.referenceDate || '2026-08-20';
+    let referenceDate = safeReferenceDate(options.referenceDate) || new Date().toISOString().slice(0,10);
 
     const recalculateAll = () => Object.values(state.accounts).forEach(profile => recalculateProfile(profile, referenceDate));
     recalculateAll();
@@ -91,7 +97,7 @@
     function notify(reason) {
       revision += 1;
       const event = { state, reason, revision, activeAccount: state.activeAccount, activeProfile: state.accounts[state.activeAccount] };
-      listeners.forEach(listener => listener(event));
+      listeners.forEach(listener => { try { listener(event); } catch(error) { globalThis.MerRuntime?.report?.(error); } });
       return event;
     }
 
@@ -132,6 +138,14 @@
       };
     }
 
+    function setReferenceDate(nextReferenceDate) {
+      const normalized=safeReferenceDate(nextReferenceDate);
+      if(!normalized||normalized===referenceDate)return false;
+      referenceDate=normalized;
+      commit('reference-date-change');
+      return true;
+    }
+
     return {
       getState: () => state,
       getActiveProfile: () => state.accounts[state.activeAccount],
@@ -141,6 +155,7 @@
       commit,
       update,
       switchAccount,
+      setReferenceDate,
       recalculate: recalculateAll
     };
   }

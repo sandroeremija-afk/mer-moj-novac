@@ -82,10 +82,18 @@
   }
 
   function dateOnly(value) {
-    if (value instanceof Date) return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+    if (value instanceof Date) {
+      if (Number.isNaN(value.getTime())) throw new Error('Invalid ISO date');
+      return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+    }
     const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!match) throw new Error('Invalid ISO date');
-    return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+    const year = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const day = Number(match[3]);
+    const date = new Date(Date.UTC(year, month, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month || date.getUTCDate() !== day) throw new Error('Invalid ISO date');
+    return date;
   }
 
   function isoDate(date) {
@@ -100,8 +108,14 @@
 
   function nextOccurrence(rule, fromValue, inclusive = false) {
     if (!rule || rule.enabled === false) return null;
-    const from = dateOnly(fromValue);
-    const start = rule.startDate ? dateOnly(rule.startDate) : new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1));
+    let from;
+    let start;
+    try {
+      from = dateOnly(fromValue);
+      start = rule.startDate ? dateOnly(rule.startDate) : new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1));
+    } catch {
+      return null;
+    }
     const day = Math.max(1, Math.min(31, Number(rule.day) || 1));
     let year = from.getUTCFullYear();
     let month = from.getUTCMonth();
@@ -114,10 +128,17 @@
 
   function occurrencesBetween(rule, fromExclusiveValue, throughInclusiveValue, max = 120) {
     if (!rule || rule.enabled === false) return [];
-    const through = dateOnly(throughInclusiveValue);
+    let through;
+    let cursor;
+    try {
+      through = dateOnly(throughInclusiveValue);
+      cursor = dateOnly(fromExclusiveValue);
+    } catch {
+      return [];
+    }
     const dates = [];
-    let cursor = dateOnly(fromExclusiveValue);
-    for (let index = 0; index < max; index += 1) {
+    const safeMaximum = Math.max(0, Math.min(1200, Math.floor(Number(max) || 0)));
+    for (let index = 0; index < safeMaximum; index += 1) {
       const next = nextOccurrence(rule, cursor, false);
       if (!next) break;
       const date = dateOnly(next);
@@ -257,7 +278,7 @@
   function importBankTransactions(profile, connection, rawTransactions) {
     if (!profile || !connection || !Array.isArray(rawTransactions)) return { imported: [], duplicates: 0, invalid: rawTransactions?.length || 0, uncategorized: 0 };
     profile.transactions = profile.transactions || [];
-    const knownIds = new Set(profile.transactions.flatMap(transaction => [transaction.bankTransactionId, transaction.importHash].filter(Boolean)));
+    const knownIds = new Set(profile.transactions.filter(transaction=>transaction&&typeof transaction==='object').flatMap(transaction => [transaction.bankTransactionId, transaction.importHash].filter(Boolean)));
     const imported = [];
     let duplicates = 0;
     let invalid = 0;
@@ -274,18 +295,21 @@
   }
 
   function filterTransactions(transactions, timeframe = 'monthly', referenceValue = new Date()) {
-    const reference = dateOnly(referenceValue);
+    let reference;
+    try { reference = dateOnly(referenceValue); } catch { return []; }
     const referenceIso = isoDate(reference);
     const monthPrefix = referenceIso.slice(0, 7);
     const yearPrefix = referenceIso.slice(0, 4);
     const normalized = timeframe === 'yearly' || timeframe === 'this-year' ? 'ytd' : timeframe;
     return (transactions || []).filter(transaction => {
+      if (!transaction || typeof transaction !== 'object') return false;
       const date = String(transaction.date || '').slice(0, 10);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+      try { if (isoDate(dateOnly(date)) !== date) return false; } catch { return false; }
       if (normalized === 'daily') return date === referenceIso;
       if (normalized === 'monthly') return date.startsWith(monthPrefix) && date <= referenceIso;
       if (normalized === 'ytd') return date.startsWith(yearPrefix) && date <= referenceIso;
-      return normalized === 'all';
+      return normalized === 'all' && date <= referenceIso;
     });
   }
 
@@ -301,7 +325,7 @@
     totals.expenses = Math.max(0, roundMoney(totals.expenses));
     totals.net = totals.income - totals.expenses;
     totals.net = roundMoney(totals.net);
-    totals.savingsRate = totals.income > 0 ? totals.net / totals.income * 100 : null;
+    totals.savingsRate = totals.income > 0 ? Math.round(totals.net / totals.income * 100000000) / 1000000 : null;
     totals.count = filtered.length;
     return totals;
   }
@@ -424,6 +448,7 @@
     const prefix = monthPrefix(year, month);
     const daily = Array.from({ length:totalDays }, () => 0);
     (transactions || []).forEach(transaction => {
+      if (!transaction || typeof transaction !== 'object') return;
       if (transactionType(transaction) !== 'expense') return;
       const date = String(transaction.date || '').slice(0, 10);
       if (!date.startsWith(prefix) || date > isoDate(reference)) return;
@@ -498,9 +523,9 @@
     return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
   }
 
-  function monthlyExpenseCsv(profile, monthPrefix = '2026-08', currency = 'EUR') {
+  function monthlyExpenseCsv(profile, monthPrefix = new Date().toISOString().slice(0,7), currency = 'EUR') {
     const rows = [['Date', 'Description', 'Category', `Amount (${currency})`]];
-    (profile.transactions || []).filter(tx => transactionType(tx) === 'expense' && String(tx.date).startsWith(monthPrefix)).forEach(tx => rows.push([String(tx.date).slice(0, 10), tx.name, tx.category, Number(tx.amount).toFixed(2)]));
+    (profile.transactions || []).filter(tx => tx && transactionType(tx) === 'expense' && String(tx.date || '').startsWith(monthPrefix) && Number.isFinite(Number(tx.amount))).forEach(tx => rows.push([String(tx.date).slice(0, 10), tx.name || '', tx.category || 'other', Number(tx.amount).toFixed(2)]));
     const total = rows.slice(1).reduce((sum, row) => sum + Number(row[3]), 0);
     rows.push(['', 'TOTAL', '', total.toFixed(2)]);
     return rows.map(row => row.map(csvEscape).join(',')).join('\r\n');

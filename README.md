@@ -2,9 +2,16 @@
 
 Production-prepared static application for savings, budgeting, income, and cash-flow tracking. The interface follows the supplied mer brand book, opens in Croatian, and includes an HR/EN switch.
 
-## Run
+## Run and verify
 
-Open `index.html` directly, or serve this folder from any static host. No build step or backend is required. App data is saved locally in the browser and Personal/Business profiles are isolated.
+Node.js 20 or newer is required for the reproducible production pipeline.
+
+```powershell
+npm install
+npm run check
+```
+
+`npm run check` performs the source/security preflight, runs every logic and UI contract evaluation, and creates the minified `dist/` output. For local UI work, serve the repository root with any static server and open `index.html`. App data is saved locally in the browser and Personal/Business profiles are isolated.
 
 ## Included
 
@@ -24,14 +31,14 @@ Open `index.html` directly, or serve this folder from any static host. No build 
 - Multiple purpose-based savings goals with progress, deadlines, deposits, editing, and a selectable primary Dashboard goal
 - Vault-style savings cards with progress rings, target countdowns, required monthly contributions, and a single selectable spare-change round-up destination
 - Automatic subscription detection with renewal reminders and a dedicated subscription manager
-- A live contextual header with time-of-day greeting, system date/time rollover, and translated HR/EN formatting
+- A live contextual header with time-of-day greeting, date rollover, and translated HR/EN formatting
 - A dedicated login/registration landing, Web Crypto password hashing, session persistence, demo access, and a full logout flow
 - Production Open Banking/PSD2 transaction contracts and provider adapters prepared for GoCardless/Nordigen, Salt Edge, and Tink
 - Institution metadata for ZABA, PBZ, Erste, HPB, OTP, Revolut, N26, and Wise, including IBAN/BIC/currency transaction fields
 - CAMT.053 / ISO 20022 bank-statement parsing alongside CSV and Excel, using the same pre-commit review drawer
 - Dense Insights canvas with category donut, six-month income/expense bars, top-five merchants, and savings-rate gauge
 - Profile-isolated custom keyword rules shared by bank sync and file imports
-- Fixed `100dvh` application shell with zero browser-page scrolling; Activity is the only module with a vertical list scrollbar
+- Fixed `100dvh` desktop application shell with intentional internal scrolling only for volume-heavy Activity, Budget-category, and import-review lists
 - Brand-book-compliant adaptive wordmarks that switch between positive and negative variants by surface and theme while preserving the 9:4 aspect ratio
 - A stationary auth hero with an independently scrollable form column, a repaired fixed-height Savings canvas, and a semantic responsive type scale
 - Progressive-disclosure detail modals for secondary Dashboard, Budget, Savings, and Insights content
@@ -60,6 +67,12 @@ The demo never asks for or stores real banking credentials. A production Open Ba
 
 `state-store.js` is the single commit boundary for app data. Every add, edit, delete, sync, import, savings-goal, and settings mutation passes through the store; both account profiles are recalculated before one synchronous UI notification. The app shell, main content, and document root are locked to `100vh`/`100dvh` on desktop. Primary modules stay inside that canvas, while Activity, the bounded Budget category list, and the 500+ row import-review table own intentional vertical scroll state. Secondary information opens in detail modals. Tablet and mobile layouts use natural vertical flow so cards remain readable.
 
+## Production output
+
+`npm run build` minifies every application script with Terser, compacts CSS/HTML/SVG assets, verifies that each bundle is non-empty, and writes a byte-reduction report to `dist/build-report.json`. `vercel.json` publishes only `dist/` and applies a restrictive Content Security Policy plus clickjacking, MIME-sniffing, referrer, permissions, and cross-origin isolation headers. `runtime.js` catches uncaught errors and rejected promises and presents an accessible recovery surface without exposing internal error details.
+
+The external SheetJS browser bundle is pinned to version `0.20.3` and restricted by the production CSP. Live financial onboarding still requires moving authentication, MFA secrets, and Open Banking tokens to a trusted server, as described in the security model above.
+
 ## Run bank evaluations
 
 ```powershell
@@ -83,4 +96,6 @@ node tests/eval-cycle-2-fixed-layout.test.js
 
 ## Verification
 
-The complete suite currently passes 86 automated checks across auth/session security, CSV/Excel/CAMT parsing, Croatian merchant categorization, PSD2 contracts, sync/deduplication, MFA, reactive state, round-up/profile isolation, goal/rule isolation, adaptive logos, idle behavior, typography, navigation, responsive layouts, modal routing, and fixed-layout contracts. Interactive browser evaluation with 16 Budget categories verified a fixed root canvas, a bounded internally scrollable category card, precisely aligned search controls in both themes, real-time filtering and limit synchronization, clean close/backdrop behavior, and no runtime errors.
+The complete suite currently passes 123 automated checks in 23 evaluation files across auth/session security, CSV/Excel/CAMT parsing, Croatian merchant categorization, PSD2 contracts, sync/deduplication, MFA, reactive state, calendar and leap-year behavior, round-up/profile isolation, malformed data recovery, goal/rule isolation, adaptive logos, idle behavior, typography, navigation, responsive layouts, modal focus management, production headers, and fixed-layout contracts.
+
+Interactive browser evaluation covers 414, 768, 820, 1366, 1440, and 1920 px widths. It verifies natural mobile/tablet flow, an exact desktop viewport canvas, zero horizontal overflow, all seven expandable Insights cards, backdrop dismissal, focus restoration, theme/language/notification controls, registration, logout, login, password recovery, session persistence, and an empty runtime console.
