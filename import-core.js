@@ -172,10 +172,72 @@
     return { imported, duplicates, invalid };
   }
 
+  function createReviewStage(result, fileName, profileId) {
+    const source = result && typeof result === 'object' ? result : {};
+    return {
+      ...source,
+      reviewRows:Array.isArray(source.reviewRows) ? source.reviewRows : [],
+      invalidRows:Array.isArray(source.invalidRows) ? source.invalidRows : [],
+      duplicates:Math.max(0, Number(source.duplicates) || 0),
+      fileName:String(fileName || 'import.csv').replace(/[\r\n]/g, ' ').trim().slice(0, 80) || 'import.csv',
+      profileId:String(profileId || '')
+    };
+  }
+
+  function stageBelongsToProfile(stage, profileId) {
+    return Boolean(stage && typeof stage === 'object' && stage.profileId && stage.profileId === String(profileId || ''));
+  }
+
+  function applyBulkOverride(stage, profileId, override = {}) {
+    if (!stageBelongsToProfile(stage, profileId)) return { valid:false, reason:'profile-changed', count:0, snapshot:[] };
+    const type = override.type === 'income' ? 'income' : override.type === 'expense' ? 'expense' : null;
+    const category = String(override.category || '');
+    if (!type || !category) return { valid:false, reason:'invalid-override', count:0, snapshot:[] };
+    const snapshot = [];
+    stage.reviewRows.forEach((row, index) => {
+      if (!row || row.excluded) return;
+      snapshot.push({
+        index,
+        type:row.type,
+        category:row.category,
+        needsReview:Boolean(row.needsReview),
+        categoryConfidence:row.categoryConfidence,
+        categorizationRule:row.categorizationRule
+      });
+      row.type = type;
+      row.category = category;
+      row.needsReview = false;
+      row.categoryConfidence = 'manual-review';
+      row.categorizationRule = 'bulk-review';
+    });
+    return { valid:true, reason:null, count:snapshot.length, snapshot };
+  }
+
+  function undoBulkOverride(stage, profileId, snapshot) {
+    if (!stageBelongsToProfile(stage, profileId)) return { valid:false, reason:'profile-changed', count:0 };
+    let count = 0;
+    (Array.isArray(snapshot) ? snapshot : []).forEach(previous => {
+      const row = stage.reviewRows[Number(previous?.index)];
+      if (!row) return;
+      row.type = previous.type;
+      row.category = previous.category;
+      row.needsReview = Boolean(previous.needsReview);
+      row.categoryConfidence = previous.categoryConfidence;
+      row.categorizationRule = previous.categorizationRule;
+      count += 1;
+    });
+    return { valid:true, reason:null, count };
+  }
+
+  function commitReviewStage(profile, stage, profileId) {
+    if (!stageBelongsToProfile(stage, profileId)) return { imported:[], duplicates:0, invalid:0, error:'profile-changed' };
+    return commitImport(profile, stage.reviewRows, stage.fileName);
+  }
+
   function validTimestamp(value, fallbackDate) {
     const text=String(value||'');
     return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(text)&&normalizeDate(text.slice(0,10),'iso')?text.slice(0,35):`${fallbackDate}T12:00:00`;
   }
 
-  return { MAX_IMPORT_ROWS, MAX_TEXT_LENGTH, parseCsv, detectDelimiter, columnMap, normalizeDate, numberValue, fingerprint, parseRows, parseCsvImport, commitImport };
+  return { MAX_IMPORT_ROWS, MAX_TEXT_LENGTH, parseCsv, detectDelimiter, columnMap, normalizeDate, numberValue, fingerprint, parseRows, parseCsvImport, commitImport, createReviewStage, stageBelongsToProfile, applyBulkOverride, undoBulkOverride, commitReviewStage };
 });

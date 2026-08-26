@@ -1681,7 +1681,7 @@ body { font-size:var(--type-body); line-height:var(--leading-body); }
   overflow:hidden;
 }
 .budget-categories-modal[open] { display:flex; min-height:0; flex-direction:column; }
-.budget-manager-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; padding-right:42px; }
+.budget-manager-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; padding-right:56px; }
 .budget-manager-heading > div { min-width:0; }
 .budget-manager-heading h2 { margin-top:5px; font-size:1.5rem; }
 .budget-manager-heading .modal-intro { margin:6px 0 0; }
@@ -1747,7 +1747,7 @@ body { font-size:var(--type-body); line-height:var(--leading-body); }
   .allocation-actions { align-items:stretch; flex-direction:column; }
   .allocation-actions .secondary-button { width:100%; }
   .budget-categories-modal { height:100dvh; max-height:100dvh; overflow:hidden; }
-  .budget-manager-heading { align-items:stretch; flex-direction:column; gap:14px; padding-right:0; }
+  .budget-manager-heading { align-items:stretch; flex-direction:column; gap:14px; padding-right:52px; }
   .budget-manager-heading .primary-button { width:100%; }
   .budget-manager-toolbar { grid-template-columns:minmax(0,1fr); margin-top:16px; }
   .budget-manager-meta { align-items:flex-start; flex-direction:column; gap:3px; margin-top:10px; }
@@ -1757,4 +1757,155 @@ body { font-size:var(--type-body); line-height:var(--leading-body); }
   .budget-manager-row .budget-row-progress { grid-column:1 / -1; grid-row:2; }
   .budget-manager-row .budget-row-value { grid-column:1; grid-row:3; text-align:left; }
   .budget-manager-row .edit-budget { grid-column:2; grid-row:1; }
+}
+
+/* Audit remediation: branded form controls retain native semantics. */
+select:not([multiple]) {
+  appearance:none;
+  -webkit-appearance:none;
+  padding-right:36px !important;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%) !important;
+  background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50% !important;
+  background-repeat:no-repeat !important;
+  background-size:5px 5px,5px 5px !important;
+}
+
+/* A capped bar stays in bounds while stripes and exact copy signal any overage. */
+.progress-track.over-cap,
+.budget-bar.over-cap {
+  border:1px solid color-mix(in srgb,var(--red) 54%,var(--line));
+  background:var(--red-soft);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--red-soft) 80%,transparent);
+}
+.progress-track.over-cap span,
+.budget-bar.over-cap span {
+  background-color:var(--red);
+  background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.28) 0 5px,transparent 5px 10px);
+}
+.is-over-budget .budget-percent,
+.is-over-budget .threshold-warning,
+.overage-label { color:#b4232a; font-weight:800; }
+[data-theme="dark"] .is-over-budget .budget-percent,
+[data-theme="dark"] .is-over-budget .threshold-warning { color:#ffb8bc; }
+
+.budget-recovery {
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin-top:14px;
+  padding:11px 12px;
+  border:1px solid color-mix(in srgb,var(--orange) 42%,var(--line));
+  border-radius:9px;
+  background:var(--yellow-soft);
+}
+.budget-recovery-icon { width:38px; height:38px; display:grid; place-items:center; border-radius:9px; color:#8a4d00; background:color-mix(in srgb,var(--orange) 18%,transparent); }
+.budget-recovery-icon svg { width:18px; }
+.budget-recovery > div:nth-child(2) { min-width:0; display:flex; flex-direction:column; gap:3px; }
+.budget-recovery strong { font-size:.75rem; }
+.budget-recovery small { color:var(--muted); font-size:.625rem; line-height:1.4; }
+.budget-recovery-actions { display:flex; align-items:center; gap:8px; }
+.budget-transfer-modal { width:min(520px,calc(100vw - 32px)); }
+.budget-transfer-modal form { display:grid; gap:14px; margin-top:20px; }
+
+.bulk-override-confirmation,
+.bulk-override-undo {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin:0 0 12px;
+  padding:10px 12px;
+  border:1px solid color-mix(in srgb,var(--orange) 45%,var(--line));
+  border-radius:8px;
+  background:var(--yellow-soft);
+}
+.bulk-override-confirmation > div:first-child { min-width:0; display:flex; flex-direction:column; gap:3px; }
+.bulk-override-confirmation > div:last-child { display:flex; flex:0 0 auto; gap:7px; }
+.bulk-override-confirmation strong { font-size:.75rem; }
+.bulk-override-confirmation span,
+.bulk-override-undo span { color:var(--muted); font-size:.6875rem; line-height:1.4; }
+.bulk-override-undo { border-color:color-mix(in srgb,var(--green) 45%,var(--line)); background:var(--green-soft); }
+
+.demo-reset-card {
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin-top:18px;
+  padding:13px;
+  border:1px solid color-mix(in srgb,var(--red) 34%,var(--line));
+  border-radius:9px;
+  background:var(--red-soft);
+}
+.demo-reset-icon { width:42px; height:42px; display:grid; place-items:center; border-radius:9px; color:#a82d34; background:color-mix(in srgb,var(--red) 12%,transparent); }
+.demo-reset-card > div { min-width:0; display:flex; flex-direction:column; gap:3px; }
+.demo-reset-card strong { font-size:.75rem; }
+.demo-reset-card small { color:var(--muted); font-size:.625rem; line-height:1.4; }
+.demo-reset-modal { width:min(500px,calc(100vw - 32px)); }
+
+.import-data-modal > .settings-pane-heading { min-width:0; padding-right:48px; }
+.import-data-modal > .settings-pane-heading > div { min-width:0; }
+.import-data-modal #importProfileBadge { max-width:180px; flex:0 0 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+[data-theme="dark"] .recommendation-panel > p:not(.overline) { color:var(--muted); }
+[data-theme="dark"] .spend-check.warning,
+[data-theme="dark"] .connection-status.warning { color:#ffc378; }
+[data-theme="dark"] .spend-check.danger,
+[data-theme="dark"] .guard-status.danger,
+[data-theme="dark"] .connection-status.error { color:#ff9da2; }
+
+/* The fixed desktop canvas keeps a two-column savings hero down to 1025px. */
+@media (min-width:1025px) and (max-width:1100px) {
+  #savingsView > .savings-layout { grid-template-columns:minmax(0,1.55fr) minmax(260px,.75fr); }
+}
+
+/* Low desktop heights disclose details through the existing modal instead of clipping. */
+@media (max-height:720px) and (min-width:1025px) {
+  #savingsView > .savings-layout { min-height:0; grid-auto-rows:minmax(0,1fr); }
+  #savingsView .savings-hero,
+  #savingsView .recommendation-panel { min-height:0; overflow:hidden; }
+  #savingsView .recommendation-panel > p:not(.overline),
+  #savingsView .savings-milestones { display:none; }
+  #savingsView .savings-number { margin-top:9px; }
+  #savingsView .savings-facts { margin-top:7px; padding-top:7px; }
+  #savingsView .recommendation-stat { margin:7px 0; padding:8px 10px; }
+  #savingsView .goal-metric-grid { display:none; }
+  #savingsView .rich-goal-card { min-height:0; }
+}
+
+@media (max-width:767px) {
+  .budget-recovery { grid-template-columns:38px minmax(0,1fr); align-items:start; }
+  .budget-recovery-actions { grid-column:1 / -1; align-items:stretch; flex-direction:column; }
+  .budget-recovery-actions button { width:100%; }
+  .bulk-override-confirmation,
+  .bulk-override-undo,
+  .demo-reset-card { align-items:stretch; flex-direction:column; }
+  .bulk-override-confirmation,
+  .bulk-override-undo { display:flex; }
+  .bulk-override-confirmation > div:last-child { width:100%; }
+  .bulk-override-confirmation > div:last-child button { flex:1; }
+  .demo-reset-card { display:flex; }
+  .demo-reset-card .destructive-button { width:100%; }
+  .import-data-modal > .settings-pane-heading { align-items:flex-start; flex-direction:column; padding-right:46px; }
+  .data-action-pair .secondary-button span,
+  .heading-actions .primary-button span,
+  .heading-actions .secondary-button span {
+    display:block;
+    position:absolute;
+    width:1px;
+    height:1px;
+    margin:-1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+  }
+  .bulk-entry-card .data-action-pair .secondary-button span {
+    position:static;
+    width:auto;
+    height:auto;
+    margin:0;
+    overflow:visible;
+    clip:auto;
+    white-space:normal;
+  }
 }

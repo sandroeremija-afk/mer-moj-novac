@@ -58,6 +58,8 @@ Object.assign(translations.en,{incomeImpact:'Available balance will increase to 
 
 Object.assign(translations.hr,{budgetCategoryList:'Popis budžetskih kategorija',showAllCategories:'Prikaži sve',manageBudgetCategories:'Upravljaj kategorijama',budgetManagerIntro:'Pretražite sve kategorije, provjerite potrošnju i uredite mjesečne limite.',addBudget:'Dodaj budžet',searchBudgetCategories:'Pretraži kategorije',filterBudgetStatus:'Filtriraj po statusu budžeta',allBudgetStatuses:'Svi statusi',withinBudgetStatus:'Dostupno',nearLimitStatus:'Blizu limita',limitReachedStatus:'Dosegnut limit',editBudgetHint:'Odaberite olovku za izravno uređivanje limita.',usage:'Iskorištenost',spentVsLimit:'Potrošeno / limit',actions:'Radnje',noBudgetCategories:'Nema odgovarajućih kategorija',tryDifferentBudgetFilter:'Pokušajte s drugim pojmom ili statusom.',budgetCategoryCount:'Prikazano {visible} od {total} kategorija'});
 Object.assign(translations.en,{budgetCategoryList:'Budget category list',showAllCategories:'Show all',manageBudgetCategories:'Manage categories',budgetManagerIntro:'Search every category, review spending, and edit monthly limits.',addBudget:'Add budget',searchBudgetCategories:'Search categories',filterBudgetStatus:'Filter by budget status',allBudgetStatuses:'All statuses',withinBudgetStatus:'Available',nearLimitStatus:'Near limit',limitReachedStatus:'Limit reached',editBudgetHint:'Select the pencil to edit a limit directly.',usage:'Usage',spentVsLimit:'Spent / limit',actions:'Actions',noBudgetCategories:'No matching categories',tryDifferentBudgetFilter:'Try another search term or status.',budgetCategoryCount:'Showing {visible} of {total} categories'});
+Object.assign(translations.hr,{monthlyBudget:'Fleksibilni budžet za potrošnju',afterCommitments:'Prihodi nakon obveza, štednje i rezerve',remainingBudget:'Sigurno preostaje nakon potrošnje',allocatedCategories:'Raspoređeno u kategorije',budgetOf:'{percent}% fleksibilnog budžeta od {budget}',budgetOverageExact:'{percent}% · {amount} iznad limita',budgetRecoveryOverTitle:'Plan kategorija prelazi fleksibilni budžet',budgetRecoveryOverCopy:'Smanjite samo neiskorištene dijelove limita za {amount}; zabilježena potrošnja ostaje netaknuta.',budgetRecoveryCategoryTitle:'Jedna ili više kategorija je prekoračena',budgetRecoveryCategoryCopy:'Preraspodijelite neiskorišteni limit iz druge kategorije bez promjene ukupnog budžeta.',autoBalanceBudget:'Uskladi plan',coverOverspending:'Pokrij prekoračenje',rebalanceBudget:'PRERASPODJELA BUDŽETA',coverOverspendingIntro:'Premjestite neiskorišteni dio limita iz jedne kategorije u prekoračenu kategoriju bez promjene ukupnog budžeta.',overspentCategory:'Prekoračena kategorija',fundFromCategory:'Prenesi iz kategorije',transferAmount:'Iznos preraspodjele',confirmTransfer:'Potvrdi preraspodjelu',transferContext:'Dostupno za prijenos: {available}. Prekoračenje: {overage}.',transferInvalid:'Odaberite valjane kategorije i iznos.',transferSaved:'Preraspodijeljeno je {amount}. Ukupni budžet ostao je isti.',balancePlanConfirm:'Smanjit ćemo samo neiskorištene dijelove kategorijskih limita. Zabilježena potrošnja neće se mijenjati. Nastaviti?',balancePlanReady:'Plan je usklađen za {amount}.',balancePlanPartial:'Smanjeno je {amount}, ali {remaining} nije moguće pokriti bez promjene ukupnog plana.',spentCategory:'Potrošeno: {spent}. Najniži dopušteni limit je {minimum}; trenutačni plan dopušta najviše {maximum}.',positiveAmountRequired:'Iznos mora biti veći od nule.',demoWorkspace:'DEMO PROSTOR',demoResetTitle:'Vrati čisti demo prostor',demoResetHint:'Uklanja probne promjene iz oba profila i vraća početne MER podatke. Postavke prikaza ostaju sačuvane.',resetDemoData:'Vrati demo podatke',confirmDemoResetTitle:'Vratiti početne demo podatke?',confirmDemoResetBody:'Sve probne transakcije, pravila, ciljevi i bankovne veze u Osobnom i Poslovnom profilu bit će zamijenjeni početnim primjerima. Ovu radnju nije moguće poništiti.',confirmDemoReset:'Da, vrati podatke',demoResetComplete:'Demo prostor vraćen je na početne podatke.',demoResetUnavailable:'Reset je dostupan samo u demo načinu.',cancel:'Odustani'});
+Object.assign(translations.en,{monthlyBudget:'Flexible spending budget',afterCommitments:'Income after bills, savings and buffer',remainingBudget:'Safe remainder after spending',allocatedCategories:'Allocated to categories',budgetOf:'{percent}% of the {budget} flexible budget',budgetOverageExact:'{percent}% · {amount} over limit',budgetRecoveryOverTitle:'Category plan exceeds the flexible budget',budgetRecoveryOverCopy:'Reduce only unused category headroom by {amount}; recorded spending stays untouched.',budgetRecoveryCategoryTitle:'One or more categories are over limit',budgetRecoveryCategoryCopy:'Move unused room from another category without changing the total budget.',autoBalanceBudget:'Balance plan',coverOverspending:'Cover overspending',rebalanceBudget:'BUDGET REALLOCATION',coverOverspendingIntro:'Move unused room from one category to an overspent category without changing the total budget.',overspentCategory:'Overspent category',fundFromCategory:'Move from category',transferAmount:'Transfer amount',confirmTransfer:'Confirm reallocation',transferContext:'Available to move: {available}. Overage: {overage}.',transferInvalid:'Choose valid categories and an amount.',transferSaved:'Moved {amount}. The total budget stayed unchanged.',balancePlanConfirm:'Only unused category headroom will be reduced. Recorded spending will not change. Continue?',balancePlanReady:'The plan was balanced by {amount}.',balancePlanPartial:'Reduced by {amount}, but {remaining} cannot be covered without changing the total plan.',spentCategory:'Spent: {spent}. The minimum allowed limit is {minimum}; the current plan allows up to {maximum}.',positiveAmountRequired:'Amount must be greater than zero.',demoWorkspace:'DEMO WORKSPACE',demoResetTitle:'Restore a clean demo workspace',demoResetHint:'Removes trial changes from both profiles and restores the original MER sample data. Display preferences stay saved.',resetDemoData:'Reset demo data',confirmDemoResetTitle:'Restore the original demo data?',confirmDemoResetBody:'All trial transactions, rules, goals and bank connections in Personal and Business will be replaced with the original examples. This cannot be undone.',confirmDemoReset:'Yes, restore data',demoResetComplete:'The demo workspace was restored.',demoResetUnavailable:'Reset is available only in demo mode.',cancel:'Cancel'});
 
 const categoryMeta = {
   food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, healthBeauty:{icon:'N',className:'shopping'}, utilities:{icon:'R',className:'other'}, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
@@ -289,8 +291,9 @@ function renderOverview() {
   $('#budgetPercent').textContent = t('budgetOf', { percent, budget:currency(plan.monthlyBudget, true) });
   $('#budgetProgress').style.width = `${Math.min(100, percent)}%`;
   $('#budgetProgressTrack').setAttribute('aria-valuenow', Math.min(100, percent));
+  $('#budgetProgressTrack').setAttribute('aria-valuetext',percent>100?t('budgetOverageExact',{percent,amount:currency(Math.max(0,state.spent-plan.monthlyBudget),true)}):t('budgetOf',{percent,budget:currency(plan.monthlyBudget,true)}));
   const totalThreshold=MerCore.budgetThreshold(state.spent,plan.monthlyBudget);
-  $('#budgetProgressTrack').className=`progress-track threshold-${totalThreshold.level}`;
+  $('#budgetProgressTrack').className=`progress-track threshold-${totalThreshold.level}${percent>100?' over-cap':''}`;
   $('#safeDaily').textContent = currency(plan.safeDaily, true);
   $('#safeRemaining').textContent = currency(plan.safeRemaining);
   $('#safeDaily').classList.toggle('negative-value',plan.safeDaily<0);
@@ -357,7 +360,8 @@ function renderBudgetLists() {
   $('#budgetList').innerHTML = overviewCategories.map(cat => {
     const pct = Math.round(state.derived?.categoryMetrics?.[cat.id]?.percent ?? MerCore.budgetThreshold(cat.spent,cat.limit).percent);
     const meta = categoryVisual(cat);
-    return `<div class="budget-item"><div class="budget-item-header"><span class="category-icon ${meta.className}">${escapeHtml(meta.icon)}</span><div><div class="budget-item-title"><strong>${escapeHtml(categoryName(cat.id))}</strong><span>${t('usedOf',{spent:currency(cat.spent,true),limit:currency(cat.limit,true)})}</span></div><div class="budget-bar"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div>${pct>=80?`<small class="threshold-warning ${pct>=100?'is-red':''}">${thresholdMessage(pct)}</small>`:''}</div><span class="budget-percent">${pct}%</span></div></div>`;
+    const overage=Math.max(0,cat.spent-cat.limit),status=pct>=100?t('budgetOverageExact',{percent:pct,amount:currency(overage,true)}):thresholdMessage(pct);
+    return `<div class="budget-item${pct>100?' is-over-budget':''}"><div class="budget-item-header"><span class="category-icon ${meta.className}">${escapeHtml(meta.icon)}</span><div><div class="budget-item-title"><strong>${escapeHtml(categoryName(cat.id))}</strong><span>${t('usedOf',{spent:currency(cat.spent,true),limit:currency(cat.limit,true)})}</span></div><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div>${pct>=80?`<small class="threshold-warning ${pct>=100?'is-red overage-label':''}">${status}</small>`:''}</div><span class="budget-percent">${pct}%</span></div></div>`;
   }).join('');
 }
 
@@ -365,7 +369,7 @@ function renderBudgetView() {
   const plan = getPlan();
   const allocated = state.categories.reduce((sum,cat) => sum + cat.limit, 0);
   const difference = plan.monthlyBudget - allocated;
-  const allocationPercent = Math.round(MerCore.ratioPercent(allocated,plan.monthlyBudget));
+  const allocationPercent = plan.monthlyBudget>0?Math.round(MerCore.ratioPercent(allocated,plan.monthlyBudget)):allocated>0?100:0;
   $('#fullBudgetValue').textContent = currency(plan.monthlyBudget, true);
   $('#fullRemainingValue').textContent = currency(plan.safeRemaining);
   $('#fullRemainingValue').classList.toggle('negative-value',plan.safeRemaining<0);
@@ -378,14 +382,20 @@ function renderBudgetView() {
   $('.allocation-bar').classList.toggle('over', allocationPercent > 100);
   $('#allocationCopy').textContent = t('allocationCopy',{allocated:currency(allocated,true),budget:currency(plan.monthlyBudget,true)});
   $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
+  const overspent=state.categories.filter(cat=>cat.spent>cat.limit+.005),donors=state.categories.filter(cat=>cat.limit>cat.spent+.005),overAllocated=difference<-.005,recovery=$('#budgetRecovery');
+  recovery.hidden=!overAllocated&&!overspent.length;
+  $('#autoBalanceBudget').hidden=!overAllocated;
+  $('#openBudgetTransfer').hidden=!overspent.length||!donors.length;
+  if(overAllocated){$('#budgetRecoveryTitle').textContent=t('budgetRecoveryOverTitle');$('#budgetRecoveryCopy').textContent=t('budgetRecoveryOverCopy',{amount:currency(Math.abs(difference),true)});}
+  else if(overspent.length){$('#budgetRecoveryTitle').textContent=t('budgetRecoveryCategoryTitle');$('#budgetRecoveryCopy').textContent=t('budgetRecoveryCategoryCopy');}
   if($('#budgetCategoriesModal').open)renderBudgetCategoryManager();
 }
 
 function budgetCategoryPercent(cat) { return Math.round(state.derived?.categoryMetrics?.[cat.id]?.percent ?? MerCore.budgetThreshold(cat.spent,cat.limit).percent); }
 
 function budgetCategoryRow(cat, manager=false) {
-  const pct=budgetCategoryPercent(cat),meta=categoryVisual(cat),remaining=Math.max(0,cat.limit-cat.spent),name=categoryName(cat.id),safeId=escapeHtml(cat.id),safeName=escapeHtml(name);
-  return `<div class="budget-row${manager?' budget-manager-row':''}"><div class="budget-category"><span class="category-icon ${meta.className}">${escapeHtml(meta.icon)}</span><div><strong>${safeName}</strong><small class="${pct>=80?'threshold-warning':''}">${pct>=80?thresholdMessage(pct):`${currency(remaining,true)} ${currentLang==='hr'?'preostalo':'remaining'}`}</small></div></div><div class="budget-row-progress"><div class="budget-bar"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div><span class="budget-percent">${pct}%</span></div><div class="budget-row-value">${currency(cat.spent,true)} / ${currency(cat.limit,true)}</div><button type="button" class="icon-button small edit-budget" data-edit-budget="${safeId}" aria-label="${currentLang==='hr'?'Uredi budžet za':'Edit budget for'} ${safeName}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
+  const pct=budgetCategoryPercent(cat),meta=categoryVisual(cat),remaining=Math.max(0,cat.limit-cat.spent),overage=Math.max(0,cat.spent-cat.limit),name=categoryName(cat.id),safeId=escapeHtml(cat.id),safeName=escapeHtml(name),status=pct>=100?t('budgetOverageExact',{percent:pct,amount:currency(overage,true)}):pct>=80?thresholdMessage(pct):`${currency(remaining,true)} ${currentLang==='hr'?'preostalo':'remaining'}`;
+  return `<div class="budget-row${manager?' budget-manager-row':''}${pct>100?' is-over-budget':''}"><div class="budget-category"><span class="category-icon ${meta.className}">${escapeHtml(meta.icon)}</span><div><strong>${safeName}</strong><small class="${pct>=80?'threshold-warning':''}${pct>=100?' overage-label':''}">${status}</small></div></div><div class="budget-row-progress"><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div><span class="budget-percent">${pct}%</span></div><div class="budget-row-value">${currency(cat.spent,true)} / ${currency(cat.limit,true)}</div><button type="button" class="icon-button small edit-budget" data-edit-budget="${safeId}" aria-label="${currentLang==='hr'?'Uredi budžet za':'Edit budget for'} ${safeName}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
 }
 
 function budgetCategoryMatchesStatus(cat,status) {
@@ -587,13 +597,13 @@ function renderRecurring() {
 }
 
 function buildNotifications() {
-  const notifications=[];
-  const reviewCount=uncategorizedTransactions().length;if(reviewCount)notifications.push({type:'warning',icon:'icon-alert',title:t('alertUncategorizedTitle'),body:t('alertUncategorizedBody',{count:reviewCount}),action:t('reviewCategories'),view:'activity',reviewOnly:true});
-  state.categories.forEach(cat=>{const threshold=MerCore.budgetThreshold(cat.spent,cat.limit);if(threshold.percent>=80)notifications.push({type:threshold.level==='red'?'danger':'warning',icon:'icon-wallet',title:t('alertBudgetTitle'),body:t('alertBudgetBody',{category:categoryName(cat.id),percent:Math.round(threshold.percent)}),action:t('reviewBudget'),view:'budgets'});});
-  (state.recurring||[]).forEach(rule=>{const next=MerCore.nextOccurrence(rule,appReferenceDate);if(next){const days=Math.round((new Date(`${next}T12:00:00`)-new Date(`${appReferenceDate}T12:00:00`))/86400000);if(days<=20)notifications.push({type:'info',icon:'icon-calendar',title:t('alertRecurringTitle'),body:t('alertRecurringBody',{name:rule.name,amount:currency(rule.amount),date:formatIsoDate(next)}),action:t('reviewRecurring'),view:'budgets'});}});
-  MerAccounting.detectSubscriptions(state.transactions,appReferenceDate).filter(subscription=>subscription.daysUntil>=0&&subscription.daysUntil<=31).slice(0,2).forEach(subscription=>notifications.push({type:'info',icon:'icon-refresh',title:t('recurringSubscriptions'),body:`${subscription.merchant} · ${currency(subscription.amount)} · ${t('renewsIn',{days:subscription.daysUntil})}`,action:t('manageSubscriptions'),view:'insights',subscriptions:true}));
-  const plan=getPlan();if(plan.monthlyBudget&&plan.safeRemaining/plan.monthlyBudget<.25)notifications.push({type:'warning',icon:'icon-shield',title:t('alertSpendingTitle'),body:t('alertSpendingBody',{amount:currency(plan.safeRemaining)}),action:t('reviewSpending'),view:'activity'});
-  return notifications.slice(0,6);
+  const notifications=[],seen=new Set(),push=item=>{if(!seen.has(item.key)){seen.add(item.key);notifications.push(item);}};
+  const reviewCount=uncategorizedTransactions().length;if(reviewCount)push({key:'uncategorized',priority:5,type:'warning',icon:'icon-alert',title:t('alertUncategorizedTitle'),body:t('alertUncategorizedBody',{count:reviewCount}),action:t('reviewCategories'),view:'activity',reviewOnly:true});
+  const plan=getPlan();if(plan.monthlyBudget&&plan.safeRemaining/plan.monthlyBudget<.25)push({key:'safe-to-spend',priority:5,type:'warning',icon:'icon-shield',title:t('alertSpendingTitle'),body:t('alertSpendingBody',{amount:currency(plan.safeRemaining)}),action:t('reviewSpending'),view:'activity'});
+  state.categories.forEach(cat=>{const threshold=MerCore.budgetThreshold(cat.spent,cat.limit);if(threshold.percent>=80)push({key:`budget:${cat.id}`,priority:threshold.level==='red'?4:3,type:threshold.level==='red'?'danger':'warning',icon:'icon-wallet',title:t('alertBudgetTitle'),body:t('alertBudgetBody',{category:categoryName(cat.id),percent:Math.round(threshold.percent)}),action:t('reviewBudget'),view:'budgets'});});
+  (state.recurring||[]).forEach(rule=>{const next=MerCore.nextOccurrence(rule,appReferenceDate);if(next){const days=Math.round((new Date(`${next}T12:00:00`)-new Date(`${appReferenceDate}T12:00:00`))/86400000);if(days<=20)push({key:`recurring:${rule.id}`,priority:2,type:'info',icon:'icon-calendar',title:t('alertRecurringTitle'),body:t('alertRecurringBody',{name:rule.name,amount:currency(rule.amount),date:formatIsoDate(next)}),action:t('reviewRecurring'),view:'budgets'});}});
+  MerAccounting.detectSubscriptions(state.transactions,appReferenceDate).filter(subscription=>subscription.daysUntil>=0&&subscription.daysUntil<=31).slice(0,2).forEach(subscription=>push({key:subscription.id,priority:2,type:'info',icon:'icon-refresh',title:t('recurringSubscriptions'),body:`${subscription.merchant} · ${currency(subscription.amount)} · ${t('renewsIn',{days:subscription.daysUntil})}`,action:t('manageSubscriptions'),view:'insights',subscriptions:true}));
+  return notifications.sort((left,right)=>right.priority-left.priority||left.key.localeCompare(right.key)).slice(0,6);
 }
 
 function renderNotifications() {
@@ -917,7 +927,7 @@ function openSidebar() { $('#sidebar').classList.add('open'); $('#sidebarScrim')
 function closeSidebar() { $('#sidebar').classList.remove('open'); $('#sidebarScrim').hidden=true; $('#menuToggle').setAttribute('aria-expanded','false'); $('#menuToggle').setAttribute('aria-label',t('openNav')); }
 
 function toggleAccountMenu(force) { const menu=$('#accountMenu'),willOpen=typeof force==='boolean'?force:menu.hidden;menu.hidden=!willOpen;$('#openSettings').setAttribute('aria-expanded',String(willOpen)); }
-function closeNotifications() { $('#notificationCenter').hidden=true;$('#notificationButton').setAttribute('aria-expanded','false'); }
+function closeNotifications(restoreFocus=false) { const wasOpen=!$('#notificationCenter').hidden;$('#notificationCenter').hidden=true;$('#notificationButton').setAttribute('aria-expanded','false');if(restoreFocus&&wasOpen)requestAnimationFrame(()=>$('#notificationButton').focus({preventScroll:true})); }
 function toggleNotifications() { const open=$('#notificationCenter').hidden;$('#notificationCenter').hidden=!open;$('#notificationButton').setAttribute('aria-expanded',String(open));if(open)toggleAccountMenu(false); }
 function switchAccount(accountId) { if(!appState.accounts[accountId]||accountId===appState.activeAccount)return;appState.activeAccount=accountId;state=appState.accounts[accountId];activityReviewOnly=false;processDueRecurring(state);save('account-switch');toggleAccountMenu(false);showView('overview');showToast(t('accountSwitched',{account:state.accountName})); }
 function toggleTheme() { currentTheme=currentTheme==='dark'?'light':'dark';applyTheme();save(); }
@@ -938,8 +948,10 @@ function showTooltip(trigger) { const tip=$('#appTooltip');tip.textContent=t(tri
 function hideTooltip() { $('#appTooltip').hidden=true; }
 
 function resetTransactionCheck() {
-  $('#transactionSubmit').disabled=false;
+  $('#transactionSubmit').disabled=true;
+  $('#transactionAmount').setAttribute('aria-invalid','false');
   $('#spendCheck').className='spend-check';
+  $('#spendCheck').dataset.budgetWarning='';$('#spendCheck').dataset.monthlyOver='0';$('#spendCheck').dataset.categoryOver='0';
   $('#spendCheck').innerHTML=`<svg aria-hidden="true"><use href="#icon-shield"></use></svg><div><strong>${t('guardReady')}</strong><span>${t('enterImpact')}</span></div>`;
 }
 
@@ -958,9 +970,12 @@ function setTransactionType(type) {
 }
 
 function evaluateTransaction() {
-  const amount=Number($('#transactionAmount').value)||0;
+  const amountInput=$('#transactionAmount'),rawAmount=amountInput.value.trim(),amount=Number(rawAmount);
   const existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
   const check=$('#spendCheck');
+  if(!rawAmount){resetTransactionCheck();return false;}
+  if(!Number.isFinite(amount)||amount<=0){check.className='spend-check danger';check.dataset.budgetWarning='';check.dataset.monthlyOver='0';check.dataset.categoryOver='0';check.innerHTML=`<svg aria-hidden="true"><use href="#icon-alert"></use></svg><div><strong>${t('positiveAmountRequired')}</strong><span>${t('enterImpact')}</span></div>`;amountInput.setAttribute('aria-invalid','true');$('#transactionSubmit').disabled=true;return false;}
+  amountInput.setAttribute('aria-invalid','false');
   if(transactionType==='income'){
     check.className='spend-check success';
     check.dataset.budgetWarning='';check.dataset.monthlyOver='0';check.dataset.categoryOver='0';
@@ -1029,9 +1044,28 @@ function scaleCategoryLimits(newBudget) {
 }
 
 function openBudgetEditor(id=null) {
-  editingCategoryId=id;const cat=id?state.categories.find(item=>item.id===id):null;const plan=getPlan();const allocated=state.categories.reduce((sum,item)=>sum+item.limit,0);const max=cat?cat.limit+Math.max(0,plan.monthlyBudget-allocated):Math.max(0,plan.monthlyBudget-allocated);
-  $('#budgetModalTitle').textContent=cat?categoryName(cat.id):t('newCategory');$('#categoryNameInput').value=cat?categoryName(cat.id):'';$('#categoryNameInput').disabled=Boolean(cat&&!cat.isCustom);$('#categoryIconInput').value=cat?(categoryVisual(cat).icon||''):'';$('#categoryIconInput').disabled=Boolean(cat&&!cat.isCustom);$('#budgetLimitInput').value=cat?Math.round(cat.limit):'';$('#budgetLimitInput').min=Math.ceil(cat?.spent||1);$('#budgetLimitInput').max=Math.floor(max);$('#deleteCategory').hidden=!cat?.isCustom;
-  $('#budgetModalContext').textContent=cat?t('spentCategory',{spent:currency(cat.spent),max:currency(max,true)}):t('accountIsolation');openModal($('#budgetModal'));setTimeout(()=>$('#categoryNameInput').disabled?$('#budgetLimitInput').select():$('#categoryNameInput').focus(),50);
+  editingCategoryId=id;const cat=id?state.categories.find(item=>item.id===id):null,plan=getPlan(),otherAllocated=state.categories.reduce((sum,item)=>sum+item.limit,0)-(cat?.limit||0),bounds=MerCore.validateCategoryLimit(cat?.limit||0,cat?.spent||0,otherAllocated,plan.monthlyBudget),minimum=Math.max(0,bounds.minimum),maximum=Math.max(minimum,bounds.maximum);
+  $('#budgetModalTitle').textContent=cat?categoryName(cat.id):t('newCategory');$('#categoryNameInput').value=cat?categoryName(cat.id):'';$('#categoryNameInput').disabled=Boolean(cat&&!cat.isCustom);$('#categoryIconInput').value=cat?(categoryVisual(cat).icon||''):'';$('#categoryIconInput').disabled=Boolean(cat&&!cat.isCustom);$('#budgetLimitInput').value=cat?cat.limit:'';$('#budgetLimitInput').min=minimum.toFixed(2);$('#budgetLimitInput').max=maximum.toFixed(2);$('#deleteCategory').hidden=!cat?.isCustom;
+  $('#budgetModalContext').textContent=cat?t('spentCategory',{spent:currency(cat.spent),minimum:currency(minimum),maximum:currency(maximum)}):t('accountIsolation');openModal($('#budgetModal'));setTimeout(()=>$('#categoryNameInput').disabled?$('#budgetLimitInput').select():$('#categoryNameInput').focus(),50);
+}
+
+function refreshBudgetTransferForm() {
+  const targets=state.categories.filter(cat=>cat.spent>cat.limit+.005),targetSelect=$('#budgetTransferTarget'),sourceSelect=$('#budgetTransferSource'),previousTarget=targetSelect.value,previousSource=sourceSelect.value;
+  targetSelect.innerHTML=targets.map(cat=>`<option value="${escapeHtml(cat.id)}">${escapeHtml(categoryName(cat.id))} · +${currency(cat.spent-cat.limit,true)}</option>`).join('');
+  if(targets.some(cat=>cat.id===previousTarget))targetSelect.value=previousTarget;
+  const target=state.categories.find(cat=>cat.id===targetSelect.value)||targets[0],donors=state.categories.filter(cat=>cat.id!==target?.id&&cat.limit>cat.spent+.005);
+  sourceSelect.innerHTML=donors.map(cat=>`<option value="${escapeHtml(cat.id)}">${escapeHtml(categoryName(cat.id))} · ${currency(cat.limit-cat.spent,true)}</option>`).join('');
+  if(donors.some(cat=>cat.id===previousSource))sourceSelect.value=previousSource;
+  const source=state.categories.find(cat=>cat.id===sourceSelect.value)||donors[0],available=Math.max(0,source?(source.limit-source.spent):0),overage=Math.max(0,target?(target.spent-target.limit):0),maximum=Math.min(available,overage),amountInput=$('#budgetTransferAmount');
+  amountInput.max=maximum.toFixed(2);amountInput.value=maximum>0?maximum.toFixed(2):'';
+  $('#budgetTransferContext').textContent=t('transferContext',{available:currency(available),overage:currency(overage)});
+  $('#budgetTransferForm button[type="submit"]').disabled=maximum<=0;
+}
+
+function openBudgetTransfer() {
+  refreshBudgetTransferForm();
+  if(!$('#budgetTransferTarget').options.length||!$('#budgetTransferSource').options.length){showToast(t('transferInvalid'));return;}
+  openModal($('#budgetTransferModal'));
 }
 
 function fallbackCategory(excludingId) {
@@ -1088,6 +1122,11 @@ $('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;r
 $('#settingsExportCsv').addEventListener('click',exportCsv);
 $('#addCategory').addEventListener('click',()=>{returnToBudgetManager=false;openBudgetEditor();});
 $('#manageBudgetCategories').addEventListener('click',()=>openBudgetCategoryManager({reset:true}));
+$('#openBudgetTransfer').addEventListener('click',openBudgetTransfer);
+$('#autoBalanceBudget').addEventListener('click',()=>{if(!window.confirm(t('balancePlanConfirm')))return;const result=MerCore.trimBudgetAllocation(state.categories,getPlan().monthlyBudget);if(!result.valid)return;save('budget-auto-balance');showToast(t(result.resolved?'balancePlanReady':'balancePlanPartial',{amount:currency(result.reduced),remaining:currency(result.remaining)}));});
+$('#budgetTransferTarget').addEventListener('change',refreshBudgetTransferForm);
+$('#budgetTransferSource').addEventListener('change',refreshBudgetTransferForm);
+$('#budgetTransferForm').addEventListener('submit',event=>{event.preventDefault();const result=MerCore.transferBudgetAllocation(state.categories,$('#budgetTransferSource').value,$('#budgetTransferTarget').value,Number($('#budgetTransferAmount').value));if(!result.valid){showToast(t('transferInvalid'));refreshBudgetTransferForm();return;}save('budget-cover-overspending');closeModal($('#budgetTransferModal'));showToast(t('transferSaved',{amount:currency(result.amount)}));});
 $('#budgetCategoryManagerAdd').addEventListener('click',()=>{returnToBudgetManager=true;openBudgetEditor();});
 $('#budgetCategorySearch').addEventListener('input',renderBudgetCategoryManager);
 $('#budgetCategoryStatusFilter').addEventListener('change',renderBudgetCategoryManager);
@@ -1097,7 +1136,7 @@ $('#budgetCategoryModalList').addEventListener('click',handleBudgetEdit);
 $('#addRecurring').addEventListener('click',()=>openRecurring());
 $('#addIncomeCategory').addEventListener('click',()=>openIncomeCategoryEditor());
 $('#themeToggle').addEventListener('click',toggleTheme);$$('[data-account]').forEach(button=>button.addEventListener('click',()=>switchAccount(button.dataset.account)));
-$('#notificationButton').addEventListener('click',event=>{event.stopPropagation();toggleNotifications();});$('#closeNotifications').addEventListener('click',closeNotifications);
+$('#notificationButton').addEventListener('click',event=>{event.stopPropagation();toggleNotifications();});$('#closeNotifications').addEventListener('click',()=>closeNotifications(true));
 $$('[data-tooltip-key]').forEach(trigger=>{trigger.addEventListener('mouseenter',()=>showTooltip(trigger));trigger.addEventListener('mouseleave',hideTooltip);trigger.addEventListener('focus',()=>showTooltip(trigger));trigger.addEventListener('blur',hideTooltip);trigger.addEventListener('click',()=>$('#appTooltip').hidden?showTooltip(trigger):hideTooltip());});
 $$('[data-insight-detail]').forEach(card=>{
   card.addEventListener('click',event=>{if(event.target.closest('button,a'))return;openInsightDetail(card.dataset.insightDetail);});
@@ -1105,7 +1144,7 @@ $$('[data-insight-detail]').forEach(card=>{
 });
 $$('[data-card-menu]').forEach(trigger=>trigger.addEventListener('click',event=>{event.stopPropagation();const menuId=trigger.dataset.cardMenu;closeCardMenus(trigger.getAttribute('aria-expanded')==='true'?null:menuId);}));
 document.addEventListener('click',event=>{if(!event.target.closest('.sidebar-bottom'))toggleAccountMenu(false);if(!event.target.closest('.notification-wrap'))closeNotifications();if(!event.target.closest('.card-action-wrap'))closeCardMenus();});
-document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const modal=$('.modal[open]');if(modal){event.preventDefault();closeModal(modal);}closeCardMenus();});
+document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const modal=$('.modal[open]');if(modal){event.preventDefault();closeModal(modal);return;}if(!$('#notificationCenter').hidden){event.preventDefault();closeNotifications(true);return;}if(!$('#accountMenu').hidden){event.preventDefault();toggleAccountMenu(false);$('#openSettings').focus({preventScroll:true});return;}closeCardMenus();});
 $$('.nav-item').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
 $$('[data-go-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.goView)));
 $('[data-home]').addEventListener('click',event=>{event.preventDefault();showView('overview');});

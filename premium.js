@@ -13,6 +13,8 @@
     smartRules:'AUTO-CATEGORIZATION', automationRules:'Rules for imported transactions', automationSubtitle:'Automatically assign categories to imported bank transactions using keywords.', ruleIf:'IF', ruleThen:'THEN', ruleIfContains:'Transaction name contains', ruleAssignCategory:'Assign category', ruleKeywordPlaceholder:'e.g. Uber', activeRules:'Active rules', noRulesTitle:'No custom rules yet', noRulesBody:'Add your first rule above and the next import will be categorized automatically.', ruleExample:'EXAMPLE', ruleExampleContains:'Name contains', addRule:'Add rule', ruleSaved:'Rule added.', ruleDeleted:'Rule deleted.', ruleExists:'A rule for that keyword already exists.', deleteRule:'Delete rule',
     goalBucketsOverline:'PURPOSEFUL SAVING', goalBuckets:'Savings goals', goalBucketsIntro:'Separate your reserve, travel or larger purchases into clear, measurable goals.', newSavingsGoal:'New goal', goalModalIntro:'Add a name, target amount and date to track progress without mixing purposes.', goalName:'Goal name', targetAmount:'Target amount', currentAmount:'Current amount', targetDate:'Target date', setPrimaryGoal:'Show as primary goal', primaryGoalHint:'The primary goal appears on the dashboard.', deleteGoal:'Delete goal', saveGoal:'Save goal', editGoal:'Edit goal', addToSavingsGoal:'Add to a savings goal', savingsGoalLabel:'Savings goal', goalRemaining:'{amount} remaining', goalDue:'Due: {date}', goalNoDate:'No target date', primaryGoal:'Primary goal', goalSaved:'Savings goal saved.', goalDeleted:'Savings goal deleted.', goalInvalid:'Check the goal name, amounts and date.', goalHasBalance:'Set this goal’s current amount to 0 before deleting it.', atLeastOneGoal:'At least one savings goal must remain.'
   });
+  Object.assign(translations.hr,{confirmBulkOverrideTitle:'Potvrdite grupnu izmjenu',bulkOverrideCopy:'Promijenit ćete vrstu i kategoriju za {count} uključenih redaka u “{category}”.',confirmBulkOverride:'Promijeni uključene retke',bulkOverrideApplied:'Promijenjeno je {count} redaka.',undoBulkOverride:'Poništi grupnu izmjenu',bulkOverrideUndone:'Grupna izmjena je poništena.',importProfileChanged:'Aktivni profil se promijenio. Prethodni pregled uvoza sigurno je odbačen.'});
+  Object.assign(translations.en,{confirmBulkOverrideTitle:'Confirm bulk change',bulkOverrideCopy:'You are about to change type and category for {count} included rows to “{category}”.',confirmBulkOverride:'Change included rows',bulkOverrideApplied:'Changed {count} rows.',undoBulkOverride:'Undo bulk change',bulkOverrideUndone:'Bulk change undone.',importProfileChanged:'The active profile changed. The previous import review was safely discarded.'});
 
   Object.assign(translations.hr, {
     activeModule:'AKTIVNI MODUL', viewDetails:'Detalji', overviewDetailsOverline:'DETALJI PREGLEDA', overviewDetailsTitle:'Trendovi i sljedeći koraci', budgetDetailsOverline:'AUTOMATIZACIJA BUDŽETA', savingsDetailsOverline:'DETALJI ŠTEDNJE', reportDetails:'Detalji izvještaja', insightsDetailsOverline:'DUBINSKA ANALIZA', settingsIntroClean:'Privatnost, sigurnost, pravila i povezane banke na jednom mjestu.'
@@ -26,6 +28,8 @@
   let visibleRecoveryCodes = [];
   let importStage = null;
   let importPage = 0;
+  let pendingBulkOverride = null;
+  let lastBulkOverride = null;
   let editingGoalId = null;
   const importPageSize = 50;
 
@@ -81,6 +85,7 @@
     $('#hideBalances').checked=Boolean(appState.settings.hideBalances);
     $('#importProfileBadge').textContent=t(state.accountLabel);
     $('#rulesProfileBadge').textContent=t(state.accountLabel);
+    $('#demoResetCard').hidden=!Boolean(window.MerAuthProvider?.currentSession?.()?.demo);
     renderMfa();renderAutomationRules();renderImportReview();
   }
 
@@ -128,6 +133,9 @@
   function openGlobalImport() {
     if($('#transactionModal').open)closeModal($('#transactionModal'));
     if($('#bankSettingsModal').open)closeModal($('#bankSettingsModal'));
+    if(importStage&&!MerImport.stageBelongsToProfile(importStage,appState.activeAccount)){
+      importStage=null;pendingBulkOverride=null;lastBulkOverride=null;showToast(t('importProfileChanged'));
+    }
     $('#importProfileBadge').textContent=t(state.accountLabel);
     renderImportReview();
     if(!$('#importDataModal').open)openModal($('#importDataModal'));
@@ -164,25 +172,37 @@
   }
 
   function stageImport(result,fileName) {
-    importStage={...result,fileName};importPage=0;renderImportReview();
+    importStage=MerImport.createReviewStage(result,fileName,appState.activeAccount);importPage=0;pendingBulkOverride=null;lastBulkOverride=null;renderImportReview();
   }
+
+  function renderBulkOverrideState() {
+    const confirmation=$('#bulkOverrideConfirmation'),undo=$('#bulkOverrideUndoBar');
+    confirmation.hidden=!pendingBulkOverride;
+    undo.hidden=!lastBulkOverride;
+    if(pendingBulkOverride)$('#bulkOverrideConfirmationCopy').textContent=t('bulkOverrideCopy',{count:pendingBulkOverride.count,category:pendingBulkOverride.categoryLabel});
+    if(lastBulkOverride)$('#bulkOverrideUndoCopy').textContent=t('bulkOverrideApplied',{count:lastBulkOverride.snapshot.length});
+  }
+
+  function invalidateBulkUndo() { lastBulkOverride=null;renderBulkOverrideState(); }
 
   function renderImportReview() {
     const review=$('#importReview');if(!review)return;
+    if(importStage&&!MerImport.stageBelongsToProfile(importStage,appState.activeAccount)){importStage=null;pendingBulkOverride=null;lastBulkOverride=null;}
     review.hidden=!importStage;
-    if(!importStage)return;
+    if(!importStage){renderBulkOverrideState();return;}
     const rows=importStage.reviewRows||[];const pages=Math.max(1,Math.ceil(rows.length/importPageSize));importPage=Math.min(importPage,pages-1);
     $('#importSummary').textContent=t('importSummary',{ready:rows.filter(row=>!row.excluded).length,duplicates:importStage.duplicates||0,invalid:importStage.invalidRows?.length||0});
     $('#importPageLabel').textContent=t('importPage',{page:importPage+1,pages});$('#importPrev').disabled=importPage===0;$('#importNext').disabled=importPage>=pages-1;
     const slice=rows.slice(importPage*importPageSize,(importPage+1)*importPageSize);
     $('#importReviewRows').innerHTML=slice.map((row,offset)=>{const index=importPage*importPageSize+offset;return `<tr class="${row.needsReview?'needs-review':''}"><td><input type="checkbox" data-import-include="${index}" ${row.excluded?'':'checked'} aria-label="${t('include')}"></td><td><input type="date" value="${row.date}" data-import-date="${index}"></td><td><input type="text" value="${escapeHtml(row.name)}" data-import-name="${index}"></td><td><input type="number" min="0.01" step="0.01" value="${row.amount}" data-import-amount="${index}"></td><td><select data-import-type="${index}"><option value="expense" ${row.type==='expense'?'selected':''}>${t('expense')}</option><option value="income" ${row.type==='income'?'selected':''}>${t('income')}</option></select></td><td><select data-import-category="${index}">${categoryOptions(row.type,row.category)}</select></td></tr>`;}).join('');
     $$('[data-import-include]').forEach(input=>input.addEventListener('change',()=>{rows[Number(input.dataset.importInclude)].excluded=!input.checked;$('#importSummary').textContent=t('importSummary',{ready:rows.filter(row=>!row.excluded).length,duplicates:importStage.duplicates||0,invalid:importStage.invalidRows?.length||0});}));
-    $$('[data-import-type]').forEach(select=>select.addEventListener('change',()=>{const index=Number(select.dataset.importType),row=rows[index];row.type=select.value;row.category=(row.type==='income'?state.incomeCategories:state.categories)[0]?.id;row.needsReview=false;renderImportReview();}));
-    $$('[data-import-category]').forEach(select=>select.addEventListener('change',()=>{const row=rows[Number(select.dataset.importCategory)];row.category=select.value;row.needsReview=false;}));
+    $$('[data-import-type]').forEach(select=>select.addEventListener('change',()=>{const index=Number(select.dataset.importType),row=rows[index];row.type=select.value;row.category=(row.type==='income'?state.incomeCategories:state.categories)[0]?.id;row.needsReview=false;row.categoryConfidence='manual-review';row.categorizationRule='row-review';pendingBulkOverride=null;invalidateBulkUndo();renderImportReview();}));
+    $$('[data-import-category]').forEach(select=>select.addEventListener('change',()=>{const row=rows[Number(select.dataset.importCategory)];row.category=select.value;row.needsReview=false;row.categoryConfidence='manual-review';row.categorizationRule='row-review';pendingBulkOverride=null;invalidateBulkUndo();}));
     $$('[data-import-date]').forEach(input=>input.addEventListener('change',()=>{rows[Number(input.dataset.importDate)].date=input.value;}));
     $$('[data-import-name]').forEach(input=>input.addEventListener('change',()=>{rows[Number(input.dataset.importName)].name=input.value.trim();}));
     $$('[data-import-amount]').forEach(input=>input.addEventListener('change',()=>{rows[Number(input.dataset.importAmount)].amount=Math.abs(Number(input.value)||0);}));
     $('#bulkImportCategory').innerHTML=categoryOptions($('#bulkImportType').value,$('#bulkImportCategory').value);
+    renderBulkOverrideState();
   }
 
   async function readImportFile(file) {
@@ -202,6 +222,48 @@
     const rows=[['Date','Description','Amount','Type']];
     for(let index=1;index<=520;index+=1){const day=String(index%28+1).padStart(2,'0'),income=index%13===0;const names=income?`Freelance client ${index}`:[`Konzum Market ${index}`,`Uber ride ${index}`,`Netflix plan ${index}`,`Unknown vendor ${index}`][index%4];rows.push([`${appReferenceDate.slice(0,7)}-${day}`,names,income?500+index:-(5+(index%73)),income?'Income':'Expense']);}
     stageImport(MerImport.parseRows(rows,state,{dateFormat:appState.settings.dateFormat}),'mer-demo-520.csv');
+  }
+
+  function requestBulkOverride() {
+    if(!importStage||!MerImport.stageBelongsToProfile(importStage,appState.activeAccount)){showToast(t('importProfileChanged'));importStage=null;renderImportReview();return;}
+    const count=importStage.reviewRows.filter(row=>row&&!row.excluded).length;
+    if(!count)return;
+    const type=$('#bulkImportType').value,category=$('#bulkImportCategory').value,categoryLabel=$('#bulkImportCategory').selectedOptions[0]?.textContent||category;
+    pendingBulkOverride={type,category,categoryLabel,count};
+    renderBulkOverrideState();
+    $('#bulkOverrideConfirmation').focus?.({preventScroll:true});
+  }
+
+  function confirmBulkOverride() {
+    if(!pendingBulkOverride||!importStage)return;
+    const result=MerImport.applyBulkOverride(importStage,appState.activeAccount,pendingBulkOverride);
+    if(!result.valid){pendingBulkOverride=null;showToast(t('importProfileChanged'));renderImportReview();return;}
+    lastBulkOverride={profileId:appState.activeAccount,snapshot:result.snapshot};
+    pendingBulkOverride=null;
+    renderImportReview();
+  }
+
+  function undoLastBulkOverride() {
+    if(!lastBulkOverride||!importStage)return;
+    const result=MerImport.undoBulkOverride(importStage,appState.activeAccount,lastBulkOverride.snapshot);
+    lastBulkOverride=null;pendingBulkOverride=null;
+    if(!result.valid){showToast(t('importProfileChanged'));importStage=null;}else showToast(t('bulkOverrideUndone'));
+    renderImportReview();
+  }
+
+  function resetDemoWorkspace() {
+    if(!window.MerAuthProvider?.currentSession?.()?.demo){showToast(t('demoResetUnavailable'));return false;}
+    appState.accounts.personal=normalizeProfile(structuredClone(personalDefaults),personalDefaults);
+    appState.accounts.business=normalizeProfile(structuredClone(businessDefaults),businessDefaults);
+    appState.bankConnections=[];
+    appState.activeAccount='personal';
+    state=appState.accounts.personal;
+    Object.values(appState.accounts).forEach(alignSavingsHistory);
+    importStage=null;pendingBulkOverride=null;lastBulkOverride=null;activityReviewOnly=false;
+    save('demo-reset');
+    showView('overview');
+    showToast(t('demoResetComplete'));
+    return true;
   }
 
   function renderAutomationRules() {
@@ -253,9 +315,16 @@
   $('#mfaUnlockForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(async()=>{if(!await verifyMfaCode($('#mfaUnlockCode').value)){ $('#mfaUnlockError').textContent=t('unlockError');return;}sessionStorage.setItem('mer-mfa-unlocked','true');$('#mfaLockScreen').hidden=true;document.body.classList.remove('mfa-locked');},'mfaInvalid');});
 
   $('#importFile').addEventListener('change',()=>{const file=$('#importFile').files?.[0];if(file)readImportFile(file);});$('#loadImportSample').addEventListener('click',loadLargeSample);$('#importPrev').addEventListener('click',()=>{importPage=Math.max(0,importPage-1);renderImportReview();});$('#importNext').addEventListener('click',()=>{importPage+=1;renderImportReview();});
-  $('#bulkImportType').addEventListener('change',()=>{$('#bulkImportCategory').innerHTML=categoryOptions($('#bulkImportType').value);});
-  $('#applyBulkImport').addEventListener('click',()=>{if(!importStage)return;const type=$('#bulkImportType').value,category=$('#bulkImportCategory').value;importStage.reviewRows.filter(row=>!row.excluded).forEach(row=>{row.type=type;row.category=category;row.needsReview=false;});renderImportReview();});
-  $('#confirmImport').addEventListener('click',()=>{if(!importStage)return;const result=MerImport.commitImport(state,importStage.reviewRows,importStage.fileName);result.imported.forEach(tx=>MerAccounting.applyRoundUp(state,tx));const duplicates=(importStage.duplicates||0)+result.duplicates;importStage=null;save('bulk-import');showToast(t('importFinished',{count:result.imported.length,duplicates}));});
+  $('#bulkImportType').addEventListener('change',()=>{pendingBulkOverride=null;$('#bulkImportCategory').innerHTML=categoryOptions($('#bulkImportType').value);renderBulkOverrideState();});
+  $('#bulkImportCategory').addEventListener('change',()=>{pendingBulkOverride=null;renderBulkOverrideState();});
+  $('#applyBulkImport').addEventListener('click',requestBulkOverride);
+  $('#bulkOverrideCancel').addEventListener('click',()=>{pendingBulkOverride=null;renderBulkOverrideState();});
+  $('#bulkOverrideConfirm').addEventListener('click',confirmBulkOverride);
+  $('#undoBulkOverride').addEventListener('click',undoLastBulkOverride);
+  $('#confirmImport').addEventListener('click',()=>{if(!importStage)return;const stagedDuplicates=importStage.duplicates||0,result=MerImport.commitReviewStage(state,importStage,appState.activeAccount);if(result.error){importStage=null;pendingBulkOverride=null;lastBulkOverride=null;renderImportReview();showToast(t('importProfileChanged'));return;}result.imported.forEach(tx=>MerAccounting.applyRoundUp(state,tx));const duplicates=stagedDuplicates+result.duplicates;importStage=null;pendingBulkOverride=null;lastBulkOverride=null;$('#importFile').value='';save('bulk-import');closeModal($('#importDataModal'));showToast(t('importFinished',{count:result.imported.length,duplicates}));});
+
+  $('#resetDemoData').addEventListener('click',()=>openModal($('#demoResetModal')));
+  $('#confirmDemoReset').addEventListener('click',resetDemoWorkspace);
 
   $('#ruleType').addEventListener('change',renderRuleCategorySelect);$('#automationRuleForm').addEventListener('submit',event=>{event.preventDefault();const keyword=$('#ruleKeyword').value.trim();if(!keyword){showToast(t('categoryNameRequired'));return;}if(state.automationRules.some(rule=>rule.keyword.toLocaleLowerCase()===keyword.toLocaleLowerCase())){showToast(t('ruleExists'));return;}state.automationRules.push({id:uniqueId('rule'),keyword:keyword.slice(0,60),type:$('#ruleType').value==='income'?'income':'expense',category:$('#ruleCategory').value,enabled:true});save();event.target.reset();renderAutomationRules();showToast(t('ruleSaved'));});
 

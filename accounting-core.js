@@ -71,7 +71,7 @@
     return { reviewRows, invalidRows, duplicates:0, totalRows:reviewRows.length + invalidRows.length, format:'CAMT.053' };
   }
 
-  const normalizedMerchant = value => clean(value).toLocaleLowerCase('en').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(pos|card|payment|zagreb|hr|eu|sarl|ab)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+  const normalizedMerchant = value => clean(value).toLocaleLowerCase('en').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(pos|card|payment|zagreb|hr|eu|sarl|ab)\b/g,' ').replace(/\b\d{3,}\b/g,' ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   function topMerchants(transactions, timeframe, reference) {
     const grouped = {};
     MerCore.filterTransactions(transactions, timeframe, reference).filter(tx => MerCore.transactionType(tx)==='expense').forEach(tx => {
@@ -98,19 +98,27 @@
   }
 
   function detectSubscriptions(transactions, reference = new Date()) {
-    const known = /netflix|spotify|gym|teretana|icloud|google one|dropbox|adobe|microsoft 365|youtube premium|hbo|max|disney/i;
-    const expenses = (transactions||[]).filter(tx=>MerCore.transactionType(tx)==='expense'&&validDate(tx?.date)).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+    const known = /\b(?:netflix|spotify|gym|teretana|icloud|google one|dropbox|adobe|microsoft 365|youtube premium|hbo(?: max)?|max streaming|disney(?: plus)?)\b/i;
     const grouped = {};
-    expenses.forEach(tx=>{const key=normalizedMerchant(tx.merchantName||tx.name);if(!key)return;(grouped[key] ||= []).push(tx);});
     const referenceIso=validDate(reference)||validDate(new Date().toISOString());
     const referenceDate = new Date(`${referenceIso}T12:00:00`);
+    const expenses = (transactions||[]).filter(tx=>{
+      const date=validDate(tx?.date);
+      return MerCore.transactionType(tx)==='expense'&&date&&date<=referenceIso;
+    }).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+    expenses.forEach(tx=>{const key=normalizedMerchant(tx.merchantName||tx.name);if(!key)return;(grouped[key] ||= []).push(tx);});
     return Object.values(grouped).filter(group=>{
-      if(known.test(group[0].name))return true;
+      const lastDate=new Date(`${validDate(group.at(-1)?.date)}T12:00:00`);
+      const daysSinceLast=Math.floor((referenceDate-lastDate)/86400000);
+      if(known.test(group[0].merchantName||group[0].name))return daysSinceLast<=62;
       const cadence=group.slice(1).filter((tx,index)=>{const previous=group[index],days=(new Date(tx.date)-new Date(previous.date))/86400000,baseline=Math.max(1,Number(previous.amount)||0);return Math.abs(days-30)<=5&&Math.abs((Number(tx.amount)||0)-baseline)/baseline<=.15;});
-      return group.length>=3&&cadence.length>=2;
+      return group.length>=3&&cadence.length>=2&&daysSinceLast<=62;
     }).map(group=>{
-      const last=group[group.length-1], next=new Date(last.date); next.setMonth(next.getMonth()+1);while(next<referenceDate)next.setMonth(next.getMonth()+1);
-      return { id:`subscription-${MerCore.stableTransactionHash(normalizedMerchant(last.name))}`, merchant:last.merchantName||last.name, amount:Number(last.amount)||0, category:last.category, lastCharged:String(last.date).slice(0,10), nextRenewal:next.toISOString().slice(0,10), daysUntil:Math.ceil((next-referenceDate)/86400000), confidence:known.test(last.name)?'merchant':'cadence' };
+      const last=group[group.length-1],lastIso=validDate(last.date),renewalRule={enabled:true,day:Number(lastIso.slice(8,10)),startDate:lastIso};
+      let nextIso=MerCore.nextOccurrence(renewalRule,lastIso);
+      while(nextIso&&nextIso<referenceIso)nextIso=MerCore.nextOccurrence(renewalRule,nextIso);
+      const next=new Date(`${nextIso||referenceIso}T12:00:00`),merchant=last.merchantName||last.name;
+      return { id:`subscription-${MerCore.stableTransactionHash(normalizedMerchant(merchant))}`, merchant, amount:Number(last.amount)||0, category:last.category, lastCharged:lastIso, nextRenewal:nextIso||referenceIso, daysUntil:Math.ceil((next-referenceDate)/86400000), confidence:known.test(merchant)?'merchant':'cadence' };
     }).sort((a,b)=>a.daysUntil-b.daysUntil);
   }
 

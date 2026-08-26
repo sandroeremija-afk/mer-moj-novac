@@ -159,6 +159,56 @@
     return { valid: true, reason: null, minimum, maximum };
   }
 
+  function transferBudgetAllocation(categories, fromCategoryId, toCategoryId, amount) {
+    const list = Array.isArray(categories) ? categories : [];
+    const from = list.find(category => category?.id === fromCategoryId);
+    const to = list.find(category => category?.id === toCategoryId);
+    const requested = roundMoney(amount);
+    if (!from || !to || from === to) return { valid:false, reason:'invalid-categories', amount:0 };
+    if (!Number.isFinite(requested) || requested <= 0) return { valid:false, reason:'invalid-amount', amount:0 };
+    const donorHeadroom = Math.max(0, roundMoney(financialAmount(from.limit) - financialAmount(from.spent)));
+    const targetOverage = Math.max(0, roundMoney(financialAmount(to.spent) - financialAmount(to.limit)));
+    if (donorHeadroom <= 0) return { valid:false, reason:'no-headroom', amount:0, donorHeadroom, targetOverage };
+    if (targetOverage <= 0) return { valid:false, reason:'target-covered', amount:0, donorHeadroom, targetOverage };
+    const transferred = Math.min(requested, donorHeadroom, targetOverage);
+    if (transferred <= 0) return { valid:false, reason:'invalid-amount', amount:0, donorHeadroom, targetOverage };
+    const totalBefore = roundMoney(list.reduce((sum, category) => sum + Math.max(0, financialAmount(category?.limit)), 0));
+    from.limit = Math.max(financialAmount(from.spent), roundMoney(financialAmount(from.limit) - transferred));
+    to.limit = roundMoney(financialAmount(to.limit) + transferred);
+    const totalAfter = roundMoney(list.reduce((sum, category) => sum + Math.max(0, financialAmount(category?.limit)), 0));
+    return { valid:true, reason:null, amount:transferred, donorHeadroom, targetOverage, fromId:from.id, toId:to.id, totalBefore, totalAfter };
+  }
+
+  function trimBudgetAllocation(categories, monthlyBudget) {
+    const list = Array.isArray(categories) ? categories : [];
+    const budget = Math.max(0, roundMoney(monthlyBudget));
+    const allocatedBefore = roundMoney(list.reduce((sum, category) => sum + Math.max(0, financialAmount(category?.limit)), 0));
+    let remaining = Math.max(0, roundMoney(allocatedBefore - budget));
+    const reductions = [];
+    const candidates = list.map(category => ({
+      category,
+      headroom:Math.max(0, roundMoney(financialAmount(category?.limit) - financialAmount(category?.spent)))
+    })).filter(item => item.headroom > 0).sort((left, right) => right.headroom - left.headroom || String(left.category.id).localeCompare(String(right.category.id)));
+    candidates.forEach(item => {
+      if (remaining <= 0) return;
+      const amount = Math.min(item.headroom, remaining);
+      item.category.limit = roundMoney(financialAmount(item.category.limit) - amount);
+      reductions.push({ categoryId:item.category.id, amount });
+      remaining = Math.max(0, roundMoney(remaining - amount));
+    });
+    const allocatedAfter = roundMoney(list.reduce((sum, category) => sum + Math.max(0, financialAmount(category?.limit)), 0));
+    return {
+      valid:allocatedBefore > budget,
+      resolved:remaining <= 0,
+      reason:allocatedBefore <= budget ? 'not-over-allocated' : remaining > 0 ? 'spending-floor' : null,
+      reduced:roundMoney(allocatedBefore - allocatedAfter),
+      remaining,
+      allocatedBefore,
+      allocatedAfter,
+      reductions
+    };
+  }
+
   function transactionType(transaction) {
     return transaction && transaction.type === 'income' ? 'income' : 'expense';
   }
@@ -562,6 +612,8 @@
     nextOccurrence,
     occurrencesBetween,
     validateCategoryLimit,
+    transferBudgetAllocation,
+    trimBudgetAllocation,
     transactionType,
     financialAmount,
     roundMoney,

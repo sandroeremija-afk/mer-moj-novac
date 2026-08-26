@@ -76,7 +76,8 @@ test('Cycle 2: settings UI exposes MFA, review pagination, privacy, export and g
   ['mfaSetup','recoveryCodes','importReviewRows','importPrev','importNext','hideBalances','settingsExportJson','settingsExportAllCsv','goalBucketGrid','automationRuleForm'].forEach(id => assert.match(html, new RegExp(`id="${id}"`)));
   assert.match(script, /const importPageSize = 50/);
   assert.match(script, /MerSecurity\.validateTotp/);
-  assert.match(script, /MerImport\.commitImport/);
+  assert.match(script, /MerImport\.commitReviewStage/);
+  assert.match(script, /MerImport\.stageBelongsToProfile/);
 });
 
 test('Cycle 2: both Insights and Dashboard are re-rendered after premium state changes', () => {
