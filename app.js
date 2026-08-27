@@ -120,7 +120,23 @@ const uniqueId=prefix=>`${prefix}-${Date.now()}-${++uniqueSequence}`;
 appState.bankConnections=Array.isArray(appState.bankConnections)?appState.bankConnections.filter(connection=>connection&&typeof connection==='object'&&connection.id&&connection.providerId&&['personal','business'].includes(connection.profileId)).map((connection,index)=>({...connection,id:safeIdentifier(connection.id,`connection-${index}`),providerId:safeIdentifier(connection.providerId,'mock'),accountId:safeIdentifier(connection.accountId,`account-${index}`)})):[];
 const supportedCurrencies=new Set(['EUR','USD','GBP','CHF']);
 const storedSettings=appState.settings&&typeof appState.settings==='object'?appState.settings:{};
-function normalizeAppSettings(settings={}){const currency=String(settings.currency||'EUR').toUpperCase(),dateFormat=['locale','iso','us'].includes(settings.dateFormat)?settings.dateFormat:'locale';let timezone=String(settings.timezone||'Europe/Zagreb');try{new Intl.DateTimeFormat('en',{timeZone:timezone}).format();}catch{timezone='Europe/Zagreb';}return {currency:supportedCurrencies.has(currency)?currency:'EUR',dateFormat,timezone,hideBalances:Boolean(settings.hideBalances)};}
+function normalizeLayoutOrders(value={}) {
+  const result={};
+  Object.entries(value&&typeof value==='object'?value:{}).slice(0,64).forEach(([rawScopeId,grids])=>{
+    const scopeId=String(rawScopeId).trim().toLowerCase().replace(/[^a-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80);
+    if(!scopeId||!grids||typeof grids!=='object')return;
+    result[scopeId]={};
+    Object.entries(grids).slice(0,24).forEach(([gridId,contexts])=>{
+      const safeGridId=String(gridId).trim().toLowerCase().replace(/[^a-z0-9._-]+/g,'-').slice(0,80);if(!safeGridId||!contexts||typeof contexts!=='object')return;
+      const normalized={};
+      ['mobile','tablet','desktop','wide'].forEach(context=>{if(!Array.isArray(contexts[context]))return;normalized[context]=[...new Set(contexts[context].filter(id=>typeof id==='string'&&id.trim()&&id.length<=160).map(id=>id.trim()))].slice(0,40);});
+      if(Object.keys(normalized).length)result[scopeId][safeGridId]=normalized;
+    });
+    if(!Object.keys(result[scopeId]).length)delete result[scopeId];
+  });
+  return result;
+}
+function normalizeAppSettings(settings={}){const currency=String(settings.currency||'EUR').toUpperCase(),dateFormat=['locale','iso','us'].includes(settings.dateFormat)?settings.dateFormat:'locale';let timezone=String(settings.timezone||'Europe/Zagreb');try{new Intl.DateTimeFormat('en',{timeZone:timezone}).format();}catch{timezone='Europe/Zagreb';}return {currency:supportedCurrencies.has(currency)?currency:'EUR',dateFormat,timezone,hideBalances:Boolean(settings.hideBalances),layoutOrders:normalizeLayoutOrders(settings.layoutOrders)};}
 appState.settings=normalizeAppSettings(storedSettings);
 appState.mfa={enabled:false,secret:null,recoveryCodeHashes:[],...(appState.mfa&&typeof appState.mfa==='object'?appState.mfa:{})};
 appState.mfa.enabled=Boolean(appState.mfa.enabled&&appState.mfa.secret);
@@ -211,7 +227,7 @@ reactiveStore.subscribe(event => {
   appState=event.state;
   state=event.activeProfile;
   try{localStorage.setItem('mer-money-v6',JSON.stringify(appState));}catch(error){window.MerRuntime?.report?.(error,{silent:true});}
-  if(reactiveUiReady)renderAll();
+  if(reactiveUiReady&&event.reason!=='layout-reorder')renderAll();
 });
 const save = (reason='state-change') => {
   appState.language=currentLang;

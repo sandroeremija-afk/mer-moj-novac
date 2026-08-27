@@ -124,6 +124,8 @@
   }
   function showAuth() {
     window.MerOnboardingUi?.close();
+    window.MerAssistantUi?.resetSession?.();
+    window.MerLayoutUi?.disable?.({ notify:false });
     document.getElementById('mfaLockScreen').hidden = true;
     document.body.classList.remove('mfa-locked');
     appShell.hidden = true;

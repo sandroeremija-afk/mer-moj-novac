@@ -132,7 +132,7 @@ test('evaluation cycle 1: corrupt persistence fails safely without affecting ano
   assert.equal(controller(storage, 'finished-user').shouldAutoStart(), false);
 });
 
-test('evaluation cycle 1: login and Settings wire the controller into the real UI', () => {
+test('evaluation cycle 1: login, Settings and Help wire the controller into the real UI', () => {
   for (const id of ['onboardingTour', 'onboardingSpotlight', 'onboardingPopover', 'onboardingTitle', 'onboardingBody', 'onboardingProgress', 'onboardingPrevious', 'onboardingNext', 'onboardingSkip', 'restartOnboarding']) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
@@ -148,8 +148,22 @@ test('evaluation cycle 1: login and Settings wire the controller into the real U
   assert.ok(coreScript > 0 && coreScript < uiScript && uiScript < authScript);
   assert.match(authUi, /MerOnboardingUi\?\.onSessionStarted\(session\)/);
   assert.match(onboardingUi, /MerAuthProvider\?\.currentSession\?\.\(\)\?\.userId/);
-  assert.match(onboardingUi, /restartOnboarding[\s\S]*start\(\{\s*force:true\s*\}\)/);
+  assert.match(onboardingUi, /restartOnboarding[^\n]*restartTourFrom/);
+  assert.match(onboardingUi, /restart\(returnTarget = null\)[^}]*openTour\(\{ force:true, returnTarget \}\)/);
+  assert.match(onboardingUi, /restartTourFrom[\s\S]*openTour\(\{\s*force:true/);
   assert.match(onboardingUi, /getBoundingClientRect\(\)/);
   assert.match(onboardingUi, /ResizeObserver/);
   assert.match(onboardingUi, /scrollIntoView/);
+});
+
+test('evaluation cycle 1: session auto-start is unforced, cached per user and has no idle reopen loop', () => {
+  assert.match(onboardingUi, /function controllerFor\(session\)[\s\S]*controller\.snapshot\(\)\.userId/);
+  assert.match(onboardingUi, /onSessionStarted\(session\)\s*\{[^}]*pendingSession\s*=\s*session[^}]*openTour\(\)/);
+  assert.match(onboardingUi, /resume\(\)\s*\{[^}]*openTour\(\)/);
+  assert.doesNotMatch(onboardingUi, /onSessionStarted[\s\S]{0,160}force\s*:\s*true/);
+  assert.doesNotMatch(onboardingUi, /setInterval\s*\(/, 'onboarding never reopens from an idle polling loop');
+});
+
+test('evaluation cycle 1: duplicate session callbacks leave an active tour interactive', () => {
+  assert.match(onboardingUi, /controller\s*=\s*controllerFor\(session\);\s*if \(!tour\.hidden && controller\.snapshot\(\)\.open\) return true;\s*const snapshot = controller\.start/);
 });

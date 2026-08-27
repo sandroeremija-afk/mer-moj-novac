@@ -1,7 +1,7 @@
 (function initializeOnboarding() {
   Object.assign(translations.hr, {
     helpAssistant:'Pomoć & AI Asistent', helpAssistantHint:'Vodič i financijska pitanja',
-    onboardingSettingsHint:'Ponovno prođite kroz najvažnije module i postavke.', restartOnboarding:'Pokreni vodič', onboardingSteps:'Koraci vodiča', skipTour:'Preskoči', finishTour:'Završi',
+    onboardingTourCardTitle:'Interaktivni vodič', onboardingSettingsHint:'Ponovno prođite kroz najvažnije module i postavke.', restartOnboarding:'Pokreni vodič ponovno', onboardingSteps:'Koraci vodiča', skipTour:'Preskoči', finishTour:'Završi',
     onboardingNavigationTitle:'Sve je nadohvat ruke', onboardingNavigationBody:'Bočna navigacija vodi do Pregleda, Budžeta, Štednje, Aktivnosti i Uvida — bez gubitka konteksta.', onboardingNavigationTip:'Osobni i Poslovni profil uvijek zadržavaju potpuno odvojene podatke.', onboardingNavigationLabel:'Navigacija',
     onboardingTransactionTitle:'Zabilježite stvarno stanje', onboardingTransactionBody:'Gumb Dodaj transakciju otvara isti obrazac za prihod ili trošak. Budžetsko prekoračenje upozorava, ali nikada ne blokira spremanje.', onboardingTransactionTip:'Novi iznos odmah osvježava stanje, budžete, štednju i grafikone.', onboardingTransactionLabel:'Transakcije',
     onboardingOverviewTitle:'Zaštita budžeta u stvarnom vremenu', onboardingOverviewBody:'Ova kartica povezuje mjesečne prihode i troškove u siguran iznos za potrošnju te dnevni tempo.', onboardingOverviewTip:'Dodatni prihod odmah povećava siguran i dnevni raspoloživi iznos.', onboardingOverviewLabel:'Pregled',
@@ -13,7 +13,7 @@
   });
   Object.assign(translations.en, {
     helpAssistant:'Help & AI Assistant', helpAssistantHint:'Guide and money questions',
-    onboardingSettingsHint:'Walk through the key modules and settings again.', restartOnboarding:'Start tour', onboardingSteps:'Tour steps', skipTour:'Skip', finishTour:'Finish',
+    onboardingTourCardTitle:'Interactive tour', onboardingSettingsHint:'Walk through the key modules and settings again.', restartOnboarding:'Re-run tour', onboardingSteps:'Tour steps', skipTour:'Skip', finishTour:'Finish',
     onboardingNavigationTitle:'Everything is within reach', onboardingNavigationBody:'The sidebar takes you to Overview, Budgets, Savings, Activity and Insights without losing context.', onboardingNavigationTip:'Personal and Business data always remain completely isolated.', onboardingNavigationLabel:'Navigation',
     onboardingTransactionTitle:'Record financial reality', onboardingTransactionBody:'Add transaction opens one form for income or expenses. Budget overages warn you but never block saving.', onboardingTransactionTip:'A new amount instantly refreshes balances, budgets, savings and charts.', onboardingTransactionLabel:'Transactions',
     onboardingOverviewTitle:'Real-time Budget Protection', onboardingOverviewBody:'This card combines monthly income and expenses into your safe-to-spend amount and daily pace.', onboardingOverviewTip:'New income immediately increases both safe and daily available amounts.', onboardingOverviewLabel:'Overview',
@@ -44,6 +44,11 @@
 
   function userIdFor(session) { return session?.userId || session?.email || 'anonymous'; }
   function createController(session) { return MerOnboardingCore.createOnboardingController({ storage:localStorage, userId:userIdFor(session) }); }
+  function controllerFor(session) {
+    const normalizedUserId = MerOnboardingCore.cleanUserId(userIdFor(session));
+    if (!controller || controller.snapshot().userId !== normalizedUserId) controller = createController(session);
+    return controller;
+  }
   function stepKey(step, suffix) { return `onboarding${step.id[0].toUpperCase()}${step.id.slice(1)}${suffix}`; }
   function mobileViewport() { return window.matchMedia('(max-width: 767px)').matches; }
 
@@ -202,16 +207,18 @@
       if (startingSidebarOpen) openSidebar(); else closeSidebar();
     }
     if (focus) {
-      const target = returnFocus?.isConnected ? returnFocus : $('#openSettings');
+      const focusCandidate = returnFocus?.isConnected && returnFocus.getClientRects().length ? returnFocus : null;
+      const target = focusCandidate || (mobileViewport() ? $('#menuToggle') : $('#openSettings'));
       target?.focus({ preventScroll:true });
     }
     returnFocus = null;
   }
 
-  function openTour({ force = false } = {}) {
+  function openTour({ force = false, returnTarget = null } = {}) {
     const session = pendingSession || window.MerAuthProvider?.currentSession?.();
     if (!session || document.body.classList.contains('mfa-locked')) return false;
-    controller = createController(session);
+    controller = controllerFor(session);
+    if (!tour.hidden && controller.snapshot().open) return true;
     const snapshot = controller.start({ force });
     if (!snapshot.open) return false;
 
@@ -219,7 +226,7 @@
     $$('dialog[open]').forEach(dialog => closeModal(dialog));
     startingView = activeView;
     startingSidebarOpen = $('#sidebar')?.classList.contains('open') || false;
-    returnFocus = document.activeElement;
+    returnFocus = returnTarget || document.activeElement;
     tour.hidden = false;
     document.body.classList.add('tour-active');
     appShell.inert = true;
@@ -249,32 +256,23 @@
   });
   $('#onboardingSkip').addEventListener('click', dismissTour);
   $('#onboardingClose').addEventListener('click', dismissTour);
-  $('#restartOnboarding').addEventListener('click', () => {
+  function restartTourFrom(trigger, dialog) {
     const authenticatedUserId = window.MerAuthProvider?.currentSession?.()?.userId;
     const session = window.MerAuthProvider?.currentSession?.();
-    if (!session) return;
+    if (!session) return false;
     if (authenticatedUserId && !session.userId) session.userId = authenticatedUserId;
-    closeModal($('#bankSettingsModal'));
     pendingSession = session;
-    controller = createController(session);
-    const snapshot = controller.start({ force:true });
-    setTimeout(() => {
-      startingView = activeView;
-      startingSidebarOpen = $('#sidebar')?.classList.contains('open') || false;
-      returnFocus = $('#restartOnboarding');
-      tour.hidden = false;
-      document.body.classList.add('tour-active');
-      appShell.inert = true;
-      installTourEvents();
-      render(snapshot);
-      $('#onboardingNext').focus({ preventScroll:true });
-    }, 30);
-  });
+    if (dialog?.open) closeModal(dialog);
+    setTimeout(() => openTour({ force:true, returnTarget:trigger }), 30);
+    return true;
+  }
+
+  $('#restartOnboarding').addEventListener('click', event => restartTourFrom($('#openSettings'), event.currentTarget.closest('dialog')));
 
   window.MerOnboardingUi = Object.freeze({
     onSessionStarted(session) { pendingSession=session;if (!document.body.classList.contains('mfa-locked')) openTour(); },
     resume() { if (pendingSession && !document.body.classList.contains('mfa-locked')) openTour(); },
     close() { if (!tour.hidden) { if (controller?.snapshot().open) controller.dismiss();closeTourSurface({ restoreView:false, focus:false }); } },
-    restart() { return openTour({ force:true }); }
+    restart(returnTarget = null) { return openTour({ force:true, returnTarget }); }
   });
 })();
