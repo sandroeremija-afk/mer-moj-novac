@@ -61,12 +61,23 @@ test('evaluation cycle 2: quick prompts scroll horizontally without clipping eit
   assert.match(suggestions, /overflow-y:hidden/);
   assert.match(suggestions, /white-space:nowrap/);
   assert.match(suggestions, /scroll-snap-type:x proximity/);
+  assert.match(suggestions, /touch-action:pan-x/);
+  assert.match(suggestions, /box-sizing:border-box/);
+  const widgetSuggestions = cssRule('.assistant-widget .assistant-suggestions');
+  assert.match(widgetSuggestions, /width:calc\(100% - 24px\)/);
+  assert.match(widgetSuggestions, /max-width:calc\(100% - 24px\)/);
+  assert.match(widgetSuggestions, /margin-inline:12px/);
   const chip = cssRule('.assistant-suggestion');
   assert.match(chip, /flex:0 0 auto/);
   assert.match(chip, /max-width:none/);
   assert.match(chip, /overflow:visible/);
   assert.match(chip, /white-space:nowrap/);
   assert.match(chip, /scroll-snap-align:start/);
+  assert.match(ui, /function enableHorizontalPromptDrag\(container\)/);
+  assert.match(ui, /event\.pointerType !== 'mouse'/);
+  assert.match(ui, /container\.scrollLeft = drag\.startScrollLeft - delta/);
+  assert.match(ui, /event\.stopImmediatePropagation\(\)/, 'a drag cannot accidentally submit the chip under the pointer');
+  assert.match(ui, /container\.addEventListener\('wheel'/);
 });
 
 test('evaluation cycle 2: Help exposes a restart-tour hook and preserves the existing fallback trigger', () => {

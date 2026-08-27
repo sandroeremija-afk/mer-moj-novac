@@ -10,7 +10,11 @@ test('cycle 2: Savings uses the remaining fixed viewport without a nested scroll
   assert.match(css, /#savingsView \{[^}]*display:flex[^}]*flex-direction:column[^}]*overflow:hidden/s);
   assert.match(css, /#savingsView > \.goal-buckets-panel \{[^}]*flex:1 1 auto[^}]*overflow:hidden/s);
   assert.match(css, /#savingsView \.goal-bucket-grid \{[^}]*min-height:0[^}]*flex:1 1 auto/s);
-  assert.doesNotMatch(css, /#savingsView[^}]*overflow-y\s*:\s*auto/);
+  const desktopStart = css.indexOf('@media (min-width:1025px)', css.indexOf('/* Savings occupies'));
+  const desktopEnd = css.indexOf('@media (min-width:1025px) and', desktopStart);
+  const desktopSavings = css.slice(desktopStart, desktopEnd);
+  assert.doesNotMatch(desktopSavings, /overflow-y\s*:\s*auto/);
+  assert.match(css, /@media \(max-width:414px\)[\s\S]*?#savingsView \.goal-bucket-grid \{[^}]*overflow-y:auto/);
   assert.match(css, /@media \(max-height:820px\) and \(min-width:801px\)/);
 });
 

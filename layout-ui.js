@@ -20,9 +20,9 @@
   applyStaticTranslations();
 
   const core = window.MerLayoutCore;
-  const toggle = $('#layoutEditToggle');
+  const toggles = $$('[data-layout-edit-toggle]');
   const liveRegion = $('#layoutLiveRegion');
-  if (!core || !toggle || !liveRegion) return;
+  if (!core || !toggles.length || !liveRegion) return;
   let persistentStorage = null;
   try { persistentStorage = window.localStorage; } catch { persistentStorage = null; }
 
@@ -243,10 +243,21 @@
     directCards(grid).forEach(updateCardEditingState);
   }
 
+  function syncToggles() {
+    toggles.forEach(toggle => {
+      const labelText = t(editing ? 'finishLayout' : 'customizeLayout');
+      toggle.setAttribute('aria-pressed', String(editing));
+      toggle.setAttribute('aria-label', labelText);
+      toggle.classList.toggle('active', editing);
+      const label = toggle.querySelector('span');
+      if (label) label.textContent = labelText;
+    });
+  }
+
   function syncAll() {
     cancelAnimationFrame(syncFrame);
     syncFrame = 0;
-    toggle.querySelector('span').textContent = t(editing ? 'finishLayout' : 'customizeLayout');
+    syncToggles();
     grids().forEach(syncGrid);
   }
 
@@ -262,14 +273,12 @@
     }
     editing = Boolean(next);
     document.body.classList.toggle('layout-editing', editing);
-    toggle.setAttribute('aria-pressed', String(editing));
-    toggle.classList.toggle('active', editing);
-    toggle.querySelector('span').textContent = t(editing ? 'finishLayout' : 'customizeLayout');
+    syncToggles();
     grids().forEach(grid => directCards(grid).forEach(updateCardEditingState));
     if (notify && typeof showToast === 'function') showToast(t(editing ? 'layoutEditStarted' : 'layoutEditFinished'));
   }
 
-  toggle.addEventListener('click', () => setEditing(!editing));
+  toggles.forEach(toggle => toggle.addEventListener('click', () => setEditing(!editing)));
   document.addEventListener('click', event => {
     if (performance.now() < suppressClickUntil && event.target.closest?.('[data-layout-card]')) {
       event.preventDefault();

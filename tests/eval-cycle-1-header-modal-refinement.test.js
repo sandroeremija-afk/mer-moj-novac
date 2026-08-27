@@ -24,6 +24,18 @@ test('evaluation cycle 1: contextual titles replace every generic topbar module 
   assert.match(app, /activity:\{title:'moneyMovement',subtitle:'activitySubtitle'\}/);
   assert.match(app, /insights:\{title:'reports',subtitle:'insightsSubtitle'\}/);
   assert.equal((html.match(/class="page-heading[^\"]*actions-only-heading"/g) || []).length, 5);
+  for (const title of ["monthlyPlan:'Mjesečni plan'", "yourFuture:'Vaša budućnost'", "moneyMovement:'Kretanje novca'", "reports:'Izvještaji'", "monthlyPlan:'Monthly plan'", "yourFuture:'Your future'", "moneyMovement:'Money movement'", "reports:'Reports'"]) {
+    assert.ok(app.includes(title), `${title} uses sentence case`);
+  }
+  const contextTitleRule = css.match(/\.context-header h1\s*\{([^}]*)\}/)?.[1] || '';
+  assert.doesNotMatch(contextTitleRule, /text-transform\s*:\s*uppercase/);
+});
+
+test('evaluation cycle 1: layout controls share one invariant left slot across all modules', () => {
+  assert.equal((html.match(/data-layout-edit-toggle/g) || []).length, 5);
+  assert.match(css, /\.actions-only-heading\s*\{[^}]*display:grid[^}]*grid-template-columns:auto minmax\(0,1fr\)[^}]*align-items:center/);
+  assert.match(css, /\.actions-only-heading > \.layout-edit-toggle\s*\{[^}]*justify-self:start[^}]*flex:0 0 auto/);
+  assert.match(css, /\.actions-only-heading \.heading-actions\s*\{[^}]*margin-left:0[^}]*justify-self:end/);
 });
 
 test('evaluation cycle 1: Dashboard places Add Transaction directly after Adjust Plan', () => {
