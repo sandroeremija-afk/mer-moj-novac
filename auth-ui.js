@@ -173,12 +173,7 @@
   document.getElementById('cancelPasswordReset').addEventListener('click', closePasswordReset);
   document.getElementById('passwordResetDone').addEventListener('click', closePasswordReset);
   passwordResetModal.addEventListener('cancel', event => { event.preventDefault(); closePasswordReset(); });
-  passwordResetModal.addEventListener('click', event => {
-    if (event.target !== passwordResetModal) return;
-    const rect = passwordResetModal.getBoundingClientRect();
-    const outside = event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
-    if (outside) closePasswordReset();
-  });
+  window.MerRuntime.bindDialogBackdropDismiss(passwordResetModal, closePasswordReset);
   passwordResetModal.setAttribute('aria-modal','true');
   passwordResetModal.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const focusable=[...passwordResetModal.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(element=>!element.hidden&&element.getClientRects().length>0);if(!focusable.length){event.preventDefault();passwordResetModal.focus();return;}const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
   passwordResetForm.addEventListener('submit', async event => {

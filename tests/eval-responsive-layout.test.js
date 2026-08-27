@@ -28,7 +28,7 @@ test('evaluation cycle 1: navigation and header adapt below the mobile breakpoin
 test('evaluation cycle 2: touch targets and mobile dialogs meet the interaction contract', () => {
   assert.match(css, /@media \(max-width:1024px\), \(pointer:coarse\) \{[\s\S]*?min-height:44px/);
   assert.match(css, /\.icon-button,[\s\S]*?\.card-action-trigger \{[\s\S]*?width:44px;[\s\S]*?height:44px;/);
-  assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.modal,[\s\S]*?inset:auto 8px 0;[\s\S]*?width:calc\(100vw - 16px\);[\s\S]*?max-height:94dvh;[\s\S]*?border-radius:18px 18px 0 0;/);
+  assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.modal,[\s\S]*?inset:auto 8px 0;[\s\S]*?width:calc\(100vw - 16px\);[\s\S]*?max-height:90dvh;[\s\S]*?border-radius:18px 18px 0 0;/);
   assert.match(css, /\.premium-settings\[open\] \{[\s\S]*?height:90dvh;[\s\S]*?overflow:hidden;/);
   assert.match(css, /\.notification-center \{[\s\S]*?position:fixed;[\s\S]*?max-height:calc\(100dvh - 90px\);/);
 });
@@ -38,5 +38,5 @@ test('evaluation cycle 2: shared modal, import, account and chart handlers remai
   assert.match(premium, /\$\$\('\[data-open-global-import\]'\)/);
   assert.match(app, /\$\$\('\[data-account\]'\)/);
   assert.match(app, /\$\$\('\[data-insight-detail\]'\)/);
-  assert.match(app, /modal\.addEventListener\('click',event=>/);
+  assert.match(app, /MerRuntime\.bindDialogBackdropDismiss\(modal,\(\)=>closeModal\(modal\)\)/);
 });

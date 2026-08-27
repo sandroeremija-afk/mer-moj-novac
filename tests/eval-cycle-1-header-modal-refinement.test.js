@@ -45,11 +45,10 @@ test('evaluation cycle 1: every commit form exposes Cancel next to its primary a
 });
 
 test('evaluation cycle 1: native backdrop dismissal remains centralized and mobile keeps a tappable backdrop', () => {
-  assert.match(app, /modal\.addEventListener\('click',event=>\{/);
-  assert.match(app, /event\.target!==modal/);
-  assert.match(app, /event\.clientX<rect\.left\|\|event\.clientX>rect\.right/);
+  assert.match(app, /MerRuntime\.bindDialogBackdropDismiss\(modal,\(\)=>closeModal\(modal\)\)/);
+  assert.doesNotMatch(app, /modal\.addEventListener\('click'/);
   assert.match(css, /inset:auto 8px 0;/);
-  assert.match(css, /max-height:94dvh;/);
+  assert.match(css, /max-height:90dvh;/);
   assert.doesNotMatch(css.slice(css.indexOf('Contextual workspace header')), /width:100vw;[\s\S]*height:100dvh;[\s\S]*border-radius:0;/);
 });
 

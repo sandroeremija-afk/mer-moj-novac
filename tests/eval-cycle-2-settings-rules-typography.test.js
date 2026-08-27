@@ -38,8 +38,8 @@ test('cycle 2: Settings owns a larger legible type scale without changing global
   assert.match(css, /\.premium-settings \.settings-export strong \{[^}]*font-size:12px/);
 });
 
-test('cycle 2: desktop Settings remains bounded by 100dvh with no pane scrollbar', () => {
-  assert.match(css, /\.premium-settings\[open\] \{[^}]*max-height:calc\(100dvh - 24px\)[^}]*overflow:hidden/);
+test('cycle 2: desktop Settings remains bounded by 90dvh with no pane scrollbar', () => {
+  assert.match(css, /\.premium-settings\[open\] \{[^}]*max-height:min\(90dvh,calc\(100dvh - 24px\)\)[^}]*overflow:hidden/);
   assert.match(css, /\.settings-pane\.active \{[^}]*overflow:visible/);
   assert.doesNotMatch(css, /\.settings-pane\.active[^}]*overflow-y:auto/);
   assert.match(css, /@media \(max-width: 540px\)[\s\S]*\.rule-builder \{ grid-template-columns:minmax\(0,1fr\); \}/);

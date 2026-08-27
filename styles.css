@@ -872,8 +872,8 @@ body { height:100vh; height:100dvh; }
 #activityView > .activity-panel { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
 .activity-toolbar, .review-queue-banner { flex:0 0 auto; }
 .transaction-list { flex:1 1 auto; min-height:0; overflow-y:auto; scrollbar-gutter:stable; }
-.modal { max-height:calc(100dvh - 24px); overflow:hidden; overscroll-behavior:contain; }
-.premium-settings[open] { max-height:calc(100dvh - 24px); display:flex; flex-direction:column; overflow:hidden; }
+.modal { max-height:min(90dvh,calc(100dvh - 24px)); overflow:hidden; overscroll-behavior:contain; }
+.premium-settings[open] { max-height:min(90dvh,calc(100dvh - 24px)); display:flex; flex-direction:column; overflow:hidden; }
 .premium-settings > .overline, .premium-settings > h2, .premium-settings > .modal-intro, .premium-settings > .settings-tabs { flex:0 0 auto; }
 .settings-pane.active { flex:1 1 auto; min-height:0; overflow:visible; padding-right:0; }
 .budget-table, .recurring-list, .savings-entry-list, .goal-bucket-grid, .bank-connection-list, .automation-rule-list, .income-category-list, .category-breakdown, .notification-list { max-height:none; overflow:visible; padding-right:0; scrollbar-gutter:auto; }
@@ -895,9 +895,11 @@ body { height:100vh; height:100dvh; }
 
 /* Progressive disclosure keeps primary modules calm and scrollbar-free. */
 .detail-modal { width:min(1120px,calc(100vw - 30px)); max-width:1120px; }
-.detail-modal[open] { display:flex; flex-direction:column; }
+.detail-modal[open] { display:flex; flex-direction:column; overflow:hidden; }
 .detail-modal > h2, .import-data-modal h2 { margin-top:4px; }
-.detail-modal-grid { min-height:0; display:grid; gap:13px; margin-top:18px; }
+.detail-modal-grid { min-height:0; display:grid; flex:1 1 auto; gap:13px; margin-top:18px; padding:0 4px 4px 0; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent; }
+.detail-modal-grid::-webkit-scrollbar { width:7px; height:7px; }
+.detail-modal-grid::-webkit-scrollbar-thumb { border:2px solid transparent; border-radius:999px; background:var(--line-strong); background-clip:padding-box; }
 .detail-modal-grid .panel { padding:16px; box-shadow:none; }
 .overview-detail-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .overview-detail-grid .chart-panel { width:100%; min-width:0; grid-column:1 / -1; grid-row:auto; }
@@ -1174,7 +1176,7 @@ mer-logo[variant="auto"] { --logo-wordmark:#040606; }
 mer-logo:defined { font-size:0; letter-spacing:normal; }
 .auth-card-logo { width:128px; height:38.58px; margin-bottom:26px; }
 
-.auth-reset-modal { position:relative; width:min(430px,calc(100vw - 32px)); padding:34px; border:1px solid var(--line); border-radius:18px; color:var(--ink); background:var(--panel); box-shadow:0 28px 80px rgba(4,18,14,.28); }
+.auth-reset-modal { position:relative; width:min(430px,calc(100vw - 32px)); max-height:min(90dvh,calc(100dvh - 24px)); overflow-y:auto; padding:34px; border:1px solid var(--line); border-radius:18px; color:var(--ink); background:var(--panel); box-shadow:0 28px 80px rgba(4,18,14,.28); }
 .auth-reset-modal::backdrop { background:rgba(3,14,11,.62); backdrop-filter:blur(5px); }
 .auth-reset-modal .modal-close { top:18px; right:18px; }
 .auth-reset-modal h2 { margin:8px 42px 8px 0; font-size:1.5rem; line-height:1.2; }
@@ -1421,7 +1423,7 @@ body { font-size:var(--type-body); line-height:var(--leading-body); }
   .budget-row-value { display:none; }
   .insight-visual-card { min-height:240px; }
   .modal {
-    max-height:calc(100dvh - 24px);
+    max-height:min(90dvh,calc(100dvh - 24px));
     overflow-y:auto;
   }
   .premium-settings[open] { overflow-y:auto; }
@@ -2052,13 +2054,14 @@ select:not([multiple]) {
     width:calc(100vw - 16px);
     max-width:none;
     height:auto;
-    max-height:94dvh;
+    max-height:90dvh;
     margin:0 auto;
     padding:58px 18px calc(22px + env(safe-area-inset-bottom));
     border-radius:18px 18px 0 0;
     overflow-x:hidden;
     overflow-y:auto;
   }
+  .detail-modal { overflow:hidden; }
   .premium-settings[open] {
     inset:auto 8px 0;
     width:calc(100vw - 16px);
@@ -2090,6 +2093,20 @@ select:not([multiple]) {
   #savingsView .recommendation-panel .full-width { height:auto; min-height:44px; padding-block:10px; white-space:normal; }
   .weekly-review-card { grid-template-columns:38px minmax(0,1fr); }
   .weekly-review-card .link-button { grid-column:2; justify-self:start; }
+}
+
+@media (max-width:768px) {
+  .detail-modal { width:calc(100vw - 16px); max-height:90dvh; padding:54px 14px calc(18px + env(safe-area-inset-bottom)); }
+  .detail-modal-grid,
+  .overview-detail-grid { grid-template-columns:minmax(0,1fr); }
+  .detail-modal-grid .panel,
+  .overview-detail-grid .panel,
+  .overview-detail-grid .line-chart { width:100%; min-width:0; max-width:100%; }
+  .overview-detail-grid .panel { padding:14px; }
+  .overview-detail-grid .panel-heading,
+  .overview-detail-grid .chart-summary,
+  .overview-detail-grid .legend { flex-wrap:wrap; }
+  .overview-detail-grid .line-chart svg { width:100%; max-width:100%; height:auto; }
 }
 
 @media (max-width:560px) {

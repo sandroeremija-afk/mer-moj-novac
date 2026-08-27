@@ -20,9 +20,9 @@ test('evaluation cycle 2: every native dialog is named and global modal focus is
   assert.match(app, /function focusableElements\(modal\)/);
   assert.match(app, /const modalReturnFocus=new WeakMap\(\)/);
   assert.match(app, /modal\.addEventListener\('keydown',event=>\{if\(event\.key!=='Tab'\)/);
-  assert.match(app, /event\.target!==modal/);
+  assert.match(app, /MerRuntime\.bindDialogBackdropDismiss\(modal,\(\)=>closeModal\(modal\)\)/);
   assert.match(auth, /passwordResetModal\.addEventListener\('keydown',event=>\{if\(event\.key!=='Tab'\)/);
-  assert.match(auth, /event\.target !== passwordResetModal/);
+  assert.match(auth, /MerRuntime\.bindDialogBackdropDismiss\(passwordResetModal, closePasswordReset\)/);
 });
 
 test('evaluation cycle 2: async failures surface through one accessible production boundary', () => {

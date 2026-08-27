@@ -29,7 +29,7 @@ test('cycle 1: only Activity keeps an internal vertical scrolling window', () =>
 });
 
 test('cycle 1: secondary content uses progressive disclosure while the large import review owns its table scroll', () => {
-  assert.match(css, /\.premium-settings\[open\][^}]*max-height:calc\(100dvh - 24px\)[^}]*overflow:hidden/);
+  assert.match(css, /\.premium-settings\[open\][^}]*max-height:min\(90dvh,calc\(100dvh - 24px\)\)[^}]*overflow:hidden/);
   assert.match(css, /\.settings-pane\.active[^}]*overflow:visible/);
   assert.match(css, /\.import-table-wrap[^}]*scrollbar-gutter:stable/);
   for (const modal of ['overviewDetailsModal', 'budgetDetailsModal', 'savingsDetailsModal', 'insightsDetailsModal']) {

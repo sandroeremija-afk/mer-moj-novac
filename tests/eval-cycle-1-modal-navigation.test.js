@@ -18,17 +18,17 @@ test('evaluation cycle 1: native dialog backdrops own blur and the legacy layer 
   assert.match(app, /\$\('#modalBackdrop'\)\.hidden=true/);
 });
 
-test('evaluation cycle 1: every application dialog closes through X, Escape, and an outside pointer event', () => {
+test('evaluation cycle 1: every application dialog closes through X, Escape, and a paired backdrop press', () => {
   const dialogs = html.match(/<dialog class="modal\b/g) || [];
   const closeButtons = html.match(/data-close-modal/g) || [];
   assert.ok(dialogs.length >= 10);
   assert.ok(closeButtons.length >= dialogs.length, 'each dialog has a close control; confirmation dialogs may expose an additional cancel action');
   assert.match(app, /\$\$\('\.modal'\)\.forEach\(modal=>\{/);
   assert.match(app, /modal\.addEventListener\('cancel'/);
-  assert.match(app, /modal\.addEventListener\('click'/);
-  assert.match(app, /event\.clientX<rect\.left\|\|event\.clientX>rect\.right/);
-  assert.match(auth, /passwordResetModal\.addEventListener\('click'/);
-  assert.match(auth, /if \(outside\) closePasswordReset\(\)/);
+  assert.match(app, /MerRuntime\.bindDialogBackdropDismiss\(modal,\(\)=>closeModal\(modal\)\)/);
+  assert.match(auth, /MerRuntime\.bindDialogBackdropDismiss\(passwordResetModal, closePasswordReset\)/);
+  assert.doesNotMatch(app, /modal\.addEventListener\('click'/);
+  assert.doesNotMatch(auth, /passwordResetModal\.addEventListener\('click'/);
 });
 
 test('evaluation cycle 1: cross-module navigation clears modal, menu, tooltip, and notification state', () => {

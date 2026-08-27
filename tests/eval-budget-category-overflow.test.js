@@ -38,7 +38,7 @@ test('evaluation cycle 2: category mutations commit to the central store and ret
   assert.match(app, /save\(cat\?'category-edit':'category-add'\)/);
   assert.match(app, /if\(returnToBudgetManager\)\{returnToBudgetManager=false;openBudgetCategoryManager\(\);\}/);
   assert.match(app, /if\(\$\('#budgetCategoriesModal'\)\.open\)renderBudgetCategoryManager\(\)/);
-  assert.match(app, /modal\.addEventListener\('click',event=>[\s\S]*?if\(outside\)closeModal\(modal\)/);
+  assert.match(app, /MerRuntime\.bindDialogBackdropDismiss\(modal,\(\)=>closeModal\(modal\)\)/);
 });
 
 test('search alignment cycle 1: manager search reserves a clean icon and text lane', () => {

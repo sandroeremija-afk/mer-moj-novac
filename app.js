@@ -1126,12 +1126,7 @@ $$('.modal').forEach(modal=>{
   modal.setAttribute('aria-modal','true');
   modal.addEventListener('cancel',event=>{event.preventDefault();closeModal(modal);});
   modal.addEventListener('close',()=>{if(modal.id==='insightChartModal')activeInsightDetail=null;syncModalLayer();});
-  modal.addEventListener('click',event=>{
-    if(event.target!==modal)return;
-    const rect=modal.getBoundingClientRect();
-    const outside=event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom;
-    if(outside)closeModal(modal);
-  });
+  window.MerRuntime.bindDialogBackdropDismiss(modal,()=>closeModal(modal));
   modal.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const focusable=focusableElements(modal);if(!focusable.length){event.preventDefault();modal.focus();return;}const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
 });
 $('#modalBackdrop').addEventListener('click',closeAllOverlays);
