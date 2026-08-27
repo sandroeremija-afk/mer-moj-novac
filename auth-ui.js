@@ -120,8 +120,10 @@
     }
     renderCopy();
     renderAll();
+    window.MerOnboardingUi?.onSessionStarted(session);
   }
   function showAuth() {
+    window.MerOnboardingUi?.close();
     document.getElementById('mfaLockScreen').hidden = true;
     document.body.classList.remove('mfa-locked');
     appShell.hidden = true;

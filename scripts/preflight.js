@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const jsFiles = ['runtime.js','logo.js','core.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','app.js','premium.js','auth-ui.js'];
+const jsFiles = ['runtime.js','logo.js','core.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','auth-ui.js'];
 const errors = [];
 
 for (const file of jsFiles) {
