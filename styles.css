@@ -1909,3 +1909,200 @@ select:not([multiple]) {
     white-space:normal;
   }
 }
+
+/* Contextual workspace header, modal footers, and responsive filter refinements. */
+.context-header {
+  min-width:0;
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  justify-content:center;
+  gap:3px;
+  overflow:hidden;
+}
+.context-header h1 {
+  margin:0;
+  overflow:hidden;
+  font-size:clamp(1.125rem,1.35vw,1.375rem);
+  line-height:1.15;
+  letter-spacing:-.025em;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.context-header p {
+  margin:0;
+  overflow:hidden;
+  color:var(--muted);
+  font-size:.6875rem;
+  line-height:1.35;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.actions-only-heading {
+  min-height:40px;
+  align-items:center;
+  justify-content:flex-end;
+  margin-bottom:14px;
+}
+.actions-only-heading .heading-actions { margin-left:auto; }
+.sidebar-bottom { margin-top:auto; flex:0 0 auto; }
+
+.modal-primary-actions { display:flex; align-items:center; justify-content:flex-end; gap:9px; }
+.split-actions { align-items:center; justify-content:space-between; }
+.split-actions > .destructive-button { margin-right:auto; }
+.import-commit-actions { margin-top:14px; }
+
+.settings-modal-body {
+  min-height:0;
+  flex:1 1 auto;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:0 5px 2px 0;
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:var(--line-strong) transparent;
+}
+.settings-modal-body::-webkit-scrollbar { width:7px; }
+.settings-modal-body::-webkit-scrollbar-thumb { border:2px solid transparent; border-radius:999px; background:var(--line-strong); background-clip:padding-box; }
+.settings-modal-body .settings-tabs { position:sticky; z-index:2; top:0; background:var(--canvas); }
+.settings-modal-body .settings-pane.active { min-height:0; overflow:visible; }
+
+.savings-side-stack { min-width:0; display:grid; grid-template-rows:minmax(0,1fr) auto; gap:12px; }
+.savings-side-stack .recommendation-panel { min-width:0; display:flex; flex-direction:column; }
+.savings-side-stack .recommendation-panel .full-width { margin-top:auto; }
+.weekly-review-card {
+  min-width:0;
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) auto;
+  align-items:center;
+  gap:11px;
+  padding:13px 14px;
+  border-color:color-mix(in srgb,var(--green) 42%,var(--line));
+  background:color-mix(in srgb,var(--green-soft) 68%,var(--panel));
+}
+.weekly-review-card .plan-mark { width:38px; height:38px; margin:0; }
+.weekly-review-copy { min-width:0; }
+.weekly-review-copy > p:last-child { margin:4px 0 0; color:var(--muted); font-size:.6875rem; line-height:1.4; }
+.weekly-review-copy strong { color:var(--ink); }
+.weekly-review-card .link-button { white-space:nowrap; }
+
+.activity-toolbar {
+  display:grid;
+  grid-template-columns:minmax(210px,1.45fr) repeat(2,minmax(132px,.8fr)) minmax(155px,1fr) minmax(125px,.72fr) minmax(170px,1fr) auto;
+  align-items:end;
+}
+.activity-toolbar .search-field,
+.activity-toolbar .filter-field { min-width:0; }
+.activity-toolbar .filter-field select { min-width:0; }
+.date-filter-field { display:grid; gap:4px; }
+.date-filter-field > span { color:var(--muted); font-size:.625rem; font-weight:700; }
+.filter-field input {
+  width:100%;
+  height:44px;
+  min-width:0;
+  padding:0 10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  outline:none;
+  color:var(--ink);
+  background:var(--panel);
+  font-size:.75rem;
+}
+.filter-field input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(0,169,228,.13); }
+[data-theme="dark"] .filter-field input { color:var(--ink); background:var(--panel); color-scheme:dark; }
+.activity-filter-reset { min-height:44px; white-space:nowrap; }
+
+@media (min-width:1200px) {
+  #savingsView > .savings-layout { grid-template-columns:minmax(0,1.45fr) minmax(250px,.72fr) minmax(190px,.52fr); }
+  #savingsView .savings-side-stack { display:contents; }
+  #savingsView .weekly-review-card { align-content:center; grid-template-columns:38px minmax(0,1fr); }
+  #savingsView .weekly-review-card .link-button { grid-column:2; justify-self:start; }
+}
+
+@media (max-width:1300px) and (min-width:768px) {
+  .activity-toolbar { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .activity-toolbar .search-field { grid-column:span 2; }
+  .activity-filter-reset { width:100%; }
+}
+
+@media (max-width:1024px) {
+  .context-header p { display:none; }
+  .actions-only-heading { min-height:0; }
+  .savings-side-stack { grid-template-rows:auto auto; }
+}
+
+@media (max-width:767px) {
+  .topbar { align-items:center; }
+  .context-header { min-width:0; }
+  .context-header h1 { font-size:clamp(1rem,4.5vw,1.2rem); }
+  .actions-only-heading { margin-bottom:12px; }
+  .activity-toolbar { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; }
+  .activity-toolbar .search-field { grid-column:auto; }
+  .activity-toolbar > * { width:100%; }
+
+  .modal,
+  .detail-modal,
+  .settings-modal,
+  .import-data-modal,
+  .insight-expanded-modal,
+  .subscriptions-modal,
+  .auth-reset-modal {
+    inset:auto 8px 0;
+    width:calc(100vw - 16px);
+    max-width:none;
+    height:auto;
+    max-height:94dvh;
+    margin:0 auto;
+    padding:58px 18px calc(22px + env(safe-area-inset-bottom));
+    border-radius:18px 18px 0 0;
+    overflow-x:hidden;
+    overflow-y:auto;
+  }
+  .premium-settings[open] {
+    inset:auto 8px 0;
+    width:calc(100vw - 16px);
+    height:90dvh;
+    max-height:90dvh;
+    margin:0 auto;
+    padding:56px 16px calc(14px + env(safe-area-inset-bottom));
+    border-radius:18px 18px 0 0;
+    overflow:hidden;
+  }
+  .premium-settings > .modal-close { top:12px; right:12px; }
+  .premium-settings > .overline,
+  .premium-settings > h2,
+  .premium-settings > .modal-intro { flex:0 0 auto; }
+  .premium-settings .settings-modal-body { min-height:0; flex:1 1 auto; overflow-y:auto; }
+  .premium-settings .settings-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); display:grid; overflow:visible; }
+
+  #savingsView .recommendation-panel {
+    width:100%;
+    min-width:0;
+    overflow:hidden;
+    padding:clamp(16px,5vw,20px);
+  }
+  #savingsView .recommendation-panel h2,
+  #savingsView .recommendation-panel > p,
+  #savingsView .recommendation-stat span,
+  #savingsView .recommendation-stat strong { min-width:0; overflow-wrap:anywhere; }
+  #savingsView .recommendation-stat { width:100%; min-width:0; }
+  #savingsView .recommendation-panel .full-width { height:auto; min-height:44px; padding-block:10px; white-space:normal; }
+  .weekly-review-card { grid-template-columns:38px minmax(0,1fr); }
+  .weekly-review-card .link-button { grid-column:2; justify-self:start; }
+}
+
+@media (max-width:560px) {
+  .topbar {
+    grid-template-columns:44px minmax(0,1fr);
+    grid-template-areas:"menu title" "actions actions";
+  }
+  .context-header { grid-area:title; }
+  .modal-actions.split-actions { align-items:stretch; flex-direction:column; }
+  .modal-primary-actions { width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .modal-primary-actions .primary-button,
+  .modal-primary-actions .secondary-button { min-width:0; height:auto; min-height:44px; padding:9px 10px; white-space:normal; }
+  .modal-actions > .destructive-button { width:100%; }
+  .import-commit-actions { display:grid; grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr); }
+  .import-commit-actions > button { width:100%; min-width:0; height:auto; min-height:44px; padding:9px 10px; white-space:normal; }
+}

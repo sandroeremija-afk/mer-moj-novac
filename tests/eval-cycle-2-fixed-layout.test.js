@@ -91,7 +91,7 @@ test('cycle 2: account dropdown is clean and the sidebar/header order is stable'
   const sidebarTransactionIndex = html.indexOf('class="primary-button sidebar-transaction-button"', brandIndex);
   const navIndex = html.indexOf('class="nav-list"', sidebarTransactionIndex);
   assert.ok(sidebarIndex < brandIndex && brandIndex < sidebarTransactionIndex && sidebarTransactionIndex < navIndex);
-  const moduleIndex = html.indexOf('id="activeModuleTitle"');
+  const moduleIndex = html.indexOf('id="contextHeader"');
   const actionsIndex = html.indexOf('class="top-actions"', moduleIndex);
   const dateIndex = html.indexOf('class="date-switcher"', actionsIndex);
   const clusterIndex = html.indexOf('class="header-action-cluster"', dateIndex);
@@ -99,13 +99,14 @@ test('cycle 2: account dropdown is clean and the sidebar/header order is stable'
   const notificationIndex = html.indexOf('class="notification-wrap"', themeIndex);
   const languageIndex = html.indexOf('class="language-switch"', notificationIndex);
   assert.ok(moduleIndex > 0 && moduleIndex < actionsIndex);
+  assert.doesNotMatch(html, /id="activeModuleTitle"/);
   assert.ok(actionsIndex < dateIndex && dateIndex < clusterIndex && clusterIndex < themeIndex && themeIndex < notificationIndex && notificationIndex < languageIndex);
   const sidebarMarkup = html.slice(sidebarIndex, html.indexOf('</aside>', sidebarIndex));
   assert.doesNotMatch(sidebarMarkup, /id="themeToggle"/);
   assert.doesNotMatch(html.slice(actionsIndex, html.indexOf('</header>', actionsIndex)), /data-open-transaction/);
   assert.doesNotMatch(html, /id="systemTime"/);
   assert.match(app, /const moduleTitleKeys = \{overview:'navOverview',budgets:'navBudgets',savings:'navSavings',activity:'navActivity',insights:'navInsights'\}/);
-  assert.match(app, /function renderModuleTitle\(\)/);
+  assert.match(app, /function renderModuleTitle\(now=new Date\(\)\)/);
 });
 
 test('cycle 2: centralized store loads before application bootstrap', () => {

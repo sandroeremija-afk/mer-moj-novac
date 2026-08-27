@@ -24,6 +24,7 @@
       passwordResetSuccessTitle: 'Zahtjev je zaprimljen',
       passwordResetSuccessBody: 'Ako račun postoji, upute za oporavak stići će na unesenu adresu.',
       backToLogin: 'Natrag na prijavu',
+      cancel: 'Otkaži',
       or: 'ili',
       demoAction: 'Nastavi u demo načinu',
       securityNote: 'Demo prijava ne traži stvarne bankovne vjerodajnice.',
@@ -59,6 +60,7 @@
       passwordResetSuccessTitle: 'Request received',
       passwordResetSuccessBody: 'If the account exists, recovery instructions will arrive at the email you entered.',
       backToLogin: 'Back to sign in',
+      cancel: 'Cancel',
       or: 'or',
       demoAction: 'Continue in demo mode',
       securityNote: 'Demo sign-in never asks for real bank credentials.',
@@ -168,6 +170,7 @@
   document.getElementById('authRegisterTab').addEventListener('click', () => selectMode('register'));
   document.getElementById('forgotPassword').addEventListener('click', openPasswordReset);
   document.getElementById('closePasswordReset').addEventListener('click', closePasswordReset);
+  document.getElementById('cancelPasswordReset').addEventListener('click', closePasswordReset);
   document.getElementById('passwordResetDone').addEventListener('click', closePasswordReset);
   passwordResetModal.addEventListener('cancel', event => { event.preventDefault(); closePasswordReset(); });
   passwordResetModal.addEventListener('click', event => {

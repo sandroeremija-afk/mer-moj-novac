@@ -363,6 +363,100 @@
     });
   }
 
+  function normalizeActivitySearch(value) {
+    return String(value ?? '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLocaleLowerCase();
+  }
+
+  function activityFilterDate(value) {
+    if (!value) return null;
+    try {
+      const candidate = String(value).slice(0, 10);
+      return isoDate(dateOnly(candidate));
+    } catch {
+      return null;
+    }
+  }
+
+  function filterActivityTransactions(source, filters = {}) {
+    const transactions = Array.isArray(source)
+      ? source
+      : Array.isArray(source?.transactions)
+        ? source.transactions
+        : [];
+    const query = normalizeActivitySearch(filters.query ?? filters.search);
+    const typeFilter = filters.type === 'income' || filters.type === 'expense' ? filters.type : 'all';
+    const categoryFilter = String(filters.category ?? filters.categoryId ?? 'all');
+    const categoryLabels = filters.categoryLabels && typeof filters.categoryLabels === 'object' ? filters.categoryLabels : {};
+    const reviewOnly = filters.reviewOnly === true;
+    let dateFrom = activityFilterDate(filters.dateFrom ?? filters.startDate);
+    let dateTo = activityFilterDate(filters.dateTo ?? filters.endDate);
+    if (dateFrom && dateTo && dateFrom > dateTo) [dateFrom, dateTo] = [dateTo, dateFrom];
+    const sort = ['amount-asc', 'amount-desc', 'date-asc', 'date-desc'].includes(filters.sort)
+      ? filters.sort
+      : 'date-desc';
+
+    const rows = transactions.map((transaction, index) => {
+      const type = transactionType(transaction);
+      const category = String(transaction?.category ?? '');
+      const categoryKey = type === 'income' ? `income:${category}` : category;
+      let categoryLabel = categoryLabels[categoryKey] ?? categoryLabels[category] ?? category;
+      if (typeof filters.getCategoryLabel === 'function') {
+        try { categoryLabel = filters.getCategoryLabel(transaction, type) ?? categoryLabel; } catch { /* keep deterministic fallback */ }
+      }
+      const parsedTimestamp = Date.parse(String(transaction?.date ?? ''));
+      return {
+        transaction,
+        index,
+        type,
+        category,
+        date:activityFilterDate(transaction?.date),
+        timestamp:Number.isFinite(parsedTimestamp) ? parsedTimestamp : null,
+        amount:Math.abs(financialAmount(transaction?.amount)),
+        searchable:normalizeActivitySearch([
+          transaction?.name,
+          transaction?.merchantName,
+          transaction?.description,
+          transaction?.source,
+          category,
+          categoryLabel
+        ].filter(Boolean).join(' '))
+      };
+    }).filter(row => {
+      if (!row.transaction || typeof row.transaction !== 'object') return false;
+      if (reviewOnly && !row.transaction.needsReview) return false;
+      if (typeFilter !== 'all' && row.type !== typeFilter) return false;
+      if (categoryFilter !== 'all') {
+        const incomeCategory = categoryFilter.startsWith('income:');
+        const expectedCategory = incomeCategory ? categoryFilter.slice(7) : categoryFilter;
+        if (row.category !== expectedCategory || row.type !== (incomeCategory ? 'income' : 'expense')) return false;
+      }
+      if (query && !row.searchable.includes(query)) return false;
+      if ((dateFrom || dateTo) && !row.date) return false;
+      if (dateFrom && row.date < dateFrom) return false;
+      if (dateTo && row.date > dateTo) return false;
+      return true;
+    });
+
+    rows.sort((left, right) => {
+      if (sort === 'amount-asc' || sort === 'amount-desc') {
+        const difference = left.amount - right.amount;
+        if (difference) return sort === 'amount-asc' ? difference : -difference;
+      } else {
+        if (left.timestamp === null && right.timestamp !== null) return 1;
+        if (left.timestamp !== null && right.timestamp === null) return -1;
+        if (left.timestamp !== right.timestamp) return sort === 'date-asc'
+          ? left.timestamp - right.timestamp
+          : right.timestamp - left.timestamp;
+      }
+      return left.index - right.index;
+    });
+    return rows.map(row => row.transaction);
+  }
+
   function transactionTotals(transactions, timeframe = 'monthly', referenceValue = new Date()) {
     const filtered = filterTransactions(transactions, timeframe, referenceValue);
     const totals = filtered.reduce((result, transaction) => {
@@ -623,6 +717,7 @@
     normalizeBankTransaction,
     importBankTransactions,
     filterTransactions,
+    filterActivityTransactions,
     transactionTotals,
     calculateFinancials,
     FinancialEngine,

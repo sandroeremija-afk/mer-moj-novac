@@ -64,6 +64,7 @@ test('cycle 1: official brand-book vectors power one Auth logo and one sidebar l
 
 test('cycle 1: Auth removes the old subtitle and exposes a localized password recovery dialog', () => {
   assert.doesNotMatch(html, /Nastavite ondje gdje ste stali\.|Continue exactly where you left off\./);
+  assert.doesNotMatch(html, /<div class="auth-brand-panel"[\s\S]*?<p class="overline">MER MOJ NOVAC<\/p>/);
   assert.doesNotMatch(html, /class="auth-intro"/);
   assert.match(html, /id="forgotPassword"[^>]*href="#password-reset"[^>]*aria-controls="passwordResetModal"/);
   for (const id of ['passwordResetModal', 'passwordResetForm', 'passwordResetEmail', 'passwordResetSuccess', 'passwordResetDone']) {
@@ -77,5 +78,7 @@ test('cycle 1: Auth removes the old subtitle and exposes a localized password re
 test('cycle 1: module headings and settings remain free of logo artifacts', () => {
   assert.doesNotMatch(html, /class="topbar-brand-context"/);
   assert.doesNotMatch(html, /class="(?:header|settings|assessment|lock)-logo"/);
-  assert.match(html, /<h1 class="module-heading" id="activeModuleTitle">Pregled<\/h1>/);
+  assert.doesNotMatch(html, /id="activeModuleTitle"/);
+  assert.match(html, /<div class="context-header" id="contextHeader"[\s\S]*?id="contextHeaderTitle"[\s\S]*?id="contextHeaderSubtitle"/);
+  assert.match(app, /const contextHeaderKeys = \{/);
 });
