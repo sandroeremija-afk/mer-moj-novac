@@ -5,19 +5,94 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function createMerOnboardingCore() {
   const STORAGE_PREFIX = 'mer-onboarding-v1:';
   const DEFAULT_STEPS = Object.freeze([
-    { id:'welcome', titleKey:'onboardingWelcomeTitle', bodyKey:'onboardingWelcomeBody' },
-    { id:'overview', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody' },
-    { id:'budgets', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody' },
-    { id:'savings', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody' },
-    { id:'activity', titleKey:'onboardingActivityTitle', bodyKey:'onboardingActivityBody' },
-    { id:'insights', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody' },
-    { id:'settings', titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody' }
+    { id:'navigation', view:'overview', target:'.nav-list', mobileTarget:'#menuToggle', placement:'right', openSidebar:true, titleKey:'onboardingNavigationTitle', bodyKey:'onboardingNavigationBody' },
+    { id:'transaction', view:'overview', target:'#overviewView .heading-actions [data-open-transaction]', mobileTarget:'#overviewView .heading-actions [data-open-transaction]', placement:'bottom', titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody' },
+    { id:'overview', view:'overview', target:'#overviewView .safe-panel', mobileTarget:'#safeRing', placement:'right', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody' },
+    { id:'budgets', view:'budgets', target:'#budgetsView .table-panel', mobileTarget:'#budgetsView .budget-summary', placement:'left', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody' },
+    { id:'savings', view:'savings', target:'#savingsView .savings-hero', placement:'right', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody' },
+    { id:'activity', view:'activity', target:'#activityView .activity-toolbar', mobileTarget:'#activityView .activity-toolbar', placement:'bottom', titleKey:'onboardingActivityTitle', bodyKey:'onboardingActivityBody' },
+    { id:'insights', view:'insights', target:'#insightsView .advanced-insights-grid', mobileTarget:'#insightsView .insights-kpis', placement:'left', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody' },
+    { id:'settings', view:'overview', target:'#openSettings', mobileTarget:'#menuToggle', placement:'right', openSidebar:true, titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody' }
   ].map(step => Object.freeze(step)));
 
   const cleanUserId = value => String(value || 'anonymous').trim().toLowerCase().replace(/[^a-z0-9._@-]+/g, '-') || 'anonymous';
   const safeParse = value => {
     try { return value ? JSON.parse(value) : null; } catch { return null; }
   };
+
+  const finite = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+  const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
+
+  function computeSpotlightLayout(options = {}) {
+    const viewportInput = options.viewport || {};
+    const viewport = {
+      left:finite(viewportInput.left),
+      top:finite(viewportInput.top),
+      width:Math.max(1, finite(viewportInput.width, 1)),
+      height:Math.max(1, finite(viewportInput.height, 1))
+    };
+    const edge = Math.max(0, finite(options.edge, 12));
+    const gap = Math.max(0, finite(options.gap, 14));
+    const padding = Math.max(0, finite(options.padding, 8));
+    const target = options.targetRect || {};
+    const viewportRight = viewport.left + viewport.width;
+    const viewportBottom = viewport.top + viewport.height;
+    const targetLeft = finite(target.left);
+    const targetTop = finite(target.top);
+    const targetRight = Number.isFinite(Number(target.right)) ? Number(target.right) : targetLeft + Math.max(0, finite(target.width));
+    const targetBottom = Number.isFinite(Number(target.bottom)) ? Number(target.bottom) : targetTop + Math.max(0, finite(target.height));
+    const spotlightLeft = clamp(targetLeft - padding, viewport.left + edge, viewportRight - edge);
+    const spotlightTop = clamp(targetTop - padding, viewport.top + edge, viewportBottom - edge);
+    const spotlightRight = clamp(targetRight + padding, spotlightLeft, viewportRight - edge);
+    const spotlightBottom = clamp(targetBottom + padding, spotlightTop, viewportBottom - edge);
+    const spotlight = {
+      left:spotlightLeft,
+      top:spotlightTop,
+      width:Math.max(1, spotlightRight - spotlightLeft),
+      height:Math.max(1, spotlightBottom - spotlightTop)
+    };
+
+    const size = options.popoverSize || {};
+    const popoverWidth = Math.min(Math.max(1, finite(size.width, 340)), Math.max(1, viewport.width - edge * 2));
+    const popoverHeight = Math.min(Math.max(1, finite(size.height, 240)), Math.max(1, viewport.height - edge * 2));
+    const spaces = {
+      right:viewportRight - (spotlight.left + spotlight.width) - edge,
+      left:spotlight.left - viewport.left - edge,
+      bottom:viewportBottom - (spotlight.top + spotlight.height) - edge,
+      top:spotlight.top - viewport.top - edge
+    };
+    const preferred = ['right', 'left', 'bottom', 'top'].includes(options.preferredPlacement) ? options.preferredPlacement : 'right';
+    const opposite = { right:'left', left:'right', bottom:'top', top:'bottom' };
+    const remaining = ['right', 'left', 'bottom', 'top'].filter(side => side !== preferred && side !== opposite[preferred]);
+    const order = [preferred, opposite[preferred], ...remaining];
+    const required = side => (side === 'left' || side === 'right' ? popoverWidth : popoverHeight) + gap;
+    const placement = order.find(side => spaces[side] >= required(side)) || order.sort((a,b) => spaces[b] - spaces[a])[0];
+    let left;
+    let top;
+    if (placement === 'right') {
+      left = spotlight.left + spotlight.width + gap;
+      top = spotlight.top + spotlight.height / 2 - popoverHeight / 2;
+    } else if (placement === 'left') {
+      left = spotlight.left - popoverWidth - gap;
+      top = spotlight.top + spotlight.height / 2 - popoverHeight / 2;
+    } else if (placement === 'bottom') {
+      left = spotlight.left + spotlight.width / 2 - popoverWidth / 2;
+      top = spotlight.top + spotlight.height + gap;
+    } else {
+      left = spotlight.left + spotlight.width / 2 - popoverWidth / 2;
+      top = spotlight.top - popoverHeight - gap;
+    }
+    return Object.freeze({
+      spotlight:Object.freeze(spotlight),
+      popover:Object.freeze({
+        left:clamp(left, viewport.left + edge, viewportRight - edge - popoverWidth),
+        top:clamp(top, viewport.top + edge, viewportBottom - edge - popoverHeight),
+        width:popoverWidth,
+        height:popoverHeight,
+        placement
+      })
+    });
+  }
 
   function createOnboardingController(options = {}) {
     const storage = options.storage || globalThis.localStorage;
@@ -119,5 +194,5 @@
     return Object.freeze({ key, steps, shouldAutoStart, start, next, previous, dismiss, complete, snapshot });
   }
 
-  return Object.freeze({ STORAGE_PREFIX, DEFAULT_STEPS, cleanUserId, createOnboardingController });
+  return Object.freeze({ STORAGE_PREFIX, DEFAULT_STEPS, cleanUserId, computeSpotlightLayout, createOnboardingController });
 });

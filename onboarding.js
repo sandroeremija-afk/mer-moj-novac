@@ -1,67 +1,211 @@
 (function initializeOnboarding() {
   Object.assign(translations.hr, {
     helpAssistant:'Pomoć & AI Asistent', helpAssistantHint:'Vodič i financijska pitanja',
-    onboardingSettingsTitle:'Vodič kroz aplikaciju', onboardingSettingsHint:'Ponovno prođite kroz najvažnije module i postavke.', restartOnboarding:'Pokreni vodič', onboardingSteps:'Koraci vodiča', skipTour:'Preskoči vodič', finishTour:'Otvori postavke',
-    onboardingWelcomeTitle:'Dobro došli u Moj novac', onboardingWelcomeBody:'U nekoliko kratkih koraka upoznajte pregled, budžete, štednju, aktivnost, uvide i najvažnije postavke.',
-    onboardingOverviewTitle:'Sve važno na jednom pregledu', onboardingOverviewBody:'Pregled prikazuje raspoloživo stanje, siguran iznos za potrošnju, dnevni tempo i ono što slijedi.',
-    onboardingBudgetsTitle:'Postavite smjernice, ne zabrane', onboardingBudgetsBody:'U Budžetima postavite mjesečni limit za svaku kategoriju. Pragovi vas upozoravaju, ali stvarne transakcije uvijek možete evidentirati.',
-    onboardingSavingsTitle:'Pretvorite namjere u ciljeve', onboardingSavingsBody:'Štednja povezuje fond za hitne slučajeve, ciljane pretince i zaokruživanja u jasan plan napretka.',
-    onboardingActivityTitle:'Svaki zapis ostaje pod kontrolom', onboardingActivityBody:'U Aktivnosti pretražujte, filtrirajte i izravno uređujte ručne i automatski uvezene prihode i troškove.',
-    onboardingInsightsTitle:'Trendovi koji vode boljoj odluci', onboardingInsightsBody:'Uvidi uspoređuju prihode i troškove, stopu štednje, trgovce i kategorije kroz odabrano razdoblje.',
-    onboardingSettingsTitle:'Povežite banke i automatizirajte pravila', onboardingSettingsBody:'U Korisničkim postavkama otvorite Banke za povezivanje računa ili Pravila za If/Then auto-kategorizaciju. Limite uređujete u Budžetima.',
-    onboardingWelcomeTip:'Osobni i Poslovni podaci uvijek ostaju potpuno odvojeni.', onboardingOverviewTip:'Dodavanje prihoda ili troška odmah osvježava sve povezane kartice.', onboardingBudgetsTip:'Upozorenja se uključuju na 80% i 100% iskorištenosti limita.', onboardingSavingsTip:'Zaokruživanje sitniša možete usmjeriti u samo jedan aktivni cilj.', onboardingActivityTip:'Filtri rade samo nad aktivnim Osobnim ili Poslovnim profilom.', onboardingInsightsTip:'Promijenite razdoblje za dnevni, mjesečni, godišnji ili sveukupni prikaz.', onboardingSettingsTip:'Nakon završetka otvorit ćemo Pravila kako biste vidjeli praktičan If/Then primjer.',
-    onboardingWelcomeLabel:'Dobrodošli', onboardingOverviewLabel:'Pregled', onboardingBudgetsLabel:'Budžeti', onboardingSavingsLabel:'Štednja', onboardingActivityLabel:'Aktivnost', onboardingInsightsLabel:'Uvidi', onboardingSettingsLabel:'Postavke'
+    onboardingSettingsHint:'Ponovno prođite kroz najvažnije module i postavke.', restartOnboarding:'Pokreni vodič', onboardingSteps:'Koraci vodiča', skipTour:'Preskoči', finishTour:'Završi',
+    onboardingNavigationTitle:'Sve je nadohvat ruke', onboardingNavigationBody:'Bočna navigacija vodi do Pregleda, Budžeta, Štednje, Aktivnosti i Uvida — bez gubitka konteksta.', onboardingNavigationTip:'Osobni i Poslovni profil uvijek zadržavaju potpuno odvojene podatke.', onboardingNavigationLabel:'Navigacija',
+    onboardingTransactionTitle:'Zabilježite stvarno stanje', onboardingTransactionBody:'Gumb Dodaj transakciju otvara isti obrazac za prihod ili trošak. Budžetsko prekoračenje upozorava, ali nikada ne blokira spremanje.', onboardingTransactionTip:'Novi iznos odmah osvježava stanje, budžete, štednju i grafikone.', onboardingTransactionLabel:'Transakcije',
+    onboardingOverviewTitle:'Zaštita budžeta u stvarnom vremenu', onboardingOverviewBody:'Ova kartica povezuje mjesečne prihode i troškove u siguran iznos za potrošnju te dnevni tempo.', onboardingOverviewTip:'Dodatni prihod odmah povećava siguran i dnevni raspoloživi iznos.', onboardingOverviewLabel:'Pregled',
+    onboardingBudgetsTitle:'Smjernice, ne zabrane', onboardingBudgetsBody:'Postavite mjesečne limite po kategorijama i pratite zelene, žute i crvene pragove potrošnje.', onboardingBudgetsTip:'Upozorenja se uključuju na 80% i 100% iskorištenosti limita.', onboardingBudgetsLabel:'Budžeti',
+    onboardingSavingsTitle:'Ciljevi s jasnim sljedećim korakom', onboardingSavingsBody:'Fond, namjenski pretinci, rokovi i zaokruživanja zajedno pokazuju koliko ste blizu svakom cilju.', onboardingSavingsTip:'Zaokruživanje sitniša možete usmjeriti u jedan aktivni cilj.', onboardingSavingsLabel:'Štednja',
+    onboardingActivityTitle:'Pronađite i uredite svaki zapis', onboardingActivityBody:'Pretraga, raspon datuma, kategorija i vrsta pomažu brzo pronaći ručne i automatski uvezene transakcije.', onboardingActivityTip:'Filtri uvijek rade samo nad trenutačno aktivnim profilom.', onboardingActivityLabel:'Aktivnost',
+    onboardingInsightsTitle:'Pretvorite brojke u odluke', onboardingInsightsBody:'Uvidi povezuju neto iznos, strukturu potrošnje, trgovce, mjesečne trendove i stopu štednje.', onboardingInsightsTip:'Odaberite dnevni, mjesečni, godišnji ili sveukupni prikaz.', onboardingInsightsLabel:'Uvidi',
+    onboardingSettingsTitle:'Postavke i automatizacija', onboardingSettingsBody:'Iz korisničkog izbornika povežite banke, odaberite privatnost i valutu ili uredite If/Then pravila kategorizacije.', onboardingSettingsTip:'Vodič možete ponovno pokrenuti iz Postavki u bilo kojem trenutku.', onboardingSettingsLabel:'Postavke'
   });
   Object.assign(translations.en, {
     helpAssistant:'Help & AI Assistant', helpAssistantHint:'Guide and money questions',
-    onboardingSettingsTitle:'Application tour', onboardingSettingsHint:'Walk through the key modules and settings again.', restartOnboarding:'Start tour', onboardingSteps:'Tour steps', skipTour:'Skip tour', finishTour:'Open settings',
-    onboardingWelcomeTitle:'Welcome to My money', onboardingWelcomeBody:'Take a short tour of Overview, Budgets, Savings, Activity, Insights and the most important settings.',
-    onboardingOverviewTitle:'Everything important at a glance', onboardingOverviewBody:'Overview shows your available balance, safe-to-spend amount, daily pace and what is coming next.',
-    onboardingBudgetsTitle:'Set guardrails, not roadblocks', onboardingBudgetsBody:'Set a monthly category limit in Budgets. Thresholds warn you, while real transactions can always be recorded.',
-    onboardingSavingsTitle:'Turn intentions into goals', onboardingSavingsBody:'Savings brings your emergency fund, goal buckets and round-ups together in one clear progress plan.',
-    onboardingActivityTitle:'Keep every record under control', onboardingActivityBody:'Use Activity to search, filter and directly edit manual and automatically imported income and expenses.',
-    onboardingInsightsTitle:'Trends that support better decisions', onboardingInsightsBody:'Insights compares income, expenses, savings rate, merchants and categories across your selected timeframe.',
-    onboardingSettingsTitle:'Connect banks and automate rules', onboardingSettingsBody:'Open Banks in User settings to connect accounts, or Rules for If/Then auto-categorization. Category limits live in Budgets.',
-    onboardingWelcomeTip:'Personal and Business data always remain completely isolated.', onboardingOverviewTip:'Adding income or an expense instantly refreshes every connected card.', onboardingBudgetsTip:'Warnings appear at 80% and 100% of a category limit.', onboardingSavingsTip:'Round-ups can be routed to one active savings goal.', onboardingActivityTip:'Filters only read the active Personal or Business profile.', onboardingInsightsTip:'Change the timeframe for daily, monthly, year-to-date or all-time analysis.', onboardingSettingsTip:'When you finish, we will open Rules so you can see a practical If/Then example.',
-    onboardingWelcomeLabel:'Welcome', onboardingOverviewLabel:'Overview', onboardingBudgetsLabel:'Budgets', onboardingSavingsLabel:'Savings', onboardingActivityLabel:'Activity', onboardingInsightsLabel:'Insights', onboardingSettingsLabel:'Settings'
+    onboardingSettingsHint:'Walk through the key modules and settings again.', restartOnboarding:'Start tour', onboardingSteps:'Tour steps', skipTour:'Skip', finishTour:'Finish',
+    onboardingNavigationTitle:'Everything is within reach', onboardingNavigationBody:'The sidebar takes you to Overview, Budgets, Savings, Activity and Insights without losing context.', onboardingNavigationTip:'Personal and Business data always remain completely isolated.', onboardingNavigationLabel:'Navigation',
+    onboardingTransactionTitle:'Record financial reality', onboardingTransactionBody:'Add transaction opens one form for income or expenses. Budget overages warn you but never block saving.', onboardingTransactionTip:'A new amount instantly refreshes balances, budgets, savings and charts.', onboardingTransactionLabel:'Transactions',
+    onboardingOverviewTitle:'Real-time Budget Protection', onboardingOverviewBody:'This card combines monthly income and expenses into your safe-to-spend amount and daily pace.', onboardingOverviewTip:'New income immediately increases both safe and daily available amounts.', onboardingOverviewLabel:'Overview',
+    onboardingBudgetsTitle:'Guardrails, not roadblocks', onboardingBudgetsBody:'Set monthly category limits and follow green, yellow and red spending thresholds.', onboardingBudgetsTip:'Warnings appear at 80% and 100% of a category limit.', onboardingBudgetsLabel:'Budgets',
+    onboardingSavingsTitle:'Goals with a clear next step', onboardingSavingsBody:'Your fund, goal buckets, deadlines and round-ups show exactly how close you are to each goal.', onboardingSavingsTip:'Round-ups can be routed to one active savings goal.', onboardingSavingsLabel:'Savings',
+    onboardingActivityTitle:'Find and edit every record', onboardingActivityBody:'Search, date range, category and type filters help locate manual and bank-imported transactions quickly.', onboardingActivityTip:'Filters only read the currently active profile.', onboardingActivityLabel:'Activity',
+    onboardingInsightsTitle:'Turn numbers into decisions', onboardingInsightsBody:'Insights connects net total, spending mix, merchants, monthly trends and savings rate.', onboardingInsightsTip:'Choose daily, monthly, year-to-date or all-time analysis.', onboardingInsightsLabel:'Insights',
+    onboardingSettingsTitle:'Settings and automation', onboardingSettingsBody:'From the user menu, connect banks, choose privacy and currency options, or edit If/Then categorization rules.', onboardingSettingsTip:'You can restart this tour from Settings at any time.', onboardingSettingsLabel:'Settings'
   });
   applyStaticTranslations();
 
-  const modal = $('#onboardingModal');
-  if (!modal || !window.MerOnboardingCore) return;
-  const stepIcons = { welcome:'compass', overview:'grid', budgets:'wallet', savings:'target', activity:'list', insights:'chart', settings:'sliders' };
+  const tour = $('#onboardingTour');
+  const spotlight = $('#onboardingSpotlight');
+  const popover = $('#onboardingPopover');
+  const appShell = $('#appShell');
+  if (!tour || !spotlight || !popover || !appShell || !window.MerOnboardingCore) return;
+
   let controller = null;
   let pendingSession = null;
-  let closingFromAction = false;
+  let currentTarget = null;
+  let previousDescription = null;
+  let resizeObserver = null;
+  let geometryFrame = 0;
+  let settleTimer = 0;
+  let startingView = 'overview';
+  let startingSidebarOpen = false;
+  let returnFocus = null;
 
   function userIdFor(session) { return session?.userId || session?.email || 'anonymous'; }
   function createController(session) { return MerOnboardingCore.createOnboardingController({ storage:localStorage, userId:userIdFor(session) }); }
   function stepKey(step, suffix) { return `onboarding${step.id[0].toUpperCase()}${step.id.slice(1)}${suffix}`; }
+  function mobileViewport() { return window.matchMedia('(max-width: 767px)').matches; }
 
-  function previewModule(stepId) {
-    if (!moduleTitleKeys[stepId]) return;
-    activeView = stepId;
-    $$('[data-view-panel]').forEach(panel => { const active=panel.dataset.viewPanel===stepId;panel.hidden=!active;panel.classList.toggle('active',active); });
-    $$('.nav-item').forEach(item => { const active=item.dataset.view===stepId;item.classList.toggle('active',active);if(active)item.setAttribute('aria-current','page');else item.removeAttribute('aria-current'); });
-    renderModuleTitle();
+  function viewportBounds() {
+    const visual = window.visualViewport;
+    return visual
+      ? { left:visual.offsetLeft, top:visual.offsetTop, width:visual.width, height:visual.height }
+      : { left:0, top:0, width:window.innerWidth, height:window.innerHeight };
+  }
+
+  function releaseTarget() {
+    clearTimeout(settleTimer);
+    settleTimer = 0;
+    resizeObserver?.disconnect();
+    resizeObserver = null;
+    if (currentTarget) {
+      currentTarget.classList.remove('tour-target-active');
+      if (previousDescription === null) currentTarget.removeAttribute('aria-describedby');
+      else currentTarget.setAttribute('aria-describedby', previousDescription);
+    }
+    currentTarget = null;
+    previousDescription = null;
+  }
+
+  function visibleTarget(selector) {
+    if (!selector) return null;
+    const element = document.querySelector(selector);
+    if (!element || element.hidden || !element.getClientRects().length) return null;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 ? element : null;
+  }
+
+  function targetFor(step) {
+    if (mobileViewport() && !step.openSidebar) {
+      const mobile = visibleTarget(step.mobileTarget);
+      if (mobile) return mobile;
+    }
+    const primary = visibleTarget(step.target);
+    if (primary) return primary;
+    return visibleTarget(step.mobileTarget) || $('#menuToggle') || appShell;
+  }
+
+  function scheduleGeometry() {
+    cancelAnimationFrame(geometryFrame);
+    geometryFrame = requestAnimationFrame(positionSpotlight);
+  }
+
+  function positionSpotlight() {
+    geometryFrame = 0;
+    if (tour.hidden || !currentTarget?.isConnected) return;
+    const targetRect = currentTarget.getBoundingClientRect();
+    const popoverRect = popover.getBoundingClientRect();
+    const viewport = viewportBounds();
+    const layout = MerOnboardingCore.computeSpotlightLayout({
+      targetRect,
+      popoverSize:{ width:Math.min(popoverRect.width || 340, Math.max(1, viewport.width - 24)), height:Math.min(popoverRect.height || 240, Math.max(1, viewport.height - 24)) },
+      viewport,
+      preferredPlacement:controller?.snapshot().step.placement,
+      padding:8,
+      gap:14,
+      edge:12
+    });
+    Object.assign(spotlight.style, {
+      left:`${layout.spotlight.left}px`, top:`${layout.spotlight.top}px`, width:`${layout.spotlight.width}px`, height:`${layout.spotlight.height}px`
+    });
+    Object.assign(popover.style, { left:`${layout.popover.left}px`, top:`${layout.popover.top}px` });
+    popover.dataset.placement = layout.popover.placement;
+  }
+
+  function previewStep(step) {
+    releaseTarget();
+    tour.classList.add('is-positioning');
+    if (step.view && typeof showView === 'function') showView(step.view);
+    if (mobileViewport() && step.openSidebar) openSidebar();
+    else if (mobileViewport()) closeSidebar();
+
+    currentTarget = targetFor(step);
+    previousDescription = currentTarget.getAttribute('aria-describedby');
+    currentTarget.setAttribute('aria-describedby', 'onboardingBody');
+    currentTarget.classList.add('tour-target-active');
+    currentTarget.scrollIntoView({ behavior:'instant', block:'center', inline:'nearest' });
+    resizeObserver = new ResizeObserver(scheduleGeometry);
+    resizeObserver.observe(currentTarget);
+    requestAnimationFrame(() => requestAnimationFrame(scheduleGeometry));
+    settleTimer = setTimeout(() => {
+      positionSpotlight();
+      requestAnimationFrame(() => tour.classList.remove('is-positioning'));
+    }, mobileViewport() ? 240 : 60);
   }
 
   function render(snapshot = controller?.snapshot()) {
     if (!snapshot) return;
-    const steps = controller.steps;
-    const step = steps[snapshot.stepIndex];
+    const step = snapshot.step;
     const stepNumber = snapshot.stepIndex + 1;
     $('#onboardingTitle').textContent = t(step.titleKey);
     $('#onboardingBody').textContent = t(step.bodyKey);
     $('#onboardingEyebrow').textContent = t(stepKey(step, 'Label')).toLocaleUpperCase(locale());
-    $('#onboardingProgress').textContent = currentLang === 'hr' ? `Korak ${stepNumber} od ${steps.length}` : `Step ${stepNumber} of ${steps.length}`;
-    $('#onboardingProgressBar').style.width = `${stepNumber / steps.length * 100}%`;
-    $('#onboardingIcon').innerHTML = `<svg aria-hidden="true"><use href="#icon-${stepIcons[step.id] || 'compass'}"></use></svg>`;
     $('#onboardingTip span').textContent = t(stepKey(step, 'Tip'));
+    $('#onboardingProgress').textContent = currentLang === 'hr' ? `Korak ${stepNumber} od ${controller.steps.length}` : `Step ${stepNumber} of ${controller.steps.length}`;
+    $('#onboardingProgressBar').style.width = `${stepNumber / controller.steps.length * 100}%`;
     $('#onboardingPrevious').hidden = snapshot.stepIndex === 0;
-    $('#onboardingNext').textContent = t(snapshot.stepIndex === steps.length - 1 ? 'finishTour' : 'continue');
-    $('#onboardingStepList').innerHTML = steps.map((item,index) => `<div class="onboarding-rail-step ${index===snapshot.stepIndex?'active':index<snapshot.stepIndex?'done':''}"><i>${index<snapshot.stepIndex?'✓':index+1}</i><span>${escapeHtml(t(stepKey(item, 'Label')))}</span></div>`).join('');
-    previewModule(step.id);
+    $('#onboardingNext').textContent = t(snapshot.stepIndex === controller.steps.length - 1 ? 'finishTour' : 'continue');
+    previewStep(step);
+  }
+
+  function installTourEvents() {
+    window.addEventListener('resize', scheduleGeometry);
+    window.addEventListener('scroll', scheduleGeometry, true);
+    window.visualViewport?.addEventListener('resize', scheduleGeometry);
+    window.visualViewport?.addEventListener('scroll', scheduleGeometry);
+    document.addEventListener('keydown', handleTourKeydown, true);
+  }
+
+  function removeTourEvents() {
+    window.removeEventListener('resize', scheduleGeometry);
+    window.removeEventListener('scroll', scheduleGeometry, true);
+    window.visualViewport?.removeEventListener('resize', scheduleGeometry);
+    window.visualViewport?.removeEventListener('scroll', scheduleGeometry);
+    document.removeEventListener('keydown', handleTourKeydown, true);
+  }
+
+  function focusableInPopover() {
+    return [...popover.querySelectorAll('button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')].filter(element => !element.hidden && element.getClientRects().length);
+  }
+
+  function handleTourKeydown(event) {
+    if (tour.hidden) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      dismissTour();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = focusableInPopover();
+    if (!focusable.length) { event.preventDefault();popover.focus({ preventScroll:true });return; }
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault();last.focus({ preventScroll:true }); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault();first.focus({ preventScroll:true }); }
+    else if (!popover.contains(document.activeElement)) { event.preventDefault();first.focus({ preventScroll:true }); }
+  }
+
+  function closeTourSurface({ restoreView = false, focus = true } = {}) {
+    if (tour.hidden) return;
+    releaseTarget();
+    cancelAnimationFrame(geometryFrame);
+    geometryFrame = 0;
+    removeTourEvents();
+    tour.hidden = true;
+    tour.classList.remove('is-positioning');
+    appShell.inert = false;
+    document.body.classList.remove('tour-active');
+    if (restoreView && typeof showView === 'function') showView(startingView);
+    if (mobileViewport()) {
+      if (startingSidebarOpen) openSidebar(); else closeSidebar();
+    }
+    if (focus) {
+      const target = returnFocus?.isConnected ? returnFocus : $('#openSettings');
+      target?.focus({ preventScroll:true });
+    }
+    returnFocus = null;
   }
 
   function openTour({ force = false } = {}) {
@@ -70,35 +214,41 @@
     controller = createController(session);
     const snapshot = controller.start({ force });
     if (!snapshot.open) return false;
+
+    window.MerAssistantUi?.close();
+    $$('dialog[open]').forEach(dialog => closeModal(dialog));
+    startingView = activeView;
+    startingSidebarOpen = $('#sidebar')?.classList.contains('open') || false;
+    returnFocus = document.activeElement;
+    tour.hidden = false;
+    document.body.classList.add('tour-active');
+    appShell.inert = true;
+    installTourEvents();
     render(snapshot);
-    openModal(modal);
+    setTimeout(() => $('#onboardingNext').focus({ preventScroll:true }), 30);
     return true;
   }
 
-  function finishTour(openSettingsAfter = false) {
+  function finishTour() {
     if (!controller) return;
     controller.complete();
-    closingFromAction = true;
-    closeModal(modal);
-    closingFromAction = false;
-    if (openSettingsAfter) setTimeout(() => window.MerSettings?.open('automation'), 30);
+    closeTourSurface({ restoreView:false });
   }
 
   function dismissTour() {
     if (controller?.snapshot().open) controller.dismiss();
-    closingFromAction = true;
-    closeModal(modal);
-    closingFromAction = false;
+    closeTourSurface({ restoreView:true });
   }
 
   $('#onboardingPrevious').addEventListener('click', () => render(controller?.previous()));
   $('#onboardingNext').addEventListener('click', () => {
     const snapshot = controller?.snapshot();
     if (!snapshot) return;
-    if (snapshot.stepIndex === controller.steps.length - 1) { finishTour(true);return; }
+    if (snapshot.stepIndex === controller.steps.length - 1) { finishTour();return; }
     render(controller.next());
   });
   $('#onboardingSkip').addEventListener('click', dismissTour);
+  $('#onboardingClose').addEventListener('click', dismissTour);
   $('#restartOnboarding').addEventListener('click', () => {
     const authenticatedUserId = window.MerAuthProvider?.currentSession?.()?.userId;
     const session = window.MerAuthProvider?.currentSession?.();
@@ -108,17 +258,23 @@
     pendingSession = session;
     controller = createController(session);
     const snapshot = controller.start({ force:true });
-    render(snapshot);
-    setTimeout(() => openModal(modal), 30);
-  });
-  modal.addEventListener('close', () => {
-    if (!closingFromAction && controller?.snapshot().open) controller.dismiss();
+    setTimeout(() => {
+      startingView = activeView;
+      startingSidebarOpen = $('#sidebar')?.classList.contains('open') || false;
+      returnFocus = $('#restartOnboarding');
+      tour.hidden = false;
+      document.body.classList.add('tour-active');
+      appShell.inert = true;
+      installTourEvents();
+      render(snapshot);
+      $('#onboardingNext').focus({ preventScroll:true });
+    }, 30);
   });
 
   window.MerOnboardingUi = Object.freeze({
     onSessionStarted(session) { pendingSession=session;if (!document.body.classList.contains('mfa-locked')) openTour(); },
     resume() { if (pendingSession && !document.body.classList.contains('mfa-locked')) openTour(); },
-    close() { if (modal.open) dismissTour(); },
+    close() { if (!tour.hidden) { if (controller?.snapshot().open) controller.dismiss();closeTourSurface({ restoreView:false, focus:false }); } },
     restart() { return openTour({ force:true }); }
   });
 })();

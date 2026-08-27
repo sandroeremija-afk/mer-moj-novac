@@ -8,7 +8,6 @@ const MerOnboarding = require('../onboarding-core.js');
 
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const authUi = fs.readFileSync(path.join(root, 'auth-ui.js'), 'utf8');
 const onboardingUi = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 
@@ -34,11 +33,13 @@ function controller(storage, userId, timer = clock()) {
 test('evaluation cycle 1: the guided tour covers every core module and Settings', () => {
   assert.deepEqual(
     MerOnboarding.DEFAULT_STEPS.map(step => step.id),
-    ['welcome', 'overview', 'budgets', 'savings', 'activity', 'insights', 'settings']
+    ['navigation', 'transaction', 'overview', 'budgets', 'savings', 'activity', 'insights', 'settings']
   );
   for (const step of MerOnboarding.DEFAULT_STEPS) {
     assert.equal(typeof step.titleKey, 'string');
     assert.equal(typeof step.bodyKey, 'string');
+    assert.equal(typeof step.target, 'string');
+    assert.equal(typeof step.placement, 'string');
   }
 });
 
@@ -51,11 +52,11 @@ test('evaluation cycle 1: a first login launches once, walks in order and persis
   let view = firstSession.start();
   assert.equal(view.open, true);
   assert.equal(view.stepIndex, 0);
-  assert.equal(view.stepId, 'welcome');
+  assert.equal(view.stepId, 'navigation');
   assert.ok(view.record.launchedAt);
   assert.equal(firstSession.shouldAutoStart(), false, 'opening the tour immediately consumes the one-time auto launch');
 
-  for (const expected of ['overview', 'budgets', 'savings', 'activity', 'insights', 'settings']) {
+  for (const expected of ['transaction', 'overview', 'budgets', 'savings', 'activity', 'insights', 'settings']) {
     timer.tick();
     view = firstSession.next();
     assert.equal(view.stepId, expected);
@@ -72,7 +73,7 @@ test('evaluation cycle 1: a first login launches once, walks in order and persis
   timer.tick();
   const manualRestart = reloadedSession.start({ force:true });
   assert.equal(manualRestart.open, true);
-  assert.equal(manualRestart.stepId, 'welcome');
+  assert.equal(manualRestart.stepId, 'navigation');
   assert.equal(manualRestart.record.completedAt, view.record.completedAt, 'manual replay never erases completion history');
 });
 
@@ -96,7 +97,7 @@ test('evaluation cycle 1: dismissal prevents idle relaunch while Settings can ma
   timer.tick();
   const manual = afterReload.start({ force:true });
   assert.equal(manual.open, true);
-  assert.equal(manual.stepId, 'welcome');
+  assert.equal(manual.stepId, 'navigation');
   assert.equal(manual.record.dismissedAt, dismissed.record.dismissedAt, 'manual restart preserves the audit record');
 });
 
@@ -132,11 +133,13 @@ test('evaluation cycle 1: corrupt persistence fails safely without affecting ano
 });
 
 test('evaluation cycle 1: login and Settings wire the controller into the real UI', () => {
-  for (const id of ['onboardingModal', 'onboardingTitle', 'onboardingBody', 'onboardingProgress', 'onboardingPrevious', 'onboardingNext', 'onboardingSkip', 'restartOnboarding']) {
+  for (const id of ['onboardingTour', 'onboardingSpotlight', 'onboardingPopover', 'onboardingTitle', 'onboardingBody', 'onboardingProgress', 'onboardingPrevious', 'onboardingNext', 'onboardingSkip', 'restartOnboarding']) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
-  assert.match(html, /<dialog[^>]*class="[^"]*\bmodal\b[^"]*"[^>]*id="onboardingModal"/);
-  assert.match(html, /id="onboardingModal"[^>]*aria-labelledby="onboardingTitle"/);
+  assert.doesNotMatch(html, /<dialog[^>]*id="onboardingModal"/);
+  assert.match(html, /id="onboardingTour"[^>]*hidden/);
+  assert.match(html, /id="onboardingPopover"[^>]*role="dialog"[^>]*aria-modal="true"/);
+  assert.match(html, /id="onboardingPopover"[^>]*aria-labelledby="onboardingTitle"[^>]*aria-describedby="onboardingBody"/);
   assert.match(html, /id="onboardingProgress"[^>]*role="status"[^>]*aria-live="polite"/);
 
   const coreScript = html.search(/<script src="onboarding-core\.js(?:\?[^\"]*)?"><\/script>/);
@@ -146,5 +149,7 @@ test('evaluation cycle 1: login and Settings wire the controller into the real U
   assert.match(authUi, /MerOnboardingUi\?\.onSessionStarted\(session\)/);
   assert.match(onboardingUi, /MerAuthProvider\?\.currentSession\?\.\(\)\?\.userId/);
   assert.match(onboardingUi, /restartOnboarding[\s\S]*start\(\{\s*force:true\s*\}\)/);
-  assert.match(app, /\$\$\('\.modal'\)\.forEach\([\s\S]*?MerRuntime\.bindDialogBackdropDismiss\(modal/);
+  assert.match(onboardingUi, /getBoundingClientRect\(\)/);
+  assert.match(onboardingUi, /ResizeObserver/);
+  assert.match(onboardingUi, /scrollIntoView/);
 });

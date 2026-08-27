@@ -66,17 +66,21 @@ test('evaluation cycle 2: Help and AI Assistant sits immediately above the ancho
   assert.match(cssRule('.sidebar-bottom'), /margin-top:0/);
 });
 
-test('evaluation cycle 2: Help modal exposes structured FAQ and an accessible chat surface', () => {
+test('evaluation cycle 2: Help modal exposes contextual FAQ and the FAB owns the accessible chat surface', () => {
   const modal = elementMarkup('helpAssistantModal', 'dialog');
   assert.match(modal, /<dialog[^>]*class="[^"]*\bmodal\b[^"]*"/);
   assert.match(modal, /aria-labelledby="helpAssistantTitle"/);
   assert.ok((modal.match(/<details\b/g) || []).length >= 4, 'FAQ includes at least four expandable answers');
   assert.match(modal, /Zaštita budžeta/);
   assert.match(modal, /Dnevni tempo/);
-  assert.match(modal, /id="assistantMessages"[^>]*role="log"[^>]*aria-live="polite"[^>]*aria-relevant="additions"/);
-  assert.match(modal, /id="assistantForm"/);
-  assert.match(modal, /id="assistantInput"[^>]*(?:aria-label|aria-labelledby)=/);
-  assert.ok((modal.match(/data-ai-prompt=/g) || []).length >= 3, 'chat includes useful starter prompts');
+  assert.match(modal, /data-faq-filter=/);
+  assert.doesNotMatch(modal, /data-help-view=/);
+
+  const widget = elementMarkup('assistantWidget', 'section');
+  assert.match(widget, /id="assistantMessages"[^>]*role="log"[^>]*aria-live="polite"[^>]*aria-relevant="additions"/);
+  assert.match(widget, /id="assistantForm"/);
+  assert.match(widget, /id="assistantInput"[^>]*(?:aria-label|aria-labelledby)=/);
+  assert.ok((widget.match(/data-ai-prompt=/g) || []).length >= 3, 'chat includes useful starter prompts');
 });
 
 test('evaluation cycle 2: assistant requests are adapter-ready, profile scoped and race safe', () => {
@@ -89,11 +93,12 @@ test('evaluation cycle 2: assistant requests are adapter-ready, profile scoped a
   assert.match(javascript, /assistantForm[\s\S]*addEventListener\('submit'/);
 });
 
-test('evaluation cycle 2: Help remains usable as a bounded touch-friendly mobile sheet', () => {
+test('evaluation cycle 2: Help and floating assistant remain bounded and touch friendly on mobile', () => {
   assert.match(cssRule('.help-assistant-trigger'), /min-height:44px/);
+  assert.match(cssRule('.assistant-fab'), /min-height:44px/);
   assert.match(css, /\.assistant-suggestion\s*\{[^}]*min-height:44px/);
-  assert.match(css, /\.help-assistant-body\s*\{[^}]*min-height:0;[^}]*overflow-y:auto/);
+  assert.match(css, /\.assistant-messages\s*\{[^}]*overflow-y:auto/);
   assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.help-assistant-modal[^}]*\{[^}]*width:calc\(100vw - 16px\);[^}]*max-height:90dvh;/);
-  assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.assistant-composer[^}]*\{[^}]*grid-template-columns:minmax\(0,1fr\) auto/);
+  assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.assistant-widget[^}]*\{[^}]*(?:width:calc\(100vw - 24px\)|inset-inline:12px)/);
   assert.match(javascript, /\$\$\('\.modal'\)\.forEach\([\s\S]*?MerRuntime\.bindDialogBackdropDismiss\(modal/);
 });
