@@ -31,7 +31,11 @@ test('evaluation cycle 2: chart bounds expand beyond extreme values and preserve
 
 test('evaluation cycle 2: progress thresholds preserve uncapped math while UI widths can clamp', () => {
   assert.deepEqual(MerCore.budgetThreshold(0,0), { percent:0, level:'green', warning:null });
-  assert.equal(MerCore.budgetThreshold(990,1000).level, 'yellow');
+  assert.deepEqual(MerCore.budgetThreshold(7999,10000), { percent:79.99000000000001, level:'green', warning:null });
+  assert.equal(MerCore.budgetThreshold(800,1000).warning, 'near');
+  assert.equal(MerCore.budgetThreshold(9499,10000).warning, 'near');
+  assert.equal(MerCore.budgetThreshold(950,1000).warning, 'almost');
+  assert.equal(MerCore.budgetThreshold(9999,10000).warning, 'almost');
   assert.equal(MerCore.budgetThreshold(1000,1000).level, 'red');
   assert.equal(MerCore.budgetThreshold(1500,1000).percent, 150);
 });
