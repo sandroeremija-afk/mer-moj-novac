@@ -50,7 +50,7 @@
     return controller;
   }
   function stepKey(step, suffix) { return `onboarding${step.id[0].toUpperCase()}${step.id.slice(1)}${suffix}`; }
-  function mobileViewport() { return window.matchMedia('(max-width: 767px)').matches; }
+  function mobileViewport() { return window.matchMedia('(max-width: 768px)').matches; }
 
   function viewportBounds() {
     const visual = window.visualViewport;

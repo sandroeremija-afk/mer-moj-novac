@@ -454,6 +454,8 @@ function renderSavingsView() {
   $('#savingsHeroCurrent').textContent = currency(state.savingsBalance, true);
   $('#savingsHeroTarget').textContent = t('goalTargetOf',{target:currency(state.savingsGoal,true)});
   $('#savingsHeroProgress').style.width = `${pct}%`;
+  $('#savingsHeroTrack')?.setAttribute('aria-valuenow',String(pct));
+  $('#savingsHeroTrack')?.setAttribute('aria-valuetext',`${pct}% · ${currency(state.savingsBalance,true)} ${t('goalTargetOf',{target:currency(state.savingsGoal,true)})}`);
   $('#stillNeeded').textContent = currency(Math.max(0,state.savingsGoal-state.savingsBalance),true);
   $('#savingsMonthly').textContent = currency(state.savingsTarget,true);
   $('#savingsFinish').textContent = savingsFinishDate();
@@ -464,6 +466,7 @@ function renderSavingsView() {
   const savingsDomain=MerCore.chartDomain(state.savingsHistory,{padding:.05});
   const endMonth=new Date(`${appReferenceDate.slice(0,7)}-01T12:00:00Z`);
   $('#contributionChart').innerHTML = state.savingsHistory.map((amount,index) => {const point=new Date(endMonth);point.setUTCMonth(point.getUTCMonth()-(state.savingsHistory.length-1-index));const label=new Intl.DateTimeFormat(locale(),{month:'short',timeZone:'UTC'}).format(point);return `<div class="contribution-column ${index===state.savingsHistory.length-1?'current':''}" aria-label="${escapeHtml(label)}: ${currency(amount)}"><b>${currency(amount,true)}</b><span style="height:${MerCore.scaleChartValue(amount,savingsDomain,125,4)}px"></span><small>${escapeHtml(label)}</small></div>`;}).join('');
+  $('#contributionChart').setAttribute('aria-label',`${t('monthlySavingsChart')}: ${state.savingsHistory.map(amount=>currency(amount,true)).join(', ')}. ${t('totalSavedPeriod')}: ${currency(sum)}`);
 }
 
 function renderSavingsEntries() {
@@ -740,16 +743,17 @@ function renderInsights() {
 
   const groups=MerCore.groupCashflow(state.transactions,insightsTimeframe,reference);const chartEmpty=groups.length===0;
   $('#cashflowEmpty').hidden=!chartEmpty;$('#cashflowChart').hidden=chartEmpty;
-  if(!chartEmpty){const cashflowDomain=MerCore.chartDomain(groups.flatMap(group=>[group.income,group.expenses]));$('#cashflowChart').innerHTML=groups.map(group=>`<div class="cashflow-column" aria-label="${cashflowLabel(group.key)}: ${t('income')} ${currency(group.income)}, ${t('expense')} ${currency(group.expenses)}"><div class="cashflow-bars"><span class="income-bar" style="height:${MerCore.scaleChartValue(group.income,cashflowDomain,150,8)}px"><b>${group.income?currency(group.income,true):''}</b></span><span class="expense-bar" style="height:${MerCore.scaleChartValue(group.expenses,cashflowDomain,150,8)}px"><b>${group.expenses?currency(group.expenses,true):''}</b></span></div><small>${cashflowLabel(group.key)}</small></div>`).join('');}
+  if(!chartEmpty){const cashflowDomain=MerCore.chartDomain(groups.flatMap(group=>[group.income,group.expenses]));$('#cashflowChart').innerHTML=groups.map(group=>`<div class="cashflow-column" aria-label="${cashflowLabel(group.key)}: ${t('income')} ${currency(group.income)}, ${t('expense')} ${currency(group.expenses)}"><div class="cashflow-bars"><span class="income-bar" style="height:${MerCore.scaleChartValue(group.income,cashflowDomain,150,8)}px"><b>${group.income?currency(group.income,true):''}</b></span><span class="expense-bar" style="height:${MerCore.scaleChartValue(group.expenses,cashflowDomain,150,8)}px"><b>${group.expenses?currency(group.expenses,true):''}</b></span></div><small>${cashflowLabel(group.key)}</small></div>`).join('');$('#cashflowChart').setAttribute('aria-label',`${t('cashflowChart')}: ${groups.map(group=>`${cashflowLabel(group.key)}, ${t('income')} ${currency(group.income)}, ${t('expense')} ${currency(group.expenses)}`).join('; ')}`);}
   const expenses=filtered.filter(tx=>MerCore.transactionType(tx)==='expense');const byCategory=MerCore.categoryExpenseTotals(state.transactions,insightsTimeframe,reference);const breakdown=Object.entries(byCategory).filter(([,amount])=>amount>0).sort((a,b)=>b[1]-a[1]);const expenseTotal=breakdown.reduce((sum,[,amount])=>sum+amount,0);
   $('#categoryBreakdown').innerHTML=breakdown.length?breakdown.map(([id,amount])=>{const pct=MerCore.ratioPercent(amount,expenseTotal,100);return `<div class="breakdown-row"><div><strong>${escapeHtml(categoryName(id))}</strong><span>${currency(amount)}</span></div><div class="breakdown-track"><span style="width:${pct}%"></span></div><small>${number(pct,0)}%</small></div>`;}).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
   const palette=['#16574b','#00a9e4','#a7c83f','#f2b544','#e66d65','#755bb4','#8fa39e'];
   const segments=MerCore.proportionalSegments(breakdown).map((segment,index)=>({id:segment.entry[0],amount:segment.value,start:segment.start,end:segment.end,color:palette[index%palette.length]}));
   $('#categoryDonut').style.background=segments.length?`conic-gradient(${segments.map(segment=>`${segment.color} ${segment.start}% ${segment.end}%`).join(',')})`:'var(--canvas)';
   $('#donutTotal').textContent=currency(expenseTotal,true);$('#categoryDonutLegend').innerHTML=segments.slice(0,4).map(segment=>`<span><i style="background:${segment.color}"></i><b>${escapeHtml(categoryName(segment.id))}</b><small>${number(segment.end-segment.start,0)}%</small></span>`).join('')||`<small>${t('noExpensesPeriod')}</small>`;
-  const gaugePercent=totals.savingsRate===null?0:Math.max(0,Math.min(100,totals.savingsRate));$('#savingsGauge').style.setProperty('--gauge-value',`${gaugePercent*1.8}deg`);
+  $('#categoryDonut').setAttribute('aria-label',`${t('categoryDonutTitle')}: ${segments.length?segments.map(segment=>`${categoryName(segment.id)} ${number(segment.end-segment.start,0)}%`).join(', '):t('noExpensesPeriod')}. ${t('totalExpenses')}: ${currency(expenseTotal)}`);
+  const gaugePercent=totals.savingsRate===null?0:Math.max(0,Math.min(100,totals.savingsRate));$('#savingsGauge').style.setProperty('--gauge-value',`${gaugePercent*1.8}deg`);$('#savingsGauge').setAttribute('aria-label',`${t('savingsRate')}: ${totals.savingsRate===null?t('noIncomeRate'):`${number(totals.savingsRate,1)}%`}`);
   const series=MerAccounting.monthSeries(state.transactions,reference,6),seriesDomain=MerCore.chartDomain(series.flatMap(item=>[item.income,item.expenses]));
-  $('#monthlyBarChart').innerHTML=series.map(item=>`<div class="month-bar-group"><div><span class="income-month-bar" style="height:${MerCore.scaleChartValue(item.income,seriesDomain,96,5)}px" title="${t('income')}: ${currency(item.income)}"></span><span class="expense-month-bar" style="height:${MerCore.scaleChartValue(item.expenses,seriesDomain,96,5)}px" title="${t('expense')}: ${currency(item.expenses)}"></span></div><small>${new Intl.DateTimeFormat(locale(),{month:'short'}).format(new Date(`${item.key}-01T12:00:00`))}</small></div>`).join('');
+  $('#monthlyBarChart').innerHTML=series.map(item=>`<div class="month-bar-group"><div><span class="income-month-bar" style="height:${MerCore.scaleChartValue(item.income,seriesDomain,96,5)}px" title="${t('income')}: ${currency(item.income)}"></span><span class="expense-month-bar" style="height:${MerCore.scaleChartValue(item.expenses,seriesDomain,96,5)}px" title="${t('expense')}: ${currency(item.expenses)}"></span></div><small>${new Intl.DateTimeFormat(locale(),{month:'short'}).format(new Date(`${item.key}-01T12:00:00`))}</small></div>`).join('');$('#monthlyBarChart').setAttribute('aria-label',`${t('incomeVsExpenses')}: ${series.map(item=>`${insightMonthLabel(item.key)}, ${t('income')} ${currency(item.income)}, ${t('expense')} ${currency(item.expenses)}`).join('; ')}`);
   const merchants=MerAccounting.topMerchants(state.transactions,insightsTimeframe,reference),merchantDomain=MerCore.chartDomain(merchants.map(item=>item.amount));$('#topMerchantsList').innerHTML=merchants.length?merchants.map((item,index)=>`<div class="merchant-row"><b>${index+1}</b><span><strong>${escapeHtml(item.name)}</strong><i><em style="width:${MerCore.scaleChartValue(item.amount,merchantDomain,100,2)}%"></em></i></span><small>${currency(item.amount,true)}</small></div>`).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
   $$('[data-insight-detail]').forEach(card=>card.setAttribute('aria-label',`${card.querySelector('h2,.card-label span')?.textContent||t('reportDetails')} · ${currentLang==='hr'?'otvori detaljni prikaz':'open detailed view'}`));
   if($('#insightChartModal')?.open&&activeInsightDetail)renderInsightDetail(activeInsightDetail);
@@ -855,10 +859,10 @@ function renderInsightDetail(kind) {
     notes=(merchants.slice(0,3).map(item=>({label:item.name,value:`${currency(item.amount)} · ${item.count} ${copy.payments}`})));if(!notes.length)notes=historyNotes;
   }else if(kind==='savings-rate'){
     const rate=totals.savingsRate,monthlyRates=series.map(item=>({...item,rate:item.income>0?(item.income-item.expenses)/item.income*100:null}));
-    const validRates=monthlyRates.filter(item=>item.rate!==null),rateMax=Math.max(...validRates.map(item=>Math.max(0,item.rate)),1);
+    const validRates=monthlyRates.filter(item=>item.rate!==null),rateMax=Math.max(...validRates.map(item=>Math.abs(item.rate)),1);
     metrics=[{label:copy.savingsRate,value:rate===null?'—':`${number(rate,1)}%`},{label:copy.net,value:currency(totals.net)},{label:copy.income,value:currency(totals.income)}];
     const ringValue=Math.max(0,Math.min(100,rate||0))*3.6;
-    chart=`<div class="expanded-savings-layout"><div class="expanded-savings-ring" style="--expanded-progress:${ringValue}deg"><span><strong>${rate===null?'—':`${number(rate,1)}%`}</strong><small>${escapeHtml(copy.ofIncome)}</small></span></div><div class="expanded-ranked-list">${monthlyRates.slice(-6).map(item=>`<div class="expanded-ranked-row"><span>${escapeHtml(insightMonthLabel(item.key,true))}</span><strong>${item.rate===null?'—':`${number(item.rate,1)}%`}</strong><div class="expanded-ranked-track"><i style="width:${item.rate===null?0:Math.max(0,item.rate)/rateMax*100}%;background:${item.rate!==null&&item.rate<0?'var(--red)':'var(--green)'}"></i></div></div>`).join('')}</div></div>`;
+    chart=`<div class="expanded-savings-layout"><div class="expanded-savings-ring" style="--expanded-progress:${ringValue}deg"><span><strong>${rate===null?'—':`${number(rate,1)}%`}</strong><small>${escapeHtml(copy.ofIncome)}</small></span></div><div class="expanded-ranked-list">${monthlyRates.slice(-6).map(item=>`<div class="expanded-ranked-row"><span>${escapeHtml(insightMonthLabel(item.key,true))}</span><strong>${item.rate===null?'—':`${number(item.rate,1)}%`}</strong><div class="expanded-ranked-track"><i style="width:${item.rate===null?0:Math.abs(item.rate)/rateMax*100}%;background:${item.rate!==null&&item.rate<0?'var(--red)':'var(--green)'}"></i></div></div>`).join('')}</div></div>`;
     const averageRate=validRates.length?validRates.reduce((sum,item)=>sum+item.rate,0)/validRates.length:null,bestRate=validRates.reduce((chosen,item)=>!chosen||item.rate>chosen.rate?item:chosen,null);
     notes=[{label:copy.monthlyAverage,value:averageRate===null?'—':`${number(averageRate,1)}%`},{label:copy.bestMonth,value:bestRate?`${insightMonthLabel(bestRate.key,true)} · ${number(bestRate.rate,1)}%`:'—'},{label:copy.latestMonth,value:latest.income?`${number((latest.income-latest.expenses)/latest.income*100,1)}%`:'—'}];
   }else{
@@ -995,8 +999,18 @@ function exportCsv() {
   const month=appReferenceDate.slice(0,7),csv=MerCore.monthlyExpenseCsv(state,month,appState.settings.currency);const fileName=t('csvFileName',{account:appState.activeAccount,month});const blob=new Blob([`\ufeff${csv}`],{type:'text/csv;charset=utf-8'});const link=document.createElement('a');link.download=fileName;link.href=typeof URL.createObjectURL==='function'?URL.createObjectURL(blob):`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;document.body.appendChild(link);link.click();link.remove();if(link.href.startsWith('blob:'))setTimeout(()=>URL.revokeObjectURL(link.href),0);showToast(t('csvExported'));
 }
 
-function showTooltip(trigger) { const tip=$('#appTooltip');tip.textContent=t(trigger.dataset.tooltipKey);tip.hidden=false;const rect=trigger.getBoundingClientRect();const width=Math.min(260,window.innerWidth-24);const left=Math.max(12,Math.min(window.innerWidth-width-12,rect.left+rect.width/2-width/2));tip.style.left=`${left}px`;tip.style.top=`${Math.max(8,rect.top-8)}px`;tip.style.transform='translateY(-100%)'; }
-function hideTooltip() { $('#appTooltip').hidden=true; }
+let activeTooltipTrigger=null;
+function showTooltip(trigger) {
+  const tip=$('#appTooltip'),visual=window.visualViewport,bounds=visual?{left:visual.offsetLeft,top:visual.offsetTop,width:visual.width,height:visual.height}:{left:0,top:0,width:window.innerWidth,height:window.innerHeight};
+  if(activeTooltipTrigger&&activeTooltipTrigger!==trigger)activeTooltipTrigger.removeAttribute('aria-describedby');
+  activeTooltipTrigger=trigger;tip.textContent=t(trigger.dataset.tooltipKey);tip.hidden=false;tip.style.transform='none';
+  const rect=trigger.getBoundingClientRect(),tipRect=tip.getBoundingClientRect(),edge=8,gap=8,width=Math.min(260,bounds.width-edge*2);
+  const left=Math.max(bounds.left+edge,Math.min(bounds.left+bounds.width-width-edge,rect.left+rect.width/2-width/2));
+  const above=rect.top-tipRect.height-gap>=bounds.top+edge;
+  const top=above?rect.top-tipRect.height-gap:Math.min(bounds.top+bounds.height-tipRect.height-edge,rect.bottom+gap);
+  tip.style.width=`${width}px`;tip.style.left=`${left}px`;tip.style.top=`${Math.max(bounds.top+edge,top)}px`;tip.dataset.side=above?'top':'bottom';trigger.setAttribute('aria-describedby','appTooltip');
+}
+function hideTooltip() { const tip=$('#appTooltip');tip.hidden=true;activeTooltipTrigger?.removeAttribute('aria-describedby');activeTooltipTrigger=null; }
 
 function resetTransactionCheck() {
   $('#transactionSubmit').disabled=true;
@@ -1184,6 +1198,7 @@ $('#addIncomeCategory').addEventListener('click',()=>openIncomeCategoryEditor())
 $('#themeToggle').addEventListener('click',toggleTheme);$$('[data-account]').forEach(button=>button.addEventListener('click',()=>switchAccount(button.dataset.account)));
 $('#notificationButton').addEventListener('click',event=>{event.stopPropagation();toggleNotifications();});$('#closeNotifications').addEventListener('click',()=>closeNotifications(true));
 $$('[data-tooltip-key]').forEach(trigger=>{trigger.addEventListener('mouseenter',()=>showTooltip(trigger));trigger.addEventListener('mouseleave',hideTooltip);trigger.addEventListener('focus',()=>showTooltip(trigger));trigger.addEventListener('blur',hideTooltip);trigger.addEventListener('click',()=>$('#appTooltip').hidden?showTooltip(trigger):hideTooltip());});
+window.addEventListener('scroll',hideTooltip,{capture:true,passive:true});
 $$('[data-insight-detail]').forEach(card=>{
   card.addEventListener('click',event=>{if(event.target.closest('button,a'))return;openInsightDetail(card.dataset.insightDetail);});
   card.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a')){event.preventDefault();openInsightDetail(card.dataset.insightDetail);}});

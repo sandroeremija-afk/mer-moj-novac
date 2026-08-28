@@ -46,7 +46,19 @@
   function bindDialogBackdropDismiss(dialog, dismiss) {
     if (!dialog || typeof dismiss !== 'function') return () => {};
     let pressStartedOnBackdrop = false;
-    const reset = () => { pressStartedOnBackdrop = false; };
+    let activePointerId = null;
+    const reset = () => { pressStartedOnBackdrop = false;activePointerId = null; };
+    const handlePointerDown = event => {
+      if (event.isPrimary === false) return reset();
+      activePointerId = event.pointerId;
+      pressStartedOnBackdrop = isDirectDialogBackdropEvent(dialog, event);
+    };
+    const handlePointerUp = event => {
+      if (activePointerId !== null && event.pointerId !== activePointerId) return;
+      const shouldDismiss = pressStartedOnBackdrop && isDirectDialogBackdropEvent(dialog, event);
+      reset();
+      if (shouldDismiss) dismiss(event);
+    };
     const handleMouseDown = event => {
       pressStartedOnBackdrop = isDirectDialogBackdropEvent(dialog, event);
     };
@@ -55,12 +67,25 @@
       reset();
       if (shouldDismiss) dismiss(event);
     };
-    dialog.addEventListener('mousedown', handleMouseDown, true);
-    dialog.addEventListener('mouseup', handleMouseUp, true);
+    const pointerEvents = typeof root.PointerEvent === 'function';
+    if (pointerEvents) {
+      dialog.addEventListener('pointerdown', handlePointerDown, true);
+      dialog.addEventListener('pointerup', handlePointerUp, true);
+      dialog.addEventListener('pointercancel', reset, true);
+    } else {
+      dialog.addEventListener('mousedown', handleMouseDown, true);
+      dialog.addEventListener('mouseup', handleMouseUp, true);
+    }
     dialog.addEventListener('close', reset);
     return () => {
-      dialog.removeEventListener('mousedown', handleMouseDown, true);
-      dialog.removeEventListener('mouseup', handleMouseUp, true);
+      if (pointerEvents) {
+        dialog.removeEventListener('pointerdown', handlePointerDown, true);
+        dialog.removeEventListener('pointerup', handlePointerUp, true);
+        dialog.removeEventListener('pointercancel', reset, true);
+      } else {
+        dialog.removeEventListener('mousedown', handleMouseDown, true);
+        dialog.removeEventListener('mouseup', handleMouseUp, true);
+      }
       dialog.removeEventListener('close', reset);
     };
   }

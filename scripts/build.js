@@ -6,12 +6,15 @@ const { minify } = require('terser');
 
 const root = path.resolve(__dirname, '..');
 const output = path.join(root, 'dist');
-const jsFiles = ['runtime.js','logo.js','core.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','layout-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','layout-ui.js','auth-ui.js'];
+const jsFiles = ['runtime.js','logo.js','core.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','layout-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','layout-ui.js','responsive-ui.js','auth-ui.js'];
+const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source
   .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/\s+(?=:(?:is|where|not|has)\()/g, cssDescendantToken)
   .replace(/\s+/g, ' ')
   .replace(/\s*([{}:;,>])\s*/g, '$1')
+  .replaceAll(cssDescendantToken, ' ')
   .replace(/;}/g, '}')
   .trim();
 const compactHtml = source => source
@@ -40,6 +43,9 @@ async function main() {
 
   const css = await fs.readFile(path.join(root, 'styles.css'), 'utf8');
   const minifiedCss = compactCss(css);
+  const sourceFunctionalDescendants=(css.match(/\s+:(?:is|where|not|has)\(/g)||[]).length;
+  const outputFunctionalDescendants=(minifiedCss.match(/\s+:(?:is|where|not|has)\(/g)||[]).length;
+  if(outputFunctionalDescendants!==sourceFunctionalDescendants)throw new Error(`CSS descendant selector integrity failed: ${outputFunctionalDescendants}/${sourceFunctionalDescendants}`);
   await fs.writeFile(path.join(output, 'styles.min.css'), minifiedCss, 'utf8');
   report.files.push({ source:'styles.css', output:'styles.min.css', sourceBytes:Buffer.byteLength(css), outputBytes:Buffer.byteLength(minifiedCss) });
 
