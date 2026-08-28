@@ -270,6 +270,10 @@
       if (menu.hidden) clearFloatingPosition(menu);
       return;
     }
+    if (menu.classList.contains('header-bank-menu')) {
+      clearFloatingPosition(menu);
+      return;
+    }
     const trigger = document.querySelector(`[aria-controls="${CSS.escape(menu.id)}"]`);
     if (!trigger) return;
     const bounds = viewportBounds();
