@@ -52,9 +52,14 @@ test('evaluation cycle 1: fixed desktop Savings contains nested grids without cl
   const goalsGrid = rule(desktop, '#savingsView .goal-bucket-grid');
   const goalCard = rule(desktop, '#savingsView .goal-bucket-card');
   const compactDesktop = css.slice(css.lastIndexOf('@media (min-width:1025px) {'));
+  const compactView = rule(compactDesktop, '#savingsView');
   const savingsLayout = rule(compactDesktop, '#savingsView > .savings-layout');
   const compactHero = rule(compactDesktop, '#savingsView .savings-hero');
   const compactStack = rule(compactDesktop, '#savingsView .savings-side-stack');
+  const compactRecommendation = rule(compactDesktop, '#savingsView .recommendation-panel');
+  const compactTrack = rule(compactDesktop, '#savingsView .goal-track.tall');
+  const compactFacts = rule(compactDesktop, '#savingsView .savings-facts');
+  const compactWeekly = rule(compactDesktop, '#savingsView .weekly-review-card');
   const weekly = rule(css, '.weekly-review-card');
 
   assert.match(stack, /min-height\s*:\s*0/);
@@ -67,12 +72,24 @@ test('evaluation cycle 1: fixed desktop Savings contains nested grids without cl
   assert.match(goalsGrid, /grid-template-columns\s*:\s*repeat\(auto-fit\s*,\s*minmax\(170px\s*,\s*1fr\)\)/, 'desktop goals fit one adaptive row before creating another');
   assert.doesNotMatch(goalCard, /overflow(?:-y)?\s*:\s*hidden/, 'goal controls must not be hard-clipped');
   assert.match(goalCard, /height\s*:\s*auto/);
+  assert.match(compactView, /grid-template-rows\s*:\s*auto\s+clamp\(236px\s*,\s*31dvh\s*,\s*252px\)\s+minmax\(0\s*,\s*1fr\)/, 'desktop top row is bounded to reclaim the lower goals area');
+  assert.match(savingsLayout, /height\s*:\s*100%/);
   assert.match(savingsLayout, /align-items\s*:\s*stretch/, 'both top columns must share an exact bottom edge');
   assert.match(compactHero, /height\s*:\s*100%/);
   assert.match(compactHero, /align-self\s*:\s*stretch/);
   assert.match(compactHero, /justify-content\s*:\s*space-between/);
-  assert.match(compactHero, /padding\s*:\s*16px 18px/);
+  assert.match(compactHero, /padding\s*:\s*12px 14px/);
   assert.match(compactStack, /height\s*:\s*100%/);
+  assert.match(compactStack, /gap\s*:\s*8px/);
+  assert.match(compactRecommendation, /display\s*:\s*grid/);
+  assert.match(compactRecommendation, /grid-template-columns\s*:\s*32px minmax\(0\s*,\s*1fr\)/);
+  assert.match(compactRecommendation, /grid-template-areas\s*:[\s\S]*?"icon eyebrow"[\s\S]*?"action action"/);
+  assert.match(compactTrack, /height\s*:\s*7px/);
+  assert.match(compactTrack, /margin-top\s*:\s*6px/);
+  assert.match(compactFacts, /gap\s*:\s*8px/);
+  assert.match(compactFacts, /padding-top\s*:\s*7px/);
+  assert.match(compactWeekly, /min-height\s*:\s*64px/);
+  assert.match(compactWeekly, /padding\s*:\s*7px 9px/);
   assert.match(weekly, /padding\s*:\s*(?:1[012]|[0-9])px\s+(?:1[0-4]|[0-9])px/);
   assert.match(css, /@media \(min-width:1025px\) and \(max-width:1200px\) \{[\s\S]*?weekly-review-card \.link-button \{[^}]*width:44px[^}]*min-width:44px/s, 'narrow desktop keeps the weekly action compact without removing its accessible label');
   assert.match(css, /body:has\(#savingsView:not\(\[hidden\]\)\) \.assistant-fab \{[^}]*right:8px[^}]*width:44px[^}]*height:44px/s, 'the narrow-desktop FAB stays outside Savings goal controls');
@@ -138,4 +155,13 @@ test('evaluation cycle 1: laptop-height Savings progressively discloses secondar
     compactBlocks.some(block => /#savingsView\s+\.recommendation-panel\s*>\s*p:not\(\.overline\)\s*\{[^}]*display\s*:\s*none/.test(block)),
     'secondary recommendation copy is disclosed elsewhere before the strategy action is clipped'
   );
+  assert.ok(
+    compactBlocks.some(block => /#savingsView\s+\.rich-goal-card\s*\{[^}]*padding\s*:\s*9px/.test(block)),
+    'goal cards use compact laptop padding so the roundup row remains visible'
+  );
+  assert.ok(
+    compactBlocks.some(block => /#savingsView\s+\.roundup-toggle\s*\{[^}]*min-height\s*:\s*36px/.test(block)),
+    'the compact laptop roundup remains present and usable'
+  );
+  assert.doesNotMatch(css, /#savingsView\s+\.roundup-toggle\s*\{[^}]*(?:display\s*:\s*none|visibility\s*:\s*hidden)/);
 });

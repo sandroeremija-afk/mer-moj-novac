@@ -9,6 +9,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 test('cycle 2: Savings uses the fixed desktop viewport and natural mobile goal flow', () => {
   assert.match(css, /#savingsView \{[^}]*display:flex[^}]*flex-direction:column[^}]*overflow:hidden/s);
   assert.match(css, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView > \.goal-buckets-panel \{[^}]*height:100%[^}]*overflow:visible/s);
+  assert.match(css, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView \{[^}]*grid-template-rows:auto clamp\(236px,31dvh,252px\) minmax\(0,1fr\)/s);
   assert.match(css, /#savingsView \.goal-bucket-grid \{[^}]*min-height:0[^}]*flex:1 1 auto/s);
   const desktopGoalRules = [...css.matchAll(/#savingsView \.goal-bucket-grid\s*\{([^}]*)\}/g)].map(match => match[1]);
   assert.ok(desktopGoalRules.every(rule => !/overflow-y\s*:\s*(?:auto|scroll)/.test(rule)));

@@ -48,6 +48,12 @@ test('evaluation cycle 2: Savings keeps Weekly Review compact instead of stretch
   assert.doesNotMatch(css, /\.savings-side-stack\s*\{[^}]*display\s*:\s*contents/);
   assert.doesNotMatch(css, /#savingsView \.savings-side-stack\s*\{[^}]*display\s*:\s*contents/);
 
+  const compactDesktop = css.slice(css.lastIndexOf('@media (min-width:1025px) {'));
+  const compactStackRule = cssRule('#savingsView .savings-side-stack', compactDesktop);
+  const compactWeeklyRule = cssRule('#savingsView .weekly-review-card', compactDesktop);
+  assert.match(compactStackRule, /gap:8px/, 'the final desktop cascade compacts the side-card gap');
+  assert.match(compactWeeklyRule, /min-height:64px/, 'Weekly Review has a compact desktop height floor');
+
   const weeklyRule = cssRule('.weekly-review-card');
   assert.match(weeklyRule, /display:grid/);
   assert.match(weeklyRule, /padding:(?:1[012]|[0-9])px\s+(?:1[0-4]|[0-9])px/);
@@ -57,6 +63,7 @@ test('evaluation cycle 2: Savings keeps Weekly Review compact instead of stretch
 
 test('evaluation cycle 2: Savings preserves the fixed desktop canvas and fluid mobile flow', () => {
   assert.match(css, /#savingsView \{[^}]*display:flex;[^}]*min-height:0;[^}]*overflow:hidden;/);
+  assert.match(css, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView \{[^}]*grid-template-rows:auto clamp\(236px,31dvh,252px\) minmax\(0,1fr\)/);
   assert.match(css, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView > \.goal-buckets-panel \{[\s\S]*?height:100%;[\s\S]*?overflow:visible;/);
   assert.match(css, /@media \(max-width:1024px\) \{[\s\S]*?#savingsView \{[\s\S]*?height:auto;[\s\S]*?overflow:visible;/);
   assert.match(css, /@media \(max-height:720px\) and \(min-width:1025px\)/);
