@@ -55,8 +55,8 @@ Object.assign(translations.en, {
   userSettings:'USER SETTINGS', connectedBanks:'Connected Banks & Cards', connectedBanksIntro:'Connect accounts through a secure demo Open Banking layer and choose a profile for every connection.', profileIsolationTitle:'Profile isolation is on', profileIsolationBody:'Synced transactions are written only to the profile assigned to that account.', yourConnections:'Your connections', addConnection:'Add connection', noBankConnections:'No connected accounts yet', noBankConnectionsBody:'Connect a demo bank to try automatic imports without sharing real banking credentials.', secureDemoConnection:'SECURE DEMO CONNECTION', chooseInstitution:'Choose an institution', chooseAccounts:'Choose accounts or cards', assignProfile:'Assign to profile', demoConsent:'This is a modular demo provider. It never asks for or stores bank passwords.', connectAndSync:'Connect and sync', exportCsvHint:'Download a summary for the active profile.', bankSyncStatus:'Bank sync status', bankSyncReady:'Bank sync', connectBank:'Connect bank', syncNow:'Sync now', syncing:'Syncing…', noConnectedAccounts:'No connected accounts', lastSyncedNow:'Synced just now', lastSyncedMinutes:'Last synced {count} min ago', lastSyncedHours:'Last synced {count} hr ago', neverSynced:'Waiting for first sync', connectionsSummary:'{count} connected accounts · active profile: {profile}', connectedAccount:'Connected', syncFailed:'Sync failed', tokenExpired:'Bank authorization expired. Reconnect this account.', connectionLost:'The bank account is no longer available. Reconnect it.', rateLimited:'The bank temporarily limited syncing. Try again in {count}s.', reconnect:'Reconnect', refreshConnection:'Refresh connection', unlinkConnection:'Unlink account', confirmUnlink:'Confirm unlink', mappingUpdated:'Account moved to the {profile} profile.', connectionUnlinked:'Connection removed. Previously imported transactions remain in the profile.', accountsConnected:'Connected {count} accounts. Imported: {imported}.', syncComplete:'Sync complete · {imported} new, {duplicates} duplicates skipped.', noNewTransactions:'No new transactions.', selectAccount:'Select at least one account.', manualSource:'Manual', autoSource:'Automatic', needsReview:'Needs category', needsReviewShort:'to review', uncategorizedQueue:'Uncategorized transactions', reviewQueueCopy:'{count} automatic transactions need a category check.', showAllTransactions:'Show all', categoryApproved:'Category confirmed.', alertUncategorizedTitle:'New transactions need review', alertUncategorizedBody:'{count} imported transactions do not have a confident category.', reviewCategories:'Review categories', backgroundSync:'Automatic sync runs every 5 minutes while the app is open.'
 });
 
-Object.assign(translations.hr,{logout:'Odjava',healthBeauty:'Drogerija i osobna njega',advancedInsights:'Napredni financijski uvidi',categoryDonutTitle:'Potrošnja po kategoriji',expensesShort:'troškovi',merchantBreakdown:'TOP TRGOVCI',topFiveMerchants:'Najveći primatelji',manageSubscriptions:'Upravljaj pretplatama',savingsHealth:'ZDRAVLJE ŠTEDNJE',ofIncome:'od prihoda',subscriptionManager:'UPRAVLJANJE PRETPLATAMA',recurringSubscriptions:'Ponavljajuće pretplate',subscriptionIntro:'Mer prepoznaje poznate servise i mjesečni ritam naplate. Prije obnove provjerite iznos i kategoriju.',detectedSubscriptions:'Otkrivene pretplate',monthlySubscriptionCost:'Procijenjeni mjesečni trošak',renewsIn:'Obnova za {days} dana',noSubscriptions:'Nema otkrivenih pretplata.',roundUps:'Zaokruživanje',roundUpsHint:'Razlika do sljedećeg punog eura ide u ovaj trezor.',monthlyRequired:'Potrebno mjesečno',daysToGoal:'{days} dana do cilja',openBankingArchitecture:'PSD2 adapteri spremni'});
-Object.assign(translations.en,{logout:'Log out',healthBeauty:'Health & beauty',advancedInsights:'Advanced financial insights',categoryDonutTitle:'Category spending',expensesShort:'expenses',merchantBreakdown:'TOP MERCHANTS',topFiveMerchants:'Largest recipients',manageSubscriptions:'Manage subscriptions',savingsHealth:'SAVINGS HEALTH',ofIncome:'of income',subscriptionManager:'SUBSCRIPTION MANAGER',recurringSubscriptions:'Recurring subscriptions',subscriptionIntro:'Mer detects known services and monthly payment cadence. Review the amount and category before renewal.',detectedSubscriptions:'Detected subscriptions',monthlySubscriptionCost:'Estimated monthly cost',renewsIn:'Renews in {days} days',noSubscriptions:'No subscriptions detected.',roundUps:'Spare change round-ups',roundUpsHint:'The difference to the next whole euro moves into this vault.',monthlyRequired:'Required monthly',daysToGoal:'{days} days to goal',openBankingArchitecture:'PSD2 adapters ready'});
+Object.assign(translations.hr,{logout:'Odjava',healthBeauty:'Drogerija i osobna njega',advancedInsights:'Napredni financijski uvidi',categoryDonutTitle:'Potrošnja po kategoriji',expensesShort:'troškovi',merchantBreakdown:'NAJVEĆI PRIMATELJI',topFiveMerchants:'Najveći primatelji',manageSubscriptions:'Upravljaj pretplatama',savingsHealth:'ZDRAVLJE ŠTEDNJE',ofIncome:'od prihoda',subscriptionManager:'UPRAVLJANJE PRETPLATAMA',recurringSubscriptions:'Ponavljajuće pretplate',subscriptionIntro:'Mer prepoznaje poznate servise i mjesečni ritam naplate. Prije obnove provjerite iznos i kategoriju.',detectedSubscriptions:'Otkrivene pretplate',monthlySubscriptionCost:'Procijenjeni mjesečni trošak',renewsIn:'Obnova za {days} dana',noSubscriptions:'Nema otkrivenih pretplata.',roundUps:'Zaokruživanje',roundUpsHint:'Razlika do sljedećeg punog eura ide u ovaj trezor.',monthlyRequired:'Potrebno mjesečno',daysToGoal:'{days} dana do cilja',openBankingArchitecture:'PSD2 adapteri spremni',dashboardGreeting:'Dobro jutro, Sandro',manageBankConnections:'Upravljaj vezama',connectedCount:'{count} povezano'});
+Object.assign(translations.en,{logout:'Log out',healthBeauty:'Health & beauty',advancedInsights:'Advanced financial insights',categoryDonutTitle:'Category spending',expensesShort:'expenses',merchantBreakdown:'LARGEST RECIPIENTS',topFiveMerchants:'Largest recipients',manageSubscriptions:'Manage subscriptions',savingsHealth:'SAVINGS HEALTH',ofIncome:'of income',subscriptionManager:'SUBSCRIPTION MANAGER',recurringSubscriptions:'Recurring subscriptions',subscriptionIntro:'Mer detects known services and monthly payment cadence. Review the amount and category before renewal.',detectedSubscriptions:'Detected subscriptions',monthlySubscriptionCost:'Estimated monthly cost',renewsIn:'Renews in {days} days',noSubscriptions:'No subscriptions detected.',roundUps:'Spare change round-ups',roundUpsHint:'The difference to the next whole euro moves into this vault.',monthlyRequired:'Required monthly',daysToGoal:'{days} days to goal',openBankingArchitecture:'PSD2 adapters ready',dashboardGreeting:'Good morning, Sandro',manageBankConnections:'Manage connections',connectedCount:'{count} connected'});
 Object.assign(translations.hr,{transactionTotalBlocked:'Ova transakcija premašuje mjesečni budžet',reduceBy:'Unos će biti spremljen, a budžet prikazan kao prekoračen za {amount}.',transactionCategoryBlocked:'Ova transakcija premašuje budžet kategorije',categoryOverBy:'Unos će biti spremljen. {category} će biti {amount} iznad limita.',transactionDailyWarning:'Iznos je veći od dnevnog plana',transactionDailySoftNote:'Unos će biti spremljen. Dnevni plan iznosi {amount}.',transactionAddedOverBudget:'Transakcija je spremljena. Budžet je prekoračen za {amount}.'});
 Object.assign(translations.en,{transactionTotalBlocked:'This transaction exceeds the monthly budget',reduceBy:'The entry will be saved and the budget will show an overage of {amount}.',transactionCategoryBlocked:'This transaction exceeds the category budget',categoryOverBy:'The entry will be saved. {category} will be {amount} over its limit.',transactionDailyWarning:'The amount is above the daily plan',transactionDailySoftNote:'The entry will be saved. The daily plan is {amount}.',transactionAddedOverBudget:'Transaction saved. The budget is over by {amount}.'});
 Object.assign(translations.hr,{incomeImpact:'Raspoloživo stanje povećat će se na {balance}, a sigurno za potrošiti na {safe}.'});
@@ -509,15 +509,27 @@ function renderBankSyncStatus() {
   $('#connectedBankCount').textContent=connections.length;
   $('#uncategorizedCount').textContent=reviewCount;
   $('#uncategorizedBadge').hidden=reviewCount===0;
-  const status=$('#bankSyncStatus');
-  const button=$('#syncNow');
-  $('.sync-symbol').classList.toggle('syncing',bankSyncInProgress);
+  const status=$('#bankSyncStatus'),button=$('#syncNow'),trigger=$('#headerBankButton'),dot=$('#headerBankDot'),label=$('#headerBankLabel'),list=$('#headerBankAccountList');
+  const connected=connections.length>0;
+  button.hidden=!connected;
   button.disabled=bankSyncInProgress;
-  $('span',button).textContent=t(bankSyncInProgress?'syncing':connections.length?'syncNow':'connectBank');
-  if(!connections.length){status.textContent=t('noConnectedAccounts');return;}
+  $('span',button).textContent=t(bankSyncInProgress?'syncing':'syncNow');
+  dot.hidden=!connected;
+  trigger.classList.toggle('connected',connected);
+  trigger.dataset.connected=String(connected);
+  trigger.setAttribute('aria-label',connected?t('connectedCount',{count:connections.length}):t('connectBank'));
+  label.textContent=connected?t('connectedCount',{count:connections.length}):t('connectBank');
+  if(!connected){
+    status.textContent=t('noConnectedAccounts');
+    list.innerHTML=`<p class="header-bank-empty">${escapeHtml(t('noConnectedAccounts'))}</p>`;
+    $('#headerBankMenu').hidden=true;
+    trigger.setAttribute('aria-expanded','false');
+    return;
+  }
   const latest=connections.filter(item=>item.lastSyncedAt).sort((a,b)=>new Date(b.lastSyncedAt)-new Date(a.lastSyncedAt))[0];
   const error=connections.find(item=>item.status==='error');
   status.textContent=error?connectionStatusLabel(error).text:`${lastSyncedLabel(latest)} · ${t('backgroundSync')}`;
+  list.innerHTML=connections.map(connection=>{const provider=MerBankProviders.getProvider(connection.providerId);const connectionStatus=connectionStatusLabel(connection);const kind=currentLang==='hr'?connection.accountKind:connection.accountKindEn;return `<div class="header-bank-account"><span class="institution-mark" style="background:${provider?.color||'#16574b'}">${escapeHtml((connection.institution||provider?.name||'MER').slice(0,3))}</span><span><strong>${escapeHtml(connection.accountName)} ${escapeHtml(connection.accountMask||'')}</strong><small>${escapeHtml(kind||'')} · ${escapeHtml(connectionStatus.text)}</small></span></div>`;}).join('');
 }
 
 function renderProviderPicker() {
@@ -560,6 +572,18 @@ function openBankSettings() {
   toggleAccountMenu(false);
   renderBankSettings();
   openModal($('#bankSettingsModal'));
+}
+
+function startBankConnection() {
+  openBankSettings();
+  selectedBankProviderId=null;
+  $('#bankProfileSelect').value=appState.activeAccount;
+  $('#bankConnectForm').hidden=false;
+  $('#bankAccountPicker').hidden=true;
+  $('#bankProfileLabel').hidden=true;
+  $('#bankConsentCopy').hidden=true;
+  $('#connectSelectedAccounts').hidden=true;
+  renderProviderPicker();
 }
 
 async function syncBankConnection(connection,{silent=false}={}) {
@@ -749,7 +773,8 @@ function renderInsights() {
   const palette=['#16574b','#00a9e4','#a7c83f','#f2b544','#e66d65','#755bb4','#8fa39e'];
   const segments=MerCore.proportionalSegments(breakdown).map((segment,index)=>({id:segment.entry[0],amount:segment.value,start:segment.start,end:segment.end,color:palette[index%palette.length]}));
   $('#categoryDonut').style.background=segments.length?`conic-gradient(${segments.map(segment=>`${segment.color} ${segment.start}% ${segment.end}%`).join(',')})`:'var(--canvas)';
-  $('#donutTotal').textContent=currency(expenseTotal,true);$('#categoryDonutLegend').innerHTML=segments.slice(0,4).map(segment=>`<span><i style="background:${segment.color}"></i><b>${escapeHtml(categoryName(segment.id))}</b><small>${number(segment.end-segment.start,0)}%</small></span>`).join('')||`<small>${t('noExpensesPeriod')}</small>`;
+  const donutTotal=$('#donutTotal'),donutExact=currency(expenseTotal,true),donutDisplay=donutExact.length>12?compactChartCurrency(expenseTotal):donutExact;
+  donutTotal.textContent=donutDisplay;donutTotal.title=donutExact;donutTotal.dataset.fit=donutDisplay.length>10?'small':donutDisplay.length>8?'medium':'regular';$('#categoryDonutLegend').innerHTML=segments.slice(0,4).map(segment=>`<span><i style="background:${segment.color}"></i><b>${escapeHtml(categoryName(segment.id))}</b><small>${number(segment.end-segment.start,0)}%</small></span>`).join('')||`<small>${t('noExpensesPeriod')}</small>`;
   $('#categoryDonut').setAttribute('aria-label',`${t('categoryDonutTitle')}: ${segments.length?segments.map(segment=>`${categoryName(segment.id)} ${number(segment.end-segment.start,0)}%`).join(', '):t('noExpensesPeriod')}. ${t('totalExpenses')}: ${currency(expenseTotal)}`);
   const gaugePercent=totals.savingsRate===null?0:Math.max(0,Math.min(100,totals.savingsRate));$('#savingsGauge').style.setProperty('--gauge-value',`${gaugePercent*1.8}deg`);$('#savingsGauge').setAttribute('aria-label',`${t('savingsRate')}: ${totals.savingsRate===null?t('noIncomeRate'):`${number(totals.savingsRate,1)}%`}`);
   const series=MerAccounting.monthSeries(state.transactions,reference,6),seriesDomain=MerCore.chartDomain(series.flatMap(item=>[item.income,item.expenses]));
@@ -957,8 +982,7 @@ function renderModuleTitle(now=new Date()) {
   const title=$('#contextHeaderTitle'),subtitle=$('#contextHeaderSubtitle');
   if(!title||!subtitle)return;
   if(activeView==='overview'){
-    const session=window.MerAuthProvider?.currentSession?.();
-    title.textContent=MerCore.greetingFor(now,currentLang,session?.name||state.accountName);
+    title.textContent=t('dashboardGreeting');
     subtitle.textContent=t('overviewSubtitle');
   }else{
     const context=contextHeaderKeys[activeView]||contextHeaderKeys.budgets;
@@ -1173,10 +1197,13 @@ $$('[data-open-assessment]').forEach(button=>button.addEventListener('click',ope
 $$('[data-open-savings]').forEach(button=>button.addEventListener('click',()=>openSavingsDeposit()));
 $('#openSettings').addEventListener('click',event=>{event.stopPropagation();toggleAccountMenu();closeNotifications();}); $('#openPlan').addEventListener('click',()=>openModal($('#breakdownModal'))); $('#safeBreakdown').addEventListener('click',()=>openModal($('#breakdownModal')));
 $('#manageBanks').addEventListener('click',openBankSettings);
-$('#startBankConnection').addEventListener('click',()=>{selectedBankProviderId=null;$('#bankProfileSelect').value=appState.activeAccount;$('#bankConnectForm').hidden=false;$('#bankAccountPicker').hidden=true;$('#bankProfileLabel').hidden=true;$('#bankConsentCopy').hidden=true;$('#connectSelectedAccounts').hidden=true;renderProviderPicker();});
+$('#startBankConnection').addEventListener('click',startBankConnection);
 $('#cancelBankConnection').addEventListener('click',()=>{selectedBankProviderId=null;$('#bankConnectForm').hidden=true;});
 $('#bankConnectForm').addEventListener('submit',event=>runAsyncAction(()=>connectSelectedBankAccounts(event)));
-$('#syncNow').addEventListener('click',()=>runAsyncAction(()=>syncActiveBankConnections()));
+$('#headerBankButton').addEventListener('click',event=>{if(bankConnectionsFor().length)return;event.preventDefault();event.stopImmediatePropagation();closeCardMenus();openBankSettings();});
+$('#headerAddBank').addEventListener('click',()=>{closeCardMenus();startBankConnection();});
+$('#headerManageBanks').addEventListener('click',()=>{closeCardMenus();openBankSettings();});
+$('#syncNow').addEventListener('click',()=>{closeCardMenus();runAsyncAction(()=>syncActiveBankConnections());});
 $('#uncategorizedBadge').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
 $('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;renderActivity();});
 $('#settingsExportCsv').addEventListener('click',exportCsv);
@@ -1249,7 +1276,7 @@ $('#clearActivityFilters').addEventListener('click',()=>{
   renderActivity();
 });
 $$('#insightsFilters [data-timeframe]').forEach(button=>button.addEventListener('click',()=>{insightsTimeframe=button.dataset.timeframe;renderInsights();}));
-setInterval(()=>renderSystemDate(new Date()),60000);
+setInterval(()=>{renderSystemDate(new Date());renderBankSyncStatus();},60000);
 window.addEventListener('resize',()=>{if(window.innerWidth>=768)closeSidebar();renderSystemDate(new Date());});
 
 function syncBanksIfStale(){const stale=bankConnectionsFor().some(connection=>{const syncedAt=Date.parse(connection.lastSyncedAt);return !Number.isFinite(syncedAt)||Date.now()-syncedAt>=300000;});if(stale)return runAsyncAction(()=>syncActiveBankConnections({silent:true}));return Promise.resolve({skipped:'fresh'});}

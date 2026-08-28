@@ -51,7 +51,7 @@ test('evaluation cycle 2: every Help module receives expanded localized FAQ cont
   assert.match(ui, /String\(entry\.dataset\.faqModule[\s\S]*split\(\/\\s\+\//, 'filter supports reusable multi-module FAQ entries');
 });
 
-test('evaluation cycle 2: quick prompts scroll horizontally without clipping either assistant surface', () => {
+test('evaluation cycle 2: floating quick prompts fit as two wrapped columns without a scrollbar', () => {
   const suggestions = cssRule('.assistant-suggestions');
   assert.match(suggestions, /width:100%/);
   assert.match(suggestions, /min-width:0/);
@@ -63,28 +63,29 @@ test('evaluation cycle 2: quick prompts scroll horizontally without clipping eit
   assert.match(suggestions, /scroll-snap-type:x proximity/);
   assert.match(suggestions, /touch-action:pan-x/);
   assert.match(suggestions, /box-sizing:border-box/);
-  const widgetSuggestions = cssRule('.assistant-widget .assistant-suggestions');
+  const widgetMatches = [...css.matchAll(/\.assistant-widget \.assistant-suggestions\s*\{([^}]*)\}/g)];
+  const widgetSuggestions = widgetMatches.at(-1)?.[1] || '';
   assert.match(widgetSuggestions, /width:calc\(100% - 24px\)/);
   assert.match(widgetSuggestions, /max-width:calc\(100% - 24px\)/);
   assert.match(widgetSuggestions, /margin-inline:12px/);
-  const chip = cssRule('.assistant-suggestion');
-  assert.match(chip, /flex:0 0 auto/);
-  assert.match(chip, /max-width:none/);
-  assert.match(chip, /overflow:visible/);
-  assert.match(chip, /white-space:nowrap/);
-  assert.match(chip, /scroll-snap-align:start/);
-  assert.match(ui, /function enableHorizontalPromptDrag\(container\)/);
-  assert.match(ui, /event\.pointerType !== 'mouse'/);
-  assert.match(ui, /container\.scrollLeft = drag\.startScrollLeft - delta/);
-  assert.match(ui, /event\.stopImmediatePropagation\(\)/, 'a drag cannot accidentally submit the chip under the pointer');
-  assert.match(ui, /container\.addEventListener\('wheel'/);
+  assert.match(widgetSuggestions, /display:grid/);
+  assert.match(widgetSuggestions, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(widgetSuggestions, /overflow:visible/);
+  assert.match(widgetSuggestions, /white-space:normal/);
+  assert.match(widgetSuggestions, /touch-action:auto/);
+  const widgetChipMatches = [...css.matchAll(/\.assistant-widget \.assistant-suggestion\s*\{([^}]*)\}/g)];
+  const widgetChip = widgetChipMatches.at(-1)?.[1] || '';
+  assert.match(widgetChip, /width:100%/);
+  assert.match(widgetChip, /min-width:0/);
+  assert.match(widgetChip, /white-space:normal/);
+  assert.doesNotMatch(ui, /enableHorizontalPromptDrag/);
 });
 
-test('evaluation cycle 2: Help exposes a restart-tour hook and preserves the existing fallback trigger', () => {
+test('evaluation cycle 2: Help exposes the sole manual restart-tour hook', () => {
   assert.match(ui, /id\s*=\s*'helpRestartOnboarding'/);
   assert.match(ui, /dataset\.i18n\s*=\s*'restartTourFromHelp'/);
   assert.match(ui, /window\.MerOnboardingUi\?\.restart/);
-  assert.match(ui, /\$\('#restartOnboarding'\)\?\.click\(\)/);
+  assert.doesNotMatch(ui, /\$\('#restartOnboarding'\)/);
   assert.match(cssRule('.help-tour-restart'), /min-height:44px/);
 });
 

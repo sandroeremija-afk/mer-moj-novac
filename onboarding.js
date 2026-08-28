@@ -9,7 +9,7 @@
     onboardingSavingsTitle:'Ciljevi s jasnim sljedećim korakom', onboardingSavingsBody:'Fond, namjenski pretinci, rokovi i zaokruživanja zajedno pokazuju koliko ste blizu svakom cilju.', onboardingSavingsTip:'Zaokruživanje sitniša možete usmjeriti u jedan aktivni cilj.', onboardingSavingsLabel:'Štednja',
     onboardingActivityTitle:'Pronađite i uredite svaki zapis', onboardingActivityBody:'Pretraga, raspon datuma, kategorija i vrsta pomažu brzo pronaći ručne i automatski uvezene transakcije.', onboardingActivityTip:'Filtri uvijek rade samo nad trenutačno aktivnim profilom.', onboardingActivityLabel:'Aktivnost',
     onboardingInsightsTitle:'Pretvorite brojke u odluke', onboardingInsightsBody:'Uvidi povezuju neto iznos, strukturu potrošnje, trgovce, mjesečne trendove i stopu štednje.', onboardingInsightsTip:'Odaberite dnevni, mjesečni, godišnji ili sveukupni prikaz.', onboardingInsightsLabel:'Uvidi',
-    onboardingSettingsTitle:'Postavke i automatizacija', onboardingSettingsBody:'Iz korisničkog izbornika povežite banke, odaberite privatnost i valutu ili uredite If/Then pravila kategorizacije.', onboardingSettingsTip:'Vodič možete ponovno pokrenuti iz Postavki u bilo kojem trenutku.', onboardingSettingsLabel:'Postavke'
+    onboardingSettingsTitle:'Postavke i automatizacija', onboardingSettingsBody:'Iz korisničkog izbornika povežite banke, odaberite privatnost i valutu ili uredite If/Then pravila kategorizacije.', onboardingSettingsTip:'Vodič možete ponovno pokrenuti iz Pomoći i FAQ-a u bilo kojem trenutku.', onboardingSettingsLabel:'Postavke'
   });
   Object.assign(translations.en, {
     helpAssistant:'Help & AI Assistant', helpAssistantHint:'Guide and money questions',
@@ -21,7 +21,7 @@
     onboardingSavingsTitle:'Goals with a clear next step', onboardingSavingsBody:'Your fund, goal buckets, deadlines and round-ups show exactly how close you are to each goal.', onboardingSavingsTip:'Round-ups can be routed to one active savings goal.', onboardingSavingsLabel:'Savings',
     onboardingActivityTitle:'Find and edit every record', onboardingActivityBody:'Search, date range, category and type filters help locate manual and bank-imported transactions quickly.', onboardingActivityTip:'Filters only read the currently active profile.', onboardingActivityLabel:'Activity',
     onboardingInsightsTitle:'Turn numbers into decisions', onboardingInsightsBody:'Insights connects net total, spending mix, merchants, monthly trends and savings rate.', onboardingInsightsTip:'Choose daily, monthly, year-to-date or all-time analysis.', onboardingInsightsLabel:'Insights',
-    onboardingSettingsTitle:'Settings and automation', onboardingSettingsBody:'From the user menu, connect banks, choose privacy and currency options, or edit If/Then categorization rules.', onboardingSettingsTip:'You can restart this tour from Settings at any time.', onboardingSettingsLabel:'Settings'
+    onboardingSettingsTitle:'Settings and automation', onboardingSettingsBody:'From the user menu, connect banks, choose privacy and currency options, or edit If/Then categorization rules.', onboardingSettingsTip:'You can restart this tour from Help and FAQ at any time.', onboardingSettingsLabel:'Settings'
   });
   applyStaticTranslations();
 
@@ -256,19 +256,6 @@
   });
   $('#onboardingSkip').addEventListener('click', dismissTour);
   $('#onboardingClose').addEventListener('click', dismissTour);
-  function restartTourFrom(trigger, dialog) {
-    const authenticatedUserId = window.MerAuthProvider?.currentSession?.()?.userId;
-    const session = window.MerAuthProvider?.currentSession?.();
-    if (!session) return false;
-    if (authenticatedUserId && !session.userId) session.userId = authenticatedUserId;
-    pendingSession = session;
-    if (dialog?.open) closeModal(dialog);
-    setTimeout(() => openTour({ force:true, returnTarget:trigger }), 30);
-    return true;
-  }
-
-  $('#restartOnboarding').addEventListener('click', event => restartTourFrom($('#openSettings'), event.currentTarget.closest('dialog')));
-
   window.MerOnboardingUi = Object.freeze({
     onSessionStarted(session) { pendingSession=session;if (!document.body.classList.contains('mfa-locked')) openTour(); },
     resume() { if (pendingSession && !document.body.classList.contains('mfa-locked')) openTour(); },

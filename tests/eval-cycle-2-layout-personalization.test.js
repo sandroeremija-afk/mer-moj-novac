@@ -19,15 +19,15 @@ class MemoryStorage {
   removeItem(key) { this.values.delete(String(key)); }
 }
 
-test('evaluation cycle 2: every module exposes the same localized accessible layout edit toggle', () => {
+test('evaluation cycle 2: the top header exposes one localized accessible layout edit toggle', () => {
   assert.match(html, /id="layoutEditToggle"[^>]*aria-pressed="false"/);
   assert.match(html, /id="layoutEditToggle"[\s\S]*?data-i18n="customizeLayout"/);
-  assert.equal((html.match(/data-layout-edit-toggle/g) || []).length, 5);
+  assert.equal((html.match(/data-layout-edit-toggle/g) || []).length, 1);
   for (const moduleId of ['overview','budgets','savings','activity','insights']) {
     const start = html.indexOf(`data-view-panel="${moduleId}"`);
     const next = html.indexOf('data-view-panel=', start + 1);
     const moduleMarkup = html.slice(start, next < 0 ? html.length : next);
-    assert.equal((moduleMarkup.match(/data-layout-edit-toggle/g) || []).length, 1, `${moduleId} owns one layout control`);
+    assert.equal((moduleMarkup.match(/data-layout-edit-toggle/g) || []).length, 0, `${moduleId} does not duplicate the global control`);
   }
   assert.match(html, /id="layoutLiveRegion"[^>]*aria-live="polite"/);
   assert.match(ui, /customizeLayout:'Prilagodi raspored'/);

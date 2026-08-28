@@ -80,7 +80,7 @@ test('evaluation cycle 2: Help modal exposes contextual FAQ and the FAB owns the
   assert.match(widget, /id="assistantMessages"[^>]*role="log"[^>]*aria-live="polite"[^>]*aria-relevant="additions"/);
   assert.match(widget, /id="assistantForm"/);
   assert.match(widget, /id="assistantInput"[^>]*(?:aria-label|aria-labelledby)=/);
-  assert.ok((widget.match(/data-ai-prompt=/g) || []).length >= 3, 'chat includes useful starter prompts');
+  assert.equal((widget.match(/data-ai-prompt=/g) || []).length, 2, 'floating chat keeps both starter prompts visible at once');
 });
 
 test('evaluation cycle 2: assistant requests are adapter-ready, profile scoped and race safe', () => {

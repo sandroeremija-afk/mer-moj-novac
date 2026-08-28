@@ -64,7 +64,7 @@ test('evaluation cycle 2: floating chat owns one accessible conversation surface
   assert.match(widget, /id="assistantMessages"[^>]*role="log"[^>]*aria-live="polite"/);
   assert.match(widget, /id="assistantForm"/);
   assert.match(widget, /id="assistantInput"[^>]*(?:aria-label|aria-labelledby)=/);
-  assert.ok((widget.match(/data-ai-prompt=/g) || []).length >= 3, 'widget has at least three quick prompts');
+  assert.equal((widget.match(/data-ai-prompt=/g) || []).length, 2, 'widget exposes both quick prompts without a scroller');
 
   const help = elementMarkup('helpAssistantModal', 'dialog');
   assert.doesNotMatch(help, /id="assistantMessages"|id="assistantForm"/, 'chat surface is not duplicated in the full Help dialog');

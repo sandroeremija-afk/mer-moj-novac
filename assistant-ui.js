@@ -200,51 +200,6 @@
     { root:helpUi.aiPanel, messages:helpUi.messages, form:helpUi.form, input:helpUi.input, send:helpUi.send, status:helpUi.status }
   ];
 
-  function enableHorizontalPromptDrag(container) {
-    if (!container) return;
-    let drag = null;
-    let suppressClickUntil = 0;
-
-    function finishDrag(event) {
-      if (!drag || event.pointerId !== drag.pointerId) return;
-      const { pointerId, moved } = drag;
-      drag = null;
-      container.classList.remove('is-pointer-scrolling');
-      if (container.hasPointerCapture?.(pointerId)) container.releasePointerCapture(pointerId);
-      if (moved) suppressClickUntil = performance.now() + 350;
-    }
-
-    container.addEventListener('pointerdown', event => {
-      if (event.pointerType !== 'mouse' || event.button !== 0) return;
-      drag = { pointerId:event.pointerId, startX:event.clientX, startScrollLeft:container.scrollLeft, moved:false };
-      container.setPointerCapture?.(event.pointerId);
-    });
-    container.addEventListener('pointermove', event => {
-      if (!drag || event.pointerId !== drag.pointerId) return;
-      const delta = event.clientX - drag.startX;
-      if (!drag.moved && Math.abs(delta) < 5) return;
-      event.preventDefault();
-      drag.moved = true;
-      container.classList.add('is-pointer-scrolling');
-      container.scrollLeft = drag.startScrollLeft - delta;
-    }, { passive:false });
-    container.addEventListener('pointerup', finishDrag);
-    container.addEventListener('pointercancel', finishDrag);
-    container.addEventListener('lostpointercapture', finishDrag);
-    container.addEventListener('click', event => {
-      if (performance.now() >= suppressClickUntil) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }, true);
-    container.addEventListener('wheel', event => {
-      if (container.scrollWidth <= container.clientWidth || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-      event.preventDefault();
-      container.scrollLeft += event.deltaY;
-    }, { passive:false });
-  }
-
-  enableHorizontalPromptDrag(assistantWidget.querySelector('.assistant-suggestions'));
-
   function assistantSessionKey() {
     const session = window.MerAuthProvider?.currentSession?.();
     return String(session?.userId || session?.email || (session?.demo ? 'demo-user' : 'anonymous'))
@@ -437,10 +392,7 @@
   });
   helpUi.restart.addEventListener('click', () => {
     closeModal(modal);
-    setTimeout(() => {
-      if (window.MerOnboardingUi?.restart) window.MerOnboardingUi.restart($('#openHelpAssistant'));
-      else $('#restartOnboarding')?.click();
-    }, 30);
+    setTimeout(() => window.MerOnboardingUi?.restart?.($('#openHelpAssistant')), 30);
   });
   assistantFab.addEventListener('click', () => { if (assistantWidget.hidden) openAssistant();else closeAssistant(); });
   assistantWidgetClose.addEventListener('click', () => closeAssistant());

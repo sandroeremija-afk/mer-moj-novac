@@ -10,6 +10,7 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const authUi = fs.readFileSync(path.join(root, 'auth-ui.js'), 'utf8');
 const onboardingUi = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
+const assistantUi = fs.readFileSync(path.join(root, 'assistant-ui.js'), 'utf8');
 
 class MemoryStorage {
   constructor(seed = {}) { this.values = new Map(Object.entries(seed)); }
@@ -132,10 +133,12 @@ test('evaluation cycle 1: corrupt persistence fails safely without affecting ano
   assert.equal(controller(storage, 'finished-user').shouldAutoStart(), false);
 });
 
-test('evaluation cycle 1: login, Settings and Help wire the controller into the real UI', () => {
-  for (const id of ['onboardingTour', 'onboardingSpotlight', 'onboardingPopover', 'onboardingTitle', 'onboardingBody', 'onboardingProgress', 'onboardingPrevious', 'onboardingNext', 'onboardingSkip', 'restartOnboarding']) {
+test('evaluation cycle 1: login and Help wire the controller while Settings stays free of the tour action', () => {
+  for (const id of ['onboardingTour', 'onboardingSpotlight', 'onboardingPopover', 'onboardingTitle', 'onboardingBody', 'onboardingProgress', 'onboardingPrevious', 'onboardingNext', 'onboardingSkip']) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
+  assert.doesNotMatch(html, /id="restartOnboarding"/);
+  assert.match(assistantUi, /restart\.id = 'helpRestartOnboarding'/);
   assert.doesNotMatch(html, /<dialog[^>]*id="onboardingModal"/);
   assert.match(html, /id="onboardingTour"[^>]*hidden/);
   assert.match(html, /id="onboardingPopover"[^>]*role="dialog"[^>]*aria-modal="true"/);
@@ -147,10 +150,8 @@ test('evaluation cycle 1: login, Settings and Help wire the controller into the 
   const authScript = html.search(/<script src="auth-ui\.js(?:\?[^\"]*)?"><\/script>/);
   assert.ok(coreScript > 0 && coreScript < uiScript && uiScript < authScript);
   assert.match(authUi, /MerOnboardingUi\?\.onSessionStarted\(session\)/);
-  assert.match(onboardingUi, /MerAuthProvider\?\.currentSession\?\.\(\)\?\.userId/);
-  assert.match(onboardingUi, /restartOnboarding[^\n]*restartTourFrom/);
   assert.match(onboardingUi, /restart\(returnTarget = null\)[^}]*openTour\(\{ force:true, returnTarget \}\)/);
-  assert.match(onboardingUi, /restartTourFrom[\s\S]*openTour\(\{\s*force:true/);
+  assert.match(assistantUi, /MerOnboardingUi\?\.restart\?\.\(\$\('#openHelpAssistant'\)\)/);
   assert.match(onboardingUi, /getBoundingClientRect\(\)/);
   assert.match(onboardingUi, /ResizeObserver/);
   assert.match(onboardingUi, /scrollIntoView/);

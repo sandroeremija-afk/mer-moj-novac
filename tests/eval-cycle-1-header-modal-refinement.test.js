@@ -31,15 +31,20 @@ test('evaluation cycle 1: contextual titles replace every generic topbar module 
   assert.doesNotMatch(contextTitleRule, /text-transform\s*:\s*uppercase/);
 });
 
-test('evaluation cycle 1: layout controls share one invariant left slot across all modules', () => {
-  assert.equal((html.match(/data-layout-edit-toggle/g) || []).length, 5);
-  assert.match(css, /\.actions-only-heading\s*\{[^}]*display:grid[^}]*grid-template-columns:auto minmax\(0,1fr\)[^}]*align-items:center/);
-  assert.match(css, /\.actions-only-heading > \.layout-edit-toggle\s*\{[^}]*justify-self:start[^}]*flex:0 0 auto/);
-  assert.match(css, /\.actions-only-heading \.heading-actions\s*\{[^}]*margin-left:0[^}]*justify-self:end/);
+test('evaluation cycle 1: one icon-only layout control lives between the Date and theme controls', () => {
+  assert.equal((html.match(/data-layout-edit-toggle/g) || []).length, 1);
+  const topbar = html.slice(html.indexOf('<header class="topbar">'), html.indexOf('</header>'));
+  const date = topbar.indexOf('id="systemDate"');
+  const layout = topbar.indexOf('id="layoutEditToggle"');
+  const theme = topbar.indexOf('id="themeToggle"');
+  assert.ok(date >= 0 && layout > date && theme > layout);
+  assert.match(topbar, /class="[^"]*icon-button[^"]*"[^>]*id="layoutEditToggle"/);
+  assert.doesNotMatch(html.slice(html.indexOf('<div class="page">')), /data-layout-edit-toggle/);
+  assert.match(css, /\.actions-only-heading\s*\{[^}]*display:flex[^}]*justify-content:flex-end/);
 });
 
 test('evaluation cycle 1: Dashboard places Add Transaction directly after Adjust Plan', () => {
-  const overview = html.slice(html.indexOf('id="overviewView"'), html.indexOf('class="bank-sync-strip"'));
+  const overview = html.slice(html.indexOf('id="overviewView"'), html.indexOf('id="budgetsView"'));
   const adjust = overview.indexOf('data-open-assessment');
   const add = overview.indexOf('data-open-transaction', adjust);
   assert.ok(adjust >= 0 && add > adjust);

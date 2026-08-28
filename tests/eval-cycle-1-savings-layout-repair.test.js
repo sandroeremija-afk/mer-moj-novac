@@ -76,7 +76,7 @@ test('evaluation cycle 1: touch layouts restore natural flow and never inherit d
   assert.match(mobile, /#savingsView\s+\.goal-bucket-card\s*\{[^}]*height\s*:\s*auto[^}]*overflow\s*:\s*visible/s);
 });
 
-test('evaluation cycle 1: phone Savings goals use a bounded touch-scroll window with safe trailing space', () => {
+test('evaluation cycle 1: phone Savings goals use natural page flow without a nested scrollbar', () => {
   const phoneStart = css.lastIndexOf('@media (max-width:414px)');
   assert.ok(phoneStart >= 0, 'a phone-specific Savings repair exists');
   const phone = css.slice(phoneStart, css.indexOf('/* Profile-isolated', phoneStart));
@@ -84,15 +84,15 @@ test('evaluation cycle 1: phone Savings goals use a bounded touch-scroll window 
   const grid = rule(phone, '#savingsView .goal-bucket-grid');
   const card = rule(phone, '#savingsView .goal-bucket-card');
 
-  assert.match(panel, /display\s*:\s*flex/);
+  assert.match(panel, /display\s*:\s*block/);
   assert.match(panel, /min-height\s*:\s*0/);
-  assert.match(panel, /overflow\s*:\s*hidden/);
+  assert.match(panel, /overflow\s*:\s*visible/);
   assert.match(grid, /min-height\s*:\s*0/);
-  assert.match(grid, /max-height\s*:\s*min\(62dvh\s*,\s*560px\)/);
-  assert.match(grid, /overflow-y\s*:\s*auto/);
-  assert.match(grid, /grid-auto-rows\s*:\s*max-content/);
-  assert.match(grid, /padding\s*:\s*0 5px calc\(24px \+ env\(safe-area-inset-bottom\)\) 0/);
-  assert.match(grid, /touch-action\s*:\s*pan-y/);
+  assert.match(grid, /max-height\s*:\s*none/);
+  assert.match(grid, /overflow\s*:\s*visible/);
+  assert.match(grid, /grid-auto-rows\s*:\s*auto/);
+  assert.match(grid, /padding\s*:\s*0 0 calc\(6px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(grid, /touch-action\s*:\s*auto/);
   assert.match(card, /flex-shrink\s*:\s*0/);
   assert.match(html, /id="goalBucketGrid"[^>]*tabindex="0"[^>]*aria-labelledby="savingsGoalsHeading"/);
 });

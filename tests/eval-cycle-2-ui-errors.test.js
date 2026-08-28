@@ -71,7 +71,8 @@ test('Cycle 2: UI exposes settings, mapping, sync, source, review, and bilingual
   for (const contract of ['bankSettingsModal', 'bankConnectForm', 'bankProfileSelect', 'syncNow', 'uncategorizedBadge', 'reviewQueueBanner']) assert.match(html, new RegExp(contract));
   for (const contract of ['TOKEN_EXPIRED', 'DISCONNECTED', 'RATE_LIMITED', 'data-map-bank', 'transaction-source', 'categoryApproved']) assert.match(app, new RegExp(contract));
   assert.doesNotMatch(app, /bankConnectFlow/);
-  for (const contract of ['bank-connection-card', 'bank-sync-strip', 'needs-review-tag', '@media (max-width: 540px)']) assert.ok(css.includes(contract), `Missing CSS contract: ${contract}`);
+  for (const contract of ['bank-connection-card', 'header-bank-menu', 'needs-review-tag', '@media (max-width: 540px)']) assert.ok(css.includes(contract), `Missing CSS contract: ${contract}`);
+  assert.doesNotMatch(html, /id="bankSyncStrip"/);
   assert.match(app, /Bank authorization expired/);
   assert.match(app, /Bankovno odobrenje je isteklo/);
 });
