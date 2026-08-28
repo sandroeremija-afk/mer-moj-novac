@@ -105,7 +105,7 @@
     setUi(scope, '.modal-actions', 'dialog-footer');
     setUi(scope, '.detail-modal-grid, .settings-modal-body, .help-assistant-body', 'scroll-area');
     setUi(scope, '.card-action-menu, .account-menu', 'menu');
-    setUi(scope, '.notification-center, .app-tooltip', 'popover');
+    setUi(scope, '.notification-center, .app-tooltip, .activity-filter-panel', 'popover');
     setUi(scope, '.settings-tabs, .help-nav-grid, .timeframe-switch, .transaction-type-switch, .auth-tabs', 'tabs');
     setUi(scope, '.import-table-wrap', 'table-viewport');
     setUi(scope, '.import-table', 'table');

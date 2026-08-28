@@ -16,8 +16,8 @@ test('evaluation cycle 1: Budgets owns a bounded desktop category window without
   assert.match(css, /\.budget-table-window::\-webkit-scrollbar-thumb,[\s\S]*?background:var\(--line-strong\)/);
 });
 
-test('evaluation cycle 1: tablet and mobile retain the established natural page flow', () => {
-  assert.match(css, /@media \(max-width:1024px\) \{[\s\S]*?\.budget-table-window \{[^}]*max-height:none;[^}]*overflow:visible;/);
+test('evaluation cycle 1: tablet and mobile keep the category list bounded inside its card', () => {
+  assert.match(css, /@media \(max-width:1024px\) \{[\s\S]*?\.budget-table-window \{[^}]*max-height:350px;[^}]*overflow-y:auto;[^}]*scrollbar-gutter:stable;/);
 });
 
 test('evaluation cycle 2: expanded category manager provides search, status filters and add/edit actions', () => {

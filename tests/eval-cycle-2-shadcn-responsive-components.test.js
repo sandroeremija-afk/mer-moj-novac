@@ -63,7 +63,7 @@ test('evaluation cycle 2: wizards and long secondary panels preserve headers and
 });
 
 test('evaluation cycle 2: touch, tablet, laptop and sidebar edge breakpoints stay bounded', () => {
-  assert.match(css, /@media \(max-width:1440px\) and \(min-width:769px\) \{[\s\S]*?\.activity-toolbar \{ grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(css, /@media \(max-width:1440px\) and \(min-width:769px\) \{[\s\S]*?\.activity-filter-panel \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css, /@media \(max-width:820px\) \{[\s\S]*?\.budget-manager-row \{ grid-template-columns:minmax\(0,1fr\) 44px/);
   assert.match(css, /@media \(max-width:768px\) \{[\s\S]*?\.sidebar \{[\s\S]*?transform:translateX\(-100%\)/);
   assert.match(css, /@media screen and \(max-width:1024px\), \(pointer:coarse\) \{[\s\S]*?min-block-size:44px/);

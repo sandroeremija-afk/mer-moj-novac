@@ -34,8 +34,8 @@ test('evaluation cycle 2: MER recommendation and weekly review cannot overflow a
   assert.match(css, /\.weekly-review-card \.link-button \{ grid-column:2; justify-self:start; \}/);
 });
 
-test('evaluation cycle 2: Activity toolbar becomes one fluid column on mobile without horizontal overflow', () => {
-  assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.activity-toolbar \{ display:grid; grid-template-columns:minmax\(0,1fr\);/);
-  assert.match(css, /\.activity-toolbar > \* \{ width:100%; \}/);
+test('evaluation cycle 2: Activity keeps search and filter trigger compact while the mobile panel flows in one column', () => {
+  assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.activity-toolbar \{ display:grid; grid-template-columns:minmax\(0,1fr\) auto;/);
+  assert.match(css, /\.activity-filter-panel \{ width:100%; max-height:min\(68dvh,520px\); grid-template-columns:minmax\(0,1fr\); \}/);
   assert.match(css, /\.filter-field input \{[\s\S]*?min-width:0;/);
 });

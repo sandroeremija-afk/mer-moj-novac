@@ -11,7 +11,7 @@ const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 test('evaluation cycle 2: spending pace expands across the Details modal without clipping', () => {
   assert.match(css, /\.overview-detail-grid \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\); \}/);
   assert.match(css, /\.overview-detail-grid \.chart-panel \{[^}]*width:100%[^}]*grid-column:1 \/ -1/s);
-  assert.match(css, /\.overview-detail-grid \.line-chart svg \{[^}]*width:100%[^}]*max-height:none[^}]*aspect-ratio:660 \/ 220/s);
+  assert.match(css, /\.overview-detail-grid \.line-chart svg \{[^}]*width:100%[^}]*max-height:none[^}]*aspect-ratio:660 \/ 172/s);
 });
 
 test('evaluation cycle 2: Budget import has one primary import action and no leftover export action', () => {
