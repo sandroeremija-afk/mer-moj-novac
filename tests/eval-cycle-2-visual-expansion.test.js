@@ -45,7 +45,9 @@ test('evaluation cycle 2: every Insights KPI and chart card expands through one 
   assert.match(html, /id="insightExpandedBreakdown"/);
   assert.match(app, /function renderInsightDetail\(kind\)/);
   assert.match(app, /MerAccounting\.monthSeries\(state\.transactions,appReferenceDate,12\)/);
-  assert.match(app, /MerAccounting\.topMerchants\(state\.transactions,insightsTimeframe,appReferenceDate\)/);
+  assert.match(app, /const categoryDomain=MerCore\.chartDomain\(categories\.map\(\(\[,amount\]\)=>amount\)\)/);
+  assert.match(app, /kind==='merchants'[\s\S]*?categoryName\(id\)[\s\S]*?copy\.ofExpenses/);
+  assert.doesNotMatch(app, /merchantTotal=/);
   assert.match(app, /function openInsightDetail\(kind\)/);
   assert.match(app, /if\(\$\('#insightChartModal'\)\?\.open&&activeInsightDetail\)renderInsightDetail\(activeInsightDetail\)/);
   assert.match(css, /\.insight-expanded-modal \{ width:min\(1060px/);

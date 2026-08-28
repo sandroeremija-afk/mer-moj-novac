@@ -10,7 +10,7 @@ test('cycle 2: header groups Date, layout, theme, notifications, language and ba
 });
 
 test('cycle 2: Insights contains all four requested analytical visuals without a card scrollbar',()=>{
-  ['categoryDonut','monthlyBarChart','topMerchantsList','savingsGauge'].forEach(id=>assert.match(html,new RegExp(`id="${id}"`)));assert.match(app,/MerAccounting\.topMerchants/);assert.match(app,/MerAccounting\.monthSeries/);assert.match(css,/\.advanced-insights-grid/);assert.doesNotMatch(css,/\.advanced-insights-grid[^}]*overflow-y\s*:\s*auto/);
+  ['categoryDonut','monthlyBarChart','topMerchantsList','savingsGauge'].forEach(id=>assert.match(html,new RegExp(`id="${id}"`)));assert.match(app,/categoryLeaders=breakdown\.slice\(0,5\)/);assert.match(app,/MerAccounting\.monthSeries/);assert.match(css,/\.advanced-insights-grid/);assert.doesNotMatch(css,/\.advanced-insights-grid[^}]*overflow-y\s*:\s*auto/);
 });
 
 test('cycle 2: Savings exposes progress rings, countdowns, monthly requirements and selectable round-up vaults',()=>{

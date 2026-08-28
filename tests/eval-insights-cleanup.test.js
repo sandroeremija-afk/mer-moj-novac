@@ -10,13 +10,14 @@ const insightsStart = html.indexOf('id="insightsView"');
 const insightsEnd = html.indexOf('id="insightsDetailsModal"', insightsStart);
 const insights = html.slice(insightsStart, insightsEnd);
 
-test('evaluation cycle 1: Top trgovci has no subscription action or leftover action gap', () => {
+test('evaluation cycle 1: Largest categories has no subscription action or leftover action gap', () => {
   const merchantStart = insights.indexOf('class="panel insight-visual-card merchant-card');
   const merchantEnd = insights.indexOf('</article>', merchantStart);
   const merchantCard = insights.slice(merchantStart, merchantEnd);
 
-  assert.ok(merchantStart >= 0, 'Top trgovci card must exist');
+  assert.ok(merchantStart >= 0, 'Largest categories card must exist');
   assert.match(merchantCard, /id="topMerchantsList"/);
+  assert.match(merchantCard, /Najveće kategorije/);
   assert.doesNotMatch(merchantCard, /openSubscriptions|manageSubscriptions|Upravljaj pretplatama/);
   assert.doesNotMatch(app, /\$\('#openSubscriptions'\)\.addEventListener/);
 });

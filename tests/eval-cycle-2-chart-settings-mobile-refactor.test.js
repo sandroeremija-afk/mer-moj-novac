@@ -29,7 +29,10 @@ test('evaluation cycle 2: data transfer belongs only to Banks and Settings has n
 });
 
 test('evaluation cycle 2: Insights labels and donut metrics never rely on ellipsis', () => {
-  assert.match(app, /merchantBreakdown:'NAJVEĆI PRIMATELJI'/);
+  assert.match(app, /merchantBreakdown:'NAJVEĆE KATEGORIJE'/);
+  assert.match(app, /merchantBreakdown:'LARGEST CATEGORIES'/);
+  assert.match(html, /data-i18n="topFiveMerchants">Najveće kategorije/);
+  assert.doesNotMatch(html, /Najveći primatelji|NAJVEĆI PRIMATELJI/);
   assert.match(app, /donutDisplay=donutExact\.length>12\?compactChartCurrency\(expenseTotal\):donutExact/);
   assert.match(app, /donutTotal\.title=donutExact/);
   const donutRules = [...css.matchAll(/\.category-donut strong\s*\{([^}]*)\}/g)];
@@ -41,7 +44,7 @@ test('evaluation cycle 2: Insights labels and donut metrics never rely on ellips
 
 test('evaluation cycle 2: mobile savings goals and assistant prompts have no nested horizontal or vertical scroller', () => {
   const phone = css.slice(css.lastIndexOf('@media (max-width:414px)'));
-  assert.match(phone, /#savingsView \.goal-bucket-grid \{[^}]*max-height:none[^}]*overflow:visible/);
+  assert.match(phone, /#savingsView \.goal-bucket-grid \{[^}]*max-height:none[^}]*overflow-y:visible/);
   assert.doesNotMatch(phone, /#savingsView \.goal-bucket-grid \{[^}]*overflow-y:auto/);
   const widgetRules = [...css.matchAll(/\.assistant-widget \.assistant-suggestions\s*\{([^}]*)\}/g)];
   const widgetRule = widgetRules.at(-1)?.[1] || '';
@@ -52,4 +55,3 @@ test('evaluation cycle 2: mobile savings goals and assistant prompts have no nes
   const widgetEnd = html.indexOf('</section>', widgetStart);
   assert.equal((html.slice(widgetStart, widgetEnd).match(/data-ai-prompt=/g) || []).length, 2);
 });
-

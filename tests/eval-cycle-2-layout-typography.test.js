@@ -15,7 +15,7 @@ test('cycle 2: Savings uses the fixed desktop viewport and natural mobile goal f
   const desktopSavings = css.slice(desktopStart, desktopEnd);
   assert.doesNotMatch(desktopSavings, /overflow-y\s*:\s*auto/);
   const phone = css.slice(css.lastIndexOf('@media (max-width:414px)'));
-  assert.match(phone, /#savingsView \.goal-bucket-grid \{[^}]*max-height:none[^}]*overflow:visible/);
+  assert.match(phone, /#savingsView \.goal-bucket-grid \{[^}]*max-height:none[^}]*overflow-y:visible/);
   assert.doesNotMatch(phone, /#savingsView \.goal-bucket-grid \{[^}]*overflow-y:auto/);
   assert.match(css, /@media \(max-height:820px\) and \(min-width:801px\)/);
 });
