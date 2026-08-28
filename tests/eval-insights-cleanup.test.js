@@ -22,12 +22,12 @@ test('evaluation cycle 1: Largest categories has no subscription action or lefto
   assert.doesNotMatch(app, /\$\('#openSubscriptions'\)\.addEventListener/);
 });
 
-test('evaluation cycle 2: Insights header does not duplicate the sidebar transaction trigger', () => {
+test('evaluation cycle 2: Insights header uses the shared transaction modal trigger', () => {
   const headingEnd = insights.indexOf('id="insightsFilters"');
   const heading = insights.slice(0, headingEnd);
 
-  assert.doesNotMatch(heading, /data-open-transaction/);
+  assert.match(heading, /class="primary-button" data-open-transaction/);
+  assert.match(heading, /data-i18n="addTransaction">Dodaj transakciju/);
   assert.doesNotMatch(heading, /data-open-income|data-i18n="addIncome"/);
-  assert.equal((html.slice(html.indexOf('id="appShell"'),html.indexOf('id="transactionModal"')).match(/data-open-transaction/g)||[]).length,1);
   assert.match(app, /\$\$\('\[data-open-transaction\]'\)\.forEach\(button=>button\.addEventListener\('click',\(\)=>openTransaction\(\)\)\)/);
 });

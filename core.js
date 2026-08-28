@@ -34,14 +34,6 @@
     };
   }
 
-  function budgetSeverity(percent) {
-    const safePercent = Math.max(0, Number(percent) || 0);
-    if (safePercent >= 100) return 'exceeded';
-    if (safePercent >= 95) return 'almost';
-    if (safePercent >= 80) return 'near';
-    return null;
-  }
-
   function budgetThreshold(spent, limit) {
     const safeLimit = Number(limit) || 0;
     const safeSpent = Math.max(0, Number(spent) || 0);
@@ -49,20 +41,8 @@
     return {
       percent,
       level: percent >= 100 ? 'red' : percent >= 80 ? 'yellow' : 'green',
-      warning: budgetSeverity(percent)
+      warning: percent >= 100 ? 'exceeded' : percent >= 80 ? 'near' : null
     };
-  }
-
-  function groupBudgetAlerts(alerts) {
-    const items = Array.isArray(alerts) ? alerts.filter(Boolean) : [];
-    if (items.length < 2) return items.slice();
-    return [{
-      key:'budget:group',
-      grouped:true,
-      priority:Math.max(...items.map(item=>Number(item.priority)||0)),
-      type:items.some(item=>item.type==='danger')?'danger':'warning',
-      children:items.slice()
-    }];
   }
 
   function assessExpenseImpact(input = {}) {
@@ -720,9 +700,7 @@
     clone,
     createAccountStore,
     calculateBudget,
-    budgetSeverity,
     budgetThreshold,
-    groupBudgetAlerts,
     assessExpenseImpact,
     daysInMonth,
     nextOccurrence,

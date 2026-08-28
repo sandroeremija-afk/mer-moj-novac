@@ -40,7 +40,7 @@ test('cycle 2: official logo geometry is stable and theme-adaptive in its two al
   assert.match(css, /\.brand-wordmark-image \{ width:132px; height:39\.78px; \}/);
   assert.match(css, /\.auth-card-logo \{ width:128px; height:38\.58px/);
   assert.match(css, /mer-logo\[variant="negative"\] \{ --logo-wordmark:#fff; \}/);
-  assert.match(css, /mer-logo\[variant="positive"\],[\s\S]*--logo-wordmark:var\(--mer-black\)/);
+  assert.match(css, /mer-logo\[variant="positive"\],[\s\S]*--logo-wordmark:#040606/);
   assert.match(css, /mer-logo:not\(:defined\)|mer-logo \{/);
   assert.equal((html.match(/<mer-logo\b/g) || []).length, 2);
   assert.match(html, /class="auth-card-logo" variant="auto"/);

@@ -12,8 +12,6 @@
       register: 'Registracija',
       email: 'E-mail',
       password: 'Lozinka',
-      emailPlaceholder: 'ime@tvrtka.hr',
-      passwordPlaceholder: 'Unesite lozinku',
       fullName: 'Ime i prezime',
       passwordHint: 'Najmanje 10 znakova. Lozinka se pretvara u PBKDF2 hash.',
       loginAction: 'Sigurna prijava',
@@ -50,8 +48,6 @@
       register: 'Create account',
       email: 'Email',
       password: 'Password',
-      emailPlaceholder: 'name@company.com',
-      passwordPlaceholder: 'Enter your password',
       fullName: 'Full name',
       passwordHint: 'At least 10 characters. Your password is converted into a PBKDF2 hash.',
       loginAction: 'Secure sign in',
@@ -92,10 +88,6 @@
       const value = copy[lang()][element.dataset.authCopy];
       if (value) element.textContent = value;
     });
-    document.querySelectorAll('[data-auth-placeholder]').forEach(element => {
-      const value = copy[lang()][element.dataset.authPlaceholder];
-      if (value) element.setAttribute('placeholder', value);
-    });
   }
   function selectMode(mode) {
     const register = mode === 'register';
@@ -110,11 +102,7 @@
     document.getElementById('authTitle').textContent = register ? copy[lang()].register : copy[lang()].loginTitle;
   }
   function applyUser(session) {
-    if (!session) return;
-    if (session.demo) {
-      if (window.MerDemoData?.repairGoalSeed?.()) save('demo-goal-seed-repair');
-      return;
-    }
+    if (!session || session.demo) return;
     const profile = appState.accounts.personal;
     profile.accountName = session.name;
     profile.initials = session.name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();

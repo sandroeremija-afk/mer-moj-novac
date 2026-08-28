@@ -49,8 +49,8 @@ test('evaluation cycle 2: donut and cumulative chart ratios remain bounded after
 
 test('evaluation cycle 2: UI caps visual progress widths while retaining the true overage percentage', () => {
   const app=fs.readFileSync(path.resolve(__dirname,'..','app.js'),'utf8');
-  assert.match(app,/style="width:\$\{Math\.min\(100,rawPct\)\}%"/);
-  assert.match(app,/budgetProgress'\)\.style\.width = `\$\{Math\.min\(100, rawPercent\)\}%`/);
+  assert.match(app,/style="width:\$\{Math\.min\(100,pct\)\}%"/);
+  assert.match(app,/budgetProgress'\)\.style\.width = `\$\{Math\.min\(100, percent\)\}%`/);
   assert.match(app,/availableBalance'\)\.classList\.toggle\('negative-value',state\.availableBalance<0\)/);
   assert.match(app,/MerCore\.chartDomain/);
   assert.match(app,/MerCore\.proportionalSegments/);

@@ -43,12 +43,12 @@ test('evaluation cycle 1: one icon-only layout control lives between the Date an
   assert.match(css, /\.actions-only-heading\s*\{[^}]*display:flex[^}]*justify-content:flex-end/);
 });
 
-test('evaluation cycle 1: the sidebar is the sole Add Transaction entry point', () => {
-  const modalStart = html.indexOf('id="transactionModal"');
-  const applicationShell = html.slice(html.indexOf('id="appShell"'), modalStart);
-  assert.equal((applicationShell.match(/data-open-transaction/g) || []).length, 1);
-  assert.match(applicationShell, /class="primary-button sidebar-transaction-button" data-open-transaction/);
-  assert.doesNotMatch(applicationShell.slice(applicationShell.indexOf('<div class="page">')), /data-open-transaction/);
+test('evaluation cycle 1: Dashboard places Add Transaction directly after Adjust Plan', () => {
+  const overview = html.slice(html.indexOf('id="overviewView"'), html.indexOf('id="budgetsView"'));
+  const adjust = overview.indexOf('data-open-assessment');
+  const add = overview.indexOf('data-open-transaction', adjust);
+  assert.ok(adjust >= 0 && add > adjust);
+  assert.match(overview.slice(add), /data-i18n="addTransaction"/);
 });
 
 test('evaluation cycle 1: every commit form exposes Cancel next to its primary action', () => {
