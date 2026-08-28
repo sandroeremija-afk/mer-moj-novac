@@ -22,9 +22,9 @@ function elementMarkup(id, closingTag) {
   return html.slice(openIndex, endIndex + closingTag.length + 3);
 }
 
-function cssRule(selector) {
+function cssRule(selector, source = css) {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = css.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
+  const match = source.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
   assert.ok(match, `${selector} has a CSS rule`);
   return match[1];
 }
@@ -38,9 +38,13 @@ test('evaluation cycle 2: Savings keeps Weekly Review compact instead of stretch
   const weekly = savings.indexOf('class="panel weekly-review-card"', recommendation);
   assert.ok(stackStart >= 0 && recommendation > stackStart && weekly > recommendation);
 
-  const stackRule = cssRule('.savings-side-stack');
-  assert.match(stackRule, /display:grid/);
-  assert.match(stackRule, /grid-template-rows:minmax\(0,1fr\) auto/);
+  const desktopStart = css.indexOf('@media (min-width:1025px)', css.indexOf('/* Savings occupies'));
+  const desktopEnd = css.indexOf('@media (min-width:1025px) and', desktopStart);
+  const stackRule = cssRule('#savingsView .savings-side-stack', css.slice(desktopStart, desktopEnd));
+  assert.match(stackRule, /display:flex/);
+  assert.match(stackRule, /flex-direction:column/);
+  assert.match(stackRule, /justify-content:space-between/);
+  assert.match(stackRule, /gap:16px/);
   assert.doesNotMatch(css, /\.savings-side-stack\s*\{[^}]*display\s*:\s*contents/);
   assert.doesNotMatch(css, /#savingsView \.savings-side-stack\s*\{[^}]*display\s*:\s*contents/);
 
@@ -53,7 +57,7 @@ test('evaluation cycle 2: Savings keeps Weekly Review compact instead of stretch
 
 test('evaluation cycle 2: Savings preserves the fixed desktop canvas and fluid mobile flow', () => {
   assert.match(css, /#savingsView \{[^}]*display:flex;[^}]*min-height:0;[^}]*overflow:hidden;/);
-  assert.match(css, /#savingsView > \.goal-buckets-panel \{[\s\S]*?flex:1 1 auto;[\s\S]*?overflow:hidden;/);
+  assert.match(css, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView > \.goal-buckets-panel \{[\s\S]*?height:100%;[\s\S]*?overflow:visible;/);
   assert.match(css, /@media \(max-width:1024px\) \{[\s\S]*?#savingsView \{[\s\S]*?height:auto;[\s\S]*?overflow:visible;/);
   assert.match(css, /@media \(max-height:720px\) and \(min-width:1025px\)/);
 });
@@ -100,5 +104,6 @@ test('evaluation cycle 2: Help and floating assistant remain bounded and touch f
   assert.match(css, /\.assistant-messages\s*\{[^}]*overflow-y:auto/);
   assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.help-assistant-modal[^}]*\{[^}]*width:calc\(100vw - 16px\);[^}]*max-height:90dvh;/);
   assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.assistant-widget[^}]*\{[^}]*(?:width:calc\(100vw - 24px\)|inset-inline:12px)/);
+  assert.match(css, /@media \(max-width:1024px\) \{[\s\S]*?#savingsView \{[^}]*padding-bottom:40px/);
   assert.match(javascript, /\$\$\('\.modal'\)\.forEach\([\s\S]*?MerRuntime\.bindDialogBackdropDismiss\(modal/);
 });

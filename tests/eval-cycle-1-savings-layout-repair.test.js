@@ -48,21 +48,38 @@ test('evaluation cycle 1: fixed desktop Savings contains nested grids without cl
   const desktop = css.slice(desktopStart, desktopEnd);
   const stack = rule(desktop, '#savingsView .savings-side-stack');
   const recommendation = rule(desktop, '#savingsView .recommendation-panel');
+  const goalsPanel = rule(desktop, '#savingsView > .goal-buckets-panel');
+  const goalsGrid = rule(desktop, '#savingsView .goal-bucket-grid');
   const goalCard = rule(desktop, '#savingsView .goal-bucket-card');
-  const compactDesktop = css.slice(css.lastIndexOf('@media (min-width:1025px)'));
+  const compactDesktop = css.slice(css.lastIndexOf('@media (min-width:1025px) {'));
   const savingsLayout = rule(compactDesktop, '#savingsView > .savings-layout');
   const compactHero = rule(compactDesktop, '#savingsView .savings-hero');
+  const compactStack = rule(compactDesktop, '#savingsView .savings-side-stack');
   const weekly = rule(css, '.weekly-review-card');
 
   assert.match(stack, /min-height\s*:\s*0/);
-  assert.match(stack, /grid-template-rows\s*:\s*minmax\(0\s*,\s*1fr\)\s+auto/);
+  assert.match(stack, /display\s*:\s*flex/);
+  assert.match(stack, /flex-direction\s*:\s*column/);
+  assert.match(stack, /justify-content\s*:\s*space-between/);
   assert.doesNotMatch(recommendation, /overflow(?:-y)?\s*:\s*hidden/, 'recommendation actions must not be hard-clipped');
+  assert.match(goalsPanel, /overflow\s*:\s*visible/, 'the goals panel must not clip its cards');
+  assert.match(goalsGrid, /overflow\s*:\s*visible/, 'the goals grid must not own a nested scrollbar');
+  assert.match(goalsGrid, /grid-template-columns\s*:\s*repeat\(auto-fit\s*,\s*minmax\(170px\s*,\s*1fr\)\)/, 'desktop goals fit one adaptive row before creating another');
   assert.doesNotMatch(goalCard, /overflow(?:-y)?\s*:\s*hidden/, 'goal controls must not be hard-clipped');
   assert.match(goalCard, /height\s*:\s*auto/);
-  assert.match(savingsLayout, /align-items\s*:\s*start/, 'the hero must not stretch to the taller side stack');
-  assert.match(compactHero, /align-self\s*:\s*start/);
+  assert.match(savingsLayout, /align-items\s*:\s*stretch/, 'both top columns must share an exact bottom edge');
+  assert.match(compactHero, /height\s*:\s*100%/);
+  assert.match(compactHero, /align-self\s*:\s*stretch/);
+  assert.match(compactHero, /justify-content\s*:\s*space-between/);
   assert.match(compactHero, /padding\s*:\s*16px 18px/);
+  assert.match(compactStack, /height\s*:\s*100%/);
   assert.match(weekly, /padding\s*:\s*(?:1[012]|[0-9])px\s+(?:1[0-4]|[0-9])px/);
+  assert.match(css, /@media \(min-width:1025px\) and \(max-width:1200px\) \{[\s\S]*?weekly-review-card \.link-button \{[^}]*width:44px[^}]*min-width:44px/s, 'narrow desktop keeps the weekly action compact without removing its accessible label');
+  assert.match(css, /body:has\(#savingsView:not\(\[hidden\]\)\) \.assistant-fab \{[^}]*right:8px[^}]*width:44px[^}]*height:44px/s, 'the narrow-desktop FAB stays outside Savings goal controls');
+
+  const allGoalRules = [...css.matchAll(/#savingsView \.goal-bucket-grid\s*\{([^}]*)\}/g)].map(match => match[1]);
+  assert.ok(allGoalRules.length, 'Savings goal-grid rules exist');
+  assert.ok(allGoalRules.every(declarations => !/overflow-y\s*:\s*(?:auto|scroll)/.test(declarations)), 'no cascade layer may restore a nested desktop goal scrollbar');
 
   assert.doesNotMatch(
     desktop,
@@ -103,6 +120,8 @@ test('evaluation cycle 1: phone Savings goals use natural page flow without a ne
   assert.match(grid, /scrollbar-width\s*:\s*none/);
   assert.match(card, /flex-shrink\s*:\s*0/);
   assert.match(card, /padding\s*:\s*8px 9px/);
+  assert.match(css.slice(css.lastIndexOf('@media (max-width:1024px)')), /#savingsView\s*\{[^}]*padding-bottom\s*:\s*40px/, 'mobile Savings reserves a safe zone for the floating assistant');
+  assert.match(css, /@media \(max-width:1024px\) \{[\s\S]*?body:has\(#savingsView:not\(\[hidden\]\)\) \.assistant-fab \{[^}]*position:absolute/, 'touch layouts dock the Savings assistant after the content instead of covering goal actions');
   assert.match(html, /id="goalBucketGrid"[^>]*tabindex="0"[^>]*aria-labelledby="savingsGoalsHeading"/);
 });
 

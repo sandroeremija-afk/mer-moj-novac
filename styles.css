@@ -2360,47 +2360,57 @@ body.tour-active { overflow:hidden; }
     height:auto;
     margin:0;
     overflow:visible;
-    grid-template-columns:minmax(0,1.5fr) minmax(270px,.82fr);
-    gap:12px;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    align-items:stretch;
+    gap:16px;
   }
   #savingsView .savings-hero {
+    grid-column:span 2;
     min-width:0;
     min-height:0;
-    height:auto;
+    height:100%;
     display:flex;
     flex-direction:column;
+    justify-content:space-between;
     overflow:visible;
   }
-  #savingsView .savings-facts { margin-top:auto; }
+  #savingsView .savings-facts { margin-top:0; }
   #savingsView .savings-side-stack {
+    grid-column:span 1;
     min-width:0;
     min-height:0;
-    height:auto;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    gap:16px;
     overflow:visible;
-    grid-template-rows:minmax(0,1fr) auto;
   }
   #savingsView .recommendation-panel {
     min-width:0;
     min-height:0;
     height:auto;
     display:flex;
+    flex:1 1 auto;
     flex-direction:column;
     overflow:visible;
   }
-  #savingsView .weekly-review-card { min-height:82px; height:auto; }
+  #savingsView .weekly-review-card { min-height:82px; height:auto; flex:0 0 auto; }
   #savingsView > .goal-buckets-panel {
     min-width:0;
     min-height:0;
     height:100%;
     margin:0;
-    overflow:hidden;
+    overflow:visible;
   }
   #savingsView .goal-bucket-grid {
     min-width:0;
     min-height:0;
-    overflow:hidden;
+    overflow:visible;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:8px;
     grid-auto-rows:minmax(0,1fr);
-    align-items:stretch;
+    align-items:start;
   }
   #savingsView .goal-bucket-card {
     min-width:0;
@@ -2445,7 +2455,13 @@ body.tour-active { overflow:hidden; }
 }
 
 @media (max-width:1024px) {
-  #savingsView { display:block; height:auto; min-height:0; overflow:visible; }
+  body:has(#savingsView:not([hidden])) { position:relative; }
+  body:has(#savingsView:not([hidden])) .assistant-fab {
+    position:absolute;
+    right:max(12px,env(safe-area-inset-right));
+    bottom:max(12px,env(safe-area-inset-bottom));
+  }
+  #savingsView { display:block; height:auto; min-height:0; overflow:visible; padding-bottom:40px; }
   #savingsView > .savings-layout { height:auto; margin-bottom:12px; overflow:visible; }
   #savingsView .savings-hero,
   #savingsView .savings-side-stack,
@@ -2667,15 +2683,14 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 
 @media (min-width:1025px) {
   #savingsView .goal-bucket-grid {
-    overflow-x:hidden;
-    overflow-y:auto;
-    overscroll-behavior-y:contain;
-    padding-inline-end:6px;
-    grid-auto-rows:max-content;
-    scrollbar-gutter:stable;
-    scrollbar-width:thin;
+    overflow-x:visible;
+    overflow-y:visible;
+    padding-inline-end:0;
+    grid-auto-rows:minmax(0,1fr);
+    scrollbar-gutter:auto;
+    scrollbar-width:none;
   }
-  #savingsView .goal-bucket-card { min-block-size:max-content; block-size:auto; }
+  #savingsView .goal-bucket-card { min-block-size:0; block-size:auto; }
 }
 
 @media (max-width:1440px) and (min-width:769px) {
@@ -2984,19 +2999,44 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 .category-donut strong[data-fit="small"] { font-size:clamp(.5625rem,3cqi,.6875rem); }
 
 @media (min-width:1025px) {
-  #savingsView > .savings-layout { align-items:start; }
-  #savingsView .savings-hero { width:100%; align-self:start; padding:16px 18px; }
+  #savingsView > .savings-layout { align-items:stretch; }
+  #savingsView .savings-hero { width:100%; height:100%; align-self:stretch; justify-content:space-between; padding:16px 18px; }
+  #savingsView .savings-side-stack { height:100%; }
   #savingsView .savings-number { margin-top:12px; }
   #savingsView .savings-number strong { font-size:clamp(1.75rem,2.4vw,2rem); line-height:1; }
   #savingsView .goal-track.tall { margin-top:8px; }
   #savingsView .savings-milestones { margin-top:5px; }
-  #savingsView .savings-facts { gap:10px; margin-top:10px; padding-top:10px; }
+  #savingsView .savings-facts { gap:10px; margin-top:0; padding-top:10px; }
 }
 
 @media (max-width:1200px) {
   .header-bank-button { width:44px; min-width:44px; justify-content:center; padding:0; }
   .header-bank-label,.header-bank-chevron { display:none; }
   .header-bank-button .bank-status-dot { position:absolute; top:5px; right:5px; width:7px; height:7px; }
+}
+
+@media (min-width:1025px) and (max-width:1200px) {
+  body:has(#savingsView:not([hidden])) .assistant-fab {
+    right:8px;
+    bottom:12px;
+    width:44px;
+    height:44px;
+  }
+  #savingsView .weekly-review-card .link-button {
+    width:44px;
+    min-width:44px;
+    justify-content:center;
+    padding:0;
+  }
+  #savingsView .weekly-review-card .link-button [data-i18n="viewPlan"] {
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    clip:rect(0 0 0 0);
+    clip-path:inset(50%);
+    white-space:nowrap;
+  }
 }
 
 @media (max-width:560px) {

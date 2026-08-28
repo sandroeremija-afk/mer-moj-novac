@@ -8,12 +8,10 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
 test('cycle 2: Savings uses the fixed desktop viewport and natural mobile goal flow', () => {
   assert.match(css, /#savingsView \{[^}]*display:flex[^}]*flex-direction:column[^}]*overflow:hidden/s);
-  assert.match(css, /#savingsView > \.goal-buckets-panel \{[^}]*flex:1 1 auto[^}]*overflow:hidden/s);
+  assert.match(css, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView > \.goal-buckets-panel \{[^}]*height:100%[^}]*overflow:visible/s);
   assert.match(css, /#savingsView \.goal-bucket-grid \{[^}]*min-height:0[^}]*flex:1 1 auto/s);
-  const desktopStart = css.indexOf('@media (min-width:1025px)', css.indexOf('/* Savings occupies'));
-  const desktopEnd = css.indexOf('@media (min-width:1025px) and', desktopStart);
-  const desktopSavings = css.slice(desktopStart, desktopEnd);
-  assert.doesNotMatch(desktopSavings, /overflow-y\s*:\s*auto/);
+  const desktopGoalRules = [...css.matchAll(/#savingsView \.goal-bucket-grid\s*\{([^}]*)\}/g)].map(match => match[1]);
+  assert.ok(desktopGoalRules.every(rule => !/overflow-y\s*:\s*(?:auto|scroll)/.test(rule)));
   const phone = css.slice(css.lastIndexOf('@media (max-width:414px)'));
   assert.match(phone, /#savingsView \.goal-bucket-grid \{[^}]*max-height:none[^}]*overflow-y:visible/);
   assert.doesNotMatch(phone, /#savingsView \.goal-bucket-grid \{[^}]*overflow-y:auto/);
