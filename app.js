@@ -74,6 +74,8 @@ Object.assign(translations.hr,{bankAccountSelectionRequired:'Molimo označite ba
 Object.assign(translations.en,{bankAccountSelectionRequired:'Please select a bank account or card before continuing.',unlinkBankTitle:'Disconnect account',unlinkBankQuestion:'Are you sure you want to disconnect this bank or card?',unlinkBankConfirm:'Disconnect',unlinkBankCancel:'Cancel'});
 Object.assign(translations.hr,{markResolved:'Označi kao riješeno',resolveNotificationLabel:'Označi kao riješeno: {title}',notificationResolved:'Obavijest je označena kao riješena.',needsReviewCount:'{count} za pregled',allSavingsDeposits:'Sve uplate',allSavingsDepositsIntro:'Datumi, iznosi, ciljevi i profil svake evidentirane uplate.',unknownSavingsGoal:'Nepoznati cilj'});
 Object.assign(translations.en,{markResolved:'Mark as resolved',resolveNotificationLabel:'Mark as resolved: {title}',notificationResolved:'Notification marked as resolved.',needsReviewCount:'{count} to review',allSavingsDeposits:'All deposits',allSavingsDepositsIntro:'Dates, amounts, goals, and the profile for every recorded deposit.',unknownSavingsGoal:'Unknown goal'});
+Object.assign(translations.hr,{savedInPeriod:'Ušteđeno u razdoblju',savingsHistorySummary:'Sažetak povijesti štednje',monthlyAverage:'Mjesečni prosjek',bestSavingsMonth:'Najbolji mjesec',savingsTrendUp:'više od prošlog mjeseca',savingsTrendDown:'manje od prošlog mjeseca',savingsTrendFlat:'Jednako kao prošli mjesec',savingsPointLabel:'{month}: {amount}'});
+Object.assign(translations.en,{savedInPeriod:'Saved in this period',savingsHistorySummary:'Savings history summary',monthlyAverage:'Monthly average',bestSavingsMonth:'Best month',savingsTrendUp:'more than last month',savingsTrendDown:'less than last month',savingsTrendFlat:'Same as last month',savingsPointLabel:'{month}: {amount}'});
 
 const categoryMeta = {
   food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, healthBeauty:{icon:'N',className:'shopping'}, utilities:{icon:'R',className:'other'}, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
@@ -531,6 +533,41 @@ function savingsFinishDate() {
   return new Intl.DateTimeFormat(locale(), { month:'long', year:'numeric' }).format(finish);
 }
 
+function savingsHistorySeries(values) {
+  const history=(Array.isArray(values)?values:[]).map(value=>Math.max(0,Number(value)||0));
+  const safeHistory=history.length?history:[0];
+  const domain=MerCore.chartDomain(safeHistory,{padding:.08});
+  const baseline=184,plotHeight=160,left=36,right=964;
+  return safeHistory.map((amount,index)=>({
+    amount,
+    x:safeHistory.length===1?500:left+(right-left)*(index/(safeHistory.length-1)),
+    y:baseline-MerCore.scaleChartValue(amount,domain,plotHeight,amount>0?5:0)
+  }));
+}
+
+function smoothSavingsPath(points) {
+  if(!points.length)return '';
+  if(points.length===1)return `M ${points[0].x} ${points[0].y}`;
+  return points.slice(1).reduce((path,point,index)=>{const previous=points[index],mid=(previous.x+point.x)/2;return `${path} C ${mid} ${previous.y}, ${mid} ${point.y}, ${point.x} ${point.y}`;},`M ${points[0].x} ${points[0].y}`);
+}
+
+function renderSavingsHistoryChart() {
+  const history=(state.savingsHistory||[]).map(value=>Math.max(0,Number(value)||0));
+  const values=history.length?history:[0],points=savingsHistorySeries(values),linePath=smoothSavingsPath(points),baseline=184;
+  const endMonth=new Date(`${appReferenceDate.slice(0,7)}-01T12:00:00Z`);
+  const series=points.map((point,index)=>{const date=new Date(endMonth);date.setUTCMonth(date.getUTCMonth()-(points.length-1-index));return {...point,label:new Intl.DateTimeFormat(locale(),{month:'short',timeZone:'UTC'}).format(date)};});
+  const areaPath=`${linePath} L ${points.at(-1).x} ${baseline} L ${points[0].x} ${baseline} Z`;
+  $('#savingsHistorySvg').innerHTML=`<defs><linearGradient id="savingsAreaGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--blue)" stop-opacity=".28"></stop><stop offset="72%" stop-color="var(--green)" stop-opacity=".08"></stop><stop offset="100%" stop-color="var(--green)" stop-opacity="0"></stop></linearGradient></defs><g class="savings-chart-grid" aria-hidden="true"><line x1="28" y1="24" x2="972" y2="24"></line><line x1="28" y1="77" x2="972" y2="77"></line><line x1="28" y1="130" x2="972" y2="130"></line><line x1="28" y1="184" x2="972" y2="184"></line></g><path class="savings-area-fill" d="${areaPath}"></path><path class="savings-area-line" d="${linePath}"></path>`;
+  $('#savingsChartPoints').innerHTML=series.map((point,index)=>{const x=point.x/10,y=point.y/2.2,label=t('savingsPointLabel',{month:point.label,amount:currency(point.amount)});return `<button type="button" class="savings-chart-point ${index===series.length-1?'current':''}" style="--point-x:${x}%;--point-y:${y}%" data-savings-chart-point="${index}" aria-label="${escapeHtml(label)}"><span aria-hidden="true"></span></button>`;}).join('');
+  $('#savingsChartAxis').style.setProperty('--chart-columns',String(series.length));
+  $('#savingsChartAxis').innerHTML=series.map((point,index)=>`<span class="${series.length>8&&index%2===1&&index!==series.length-1?'axis-label-optional':''}">${escapeHtml(point.label)}</span>`).join('');
+  const tooltip=$('#savingsChartTooltip'),hideTooltip=()=>{tooltip.hidden=true;};
+  $$('[data-savings-chart-point]').forEach(button=>{const point=series[Number(button.dataset.savingsChartPoint)],showTooltip=()=>{tooltip.textContent=t('savingsPointLabel',{month:point.label,amount:currency(point.amount)});tooltip.style.setProperty('--tooltip-x',`${point.x/10}%`);tooltip.style.setProperty('--tooltip-y',`${point.y/2.2}%`);tooltip.hidden=false;};button.addEventListener('mouseenter',showTooltip);button.addEventListener('focus',showTooltip);button.addEventListener('click',showTooltip);button.addEventListener('mouseleave',hideTooltip);button.addEventListener('blur',hideTooltip);});
+  $('#contributionChart').onmouseleave=hideTooltip;
+  $('#contributionChart').setAttribute('aria-label',`${t('monthlySavingsChart')}: ${series.map(point=>t('savingsPointLabel',{month:point.label,amount:currency(point.amount,true)})).join(', ')}. ${t('totalSavedPeriod')}: ${currency(values.reduce((sum,value)=>sum+value,0))}`);
+  return series;
+}
+
 function renderSavingsView() {
   const pct = Math.round(MerCore.ratioPercent(state.savingsBalance,state.savingsGoal,100));
   $('#savingsHeroCurrent').textContent = currency(state.savingsBalance, true);
@@ -542,13 +579,14 @@ function renderSavingsView() {
   $('#savingsMonthly').textContent = currency(state.savingsTarget,true);
   $('#savingsFinish').textContent = savingsFinishDate();
   $('#coverageMonths').textContent = t('months',{value:number(state.savingsBalance / Math.max(1,state.bills),1)});
-  const sum = state.savingsHistory.reduce((a,b)=>a+b,0);
+  const history=(state.savingsHistory||[]).map(value=>Math.max(0,Number(value)||0)),sum=history.reduce((a,b)=>a+b,0);
   $('#yearSaved').textContent = currency(sum,true);
   $('#chartTotalSaved').textContent=currency(sum);
-  const savingsDomain=MerCore.chartDomain(state.savingsHistory,{padding:.05});
-  const endMonth=new Date(`${appReferenceDate.slice(0,7)}-01T12:00:00Z`);
-  $('#contributionChart').innerHTML = state.savingsHistory.map((amount,index) => {const point=new Date(endMonth);point.setUTCMonth(point.getUTCMonth()-(state.savingsHistory.length-1-index));const label=new Intl.DateTimeFormat(locale(),{month:'short',timeZone:'UTC'}).format(point);return `<div class="contribution-column ${index===state.savingsHistory.length-1?'current':''}" aria-label="${escapeHtml(label)}: ${currency(amount)}"><b>${currency(amount,true)}</b><span style="height:${MerCore.scaleChartValue(amount,savingsDomain,125,4)}px"></span><small>${escapeHtml(label)}</small></div>`;}).join('');
-  $('#contributionChart').setAttribute('aria-label',`${t('monthlySavingsChart')}: ${state.savingsHistory.map(amount=>currency(amount,true)).join(', ')}. ${t('totalSavedPeriod')}: ${currency(sum)}`);
+  $('#savingsMonthlyAverage').textContent=currency(history.length?sum/history.length:0,true);
+  const series=renderSavingsHistoryChart(),best=series.reduce((winner,point)=>point.amount>winner.amount?point:winner,series[0]);
+  $('#savingsBestMonth').textContent=`${best.label} · ${currency(best.amount,true)}`;
+  const current=history.at(-1)||0,previous=history.at(-2)||0,delta=previous>0?(current-previous)/previous*100:current>0?100:0,rounded=Math.round(Math.abs(delta));
+  const trendBadge=$('#savingsTrendBadge');trendBadge.textContent=`${delta>0?'+':delta<0?'−':''}${rounded}%`;trendBadge.className=`savings-trend-pill ${delta>0?'positive':delta<0?'negative':'neutral'}`;trendBadge.title=delta>0?t('savingsTrendUp'):delta<0?t('savingsTrendDown'):t('savingsTrendFlat');trendBadge.setAttribute('aria-label',`${trendBadge.textContent} · ${trendBadge.title}`);
 }
 
 function renderSavingsEntries() {

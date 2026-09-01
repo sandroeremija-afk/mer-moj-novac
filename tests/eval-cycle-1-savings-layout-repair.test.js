@@ -72,7 +72,7 @@ test('evaluation cycle 1: fixed desktop Savings contains nested grids without cl
   assert.match(goalsGrid, /grid-template-columns\s*:\s*repeat\(auto-fit\s*,\s*minmax\(170px\s*,\s*1fr\)\)/, 'desktop goals fit one adaptive row before creating another');
   assert.doesNotMatch(goalCard, /overflow(?:-y)?\s*:\s*hidden/, 'goal controls must not be hard-clipped');
   assert.match(goalCard, /height\s*:\s*auto/);
-  assert.match(compactView, /grid-template-rows\s*:\s*auto\s+clamp\(236px\s*,\s*31dvh\s*,\s*252px\)\s+minmax\(0\s*,\s*1fr\)/, 'desktop top row is bounded to reclaim the lower goals area');
+  assert.match(compactView, /grid-template-rows\s*:\s*auto\s+clamp\(200px\s*,\s*26dvh\s*,\s*224px\)\s+minmax\(0\s*,\s*1fr\)/, 'desktop top row is bounded to reclaim the lower visualization area');
   assert.match(savingsLayout, /height\s*:\s*100%/);
   assert.match(savingsLayout, /align-items\s*:\s*stretch/, 'both top columns must share an exact bottom edge');
   assert.match(compactHero, /height\s*:\s*100%/);

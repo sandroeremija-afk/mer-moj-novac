@@ -10,7 +10,7 @@
 
   const BREAKPOINTS = Object.freeze({ compact:640, tablet:1024, wide:1600 });
   const chartSelector = [
-    '.line-chart', '.contribution-chart', '.cashflow-chart', '.monthly-bars',
+    '.line-chart', '.contribution-chart', '.savings-area-chart', '.cashflow-chart', '.monthly-bars',
     '.donut-layout', '.category-donut', '.savings-gauge', '.insight-expanded-chart',
     '.expanded-month-chart', '.expanded-donut-layout', '.expanded-savings-layout'
   ].join(',');

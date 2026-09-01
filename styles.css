@@ -3652,3 +3652,209 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 @media (prefers-reduced-motion:reduce) {
   .bank-connect-step { animation:none; }
 }
+
+/* Savings visual system: dense financial context without nested scrolling. */
+#savingsView .savings-history-card {
+  position:relative;
+  isolation:isolate;
+  border-color:color-mix(in srgb,var(--blue) 18%,var(--line));
+  background:
+    radial-gradient(circle at 100% 0,color-mix(in srgb,var(--blue) 9%,transparent),transparent 42%),
+    var(--panel);
+}
+#savingsView .savings-history-heading { align-items:flex-start; gap:12px; }
+#savingsView .savings-history-total { min-width:0; display:grid; justify-items:end; gap:1px; text-align:right; }
+#savingsView .savings-history-total small { color:var(--muted); font-size:.625rem; font-weight:700; line-height:1.2; }
+#savingsView .savings-history-total strong { max-width:100%; font-size:clamp(1rem,1.45vw,1.35rem); line-height:1.05; white-space:nowrap; }
+#savingsView .savings-trend-pill {
+  min-width:42px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:3px 7px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:var(--muted);
+  background:color-mix(in srgb,var(--panel) 88%,var(--canvas));
+  font-size:.625rem;
+  font-weight:800;
+  line-height:1;
+}
+#savingsView .savings-trend-pill.positive { color:var(--dark-green); border-color:color-mix(in srgb,var(--green) 42%,var(--line)); background:color-mix(in srgb,var(--green) 14%,var(--panel)); }
+#savingsView .savings-trend-pill.negative { color:var(--red); border-color:color-mix(in srgb,var(--red) 36%,var(--line)); background:color-mix(in srgb,var(--red) 9%,var(--panel)); }
+#savingsView .savings-chart-kpis { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:8px; }
+#savingsView .savings-chart-kpis > span { min-width:0; display:grid; gap:2px; padding:7px 9px; border:1px solid color-mix(in srgb,var(--line) 84%,transparent); border-radius:9px; background:color-mix(in srgb,var(--canvas) 72%,transparent); }
+#savingsView .savings-chart-kpis small { color:var(--muted); font-size:.625rem; font-weight:650; line-height:1.25; }
+#savingsView .savings-chart-kpis strong { overflow:hidden; color:var(--ink); font-size:.75rem; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+#savingsView .savings-area-chart { position:relative; min-width:0; min-height:126px; flex:1 1 auto; margin-top:6px; overflow:hidden; touch-action:pan-y; }
+#savingsView #savingsHistorySvg { width:100%; height:100%; min-height:126px; display:block; overflow:visible; }
+#savingsView .savings-chart-grid line { stroke:color-mix(in srgb,var(--line) 78%,transparent); stroke-width:1; stroke-dasharray:3 10; vector-effect:non-scaling-stroke; }
+#savingsView .savings-area-fill { fill:url(#savingsAreaGradient); stroke:none; }
+#savingsView .savings-area-line { fill:none; stroke:var(--blue); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; filter:drop-shadow(0 4px 5px color-mix(in srgb,var(--blue) 18%,transparent)); }
+#savingsView .savings-chart-points { position:absolute; inset:0; pointer-events:none; }
+#savingsView .savings-chart-point {
+  position:absolute;
+  left:var(--point-x);
+  top:var(--point-y);
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:transparent;
+  transform:translate(-50%,-50%);
+  cursor:crosshair;
+  pointer-events:auto;
+}
+#savingsView .savings-chart-point > span { width:8px; height:8px; border:2px solid var(--panel); border-radius:50%; background:var(--blue); box-shadow:0 0 0 1px color-mix(in srgb,var(--blue) 75%,transparent); transition:transform .16s ease,box-shadow .16s ease; }
+#savingsView .savings-chart-point.current > span { width:10px; height:10px; background:var(--green); box-shadow:0 0 0 4px color-mix(in srgb,var(--green) 18%,transparent); }
+#savingsView .savings-chart-point:hover > span,
+#savingsView .savings-chart-point:focus-visible > span { transform:scale(1.35); box-shadow:0 0 0 5px color-mix(in srgb,var(--blue) 18%,transparent); }
+#savingsView .savings-chart-point:focus-visible { outline:2px solid var(--blue); outline-offset:1px; }
+#savingsView .savings-chart-axis { position:absolute; inset:auto 0 0; height:26px; display:grid; grid-template-columns:repeat(var(--chart-columns,1),minmax(0,1fr)); align-items:end; padding:0 2.8%; pointer-events:none; }
+#savingsView .savings-chart-axis span { min-width:0; overflow:hidden; color:var(--muted); font-size:clamp(.5rem,.52vw,.625rem); font-weight:650; line-height:1.1; text-align:center; text-overflow:clip; white-space:nowrap; }
+#savingsView .savings-chart-tooltip {
+  position:absolute;
+  z-index:3;
+  left:clamp(68px,var(--tooltip-x),calc(100% - 68px));
+  top:var(--tooltip-y);
+  max-width:136px;
+  padding:6px 8px;
+  border:1px solid color-mix(in srgb,var(--line) 60%,transparent);
+  border-radius:7px;
+  color:#fff;
+  background:#10211d;
+  box-shadow:0 9px 28px rgba(8,34,28,.22);
+  font-size:.625rem;
+  font-weight:700;
+  line-height:1.3;
+  text-align:center;
+  transform:translate(-50%,calc(-100% - 10px));
+  pointer-events:none;
+}
+#savingsView .chart-total-summary { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:5px; padding-top:6px; }
+#savingsView .chart-total-summary span { min-width:0; font-size:.625rem; line-height:1.3; }
+#savingsView .chart-total-summary strong { flex:0 0 auto; font-size:.75rem; }
+#savingsView .goal-progress-ring { position:relative; width:42px; height:42px; flex:0 0 42px; display:grid; place-items:center; border-radius:50%; background:none; }
+#savingsView .goal-progress-ring::before { display:none; }
+#savingsView .goal-progress-ring svg { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+#savingsView .goal-progress-ring circle { fill:none; stroke-width:3; vector-effect:non-scaling-stroke; }
+#savingsView .goal-ring-track { stroke:var(--line); }
+#savingsView .goal-ring-value { stroke:var(--green); stroke-linecap:round; stroke-dasharray:var(--goal-progress) 100; transition:stroke-dasharray .3s ease; }
+#savingsView .goal-progress-ring span { position:relative; z-index:1; inset:auto; color:var(--dark-green); font-size:.5625rem; line-height:1; }
+#savingsView .goal-bucket-title { min-width:0; display:grid; gap:2px; }
+#savingsView .goal-bucket-title strong,
+#savingsView .goal-bucket-title small { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#savingsView .goal-linear-track { height:4px; overflow:hidden; border-radius:999px; background:var(--line); }
+#savingsView .goal-linear-track span { height:100%; display:block; border-radius:inherit; background:linear-gradient(90deg,var(--blue),var(--green)); transition:width .3s ease; }
+
+@media (min-width:1025px) {
+  #savingsView {
+    display:grid;
+    grid-template-columns:minmax(360px,.98fr) minmax(0,1.36fr);
+    grid-template-rows:auto clamp(200px,26dvh,224px) minmax(0,1fr);
+    gap:10px;
+    min-height:0;
+    overflow:hidden;
+  }
+  #savingsView > .page-heading,
+  #savingsView > .savings-layout { grid-column:1 / -1; }
+  #savingsView > .savings-layout { grid-row:2; min-height:0; height:100%; align-items:stretch; gap:12px; }
+  #savingsView .savings-hero { height:100%; align-self:stretch; justify-content:space-between; padding:12px 14px; }
+  #savingsView .savings-side-stack { min-height:0; height:100%; display:flex; flex-direction:column; justify-content:space-between; gap:8px; overflow:visible; }
+  #savingsView .recommendation-panel {
+    min-width:0;
+    min-height:0;
+    display:grid;
+    flex:1 1 auto;
+    grid-template-columns:32px minmax(0,1fr);
+    grid-template-areas:"icon eyebrow" "icon title" "copy copy" "stat stat" "action action";
+    grid-template-rows:auto auto auto auto minmax(36px,1fr);
+    overflow:visible;
+  }
+  #savingsView .goal-track.tall { height:7px; margin-top:6px; }
+  #savingsView .savings-facts { gap:8px; padding-top:7px; }
+  #savingsView .weekly-review-card { min-height:64px; padding:7px 9px; }
+  #savingsView > .savings-history-card { grid-column:1; grid-row:3; min-height:0; height:100%; padding:12px 14px; overflow:hidden; }
+  #savingsView .savings-area-chart,
+  #savingsView #savingsHistorySvg { min-height:112px; }
+  #savingsView > .goal-buckets-panel { grid-column:2; grid-row:3; min-height:0; height:100%; padding:11px 13px; overflow:visible; }
+  #savingsView .goal-buckets-panel .panel-intro { margin:2px 0 7px; font-size:.6875rem; line-height:1.35; }
+  #savingsView .goal-bucket-grid { min-height:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:minmax(0,1fr); gap:8px; overflow:visible; }
+  #savingsView .goal-bucket-card { min-height:0; height:100%; display:flex; flex-direction:column; gap:6px; padding:9px 10px; overflow:hidden; }
+  #savingsView .goal-bucket-head { gap:8px; }
+  #savingsView .goal-bucket-values { margin-top:0; }
+  #savingsView .goal-metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
+  #savingsView .goal-metric-grid > span { padding:5px 6px; }
+  #savingsView .roundup-toggle { margin-top:auto; padding-top:6px; }
+}
+
+@media (min-width:1025px) and (max-height:820px) {
+  #savingsView { grid-template-rows:auto clamp(184px,24dvh,198px) minmax(0,1fr); gap:8px; }
+  #savingsView > .savings-history-card { padding:9px 12px; }
+  #savingsView .savings-chart-kpis { margin-top:5px; }
+  #savingsView .savings-chart-kpis > span { padding:5px 7px; }
+  #savingsView .savings-area-chart,
+  #savingsView #savingsHistorySvg { min-height:94px; }
+  #savingsView .chart-total-summary { margin-top:2px; padding-top:4px; }
+  #savingsView > .goal-buckets-panel { padding:9px 11px; }
+  #savingsView .goal-buckets-panel .panel-heading h2 { font-size:.875rem; }
+  #savingsView .goal-bucket-card { gap:4px; padding:7px 9px; }
+  #savingsView .goal-progress-ring { width:36px; height:36px; flex-basis:36px; }
+  #savingsView .goal-bucket-values strong { font-size:.8125rem; }
+  #savingsView .goal-metric-grid > span { padding:3px 5px; }
+  #savingsView .goal-metric-grid small { font-size:.5rem; }
+  #savingsView .goal-metric-grid strong { font-size:.625rem; }
+  #savingsView .roundup-toggle { padding-top:4px; }
+  #savingsView .roundup-toggle small { font-size:.5rem; line-height:1.2; }
+}
+
+@media (max-width:1024px) {
+  #savingsView { display:block; height:auto; min-height:0; overflow:visible; padding-bottom:40px; }
+  #savingsView > .savings-layout { height:auto; margin-bottom:12px; overflow:visible; }
+  #savingsView .savings-hero,
+  #savingsView .savings-side-stack,
+  #savingsView .recommendation-panel,
+  #savingsView > .goal-buckets-panel { height:auto; min-height:0; overflow:visible; }
+  #savingsView .savings-side-stack { grid-template-rows:auto auto; }
+  #savingsView > .goal-buckets-panel { margin-top:12px; }
+  #savingsView > .savings-history-card { height:auto; margin:0 0 12px; padding:14px; overflow:visible; }
+  #savingsView .savings-area-chart,
+  #savingsView #savingsHistorySvg { min-height:clamp(178px,37vw,232px); }
+  #savingsView .goal-bucket-grid { max-height:none; overflow:visible; overflow-x:visible; overflow-y:visible; grid-auto-rows:auto; }
+  #savingsView .goal-bucket-card { height:auto; overflow:visible; }
+}
+
+@media (max-width:414px) {
+  #savingsView > .goal-buckets-panel { display:block; min-height:0; height:auto; overflow:visible; }
+  #savingsView .goal-bucket-grid { min-height:0; max-height:none; overflow:visible; overflow-x:visible; overflow-y:visible; grid-auto-rows:auto; padding:0 0 calc(4px + env(safe-area-inset-bottom)); touch-action:auto; scrollbar-width:none; }
+  #savingsView .goal-bucket-card { height:auto; flex-shrink:0; padding:8px 9px; overflow:visible; }
+  #savingsView > .savings-history-card { padding:12px; }
+  #savingsView .savings-history-heading { gap:8px; }
+  #savingsView .savings-history-heading h2 { font-size:.9375rem; }
+  #savingsView .savings-history-total small { display:none; }
+  #savingsView .savings-history-total strong { font-size:.9375rem; }
+  #savingsView .savings-chart-kpis { gap:5px; margin-top:7px; }
+  #savingsView .savings-chart-kpis > span { padding:6px 7px; }
+  #savingsView .savings-chart-kpis small { font-size:.5625rem; }
+  #savingsView .savings-chart-kpis strong { font-size:.6875rem; }
+  #savingsView .savings-area-chart,
+  #savingsView #savingsHistorySvg { min-height:188px; }
+  #savingsView .savings-chart-point { width:44px; height:44px; }
+  #savingsView .savings-chart-axis .axis-label-optional { visibility:hidden; }
+  #savingsView .savings-chart-tooltip { max-width:124px; font-size:.5625rem; }
+  #savingsView .chart-total-summary { align-items:flex-end; }
+  #savingsView .chart-total-summary span { max-width:70%; }
+}
+
+[data-theme="dark"] #savingsView .savings-history-card { background:radial-gradient(circle at 100% 0,rgba(30,165,217,.11),transparent 42%),var(--panel); }
+[data-theme="dark"] #savingsView .savings-chart-tooltip { color:#0d1f1a; background:#f3faf7; box-shadow:0 9px 28px rgba(0,0,0,.35); }
+
+@media (prefers-reduced-motion:reduce) {
+  #savingsView .savings-area-line,
+  #savingsView .savings-chart-point > span,
+  #savingsView .goal-ring-value,
+  #savingsView .goal-linear-track span { transition:none; }
+}
