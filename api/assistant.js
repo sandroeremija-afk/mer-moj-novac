@@ -1,7 +1,9 @@
 'use strict';
 
+const { DEFAULT_GEMINI_MODEL, resolveGeminiConfig } = require('./gemini-config.js');
+
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
-const DEFAULT_MODEL = 'gemini-3.7-flash';
+const DEFAULT_MODEL = DEFAULT_GEMINI_MODEL;
 const MAX_BODY_BYTES = 32 * 1024;
 const MAX_MESSAGE_LENGTH = 1000;
 const MAX_HISTORY = 12;
@@ -249,14 +251,13 @@ function createAssistantHandler(options = {}) {
     }
     const locale = body?.locale === 'en' ? 'en' : 'hr';
     const financialContext = sanitizeFinancialContext(body?.financialContext);
-    const apiKey = cleanText(environment?.GEMINI_API_KEY, 512);
-    if (!apiKey || typeof fetchImpl !== 'function') {
+    const geminiConfig = resolveGeminiConfig(environment);
+    if (!geminiConfig.isConfigured || typeof fetchImpl !== 'function') {
       writeJson(response, 503, { error:'AI_UNAVAILABLE', retryable:true }, rateHeaders);
       return;
     }
 
-    const configuredModel = cleanText(environment?.GEMINI_MODEL, 80);
-    const model = /^[a-z0-9._-]+$/i.test(configuredModel) ? configuredModel : DEFAULT_MODEL;
+    const { apiKey, model } = geminiConfig;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -317,4 +318,3 @@ module.exports.sanitizeFinancialContext = sanitizeFinancialContext;
 module.exports.extractGeminiMessage = extractGeminiMessage;
 module.exports.DEFAULT_MODEL = DEFAULT_MODEL;
 module.exports.GEMINI_ENDPOINT = GEMINI_ENDPOINT;
-

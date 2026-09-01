@@ -70,6 +70,8 @@ Object.assign(translations.hr,{activityFilters:'Filtri aktivnosti',filters:'Filt
 Object.assign(translations.en,{activityFilters:'Activity filters',filters:'Filters',dateFrom:'From date',dateTo:'To date',sortTransactions:'Sort transactions',sortNewest:'Newest first',sortOldest:'Oldest first',sortAmountHigh:'Amount: high to low',sortAmountLow:'Amount: low to high',clearFilters:'Clear filters'});
 Object.assign(translations.hr,{allTime:'Sve ukupno',appLanguage:'Jezik aplikacije',appTheme:'Tema aplikacije',lightTheme:'Svijetla',darkTheme:'Tamna',editLayout:'Uredi',themeSettingHint:'Prilagodite izgled aplikacije uvjetima rada.',dashboardLayout:'Raspored nadzorne ploče',layoutSettingHint:'Promijenite redoslijed kartica povlačenjem.',openBanking:'OPEN BANKING',syncStatus:'Status sinkronizacije',reviewImportedTransactions:'Pregledajte uvezene transakcije bez potvrđene kategorije.',budgetDataActions:'Uvoz / izvoz budžeta',budgetDataOverline:'PODACI BUDŽETA',budgetDataIntro:'Uvezite promet za kategorizaciju ili preuzmite mjesečni plan grupiran po kategorijama.',budgetImportHint:'Pregledajte CSV, Excel ili CAMT.053 zapise prije potvrde.',budgetExportHint:'Preuzmite limite, potrošnju i iskorištenost po kategorijama.',importBankStatement:'Uvezi bankovni izvod',exportBudgetPlan:'Izvezi plan budžeta',exportInsightsReport:'Izvezi izvješće',goToSavings:'Idi na Štednju',showAllTransactions:'Prikaži sve transakcije'});
 Object.assign(translations.en,{appLanguage:'App language',appTheme:'App theme',lightTheme:'Light',darkTheme:'Dark',editLayout:'Edit',themeSettingHint:'Adapt the interface to your working environment.',dashboardLayout:'Dashboard layout',layoutSettingHint:'Change card order with drag and drop.',openBanking:'OPEN BANKING',syncStatus:'Sync status',reviewImportedTransactions:'Review imported transactions without a confirmed category.',budgetDataActions:'Import / export budget',budgetDataOverline:'BUDGET DATA',budgetDataIntro:'Import activity for categorization or download the monthly plan grouped by category.',budgetImportHint:'Review CSV, Excel, or CAMT.053 records before confirming.',budgetExportHint:'Download category limits, spending, and usage.',importBankStatement:'Import bank statement',exportBudgetPlan:'Export budget plan',exportInsightsReport:'Export report',goToSavings:'Go to Savings',showAllTransactions:'Show all transactions'});
+Object.assign(translations.hr,{bankAccountSelectionRequired:'Molimo označite banku ili karticu prije nastavka.',unlinkBankTitle:'Prekid veze',unlinkBankQuestion:'Jeste li sigurni da želite prekinuti vezu s ovom bankom/karticom?',unlinkBankConfirm:'Prekini vezu',unlinkBankCancel:'Odustani'});
+Object.assign(translations.en,{bankAccountSelectionRequired:'Please select a bank account or card before continuing.',unlinkBankTitle:'Disconnect account',unlinkBankQuestion:'Are you sure you want to disconnect this bank or card?',unlinkBankConfirm:'Disconnect',unlinkBankCancel:'Cancel'});
 
 const categoryMeta = {
   food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, healthBeauty:{icon:'N',className:'shopping'}, utilities:{icon:'R',className:'other'}, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
@@ -217,6 +219,7 @@ let activeInsightDetail = null;
 let activityReviewOnly = false;
 let selectedBankProviderId = null;
 let bankConnectionStep = 'overview';
+let pendingBankUnlinkId = null;
 let bankSyncInProgress = false;
 let returnToBudgetManager = false;
 
@@ -552,10 +555,23 @@ function renderProviderAccounts() {
   const provider=MerBankProviders.getProvider(selectedBankProviderId);if(!provider)return;
   const alreadyConnected=new Set(appState.bankConnections.filter(connection=>connection.providerId===provider.id).map(connection=>connection.accountId));
   $('#providerAccountList').innerHTML=provider.accounts.map(account=>`<label class="bank-account-choice"><input type="checkbox" name="bankAccount" value="${account.id}" ${alreadyConnected.has(account.id)?'disabled':''}><span><strong>${escapeHtml(account.name)} ${escapeHtml(account.mask)}</strong><small>${escapeHtml(currentLang==='hr'?account.kind:account.kindEn)}${alreadyConnected.has(account.id)?` · ${t('connectedAccount')}`:''}</small></span></label>`).join('');
+  setBankAccountSelectionError(false);
+}
+
+function setBankAccountSelectionError(visible) {
+  const picker=$('#bankAccountPicker'),error=$('#bankAccountSelectionError');
+  if(!picker||!error)return;
+  picker.classList.toggle('has-error',visible);
+  error.hidden=!visible;
+  $$('input[name="bankAccount"]',picker).forEach(input=>{
+    if(visible){input.setAttribute('aria-invalid','true');input.setAttribute('aria-describedby','bankAccountSelectionError');}
+    else{input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');}
+  });
 }
 
 function setBankConnectionStep(step,{focus=false}={}) {
   const next=['overview','institution','accounts'].includes(step)?step:'overview';
+  if(next!=='accounts')setBankAccountSelectionError(false);
   bankConnectionStep=next;
   const modal=$('#connectedBanksModal'),overview=$('#bankConnectionsView'),form=$('#bankConnectForm');
   const connecting=next!=='overview';
@@ -584,6 +600,7 @@ function resetBankConnectionFlow({focus=false}={}) {
   selectedBankProviderId=null;
   $('#bankConnectForm').reset();
   $('#providerAccountList').replaceChildren();
+  setBankAccountSelectionError(false);
   $('#bankConnectionAlias').value='';
   $('#bankApiToken').value='';
   setBankConnectionStep('overview',{focus});
@@ -706,14 +723,32 @@ async function mapBankConnection(connectionId,profileId) {
 }
 
 function requestUnlinkBank(button) {
-  if(button.dataset.confirmUnlink!=='true'){button.dataset.confirmUnlink='true';button.dataset.bankTooltipKey='confirmUnlink';button.classList.add('confirming');button.setAttribute('aria-label',t('confirmUnlink'));button.setAttribute('title',t('confirmUnlink'));button.innerHTML='<svg aria-hidden="true"><use href="#icon-check"></use></svg>';setTimeout(()=>{if(button.isConnected){button.dataset.confirmUnlink='false';button.dataset.bankTooltipKey='unlinkBankTooltip';button.classList.remove('confirming');button.setAttribute('aria-label',t('unlinkBankTooltip'));button.setAttribute('title',t('unlinkBankTooltip'));button.innerHTML='<svg aria-hidden="true"><use href="#icon-unlink"></use></svg>'; }},3500);return;}
-  appState.bankConnections=appState.bankConnections.filter(connection=>connection.id!==button.dataset.unlinkBank);save('bank-unlink');renderBankSettings();showToast(t('connectionUnlinked'));
+  const connection=appState.bankConnections.find(item=>item.id===button?.dataset.unlinkBank);if(!connection)return;
+  pendingBankUnlinkId=connection.id;
+  hideBankActionTooltip();
+  const modal=$('#unlinkBankModal');
+  modalReturnFocus.set(modal,button);
+  if(!modal.open){modal.showModal();document.body.classList.add('modal-active');}
+  requestAnimationFrame(()=>$('#confirmBankUnlink')?.focus({preventScroll:true}));
 }
 
-async function connectSelectedBankAccounts(event) {
-  event.preventDefault();
+function confirmBankUnlink() {
+  const connectionId=pendingBankUnlinkId;if(!connectionId)return;
+  const before=appState.bankConnections.length;
+  appState.bankConnections=appState.bankConnections.filter(connection=>connection.id!==connectionId);
+  pendingBankUnlinkId=null;
+  if(appState.bankConnections.length===before){closeModal($('#unlinkBankModal'));return;}
+  save('bank-unlink');
+  renderBankSettings();
+  modalReturnFocus.set($('#unlinkBankModal'),$('#startBankConnection'));
+  closeModal($('#unlinkBankModal'));
+  showToast(t('connectionUnlinked'));
+}
+
+async function connectSelectedBankAccounts() {
   if(!selectedBankProviderId){setBankConnectionStep('institution',{focus:true});showToast(t('selectInstitution'));return;}
-  const selected=$$('input[name="bankAccount"]:checked',$('#bankConnectForm')).map(input=>input.value);if(!selected.length){showToast(t('selectAccount'));return;}
+  const selected=$$('input[name="bankAccount"]:checked',$('#bankConnectForm')).map(input=>input.value);if(!selected.length){setBankAccountSelectionError(true);$('input[name="bankAccount"]:not([disabled])',$('#bankAccountStep'))?.focus({preventScroll:true});return;}
+  setBankAccountSelectionError(false);
   const profileId=$('#bankProfileSelect').value==='business'?'business':'personal',alias=$('#bankConnectionAlias').value.trim();
   const connections=selected.map((accountId,index)=>{const connection=MerBankProviders.createConnection(selectedBankProviderId,accountId,profileId,Date.now()+index);if(alias)connection.connectionAlias=selected.length>1?`${alias} ${index+1}`:alias;return connection;});
   $('#bankApiToken').value='';
@@ -1051,7 +1086,8 @@ function closeModal(modal) {
   if(modal?.open)modal.close();
   hideBankActionTooltip();
   syncModalLayer();
-  const returnTarget=modal&&modalReturnFocus.get(modal);if(returnTarget?.isConnected&&!$('.modal[open]'))requestAnimationFrame(()=>returnTarget.focus({preventScroll:true}));
+  const returnTarget=modal&&modalReturnFocus.get(modal),openDialog=$('.modal[open]');
+  if(returnTarget?.isConnected&&(!openDialog||openDialog.contains(returnTarget)))requestAnimationFrame(()=>returnTarget.focus({preventScroll:true}));
 }
 
 const moduleTitleKeys = {overview:'navOverview',budgets:'navBudgets',savings:'navSavings',activity:'navActivity',insights:'navInsights'};
@@ -1280,8 +1316,11 @@ $('#manageBanks').addEventListener('click',openBankSettings);
 $('#startBankConnection').addEventListener('click',startBankConnection);
 $('#cancelBankConnection').addEventListener('click',()=>resetBankConnectionFlow({focus:true}));
 $('#bankConnectionBack').addEventListener('click',()=>setBankConnectionStep('institution',{focus:true}));
-$('#bankConnectForm').addEventListener('submit',event=>runAsyncAction(()=>connectSelectedBankAccounts(event)));
+$('#bankConnectForm').addEventListener('change',event=>{if(event.target.matches('input[name="bankAccount"]')&&event.target.checked)setBankAccountSelectionError(false);});
+$('#bankConnectForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(connectSelectedBankAccounts);});
 $('#connectedBanksModal').addEventListener('close',()=>{hideBankActionTooltip();resetBankConnectionFlow();});
+$('#confirmBankUnlink').addEventListener('click',confirmBankUnlink);
+$('#unlinkBankModal').addEventListener('close',()=>{pendingBankUnlinkId=null;});
 $('#headerBankButton').addEventListener('click',openBankSettings);
 $('#syncNow').addEventListener('click',()=>{closeCardMenus();runAsyncAction(()=>syncActiveBankConnections());});
 $('#uncategorizedBadge').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
@@ -1321,7 +1360,7 @@ document.addEventListener('click',event=>{
   if(target==='activity')renderActivity();
 });
 document.addEventListener('click',event=>{if(!event.target.closest('.sidebar-bottom'))toggleAccountMenu(false);if(!event.target.closest('.notification-wrap'))closeNotifications();if(!event.target.closest('.card-action-wrap'))closeCardMenus();if(!event.target.closest('.activity-toolbar'))setActivityFiltersOpen(false);});
-document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const modal=$('.modal[open]');if(modal){event.preventDefault();closeModal(modal);return;}if(!$('#activityFiltersPanel').hidden){event.preventDefault();setActivityFiltersOpen(false);$('#activityFiltersToggle').focus({preventScroll:true});return;}if(!$('#notificationCenter').hidden){event.preventDefault();closeNotifications(true);return;}if(!$('#accountMenu').hidden){event.preventDefault();toggleAccountMenu(false);$('#openSettings').focus({preventScroll:true});return;}closeCardMenus();});
+document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const modal=$$('.modal[open]').at(-1);if(modal){event.preventDefault();closeModal(modal);return;}if(!$('#activityFiltersPanel').hidden){event.preventDefault();setActivityFiltersOpen(false);$('#activityFiltersToggle').focus({preventScroll:true});return;}if(!$('#notificationCenter').hidden){event.preventDefault();closeNotifications(true);return;}if(!$('#accountMenu').hidden){event.preventDefault();toggleAccountMenu(false);$('#openSettings').focus({preventScroll:true});return;}closeCardMenus();});
 $$('.nav-item').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
 $$('[data-go-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.goView)));
 $('[data-home]').addEventListener('click',event=>{event.preventDefault();showView('overview');});

@@ -13,7 +13,7 @@ npm run check
 
 `npm run check` performs the source/security preflight, runs every logic and UI contract evaluation, and creates the minified `dist/` output. For local UI work, serve the repository root with any static server and open `index.html`. App data is saved locally in the browser and Personal/Business profiles are isolated.
 
-The optional Gemini-backed assistant runs through the server-only Vercel Function at `/api/assistant`. Add `GEMINI_API_KEY` to `.env.local` for local use, or pull the linked Vercel development environment, then run `vercel dev`. A missing key or unavailable provider never exposes an error to the conversation: both assistant surfaces fall back to deterministic local guidance.
+The optional Gemini-backed assistant runs through the server-only Vercel Function at `/api/assistant`. Replace the placeholder value in the project-root `.env.local` with a real `GEMINI_API_KEY` for local use, or pull the linked Vercel development environment, then run `vercel dev`. This CommonJS project intentionally does not use a browser-visible `VITE_` or `NEXT_PUBLIC_` secret. A missing key, the documented placeholder, or an unavailable provider never exposes an error to the conversation: both assistant surfaces fall back to deterministic local guidance.
 
 ## Included
 
@@ -67,7 +67,7 @@ The demo never asks for or stores real banking credentials. A production Open Ba
 
 ## AI assistant architecture
 
-`assistant-core.js` is the shared client for the Help panel and floating chat widget. It limits history, sends only an allowlisted aggregate summary for the active profile, aborts stale requests during profile switches, and provides deterministic Croatian/English guidance when the remote service is unavailable. `api/assistant.js` independently validates and sanitizes the request before calling Google Gemini's Interactions API with `store: false`. The API key remains in the server-only `GEMINI_API_KEY` environment variable and is never written into the browser bundle, URL, logs, or response.
+`assistant-core.js` is the shared client for the Help panel and floating chat widget. It limits history, sends only an allowlisted aggregate summary for the active profile, aborts stale requests during profile switches, and provides deterministic Croatian/English guidance when the remote service is unavailable. `api/assistant.js` independently validates and sanitizes the request before calling Google Gemini's Interactions API with `store: false`. `api/gemini-config.js` resolves the server-only `GEMINI_API_KEY`, accepts `GOOGLE_GENERATIVE_AI_API_KEY` only as a compatibility fallback, validates the optional model name, and treats the sample placeholder as unconfigured. The key is never written into the browser bundle, URL, logs, or response.
 
 Set secrets through Vercel project environment variables for Production, Preview, and Development as required. Never add a populated `.env.local` file to Git; local environment variants are ignored and `.env.example` documents only the required names.
 

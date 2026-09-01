@@ -230,7 +230,8 @@
         <section class="bank-connect-step" id="bankInstitutionStep" data-bank-step="institution"><p class="bank-step-copy" data-i18n="institutionStepHint">Odaberite banku ili kartični servis koji želite povezati.</p><div class="provider-grid" id="providerGrid"></div></section>
         <section class="bank-connect-step" id="bankAccountStep" data-bank-step="accounts" hidden>
           <button type="button" class="bank-wizard-back" id="bankConnectionBack"><svg aria-hidden="true"><use href="#icon-left"></use></svg><span data-i18n="backToInstitutions">Natrag na institucije</span></button>
-          <fieldset class="bank-account-picker" id="bankAccountPicker"><legend data-i18n="chooseAccounts">Odaberite račune ili kartice</legend><div id="providerAccountList"></div></fieldset>
+          <fieldset class="bank-account-picker" id="bankAccountPicker" aria-describedby="bankAccountSelectionError"><legend data-i18n="chooseAccounts">Odaberite račune ili kartice</legend><div id="providerAccountList"></div></fieldset>
+          <p class="bank-account-selection-error" id="bankAccountSelectionError" role="alert" aria-live="polite" data-i18n="bankAccountSelectionRequired" hidden>Molimo označite banku ili karticu prije nastavka.</p>
           <div class="bank-credentials-grid"><label><span data-i18n="connectionAlias">Naziv veze</span><input id="bankConnectionAlias" type="text" maxlength="40" autocomplete="off" placeholder="npr. Glavni račun" data-i18n-placeholder="connectionAliasPlaceholder"></label><label><span data-i18n="apiAccessToken">API pristupni token</span><input id="bankApiToken" type="password" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Demo token (neobavezno)" data-i18n-placeholder="apiTokenPlaceholder"></label></div>
           <label id="bankProfileLabel"><span data-i18n="assignProfile">Dodijeli profilu</span><select id="bankProfileSelect"><option value="personal" data-i18n="personalAccount">Osobni račun</option><option value="business" data-i18n="businessAccount">Poslovni račun</option></select></label>
           <p class="consent-copy" id="bankConsentCopy"><svg aria-hidden="true"><use href="#icon-lock"></use></svg><span data-i18n="demoConsentExtended">Demo token koristi se samo tijekom povezivanja i nikada se ne sprema. Bankovne lozinke nisu potrebne.</span></p>
@@ -238,6 +239,17 @@
         </section>
       </form>
       <div class="bank-action-tooltip" id="bankActionTooltip" role="tooltip" hidden></div>
+    </div>
+  </dialog>
+
+  <dialog class="modal unlink-bank-modal" id="unlinkBankModal" role="alertdialog" aria-labelledby="unlinkBankModalTitle" aria-describedby="unlinkBankModalQuestion">
+    <button type="button" class="modal-close" data-close-modal aria-label="Zatvori" data-i18n-aria="close"><svg aria-hidden="true"><use href="#icon-x"></use></svg></button>
+    <p class="overline" data-i18n="openBanking">OPEN BANKING</p>
+    <h2 id="unlinkBankModalTitle" data-i18n="unlinkBankTitle">Prekid veze</h2>
+    <p class="modal-intro" id="unlinkBankModalQuestion" data-i18n="unlinkBankQuestion">Jeste li sigurni da želite prekinuti vezu s ovom bankom/karticom?</p>
+    <div class="modal-actions">
+      <button type="button" class="secondary-button" data-close-modal data-i18n="unlinkBankCancel">Odustani</button>
+      <button type="button" class="destructive-button" id="confirmBankUnlink" data-i18n="unlinkBankConfirm">Prekini vezu</button>
     </div>
   </dialog>
 
