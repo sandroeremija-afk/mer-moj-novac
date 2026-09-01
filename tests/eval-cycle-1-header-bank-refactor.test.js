@@ -11,9 +11,9 @@ const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 
 test('evaluation cycle 1: dashboard greeting and streamlined global header order are deterministic', () => {
   assert.match(app, /dashboardGreeting:'Dobro jutro, Mer'/);
-  assert.match(html, /id="accountName"[^>]*data-i18n="profileBrandName">Moj eRačun/);
-  assert.match(html, /id="accountLabel"[^>]*data-i18n="profileBrandOrganization">Elektronički računi d\.o\.o\./);
-  assert.match(app, /\$\('#accountAvatar'\)\.textContent='ME';[\s\S]*?\$\('#accountName'\)\.textContent=t\('profileBrandName'\);[\s\S]*?\$\('#accountLabel'\)\.textContent=t\('profileBrandOrganization'\)/);
+  assert.match(html, /id="accountName">Moj eRačun/);
+  assert.match(html, /id="accountLabel"[^>]*data-i18n="personalAccount">Osobni račun/);
+  assert.match(app, /\$\('#accountAvatar'\)\.textContent=state\.initials;[\s\S]*?\$\('#accountName'\)\.textContent=state\.accountName;[\s\S]*?\$\('#accountLabel'\)\.textContent=t\(state\.accountLabel\)/);
   assert.match(app, /title\.textContent=t\('dashboardGreeting'\)/);
   const header = html.slice(html.indexOf('<header class="topbar">'), html.indexOf('</header>'));
   const positions = ['systemDate','notificationButton','headerBankButton'].map(id => header.indexOf(`id="${id}"`));

@@ -93,7 +93,7 @@ const defaultIncomeCategories = [
 ];
 
 const personalDefaults = {
-  accountName:'Alex Morgan', accountLabel:'personalAccount', initials:'AM', income:4300, bills:1180, savingsTarget:620, savingsBalance:6240, savingsGoal:10000, guard:0.10, spent:1574.25, availableBalance:3840.60,
+  accountName:'Moj eRačun', accountLabel:'personalAccount', initials:'ME', income:4300, bills:1180, savingsTarget:620, savingsBalance:6240, savingsGoal:10000, guard:0.10, spent:1574.25, availableBalance:3840.60,
   categories:[{id:'food',spent:428.10,limit:520},{id:'transport',spent:164.20,limit:260},{id:'shopping',spent:354.40,limit:370},{id:'healthBeauty',spent:27.60,limit:80},{id:'entertainment',spent:145.49,limit:180},{id:'utilities',spent:454.46,limit:470},{id:'other',spent:0,limit:190}],
   incomeCategories:structuredClone(defaultIncomeCategories),
   transactions:[
@@ -110,7 +110,7 @@ const personalDefaults = {
 };
 
 const businessDefaults = {
-  accountName:'Morgan Studio', accountLabel:'businessAccount', initials:'MS', income:8200, bills:3150, savingsTarget:1200, savingsBalance:12800, savingsGoal:25000, guard:0.15, spent:2460.70, availableBalance:9150.30,
+  accountName:'Elektronički računi d.o.o.', accountLabel:'businessAccount', initials:'ER', income:8200, bills:3150, savingsTarget:1200, savingsBalance:12800, savingsGoal:25000, guard:0.15, spent:2460.70, availableBalance:9150.30,
   categories:[{id:'software',name:'Softver',icon:'S',spent:620.40,limit:900,isCustom:true},{id:'travel',name:'Putovanja',icon:'P',spent:780.30,limit:1100,isCustom:true},{id:'marketing',name:'Marketing',icon:'M',spent:540,limit:850,isCustom:true},{id:'office',name:'Ured',icon:'U',spent:520,limit:700,isCustom:true}],
   incomeCategories:structuredClone(defaultIncomeCategories),
   transactions:[{id:'bi1',type:'income',name:'Klijentski računi',amount:8200,category:'freelance',date:'2026-08-03T09:00:00'},{id:'b1',type:'expense',name:'Adobe',amount:72.50,category:'software',date:'2026-08-20T08:30:00'},{id:'b2',type:'expense',name:'Google Ads',amount:240,category:'marketing',date:'2026-08-19T12:10:00'},{id:'b3',type:'expense',name:'Croatia Airlines',amount:310.30,category:'travel',date:'2026-08-18T10:20:00'},{id:'be-rest',type:'expense',name:'Ostali poslovni troškovi',amount:1837.90,category:'office',date:'2026-08-10T12:00:00'},{id:'bi-jul',type:'income',name:'Klijentski računi',amount:7900,category:'freelance',date:'2026-07-03T09:00:00'},{id:'be-jul',type:'expense',name:'Poslovni troškovi',amount:2710,category:'office',date:'2026-07-15T12:00:00'}],
@@ -229,9 +229,9 @@ const safeFinite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value
 function normalizeProfile(profile,fallbackProfile=personalDefaults) {
   const chosenFallback=fallbackProfile&&typeof fallbackProfile==='object'&&Array.isArray(fallbackProfile.categories)?fallbackProfile:(profile?.accountLabel==='businessAccount'?businessDefaults:personalDefaults);
   const fallback=structuredClone(chosenFallback);
-  profile.accountName=String(profile.accountName||fallback.accountName).trim().slice(0,70)||fallback.accountName;
-  profile.accountLabel=profile.accountLabel==='businessAccount'?'businessAccount':'personalAccount';
-  profile.initials=String(profile.initials||fallback.initials).trim().slice(0,3).toUpperCase()||fallback.initials;
+  profile.accountLabel=fallback.accountLabel;
+  profile.accountName=fallback.accountName;
+  profile.initials=fallback.initials;
   profile.income=Math.max(0,safeFinite(profile.income,fallback.income));
   profile.bills=Math.max(0,safeFinite(profile.bills,fallback.bills));
   profile.savingsTarget=Math.max(0,safeFinite(profile.savingsTarget,fallback.savingsTarget));
@@ -351,10 +351,19 @@ function applyTheme() {
 }
 
 function renderAccountContext() {
-  $('#accountAvatar').textContent='ME';
-  $('#accountName').textContent=t('profileBrandName');
-  $('#accountLabel').textContent=t('profileBrandOrganization');
-  $$('[data-account]').forEach(button=>button.classList.toggle('active',button.dataset.account===appState.activeAccount));
+  $('#accountAvatar').textContent=state.initials;
+  $('#accountName').textContent=state.accountName;
+  $('#accountLabel').textContent=t(state.accountLabel);
+  $$('[data-account]').forEach(button=>{
+    const profile=appState.accounts[button.dataset.account];
+    if(!profile)return;
+    const active=button.dataset.account===appState.activeAccount;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-pressed',String(active));
+    button.querySelector('.avatar').textContent=profile.initials;
+    button.querySelector('strong').textContent=profile.accountName;
+    button.querySelector('small').textContent=t(profile.accountLabel);
+  });
   renderModuleTitle();
 }
 
