@@ -3968,3 +3968,66 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 [data-theme="dark"] #savingsView .savings-insight-card {
   background:radial-gradient(circle at 100% 0,rgba(132,190,78,.13),transparent 48%),linear-gradient(145deg,#202518,var(--panel));
 }
+
+/* Savings strategy overview and the export-only budget action stay compact at every viewport. */
+.budget-data-choice-grid.budget-export-only { grid-template-columns:minmax(0,1fr); }
+.savings-strategy-modal { width:min(820px,calc(100vw - 32px)); }
+.savings-strategy-summary {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:start;
+  gap:14px;
+  padding:16px;
+  border:1px solid color-mix(in srgb,var(--green) 24%,var(--line));
+  border-radius:16px;
+  background:color-mix(in srgb,var(--green) 7%,var(--panel));
+}
+.savings-strategy-summary > div { display:grid; gap:4px; min-width:0; }
+.savings-strategy-summary small,
+.savings-strategy-grid small { color:var(--muted); font-size:.75rem; font-weight:700; letter-spacing:.02em; }
+.savings-strategy-summary strong { font-size:clamp(1.45rem,3vw,2rem); line-height:1.1; }
+.savings-strategy-summary p,
+.savings-strategy-grid p { margin:0; color:var(--muted); font-size:.8125rem; line-height:1.5; }
+.savings-strategy-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-top:12px;
+}
+.savings-strategy-grid article {
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--panel);
+}
+.savings-strategy-grid strong { font-size:1.05rem; line-height:1.25; overflow-wrap:anywhere; }
+.savings-strategy-modal .modal-actions { margin-top:16px; }
+
+/* Compact shared workspace-header rhythm without changing the fixed top bar. */
+@media (min-width:1025px) {
+  .page { padding-top:clamp(14px,2dvh,20px); }
+  .actions-only-heading { margin-bottom:10px; }
+  #savingsView > .actions-only-heading { margin-bottom:0; }
+}
+
+@media (max-width:1024px) {
+  .page { padding-top:clamp(12px,2.4vw,18px); }
+  .actions-only-heading { margin-bottom:10px; }
+}
+
+@media (max-width:640px) {
+  .savings-strategy-modal[open] {
+    width:min(100%,calc(100vw - 20px));
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+  }
+  .savings-strategy-grid { grid-template-columns:1fr; }
+  .savings-strategy-summary,
+  .savings-strategy-grid article { padding:12px; }
+}

@@ -39,7 +39,8 @@ test('evaluation cycle 1: Savings preserves a predictable hero, unified recommen
   assert.equal((savings.match(/\bsavings-insight-card\b/g) || []).length, 1, 'Savings owns exactly one unified recommendation card');
   assert.match(unified, /id="savingsRecommendationCard"/);
   assert.ok(goals > recommendation, 'goal targets remain a separate lower panel');
-  assert.match(unified, /recommendation-header[\s\S]*?<h2[^>]*data-i18n="merRecommendation"[\s\S]*?class="status-pill recommendation-badge"[^>]*data-i18n="healthyReserve"[\s\S]*?recommendation-stat[\s\S]*?id="coverageMonths"[\s\S]*?recommendation-weekly[\s\S]*?data-i18n="onTrackSave"[\s\S]*?id="tipSavings"[\s\S]*?data-open-assessment[\s\S]*?data-i18n="reviewStrategy"/);
+  assert.match(unified, /recommendation-header[\s\S]*?<h2[^>]*data-i18n="merRecommendation"[\s\S]*?class="status-pill recommendation-badge"[^>]*data-i18n="healthyReserve"[\s\S]*?recommendation-stat[\s\S]*?id="coverageMonths"[\s\S]*?recommendation-weekly[\s\S]*?data-i18n="onTrackSave"[\s\S]*?id="tipSavings"[\s\S]*?data-open-savings-strategy[\s\S]*?data-i18n="reviewStrategy"/);
+  assert.doesNotMatch(unified, /data-open-assessment/);
   assert.doesNotMatch(savings, /\bsavings-side-stack\b|\bweekly-review-card\b|id="openPlan"/);
   assert.match(savings, /goal-buckets-panel[\s\S]*?id="goalBucketGrid"/);
 });

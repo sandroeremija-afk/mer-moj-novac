@@ -56,8 +56,9 @@ test('cycle 2: data actions are contextual to Budget, Activity and Insights', ()
   const insights = viewHeading('insightsView');
   assert.match(budgets, /data-open-detail="budgetDataModal"/);
   assert.match(budgets, /id="budgetDataModal"/);
-  assert.match(budgets, /data-open-global-import/);
+  assert.doesNotMatch(budgets, /data-open-global-import/);
   assert.match(budgets, /data-export-budget/);
+  assert.doesNotMatch(budgets.slice(0, budgets.indexOf('<dialog')), /data-open-assessment/);
   assert.match(activity, /class="data-action-pair"/);
   assert.match(activity, /data-open-global-import/);
   assert.match(activity, /data-export-active/);

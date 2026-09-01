@@ -216,19 +216,21 @@
   }
 
   function exportInsightsReportCsv() {
-    const totals=MerCore.transactionTotals(state.transactions,insightsTimeframe,appReferenceDate);
-    const byCategory=MerCore.categoryExpenseTotals(state.transactions,insightsTimeframe,appReferenceDate);
-    const filtered=MerCore.filterTransactions(state.transactions,insightsTimeframe,appReferenceDate).filter(tx=>tx&&Number.isFinite(Number(tx.amount)));
-    const hr=currentLang==='hr',label=hr?{metric:'Pokazatelj',value:'Vrijednost',category:'Kategorija',amount:'Trošak',share:'Udio troškova (%)',income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto ukupno',rate:'Stopa štednje (%)'}:{metric:'Metric',value:'Value',category:'Category',amount:'Expense',share:'Expense share (%)',income:'Total income',expenses:'Total expenses',net:'Net total',rate:'Savings rate (%)'};
+    const report=MerCore.buildInsightsReport(state.transactions,insightsTimeframe,appReferenceDate);
+    const totals=report.totals;
+    const hr=currentLang==='hr',label=hr?{metric:'Pokazatelj',value:'Vrijednost',category:'Kategorija',amount:'Trošak',share:'Udio troškova (%)',income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto ukupno',rate:'Stopa štednje (%)',breakdown:'Raščlamba razdoblja',period:'Razdoblje',count:'Broj transakcija'}:{metric:'Metric',value:'Value',category:'Category',amount:'Expense',share:'Expense share (%)',income:'Total income',expenses:'Total expenses',net:'Net total',rate:'Savings rate (%)',breakdown:'Period breakdown',period:'Period',count:'Transaction count'};
     const savingsRate=totals.income>0?(totals.net/totals.income)*100:null;
     const timeframeLabel=t({daily:'daily',monthly:'monthly',ytd:'yearToDate',all:'allTime'}[insightsTimeframe]||'monthly');
+    const reportKind=hr
+      ? {daily:'Satna raščlamba dana',monthly:'Dnevni mjesečni pregled',ytd:'Mjesečni godišnji pregled',all:'Povijesni sažetak'}[report.timeframe]
+      : {daily:'Hourly daily breakdown',monthly:'Daily monthly report',ytd:'Monthly annual report',all:'Historical summary'}[report.timeframe];
     const rows=[
-      [hr?'Izvješće':'Report',hr?'Snimka analitike':'Analytics snapshot'],
+      [hr?'Izvješće':'Report',reportKind],
       [hr?'Profil':'Profile',safeCsvText(state.accountName)],
       [hr?'Razdoblje':'Timeframe',timeframeLabel],
       [hr?'Datum izvješća':'Report date',appReferenceDate],
       [hr?'Valuta':'Currency',appState.settings.currency],
-      [hr?'Broj transakcija':'Transaction count',String(filtered.length)],
+      [label.count,String(report.transactionCount)],
       [],
       [label.metric,label.value],
       [label.income,Number(totals.income||0).toFixed(2)],
@@ -236,10 +238,13 @@
       [label.net,Number(totals.net||0).toFixed(2)],
       [label.rate,savingsRate===null?'—':savingsRate.toFixed(1)],
       [],
-      [label.category,label.amount,label.share]
+      [label.breakdown],
+      [label.period,label.income,label.expenses,label.net,label.count]
     ];
-    Object.entries(byCategory).filter(([,amount])=>Number(amount)>0).sort((a,b)=>b[1]-a[1]).forEach(([categoryId,amount])=>rows.push([safeCsvText(categoryName(categoryId)),Number(amount).toFixed(2),totals.expenses>0?(Number(amount)/totals.expenses*100).toFixed(1):'0.0']));
-    downloadFile(`mer-${appState.activeAccount}-insights-${insightsTimeframe}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
+    report.series.forEach(item=>rows.push([item.key,item.income.toFixed(2),item.expenses.toFixed(2),item.net.toFixed(2),String(item.count)]));
+    rows.push([], [label.category,label.amount,label.share]);
+    report.categories.forEach(item=>rows.push([safeCsvText(categoryName(item.category)),item.amount.toFixed(2),item.share.toFixed(1)]));
+    downloadFile(`mer-${appState.activeAccount}-insights-${report.timeframe}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
     showToast(t('csvExported'));
   }
 

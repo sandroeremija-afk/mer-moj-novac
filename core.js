@@ -662,6 +662,47 @@
     return Object.values(grouped).sort((a, b) => a.key.localeCompare(b.key));
   }
 
+  function buildInsightsReport(transactions, timeframe = 'monthly', referenceValue = new Date()) {
+    const normalized = timeframe === 'yearly' || timeframe === 'this-year' ? 'ytd' : timeframe;
+    const canonical = ['daily', 'monthly', 'ytd', 'all'].includes(normalized) ? normalized : 'monthly';
+    const filtered = filterTransactions(transactions, canonical, referenceValue).filter(transaction => Number.isFinite(Number(transaction?.amount)));
+    const totals = transactionTotals(filtered, 'all', referenceValue);
+    const byCategory = categoryExpenseTotals(filtered, 'all', referenceValue);
+    const granularity = { daily:'hour', monthly:'day', ytd:'month', all:'year' }[canonical];
+    const grouped = {};
+    filtered.forEach(transaction => {
+      const date = String(transaction.date || '');
+      const hour = date.match(/T(\d{2})/)?.[1] || '00';
+      const key = canonical === 'daily'
+        ? `${hour}:00`
+        : canonical === 'monthly'
+          ? date.slice(0, 10)
+          : canonical === 'ytd'
+            ? date.slice(0, 7)
+            : date.slice(0, 4);
+      if (!grouped[key]) grouped[key] = { key, income:0, expenses:0, net:0, count:0 };
+      const amount = financialAmount(transaction.amount);
+      if (transactionType(transaction) === 'income') grouped[key].income += amount;
+      else grouped[key].expenses += amount;
+      grouped[key].count += 1;
+    });
+    const series = Object.values(grouped).sort((left, right) => left.key.localeCompare(right.key)).map(item => ({
+      ...item,
+      income:Math.max(0, roundMoney(item.income)),
+      expenses:Math.max(0, roundMoney(item.expenses)),
+      net:roundMoney(item.income - item.expenses)
+    }));
+    const categories = Object.entries(byCategory)
+      .filter(([, amount]) => Number(amount) > 0)
+      .sort((left, right) => right[1] - left[1])
+      .map(([category, amount]) => ({
+        category,
+        amount:Number(amount),
+        share:totals.expenses > 0 ? roundMoney(Number(amount) / totals.expenses * 100) : 0
+      }));
+    return { timeframe:canonical, granularity, totals, transactionCount:filtered.length, series, categories };
+  }
+
   function csvEscape(value) {
     const text = String(value ?? '');
     return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
@@ -729,6 +770,7 @@
     monthOverMonthExpenses,
     topExpenseCategory,
     groupCashflow,
+    buildInsightsReport,
     monthlyExpenseCsv,
     validateSavingsGoal,
     applySavingsContribution,

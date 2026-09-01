@@ -17,10 +17,14 @@ function functionBody(name, nextName) {
   return premium.slice(start, end);
 }
 
-test('evaluation cycle 2: Budget data actions open a centered responsive native dialog', () => {
+test('evaluation cycle 2: Budget export opens a centered responsive native dialog without import', () => {
   assert.match(html, /data-open-detail="budgetDataModal"[^>]*aria-controls="budgetDataModal"[^>]*aria-haspopup="dialog"/);
   assert.match(html, /<dialog class="modal budget-data-modal" id="budgetDataModal"/);
-  assert.match(html, /id="budgetDataModal"[\s\S]*data-open-global-import[\s\S]*data-export-budget[\s\S]*data-close-modal data-i18n="cancel"/);
+  const budgetStart = html.indexOf('id="budgetDataModal"');
+  const budgetEnd = html.indexOf('</dialog>', budgetStart);
+  const budgetModal = html.slice(budgetStart, budgetEnd);
+  assert.match(budgetModal, /data-export-budget[\s\S]*data-close-modal data-i18n="cancel"/);
+  assert.doesNotMatch(budgetModal, /data-open-global-import|importBankStatement/);
   assert.doesNotMatch(html, /id="budgetDataMenu"|data-card-menu="budgetDataMenu"/);
   assert.match(css, /\.budget-data-modal\s*\{[\s\S]*position:fixed;[\s\S]*inset:0;[\s\S]*margin:auto;[\s\S]*overflow-y:auto;/);
   assert.match(css, /\.budget-data-modal::backdrop\s*\{[^}]*background:[^}]*backdrop-filter:blur\(3px\)/);
@@ -44,13 +48,13 @@ test('evaluation cycle 2: Budget export is category-grouped with plan metadata a
   assert.match(body, /categories\.forEach\(item=>rows\.push/);
 });
 
-test('evaluation cycle 2: Insights export is an aggregated snapshot for the active filter', () => {
+test('evaluation cycle 2: Insights export is a timeframe-aware report for the active filter', () => {
   const body = functionBody('exportInsightsReportCsv', 'openGlobalImport');
-  assert.match(body, /transactionTotals\(state\.transactions,insightsTimeframe,appReferenceDate\)/);
-  assert.match(body, /filterTransactions\(state\.transactions,insightsTimeframe,appReferenceDate\)/);
-  assert.match(body, /categoryExpenseTotals\(state\.transactions,insightsTimeframe,appReferenceDate\)/);
-  for (const field of ['Snimka analitike','Broj transakcija','Stopa štednje (%)','Udio troškova (%)']) assert.ok(body.includes(field), `${field} is exported`);
+  assert.match(body, /MerCore\.buildInsightsReport\(state\.transactions,insightsTimeframe,appReferenceDate\)/);
+  for (const field of ['Satna raščlamba dana','Dnevni mjesečni pregled','Mjesečni godišnji pregled','Povijesni sažetak','Stopa štednje (%)','Udio troškova (%)']) assert.ok(body.includes(field), `${field} is exported`);
   assert.match(body, /timeframeLabel=t\(\{daily:'daily',monthly:'monthly',ytd:'yearToDate',all:'allTime'\}/);
+  assert.match(body, /report\.series\.forEach/);
+  assert.match(body, /report\.categories\.forEach/);
 });
 
 test('evaluation cycle 2: CSV user text is formula-safe while numeric values stay numeric', () => {
