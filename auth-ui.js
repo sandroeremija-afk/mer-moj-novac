@@ -20,10 +20,10 @@
       forgotPassword: 'Zaboravljena lozinka?',
       passwordResetOverline: 'OPORAVAK RAČUNA',
       passwordResetTitle: 'Ponovno postavite lozinku',
-      passwordResetIntro: 'Unesite e-mail povezan s računom. Ako račun postoji, poslat ćemo upute za oporavak.',
-      passwordResetAction: 'Pošalji upute',
+      passwordResetIntro: 'U lokalnoj demo verziji zahtjev se samo simulira; stvarna e-pošta neće biti poslana.',
+      passwordResetAction: 'Simuliraj zahtjev',
       passwordResetSuccessTitle: 'Zahtjev je zaprimljen',
-      passwordResetSuccessBody: 'Ako račun postoji, upute za oporavak stići će na unesenu adresu.',
+      passwordResetSuccessBody: 'Lokalni demo zahtjev je zabilježen. Stvarna e-pošta nije poslana.',
       backToLogin: 'Natrag na prijavu',
       cancel: 'Otkaži',
       or: 'ili',
@@ -57,10 +57,10 @@
       forgotPassword: 'Forgot password?',
       passwordResetOverline: 'ACCOUNT RECOVERY',
       passwordResetTitle: 'Reset your password',
-      passwordResetIntro: 'Enter the email associated with your account. If the account exists, we will send recovery instructions.',
-      passwordResetAction: 'Send instructions',
+      passwordResetIntro: 'In this local demo, the request is simulated only; no real email will be sent.',
+      passwordResetAction: 'Simulate request',
       passwordResetSuccessTitle: 'Request received',
-      passwordResetSuccessBody: 'If the account exists, recovery instructions will arrive at the email you entered.',
+      passwordResetSuccessBody: 'The local demo request was recorded. No real email was sent.',
       backToLogin: 'Back to sign in',
       cancel: 'Cancel',
       or: 'or',
@@ -76,13 +76,17 @@
     }
   };
 
-  const provider = MerAuth.createLocalProvider();
+  const sessionLabel=(()=>{const ua=navigator.userAgent||'',browser=/Edg\//.test(ua)?'Edge':/Firefox\//.test(ua)?'Firefox':/Chrome\//.test(ua)?'Chrome':/Safari\//.test(ua)?'Safari':'Web preglednik',device=/Mobi|Android|iPhone|iPad/i.test(ua)?'Mobilni uređaj':'Računalo';return `${browser} · ${device}`;})();
+  const provider = MerAuth.createLocalProvider({sessionLabel});
   window.MerAuthProvider = provider;
   const authShell = document.getElementById('authShell');
   const appShell = document.getElementById('appShell');
   const passwordResetModal = document.getElementById('passwordResetModal');
   const passwordResetForm = document.getElementById('passwordResetForm');
   const passwordResetSuccess = document.getElementById('passwordResetSuccess');
+  const mfaLockScreen = document.getElementById('mfaLockScreen');
+  const mfaUnlockCode = document.getElementById('mfaUnlockCode');
+  let mfaReturnFocus = null;
 
   function lang() { return typeof currentLang !== 'undefined' && currentLang === 'en' ? 'en' : 'hr'; }
   function renderCopy() {
@@ -104,22 +108,50 @@
     document.getElementById('authTitle').textContent = register ? copy[lang()].register : copy[lang()].loginTitle;
   }
   function applyUser(session) {
-    if (!session || session.demo) return;
+    if (!session || session.demo) return false;
     const profile = appState.accounts.personal;
     profile.accountName = session.name;
     profile.initials = session.name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
     state = appState.accounts[appState.activeAccount];
     save('auth-profile');
+    return true;
+  }
+  function mfaFocusableElements() {
+    return [...mfaLockScreen.querySelectorAll('input:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+      .filter(element => !element.hidden && element.getClientRects().length > 0);
+  }
+  function showMfaLock(session) {
+    const newlyOpened=mfaLockScreen.hidden;
+    if (newlyOpened) mfaReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    mfaLockScreen.hidden = false;
+    document.body.classList.add('mfa-locked');
+    appShell.inert = true;
+    appShell.setAttribute('aria-hidden','true');
+    document.getElementById('mfaUnlockError').textContent = '';
+    if (newlyOpened && appState.mfa.method === 'sms') window.MerSecurityUi?.prepareUnlock?.();
+    if(newlyOpened)requestAnimationFrame(() => mfaUnlockCode.focus({ preventScroll:true }));
+    return session;
+  }
+  function hideMfaLock({ resume=true, restoreFocus=true }={}) {
+    mfaLockScreen.hidden = true;
+    document.body.classList.remove('mfa-locked');
+    appShell.inert = false;
+    appShell.removeAttribute('aria-hidden');
+    document.getElementById('mfaUnlockError').textContent = '';
+    mfaUnlockCode.value = '';
+    if (restoreFocus && mfaReturnFocus?.isConnected) mfaReturnFocus.focus({ preventScroll:true });
+    mfaReturnFocus = null;
+    if (resume) window.MerOnboardingUi?.resume();
   }
   function enterApp(session) {
-    applyUser(session);
+    const activation=window.MerMfaState?.activate?.(session)||{changed:false};
+    const profileSaved=applyUser(session);
+    if(activation.changed&&!profileSaved)save('mfa-session-activate');
     authShell.hidden = true;
     appShell.hidden = false;
     document.body.classList.remove('auth-pending', 'auth-visible');
-    if (appState.mfa.enabled && sessionStorage.getItem('mer-mfa-unlocked') !== 'true') {
-      document.getElementById('mfaLockScreen').hidden = false;
-      document.body.classList.add('mfa-locked');
-    }
+    if (appState.mfa.enabled && !window.MerMfaUnlock?.isValid?.(session)) showMfaLock(session);
+    else hideMfaLock({resume:false,restoreFocus:false});
     renderCopy();
     renderAll();
     window.MerOnboardingUi?.onSessionStarted(session);
@@ -128,8 +160,10 @@
     window.MerOnboardingUi?.close();
     window.MerAssistantUi?.resetSession?.();
     window.MerLayoutUi?.disable?.({ notify:false });
-    document.getElementById('mfaLockScreen').hidden = true;
-    document.body.classList.remove('mfa-locked');
+    window.MerMfaUnlock?.clear?.();
+    window.MerMfaState?.deactivate?.();
+    window.MerSecurityUi?.reset?.();
+    hideMfaLock({resume:false,restoreFocus:false});
     appShell.hidden = true;
     authShell.hidden = false;
     document.body.classList.remove('auth-pending');
@@ -138,6 +172,22 @@
     selectMode('login');
     setTimeout(() => document.getElementById('loginEmail').focus(), 30);
   }
+  function enforceActiveSession({touch=false}={}) {
+    if (!authShell.hidden) return null;
+    const session=touch?provider.touchCurrentSession():provider.currentSession();
+    if(!session){showAuth();return null;}
+    const activation=window.MerMfaState?.activate?.(session)||{changed:false};
+    if(activation.changed)save('mfa-session-activate');
+    if(appState.mfa.enabled&&!window.MerMfaUnlock?.isValid?.(session))showMfaLock(session);
+    else if(!appState.mfa.enabled&&!mfaLockScreen.hidden)hideMfaLock({resume:false});
+    window.MerSecurityUi?.renderSessions?.();
+    return session;
+  }
+  window.MerAuthSecurityUi=Object.freeze({
+    completeUnlock(){hideMfaLock();},
+    requireUnlock(){const session=provider.currentSession();if(session)showMfaLock(session);},
+    validateSession:enforceActiveSession
+  });
   function closePasswordReset() {
     if (passwordResetModal.open) passwordResetModal.close();
     const trigger=document.getElementById('forgotPassword');if(trigger?.isConnected)trigger.focus();
@@ -182,6 +232,7 @@
   window.MerRuntime.bindDialogBackdropDismiss(passwordResetModal, closePasswordReset);
   passwordResetModal.setAttribute('aria-modal','true');
   passwordResetModal.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const focusable=[...passwordResetModal.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(element=>!element.hidden&&element.getClientRects().length>0);if(!focusable.length){event.preventDefault();passwordResetModal.focus();return;}const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
+  mfaLockScreen.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const focusable=mfaFocusableElements();if(!focusable.length){event.preventDefault();mfaLockScreen.focus();return;}const first=focusable[0],last=focusable.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}});
   passwordResetForm.addEventListener('submit', async event => {
     event.preventDefault();
     const result = await runAuthAction(passwordResetForm,'passwordResetError',()=>provider.requestPasswordReset({ email: document.getElementById('passwordResetEmail').value }));
@@ -210,11 +261,15 @@
   });
   document.getElementById('logoutButton').addEventListener('click', () => {
     provider.signOut();
-    sessionStorage.removeItem('mer-mfa-unlocked');
+    window.MerMfaUnlock?.clear?.();
     toggleAccountMenu(false);
     showAuth();
   });
   document.querySelectorAll('[data-lang]').forEach(button => button.addEventListener('click', renderCopy));
+
+  window.addEventListener('storage',event=>{if(event.key===MerAuth.SESSIONS_KEY||event.key===MerAuth.USERS_KEY)enforceActiveSession();});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')enforceActiveSession({touch:true});});
+  window.setInterval(()=>enforceActiveSession({touch:true}),30000);
 
   const session = provider.currentSession();
   if (session) enterApp(session); else showAuth();

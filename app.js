@@ -72,6 +72,8 @@ Object.assign(translations.hr,{allTime:'Sve ukupno',appLanguage:'Jezik aplikacij
 Object.assign(translations.en,{appLanguage:'App language',appTheme:'App theme',lightTheme:'Light',darkTheme:'Dark',editLayout:'Edit',themeSettingHint:'Adapt the interface to your working environment.',dashboardLayout:'Dashboard layout',layoutSettingHint:'Change card order with drag and drop.',openBanking:'OPEN BANKING',syncStatus:'Sync status',reviewImportedTransactions:'Review imported transactions without a confirmed category.',budgetDataActions:'Import / export budget',budgetDataOverline:'BUDGET DATA',budgetDataIntro:'Import activity for categorization or download the monthly plan grouped by category.',budgetImportHint:'Review CSV, Excel, or CAMT.053 records before confirming.',budgetExportHint:'Download category limits, spending, and usage.',importBankStatement:'Import bank statement',exportBudgetPlan:'Export budget plan',exportInsightsReport:'Export report',goToSavings:'Go to Savings',showAllTransactions:'Show all transactions'});
 Object.assign(translations.hr,{bankAccountSelectionRequired:'Molimo označite banku ili karticu prije nastavka.',unlinkBankTitle:'Prekid veze',unlinkBankQuestion:'Jeste li sigurni da želite prekinuti vezu s ovom bankom/karticom?',unlinkBankConfirm:'Prekini vezu',unlinkBankCancel:'Odustani'});
 Object.assign(translations.en,{bankAccountSelectionRequired:'Please select a bank account or card before continuing.',unlinkBankTitle:'Disconnect account',unlinkBankQuestion:'Are you sure you want to disconnect this bank or card?',unlinkBankConfirm:'Disconnect',unlinkBankCancel:'Cancel'});
+Object.assign(translations.hr,{markResolved:'Označi kao riješeno',resolveNotificationLabel:'Označi kao riješeno: {title}',notificationResolved:'Obavijest je označena kao riješena.',needsReviewCount:'{count} za pregled',allSavingsDeposits:'Sve uplate',allSavingsDepositsIntro:'Datumi, iznosi, ciljevi i profil svake evidentirane uplate.',unknownSavingsGoal:'Nepoznati cilj'});
+Object.assign(translations.en,{markResolved:'Mark as resolved',resolveNotificationLabel:'Mark as resolved: {title}',notificationResolved:'Notification marked as resolved.',needsReviewCount:'{count} to review',allSavingsDeposits:'All deposits',allSavingsDepositsIntro:'Dates, amounts, goals, and the profile for every recorded deposit.',unknownSavingsGoal:'Unknown goal'});
 
 const categoryMeta = {
   food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, healthBeauty:{icon:'N',className:'shopping'}, utilities:{icon:'R',className:'other'}, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
@@ -148,9 +150,73 @@ function normalizeLayoutOrders(value={}) {
 }
 function normalizeAppSettings(settings={}){const currency=String(settings.currency||'EUR').toUpperCase(),dateFormat=['locale','iso','us'].includes(settings.dateFormat)?settings.dateFormat:'locale';let timezone=String(settings.timezone||'Europe/Zagreb');try{new Intl.DateTimeFormat('en',{timeZone:timezone}).format();}catch{timezone='Europe/Zagreb';}return {currency:supportedCurrencies.has(currency)?currency:'EUR',dateFormat,timezone,hideBalances:Boolean(settings.hideBalances),layoutOrders:normalizeLayoutOrders(settings.layoutOrders)};}
 appState.settings=normalizeAppSettings(storedSettings);
-appState.mfa={enabled:false,secret:null,recoveryCodeHashes:[],...(appState.mfa&&typeof appState.mfa==='object'?appState.mfa:{})};
-appState.mfa.enabled=Boolean(appState.mfa.enabled&&appState.mfa.secret);
-appState.mfa.recoveryCodeHashes=Array.isArray(appState.mfa.recoveryCodeHashes)?appState.mfa.recoveryCodeHashes.filter(value=>typeof value==='string'):[];
+appState.mfa=MerSecurity.createMfaMethodState({method:appState.mfa?.method||(appState.mfa?.secret?'authenticator':null),enabled:false,secret:null,recoveryCodeHashes:[],...(appState.mfa&&typeof appState.mfa==='object'?appState.mfa:{})});
+appState.mfaByUser=Object.fromEntries(Object.entries(appState.mfaByUser&&typeof appState.mfaByUser==='object'?appState.mfaByUser:{}).filter(([userId,value])=>typeof userId==='string'&&userId.length<=120&&value&&typeof value==='object').slice(-24).map(([userId,value])=>[userId,MerSecurity.createMfaMethodState(value)]));
+appState.mfaLegacyOwner=typeof appState.mfaLegacyOwner==='string'&&appState.mfaLegacyOwner.length<=120?appState.mfaLegacyOwner:null;
+const legacyMfaSnapshot=MerSecurity.createMfaMethodState(appState.mfa);
+const emptyMfaState=()=>MerSecurity.createMfaMethodState({});
+const normalizeMfaUserId=value=>typeof value==='string'&&value.trim()&&value.length<=120?value.trim():null;
+function sessionCanOwnLegacyMfa(session,userId){
+  if(appState.mfaLegacyOwner)return appState.mfaLegacyOwner===userId;
+  try{
+    const users=JSON.parse(localStorage.getItem(MerAuth.USERS_KEY)||'[]');
+    if(Array.isArray(users)&&users.length===1)return users[0]?.id===userId;
+    return Array.isArray(users)&&users.length===0&&Boolean(session?.demo)&&userId==='demo-user';
+  }catch{return false;}
+}
+let activeMfaUserId=null;
+window.MerMfaState=Object.freeze({
+  activate(session){
+    const userId=normalizeMfaUserId(session?.userId);
+    if(!userId){this.deactivate();return {userId:null,changed:false,state:emptyMfaState()};}
+    let changed=activeMfaUserId!==userId;
+    let userMfa=appState.mfaByUser[userId];
+    if(!userMfa){
+      const hasMappedMfa=Object.values(appState.mfaByUser).some(value=>MerSecurity.createMfaMethodState(value).enabled);
+      const canMigrateLegacy=legacyMfaSnapshot.enabled&&!hasMappedMfa&&sessionCanOwnLegacyMfa(session,userId);
+      userMfa=canMigrateLegacy?MerSecurity.createMfaMethodState(legacyMfaSnapshot):emptyMfaState();
+      appState.mfaByUser[userId]=userMfa;
+      if(canMigrateLegacy)appState.mfaLegacyOwner=userId;
+      changed=true;
+    }
+    activeMfaUserId=userId;
+    appState.mfa=MerSecurity.createMfaMethodState(userMfa);
+    return {userId,changed,state:appState.mfa};
+  },
+  syncActive(){
+    if(!activeMfaUserId)return false;
+    const normalized=MerSecurity.createMfaMethodState(appState.mfa);
+    appState.mfa=normalized;
+    appState.mfaByUser[activeMfaUserId]=normalized;
+    return true;
+  },
+  deactivate(){
+    if(activeMfaUserId)this.syncActive();
+    activeMfaUserId=null;
+    appState.mfa=emptyMfaState();
+  },
+  activeUserId(){return activeMfaUserId;}
+});
+
+const MFA_UNLOCK_PROOF_KEY='mer-mfa-unlock-proof-v2';
+const MFA_UNLOCK_PROOF_LIFETIME=12*60*60*1000;
+function readMfaUnlockProof(){try{const value=JSON.parse(sessionStorage.getItem(MFA_UNLOCK_PROOF_KEY)||'null');return value&&typeof value==='object'?value:null;}catch{return null;}}
+window.MerMfaUnlock=Object.freeze({
+  mark(session=window.MerAuthProvider?.currentSession?.()){
+    const sessionId=typeof session?.sessionId==='string'?session.sessionId:null,userId=normalizeMfaUserId(session?.userId);
+    if(!sessionId||!userId){this.clear();return false;}
+    const verifiedAt=Date.now();
+    try{sessionStorage.setItem(MFA_UNLOCK_PROOF_KEY,JSON.stringify({sessionId,userId,verifiedAt,expiresAt:Math.min(Number(session.expiresAt)||verifiedAt+MFA_UNLOCK_PROOF_LIFETIME,verifiedAt+MFA_UNLOCK_PROOF_LIFETIME)}));sessionStorage.removeItem('mer-mfa-unlocked');return true;}catch{return false;}
+  },
+  isValid(session=window.MerAuthProvider?.currentSession?.()){
+    const proof=readMfaUnlockProof(),sessionId=typeof session?.sessionId==='string'?session.sessionId:null,userId=normalizeMfaUserId(session?.userId),now=Date.now();
+    const valid=Boolean(proof&&sessionId&&userId&&proof.sessionId===sessionId&&proof.userId===userId&&Number.isFinite(Number(proof.verifiedAt))&&Number.isFinite(Number(proof.expiresAt))&&Number(proof.verifiedAt)>=Number(session?.issuedAt||0)&&Number(proof.expiresAt)>now);
+    if(!valid)this.clear();
+    return valid;
+  },
+  clear(){try{sessionStorage.removeItem(MFA_UNLOCK_PROOF_KEY);sessionStorage.removeItem('mer-mfa-unlocked');}catch{}},
+  key:MFA_UNLOCK_PROOF_KEY
+});
 const validStoredDate=value=>{const match=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})/);if(!match)return false;const date=new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3])));return date.getUTCFullYear()===Number(match[1])&&date.getUTCMonth()===Number(match[2])-1&&date.getUTCDate()===Number(match[3]);};
 const safeFinite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 function normalizeProfile(profile,fallbackProfile=personalDefaults) {
@@ -189,6 +255,7 @@ function normalizeProfile(profile,fallbackProfile=personalDefaults) {
   profile.savingsEntries=(Array.isArray(profile.savingsEntries)?profile.savingsEntries:[]).filter(entry=>entry&&typeof entry==='object'&&validStoredDate(entry.date)&&Number.isFinite(Number(entry.amount))&&Number(entry.amount)>0).map((entry,index)=>({...entry,id:safeIdentifier(entry.id,`saving-${index}`),amount:Number(entry.amount),note:String(entry.note||'Uplata u štednju').trim().slice(0,80),goalId:profile.goalBuckets.some(goal=>goal.id===entry.goalId)?entry.goalId:primaryGoalId}));
   profile.savingsHistory=(Array.isArray(profile.savingsHistory)?profile.savingsHistory:[]).map(value=>Math.max(0,safeFinite(value,0))).slice(-12);
   if(!profile.savingsHistory.length)profile.savingsHistory=Array(8).fill(0);
+  profile.dismissedNotifications=Object.fromEntries(Object.entries(profile.dismissedNotifications&&typeof profile.dismissedNotifications==='object'?profile.dismissedNotifications:{}).filter(([key,value])=>typeof key==='string'&&key.length<=120&&typeof value==='string'&&value.length<=120).slice(-100));
   profile.recurring=(Array.isArray(profile.recurring)?profile.recurring:[]).filter(rule=>rule&&typeof rule==='object'&&String(rule.name||'').trim()&&validStoredDate(rule.startDate)&&Number.isFinite(Number(rule.amount))&&Number(rule.amount)>0&&Number(rule.day)>=1&&Number(rule.day)<=31).map((rule,index)=>({...rule,id:safeIdentifier(rule.id,`recurring-${index}`),name:String(rule.name).trim().slice(0,80),amount:Number(rule.amount),day:Math.floor(Number(rule.day)),startDate:String(rule.startDate).slice(0,10),lastProcessed:validStoredDate(rule.lastProcessed)?String(rule.lastProcessed).slice(0,10):null,category:profile.categories.some(category=>category.id===rule.category)?rule.category:expenseFallback.id,enabled:rule.enabled!==false}));
   profile.savingsBalance=profile.goalBuckets.reduce((sum,goal)=>sum+goal.current,0);
   return profile;
@@ -238,6 +305,7 @@ const incomeCategoryVisual = cat => ({icon:cat?.icon||(incomeCategoryName(cat?.i
 reactiveStore.subscribe(event => {
   appState=event.state;
   state=event.activeProfile;
+  window.MerMfaState?.syncActive?.();
   try{localStorage.setItem('mer-money-v6',JSON.stringify(appState));}catch(error){window.MerRuntime?.report?.(error,{silent:true});}
   if(reactiveUiReady&&event.reason!=='layout-reorder')renderAll();
 });
@@ -404,17 +472,23 @@ function renderBudgetView() {
   $('#fullBudgetValue').textContent = currency(plan.monthlyBudget, true);
   $('#fullRemainingValue').textContent = currency(plan.safeRemaining);
   $('#fullRemainingValue').classList.toggle('negative-value',plan.safeRemaining<0);
+  $('[data-layout-card="budget-remaining"]').classList.toggle('is-negative',plan.safeRemaining<0);
   $('#remainingStatus').className=`delta ${plan.safeRemaining<0?'danger':'positive'}`;
   $('#remainingStatus span').textContent=t(plan.safeRemaining<0?'overBudget':'protectedCommitments');
   $('#allocatedValue').textContent = currency(allocated, true);
   $('#unallocatedValue').textContent = difference >= 0 ? t('allocated',{amount:currency(difference,true)}) : t('overAllocated',{amount:currency(Math.abs(difference),true)});
+  $('[data-layout-card="budget-allocation"]').classList.toggle('is-over-allocated',difference<0);
   $('#allocationStatus').textContent = t('allocationPercent',{percent:allocationPercent});
   $('#allocationProgress').style.width = `${Math.min(100,allocationPercent)}%`;
   $('.allocation-bar').classList.toggle('over', allocationPercent > 100);
   $('#allocationCopy').textContent = t('allocationCopy',{allocated:currency(allocated,true),budget:currency(plan.monthlyBudget,true)});
   $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
   const overspent=state.categories.filter(cat=>cat.spent>cat.limit+.005),donors=state.categories.filter(cat=>cat.limit>cat.spent+.005),overAllocated=difference<-.005,recovery=$('#budgetRecovery');
-  recovery.hidden=!overAllocated&&!overspent.length;
+  const recoveryFingerprint=notificationFingerprint([overAllocated?'allocation':'category',Math.round(Math.abs(difference)*100),...overspent.map(cat=>`${cat.id}:${Math.round(cat.spent*100)}:${Math.round(cat.limit*100)}`).sort()]);
+  const recoveryItem={key:'budget-recovery',fingerprint:recoveryFingerprint};
+  recovery.hidden=(!overAllocated&&!overspent.length)||isNotificationResolved(recoveryItem);
+  $('#resolveBudgetRecovery').dataset.notificationKey=recoveryItem.key;
+  $('#resolveBudgetRecovery').dataset.notificationFingerprint=recoveryItem.fingerprint;
   $('#autoBalanceBudget').hidden=!overAllocated;
   $('#openBudgetTransfer').hidden=!overspent.length||!donors.length;
   if(overAllocated){$('#budgetRecoveryTitle').textContent=t('budgetRecoveryOverTitle');$('#budgetRecoveryCopy').textContent=t('budgetRecoveryOverCopy',{amount:currency(Math.abs(difference),true)});}
@@ -479,7 +553,7 @@ function renderSavingsView() {
 
 function renderSavingsEntries() {
   state.savingsEntries=state.savingsEntries||[];
-  $('#savingsEntryList').innerHTML=state.savingsEntries.length?state.savingsEntries.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(entry=>`<div class="savings-entry-item"><span class="savings-entry-icon"><svg aria-hidden="true"><use href="#icon-leaf"></use></svg></span><div class="savings-entry-copy"><strong>${escapeHtml(entry.note)}</strong><small>${new Intl.DateTimeFormat(locale(),{day:'numeric',month:'long',year:'numeric'}).format(new Date(entry.date))}</small></div><span class="savings-entry-amount">+${currency(entry.amount)}</span><button type="button" class="icon-button small" data-edit-savings="${entry.id}" aria-label="${t('editSavingsEntry')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`).join(''):`<div class="notification-empty">${t('emptyActivity')}</div>`;
+  $('#savingsEntryList').innerHTML=state.savingsEntries.length?state.savingsEntries.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(entry=>{const goal=state.goalBuckets?.find(item=>item.id===entry.goalId);return `<article class="savings-entry-item"><span class="savings-entry-icon"><svg aria-hidden="true"><use href="#icon-leaf"></use></svg></span><div class="savings-entry-copy"><strong>${escapeHtml(entry.note)}</strong><small><time datetime="${escapeHtml(String(entry.date).slice(0,10))}">${new Intl.DateTimeFormat(locale(),{day:'numeric',month:'long',year:'numeric'}).format(new Date(entry.date))}</time> · ${escapeHtml(goal?.name||t('unknownSavingsGoal'))}</small><span class="savings-entry-profile">${escapeHtml(t(state.accountLabel))}</span></div><span class="savings-entry-amount">+${currency(entry.amount)}</span><button type="button" class="icon-button small" data-edit-savings="${entry.id}" aria-label="${t('editSavingsEntry')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></article>`;}).join(''):`<div class="notification-empty">${t('emptyActivity')}</div>`;
   $$('[data-edit-savings]').forEach(button=>button.addEventListener('click',()=>openSavingsDeposit(button.dataset.editSavings)));
 }
 
@@ -494,6 +568,10 @@ function renderUpcoming() {
 
 function bankConnectionsFor(profileId=appState.activeAccount) { return appState.bankConnections.filter(connection=>connection.profileId===profileId); }
 function uncategorizedTransactions(profile=state) { return (profile.transactions||[]).filter(transaction=>transaction.sourceType==='auto'&&transaction.needsReview); }
+function notificationFingerprint(parts) { return MerCore.stableTransactionHash(Array.isArray(parts)?parts:[parts]); }
+function uncategorizedNotificationFingerprint() { const ids=uncategorizedTransactions().map(transaction=>String(transaction.id)).sort();return ids.length?notificationFingerprint(ids):''; }
+function isNotificationResolved(item) { return Boolean(item?.key&&item?.fingerprint&&state.dismissedNotifications?.[item.key]===item.fingerprint); }
+function resolveNotification(item,{closeCenter=false}={}) { if(!item?.key||!item?.fingerprint)return;state.dismissedNotifications={...(state.dismissedNotifications||{}),[item.key]:item.fingerprint};save('notification-resolve');if(closeCenter)closeNotifications();showToast(t('notificationResolved')); }
 
 function lastSyncedLabel(connection) {
   if(!connection?.lastSyncedAt)return t('neverSynced');
@@ -514,9 +592,13 @@ function connectionStatusLabel(connection) {
 function renderBankSyncStatus() {
   const connections=bankConnectionsFor();
   const reviewCount=uncategorizedTransactions().length;
+  const reviewItem={key:'uncategorized',fingerprint:uncategorizedNotificationFingerprint()};
   $('#connectedBankCount').textContent=connections.length;
   $('#uncategorizedCount').textContent=reviewCount;
-  $('#uncategorizedBadge').hidden=reviewCount===0;
+  $('#uncategorizedCountLabel').textContent=t('needsReviewCount',{count:reviewCount});
+  $('#uncategorizedBadge').hidden=reviewCount===0||isNotificationResolved(reviewItem);
+  $('#resolveUncategorized').dataset.notificationKey=reviewItem.key;
+  $('#resolveUncategorized').dataset.notificationFingerprint=reviewItem.fingerprint;
   const status=$('#bankSyncStatus'),button=$('#syncNow'),trigger=$('#headerBankButton'),dot=$('#headerBankDot'),label=$('#headerBankLabel');
   const connected=connections.length>0;
   button.hidden=!connected;
@@ -765,12 +847,12 @@ function renderRecurring() {
 }
 
 function buildNotifications() {
-  const notifications=[],seen=new Set(),push=item=>{if(!seen.has(item.key)){seen.add(item.key);notifications.push(item);}};
-  const reviewCount=uncategorizedTransactions().length;if(reviewCount)push({key:'uncategorized',priority:5,type:'warning',icon:'icon-alert',title:t('alertUncategorizedTitle'),body:t('alertUncategorizedBody',{count:reviewCount}),action:t('reviewCategories'),view:'activity',reviewOnly:true});
-  const plan=getPlan();if(plan.monthlyBudget&&plan.safeRemaining/plan.monthlyBudget<.25)push({key:'safe-to-spend',priority:5,type:'warning',icon:'icon-shield',title:t('alertSpendingTitle'),body:t('alertSpendingBody',{amount:currency(plan.safeRemaining)}),action:t('reviewSpending'),view:'activity'});
-  state.categories.forEach(cat=>{const threshold=MerCore.budgetThreshold(cat.spent,cat.limit);if(threshold.percent>=80)push({key:`budget:${cat.id}`,priority:threshold.level==='red'?4:3,type:threshold.level==='red'?'danger':'warning',icon:'icon-wallet',title:t('alertBudgetTitle'),body:t('alertBudgetBody',{category:categoryName(cat.id),percent:Math.round(threshold.percent)}),action:t('reviewBudget'),view:'budgets'});});
-  (state.recurring||[]).forEach(rule=>{const next=MerCore.nextOccurrence(rule,appReferenceDate);if(next){const days=Math.round((new Date(`${next}T12:00:00`)-new Date(`${appReferenceDate}T12:00:00`))/86400000);if(days<=20)push({key:`recurring:${rule.id}`,priority:2,type:'info',icon:'icon-calendar',title:t('alertRecurringTitle'),body:t('alertRecurringBody',{name:rule.name,amount:currency(rule.amount),date:formatIsoDate(next)}),action:t('reviewRecurring'),view:'budgets'});}});
-  MerAccounting.detectSubscriptions(state.transactions,appReferenceDate).filter(subscription=>subscription.daysUntil>=0&&subscription.daysUntil<=31).slice(0,2).forEach(subscription=>push({key:subscription.id,priority:2,type:'info',icon:'icon-refresh',title:t('recurringSubscriptions'),body:`${subscription.merchant} · ${currency(subscription.amount)} · ${t('renewsIn',{days:subscription.daysUntil})}`,action:t('manageSubscriptions'),view:'insights',subscriptions:true}));
+  const notifications=[],seen=new Set(),push=item=>{if(seen.has(item.key)||isNotificationResolved(item))return;seen.add(item.key);notifications.push(item);};
+  const reviewCount=uncategorizedTransactions().length;if(reviewCount)push({key:'uncategorized',fingerprint:uncategorizedNotificationFingerprint(),priority:5,type:'warning',icon:'icon-alert',title:t('alertUncategorizedTitle'),body:t('alertUncategorizedBody',{count:reviewCount}),action:t('reviewCategories'),view:'activity',reviewOnly:true});
+  const plan=getPlan();if(plan.monthlyBudget&&plan.safeRemaining/plan.monthlyBudget<.25)push({key:'safe-to-spend',fingerprint:notificationFingerprint([Math.round(plan.safeRemaining*100),Math.round(plan.monthlyBudget*100)]),priority:5,type:'warning',icon:'icon-shield',title:t('alertSpendingTitle'),body:t('alertSpendingBody',{amount:currency(plan.safeRemaining)}),action:t('reviewSpending'),view:'activity'});
+  state.categories.forEach(cat=>{const threshold=MerCore.budgetThreshold(cat.spent,cat.limit);if(threshold.percent>=80)push({key:`budget:${cat.id}`,fingerprint:notificationFingerprint([cat.id,Math.round(cat.spent*100),Math.round(cat.limit*100)]),priority:threshold.level==='red'?4:3,type:threshold.level==='red'?'danger':'warning',icon:'icon-wallet',title:t('alertBudgetTitle'),body:t('alertBudgetBody',{category:categoryName(cat.id),percent:Math.round(threshold.percent)}),action:t('reviewBudget'),view:'budgets'});});
+  (state.recurring||[]).forEach(rule=>{const next=MerCore.nextOccurrence(rule,appReferenceDate);if(next){const days=Math.round((new Date(`${next}T12:00:00`)-new Date(`${appReferenceDate}T12:00:00`))/86400000);if(days<=20)push({key:`recurring:${rule.id}`,fingerprint:notificationFingerprint([rule.id,next,Math.round(rule.amount*100)]),priority:2,type:'info',icon:'icon-calendar',title:t('alertRecurringTitle'),body:t('alertRecurringBody',{name:rule.name,amount:currency(rule.amount),date:formatIsoDate(next)}),action:t('reviewRecurring'),view:'budgets',detailModal:'budgetDetailsModal'});}});
+  MerAccounting.detectSubscriptions(state.transactions,appReferenceDate).filter(subscription=>subscription.daysUntil>=0&&subscription.daysUntil<=31).slice(0,2).forEach(subscription=>push({key:subscription.id,fingerprint:notificationFingerprint([subscription.id,subscription.nextRenewal,Math.round(subscription.amount*100)]),priority:2,type:'info',icon:'icon-refresh',title:t('recurringSubscriptions'),body:`${subscription.merchant} · ${currency(subscription.amount)} · ${t('renewsIn',{days:subscription.daysUntil})}`,action:t('manageSubscriptions'),view:'insights',subscriptions:true}));
   return notifications.sort((left,right)=>right.priority-left.priority||left.key.localeCompare(right.key)).slice(0,6);
 }
 
@@ -779,8 +861,9 @@ function renderNotifications() {
   $('#notificationCount').textContent=notifications.length;
   $('#notificationCount').hidden=notifications.length===0;
   $('#notificationButton').setAttribute('aria-label',t('notificationCount',{count:notifications.length}));
-  $('#notificationList').innerHTML=notifications.length?notifications.map((item,index)=>`<article class="notification-item"><span class="notification-symbol ${item.type}"><svg aria-hidden="true"><use href="#${item.icon}"></use></svg></span><div class="notification-copy"><strong>${item.title}</strong><p>${item.body}</p><button type="button" class="link-button" data-notification-view="${item.view}" data-notification-review="${item.reviewOnly?'true':'false'}" data-notification-index="${index}">${item.action}<span aria-hidden="true">→</span></button></div></article>`).join(''):`<div class="notification-empty">${t('noNotifications')}</div>`;
-  $$('[data-notification-view]').forEach(button=>button.addEventListener('click',()=>{activityReviewOnly=button.dataset.notificationReview==='true';showView(button.dataset.notificationView);renderActivity();closeNotifications();if(notifications[Number(button.dataset.notificationIndex)]?.subscriptions)openModal($('#subscriptionsModal'));}));
+  $('#notificationList').innerHTML=notifications.length?notifications.map((item,index)=>`<article class="notification-item"><span class="notification-symbol ${item.type}"><svg aria-hidden="true"><use href="#${item.icon}"></use></svg></span><div class="notification-copy"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><div class="notification-actions"><button type="button" class="link-button" data-notification-view="${item.view}" data-notification-review="${item.reviewOnly?'true':'false'}" data-notification-index="${index}">${escapeHtml(item.action)}<span aria-hidden="true">→</span></button><button type="button" class="link-button resolve-alert-button" data-notification-resolve="${index}" aria-label="${escapeHtml(t('resolveNotificationLabel',{title:item.title}))}">${t('markResolved')}</button></div></div></article>`).join(''):`<div class="notification-empty">${t('noNotifications')}</div>`;
+  $$('[data-notification-view]').forEach(button=>button.addEventListener('click',()=>{const item=notifications[Number(button.dataset.notificationIndex)];activityReviewOnly=button.dataset.notificationReview==='true';showView(button.dataset.notificationView);renderActivity();closeNotifications();if(item?.subscriptions)openModal($('#subscriptionsModal'));else if(item?.detailModal)openModal($(`#${item.detailModal}`));}));
+  $$('[data-notification-resolve]').forEach(button=>button.addEventListener('click',()=>resolveNotification(notifications[Number(button.dataset.notificationResolve)],{closeCenter:false})));
 }
 
 function renderSubscriptions() {
@@ -816,7 +899,11 @@ function renderActivity() {
   const typeFilter=$('#activityTypeFilter').value||'all';
   const sort=$('#activitySort').value||'date-desc';
   const reviewCount=uncategorizedTransactions().length;
-  $('#reviewQueueBanner').hidden=!activityReviewOnly;
+  const reviewItem={key:'uncategorized',fingerprint:uncategorizedNotificationFingerprint()};
+  if(activityReviewOnly&&(reviewCount===0||isNotificationResolved(reviewItem)))activityReviewOnly=false;
+  $('#reviewQueueBanner').hidden=!activityReviewOnly||isNotificationResolved(reviewItem);
+  $('#resolveReviewQueue').dataset.notificationKey=reviewItem.key;
+  $('#resolveReviewQueue').dataset.notificationFingerprint=reviewItem.fingerprint;
   $('#reviewQueueCopy').textContent=t('reviewQueueCopy',{count:reviewCount});
   const filtered = MerCore.filterActivityTransactions(state,{
     query:search,
@@ -1323,7 +1410,11 @@ $('#confirmBankUnlink').addEventListener('click',confirmBankUnlink);
 $('#unlinkBankModal').addEventListener('close',()=>{pendingBankUnlinkId=null;});
 $('#headerBankButton').addEventListener('click',openBankSettings);
 $('#syncNow').addEventListener('click',()=>{closeCardMenus();runAsyncAction(()=>syncActiveBankConnections());});
-$('#uncategorizedBadge').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
+$('#reviewUncategorizedTransactions').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
+const resolveAlertFromButton=(button,options={})=>resolveNotification({key:button.dataset.notificationKey,fingerprint:button.dataset.notificationFingerprint},options);
+$('#resolveUncategorized').addEventListener('click',event=>{event.stopPropagation();resolveAlertFromButton(event.currentTarget);});
+$('#resolveBudgetRecovery').addEventListener('click',event=>resolveAlertFromButton(event.currentTarget));
+$('#resolveReviewQueue').addEventListener('click',event=>{activityReviewOnly=false;resolveAlertFromButton(event.currentTarget);});
 $('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;renderActivity();});
 $('#addCategory').addEventListener('click',()=>{returnToBudgetManager=false;openBudgetEditor();});
 $('#manageBudgetCategories')?.addEventListener('click',()=>openBudgetCategoryManager({reset:true}));

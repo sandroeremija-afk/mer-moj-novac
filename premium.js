@@ -22,9 +22,29 @@
   Object.assign(translations.en, {
     activeModule:'ACTIVE MODULE', viewDetails:'Details', overviewDetailsOverline:'OVERVIEW DETAILS', overviewDetailsTitle:'Trends and next steps', budgetDetailsOverline:'BUDGET AUTOMATION', savingsDetailsOverline:'SAVINGS DETAILS', reportDetails:'Report details', insightsDetailsOverline:'DEEP-DIVE ANALYSIS', settingsIntroClean:'Customize display, privacy, security and automation rules.'
   });
+  Object.assign(translations.hr, {
+    securityManagement:'Sigurnost računa',changePassword:'Promjena lozinke',changePasswordHint:'Ažurirajte lozinku i odjavite ostale aktivne sesije.',currentPassword:'Trenutna lozinka',newPassword:'Nova lozinka',confirmNewPassword:'Potvrdi novu lozinku',saveNewPassword:'Spremi novu lozinku',passwordUpdated:'Lozinka je uspješno promijenjena. Ostale sesije su odjavljene.',invalidCurrentPassword:'Trenutna lozinka nije ispravna.',passwordMismatch:'Nove lozinke se ne podudaraju.',passwordReused:'Nova lozinka mora se razlikovati od trenutačne.',passwordWeak:'Nova lozinka mora imati najmanje 10 znakova.',demoPasswordUnavailable:'Promjena lozinke nije dostupna u demo načinu.',passwordChangeFailed:'Lozinku trenutačno nije moguće promijeniti.',twoFactorAuthentication:'Dvostruka autentifikacija (2FA)',twoFactorHint:'Odaberite način potvrde prije uključivanja zaštite.',twoFactorMethod:'Način dvostruke autentifikacije',authenticatorApp:'Authenticator aplikacija',mobileNumber:'Broj mobilnog telefona',sendSmsCode:'Pošalji SMS kod',smsVerificationCode:'Kod iz SMS poruke',smsDemoDelivery:'Lokalna demonstracijska dostava za {phone}: kod {code}',smsInvalidPhone:'Unesite valjan međunarodni broj, primjerice +385 91 234 5678.',smsCodeSent:'Kod je spreman za provjeru.',activeSessions:'Aktivne sesije',activeSessionsHint:'Pregledajte uređaje i odjavite sesije koje više ne koristite.',logoutOtherDevices:'Odjavi sve ostale uređaje',currentSession:'Ovaj uređaj',localSessionIp:'IP: lokalna sesija',sessionLocation:'Lokacija: {location}',sessionStarted:'Aktivna od {date}',otherSessionsLoggedOut:'Odjavljeno je drugih sesija: {count}.',noOtherSessions:'Nema drugih aktivnih uređaja.',smsMfaDescription:'Primite jednokratni kod SMS adapterom na potvrđeni broj.',smsUnlockHint:'Unesite SMS kod ili neiskorišteni recovery kod.'
+  });
+  Object.assign(translations.en, {
+    securityManagement:'Account security',changePassword:'Change password',changePasswordHint:'Update your password and sign out other active sessions.',currentPassword:'Current password',newPassword:'New password',confirmNewPassword:'Confirm new password',saveNewPassword:'Save new password',passwordUpdated:'Password changed successfully. Other sessions were signed out.',invalidCurrentPassword:'The current password is incorrect.',passwordMismatch:'The new passwords do not match.',passwordReused:'The new password must be different from the current password.',passwordWeak:'The new password must contain at least 10 characters.',demoPasswordUnavailable:'Password changes are unavailable in demo mode.',passwordChangeFailed:'The password cannot be changed right now.',twoFactorAuthentication:'Two-factor authentication (2FA)',twoFactorHint:'Choose a verification method before enabling protection.',twoFactorMethod:'Two-factor authentication method',authenticatorApp:'Authenticator app',mobileNumber:'Mobile phone number',sendSmsCode:'Send SMS code',smsVerificationCode:'SMS verification code',smsDemoDelivery:'Local demo delivery for {phone}: code {code}',smsInvalidPhone:'Enter a valid international number, for example +385 91 234 5678.',smsCodeSent:'The code is ready for verification.',activeSessions:'Active sessions',activeSessionsHint:'Review devices and sign out sessions you no longer use.',logoutOtherDevices:'Sign out all other devices',currentSession:'This device',localSessionIp:'IP: local session',sessionLocation:'Location: {location}',sessionStarted:'Active since {date}',otherSessionsLoggedOut:'Signed out other sessions: {count}.',noOtherSessions:'There are no other active devices.',smsMfaDescription:'Receive a one-time code through the SMS adapter on your verified number.',smsUnlockHint:'Enter the SMS code or an unused recovery code.'
+  });
+  Object.assign(translations.hr, {
+    localMfaNotice:'Ovo je lokalni demo adapter: prijava, MFA i popis sesija vrijede samo u ovom profilu preglednika. Produkcija zahtijeva serverski identitet i sigurnu dostavu kodova.',
+    activeSessions:'Lokalne sesije preglednika',activeSessionsHint:'Prikazane su samo kartice i prozori ovog profila preglednika, ne udaljeni uređaji.',logoutOtherDevices:'Odjavi ostale lokalne sesije',currentSession:'Ova lokalna sesija',localSessionIp:'Lokalni demo adapter',sessionLocation:'Vremenska zona: {location}',otherSessionsLoggedOut:'Odjavljeno je drugih lokalnih sesija: {count}.',noOtherSessions:'Nema drugih lokalnih sesija.',
+    smsMfaDescription:'Lokalni SMS demo adapter prikazuje jednokratni kod u aplikaciji; produkcija zahtijeva stvarnog pružatelja dostave.',smsUnlockHint:'Unesite lokalni demo SMS kod ili neiskorišteni recovery kod.',disableSmsCode:'SMS kod ili recovery kod',sendDisableSmsCode:'Pošalji kod za isključivanje',smsDisableDelivery:'Lokalni demo kod za isključivanje za {phone}: {code}'
+  });
+  Object.assign(translations.en, {
+    localMfaNotice:'This is a local demo adapter: sign-in, MFA and session listings apply only to this browser profile. Production requires a server-side identity service and secure code delivery.',
+    activeSessions:'Local browser sessions',activeSessionsHint:'Only tabs and windows in this browser profile are shown, not remote devices.',logoutOtherDevices:'Sign out other local sessions',currentSession:'This local session',localSessionIp:'Local demo adapter',sessionLocation:'Timezone: {location}',otherSessionsLoggedOut:'Signed out other local sessions: {count}.',noOtherSessions:'There are no other local sessions.',
+    smsMfaDescription:'The local SMS demo adapter displays a one-time code in the app; production requires a real delivery provider.',smsUnlockHint:'Enter the local demo SMS code or an unused recovery code.',disableSmsCode:'SMS code or recovery code',sendDisableSmsCode:'Send disable code',smsDisableDelivery:'Local demo disable code for {phone}: {code}'
+  });
 
   let selectedSettingsTab = 'general';
+  let selectedMfaMethod = MerSecurity.normalizeMfaMethod(appState.mfa?.method) || MerSecurity.MFA_METHODS.AUTHENTICATOR;
   let pendingEnrollment = null;
+  let pendingSmsChallenge = null;
+  let pendingSmsUnlockChallenge = null;
+  let pendingSmsDisableChallenge = null;
   let visibleRecoveryCodes = [];
   let importStage = null;
   let importPage = 0;
@@ -86,25 +106,70 @@
     $('#importProfileBadge').textContent=t(state.accountLabel);
     $('#rulesProfileBadge').textContent=t(state.accountLabel);
     $('#demoResetCard').hidden=!Boolean(window.MerAuthProvider?.currentSession?.()?.demo);
-    renderMfa();renderAutomationRules();renderImportReview();
+    renderMfa();renderActiveSessions();renderAutomationRules();renderImportReview();
   }
 
   function renderMfa() {
     const enabled=Boolean(appState.mfa.enabled);
+    const method=enabled?(MerSecurity.normalizeMfaMethod(appState.mfa.method)||MerSecurity.MFA_METHODS.AUTHENTICATOR):selectedMfaMethod;
     $('#mfaStatus').textContent=t(enabled?'mfaEnabled':'mfaDisabled');
     $('#mfaStatus').classList.toggle('green-pill',enabled);
-    $('#startMfa').hidden=enabled;
+    $$('[data-mfa-method]').forEach(button=>{const active=button.dataset.mfaMethod===method;button.setAttribute('aria-pressed',String(active));button.disabled=enabled;});
+    $('.security-card [data-i18n="authenticatorApps"]').textContent=t(method==='sms'?'mobileNumber':'authenticatorApps');
+    $('.security-card [data-i18n="mfaDescription"]').textContent=t(method==='sms'?'smsMfaDescription':'mfaDescription');
+    $('#startMfa').hidden=enabled||method==='sms';
     $('#mfaDisable').hidden=!enabled;
-    $('#mfaSetup').hidden=enabled||!pendingEnrollment;
+    $('#mfaDisableCodeLabel').textContent=t(method==='sms'?'disableSmsCode':'disableCode');
+    $('#sendMfaDisableSmsCode').hidden=!enabled||method!=='sms';
+    $('#mfaDisableSmsDelivery').hidden=!enabled||method!=='sms'||!pendingSmsDisableChallenge;
+    if(pendingSmsDisableChallenge)$('#mfaDisableSmsDelivery').textContent=t('smsDisableDelivery',{phone:pendingSmsDisableChallenge.maskedPhone,code:pendingSmsDisableChallenge.demoCode});
+    $('#mfaSetup').hidden=enabled||method!=='authenticator'||!pendingEnrollment;
+    $('#mfaSmsSetup').hidden=enabled||method!=='sms';
+    $('#mfaSmsVerify').hidden=!pendingSmsChallenge;
     $('#recoveryPanel').hidden=visibleRecoveryCodes.length===0;
     if(pendingEnrollment)$('#mfaSecret').textContent=pendingEnrollment.secret.match(/.{1,4}/g).join(' ');
     $('#recoveryCodes').innerHTML=visibleRecoveryCodes.map(code=>`<code>${code}</code>`).join('');
   }
 
+  function renderActiveSessions() {
+    const sessions=window.MerAuthProvider?.listActiveSessions?.()||[],location=appState.settings.timezone||'Europe/Zagreb';
+    $('#activeSessionList').innerHTML=sessions.length?sessions.map(session=>`<article class="active-session-item"><span class="active-session-device"><svg aria-hidden="true"><use href="#icon-card"></use></svg></span><div class="active-session-copy"><strong>${escapeHtml(session.label||t('currentSession'))}</strong><small>${t('localSessionIp')} · ${t('sessionLocation',{location:escapeHtml(location)})}</small><small>${t('sessionStarted',{date:preferredDate(new Date(session.issuedAt).toISOString(),true)})}</small></div>${session.current?`<span class="active-session-current">${t('currentSession')}</span>`:''}</article>`).join(''):`<div class="notification-empty">${t('noOtherSessions')}</div>`;
+    $('#logoutOtherSessions').disabled=sessions.filter(session=>!session.current).length===0;
+  }
+
+  async function prepareSmsUnlockChallenge() {
+    if(!appState.mfa.enabled||appState.mfa.method!=='sms'||!appState.mfa.phoneNumber){pendingSmsUnlockChallenge=null;$('#mfaUnlockDelivery').hidden=true;return;}
+    pendingSmsUnlockChallenge=await MerSecurity.createSmsChallenge(appState.mfa.phoneNumber);
+    $('#mfaUnlockDelivery').textContent=t('smsDemoDelivery',{phone:pendingSmsUnlockChallenge.maskedPhone,code:pendingSmsUnlockChallenge.demoCode});
+    $('#mfaUnlockDelivery').hidden=false;
+    $('#mfaLockScreen [data-i18n="unlockHint"]').textContent=t('smsUnlockHint');
+  }
+  function resetMfaEphemeralState() {
+    selectedMfaMethod=MerSecurity.MFA_METHODS.AUTHENTICATOR;
+    pendingEnrollment=null;
+    pendingSmsChallenge=null;
+    pendingSmsUnlockChallenge=null;
+    pendingSmsDisableChallenge=null;
+    visibleRecoveryCodes=[];
+    $('#mfaUnlockDelivery').hidden=true;
+    $('#mfaDisableSmsDelivery').hidden=true;
+    $('#mfaLockScreen [data-i18n="unlockHint"]').textContent=t('unlockHint');
+  }
+  window.MerSecurityUi=Object.freeze({prepareUnlock:()=>runAsyncAction(prepareSmsUnlockChallenge,'mfaInvalid'),renderSessions:renderActiveSessions,reset:resetMfaEphemeralState});
+
   async function verifyMfaCode(code, consume=true) {
-    if(/^\d{6}$/.test(String(code||'').trim())&&await MerSecurity.validateTotp(appState.mfa.secret,String(code).trim()))return true;
+    if(appState.mfa.method==='sms'&&pendingSmsUnlockChallenge&&await MerSecurity.validateSmsChallenge(pendingSmsUnlockChallenge,code))return true;
+    if(appState.mfa.method!=='sms'&&/^\d{6}$/.test(String(code||'').trim())&&await MerSecurity.validateTotp(appState.mfa.secret,String(code).trim()))return true;
     const recovery=await MerSecurity.consumeRecoveryCode(code,appState.mfa.recoveryCodeHashes);
     if(recovery.valid&&consume){appState.mfa.recoveryCodeHashes=recovery.remainingHashes;save();}
+    return recovery.valid;
+  }
+
+  async function verifyDisableMfaCode(code) {
+    if(appState.mfa.method!=='sms')return verifyMfaCode(code);
+    if(pendingSmsDisableChallenge&&await MerSecurity.validateSmsChallenge(pendingSmsDisableChallenge,code))return true;
+    const recovery=await MerSecurity.consumeRecoveryCode(code,appState.mfa.recoveryCodeHashes);
+    if(recovery.valid){appState.mfa.recoveryCodeHashes=recovery.remainingHashes;save('mfa-recovery-code-consumed');}
     return recovery.valid;
   }
 
@@ -325,7 +390,7 @@
 
   $$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>selectSettingsTab(button.dataset.settingsTab)));
   $('#manageSettings').addEventListener('click',()=>openSettings('general'));
-  $('#bankSettingsModal').addEventListener('close',()=>{visibleRecoveryCodes=[];pendingEnrollment=null;renderMfa();});
+  $('#bankSettingsModal').addEventListener('close',()=>{visibleRecoveryCodes=[];pendingEnrollment=null;pendingSmsChallenge=null;pendingSmsDisableChallenge=null;$('#mfaDisableCode').value='';renderMfa();});
   ['baseCurrency','dateFormat','timezone','hideBalances'].forEach(id=>$('#'+id).addEventListener('change',()=>{appState.settings.currency=$('#baseCurrency').value;appState.settings.dateFormat=$('#dateFormat').value;appState.settings.timezone=$('#timezone').value;appState.settings.hideBalances=$('#hideBalances').checked;save('settings-change');showToast(t('settingsSaved'));}));
   $('#settingsLanguage').addEventListener('change',event=>setLanguage(event.target.value));
   $('#layoutEditToggle').addEventListener('click',()=>closeModal($('#bankSettingsModal')));
@@ -334,12 +399,18 @@
   $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();if($('#budgetDataModal').open)closeModal($('#budgetDataModal'));exportBudgetPlanCsv();}));
   $$('[data-export-insights]').forEach(button=>button.addEventListener('click',exportInsightsReportCsv));
 
+  $('#changePasswordForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(async()=>{const feedback=$('#passwordChangeFeedback'),result=await window.MerAuthProvider?.changePassword?.({currentPassword:$('#currentPasswordInput').value,newPassword:$('#newPasswordInput').value,confirmPassword:$('#confirmNewPasswordInput').value});const errorKeys={DEMO_READ_ONLY:'demoPasswordUnavailable',INVALID_CURRENT_PASSWORD:'invalidCurrentPassword',PASSWORD_MISMATCH:'passwordMismatch',PASSWORD_REUSED:'passwordReused',WEAK_PASSWORD:'passwordWeak'};feedback.className=`security-form-feedback ${result?.ok?'success':'error'}`;feedback.textContent=t(result?.ok?'passwordUpdated':(errorKeys[result?.code]||'passwordChangeFailed'));if(result?.ok){window.MerMfaState?.activate?.(result.session);window.MerMfaUnlock?.mark?.(result.session);event.currentTarget.reset();renderActiveSessions();}},'passwordChangeFailed');});
+  $('#logoutOtherSessions').addEventListener('click',()=>{const result=window.MerAuthProvider?.revokeOtherSessions?.();if(!result?.ok){showToast(t('passwordChangeFailed'));return;}renderActiveSessions();showToast(t('otherSessionsLoggedOut',{count:result.revoked}));});
+  $('#mfaMethodSelector').addEventListener('click',event=>{const choice=event.target.closest('[data-mfa-method]');if(!choice||appState.mfa.enabled)return;selectedMfaMethod=MerSecurity.normalizeMfaMethod(choice.dataset.mfaMethod)||MerSecurity.MFA_METHODS.AUTHENTICATOR;pendingEnrollment=null;pendingSmsChallenge=null;visibleRecoveryCodes=[];renderMfa();});
   $('#startMfa').addEventListener('click',()=>runAsyncAction(async()=>{pendingEnrollment=await MerSecurity.createEnrollment(state.accountName);visibleRecoveryCodes=[];renderMfa();},'mfaInvalid'));
   $('#copyMfaSecret').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingEnrollment)return;if(!navigator.clipboard?.writeText)throw new Error('clipboard-unavailable');await navigator.clipboard.writeText(pendingEnrollment.secret);showToast(t('secretCopied'));},'mfaInvalid'));
-  $('#confirmMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingEnrollment||!await MerSecurity.validateTotp(pendingEnrollment.secret,$('#mfaVerificationCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa={enabled:true,secret:pendingEnrollment.secret,recoveryCodeHashes:pendingEnrollment.recoveryCodeHashes,enabledAt:new Date().toISOString()};visibleRecoveryCodes=pendingEnrollment.recoveryCodes;pendingEnrollment=null;sessionStorage.setItem('mer-mfa-unlocked','true');save();renderMfa();showToast(t('mfaReady'));},'mfaInvalid'));
+  $('#confirmMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingEnrollment||!await MerSecurity.validateTotp(pendingEnrollment.secret,$('#mfaVerificationCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa=MerSecurity.createMfaMethodState({enabled:true,method:'authenticator',secret:pendingEnrollment.secret,recoveryCodeHashes:pendingEnrollment.recoveryCodeHashes,enabledAt:new Date().toISOString()});visibleRecoveryCodes=pendingEnrollment.recoveryCodes;pendingEnrollment=null;window.MerMfaUnlock?.mark?.();save('mfa-enable-authenticator');renderMfa();showToast(t('mfaReady'));},'mfaInvalid'));
+  $('#sendMfaSmsCode').addEventListener('click',()=>runAsyncAction(async()=>{const phone=MerSecurity.normalizeSmsDestination($('#mfaSmsPhone').value);if(!phone){showToast(t('smsInvalidPhone'));return;}pendingSmsChallenge=await MerSecurity.createSmsChallenge(phone);$('#mfaSmsDemoDelivery').textContent=t('smsDemoDelivery',{phone:pendingSmsChallenge.maskedPhone,code:pendingSmsChallenge.demoCode});renderMfa();$('#mfaSmsCode').focus({preventScroll:true});showToast(t('smsCodeSent'));},'mfaInvalid'));
+  $('#confirmSmsMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingSmsChallenge||!await MerSecurity.validateSmsChallenge(pendingSmsChallenge,$('#mfaSmsCode').value)){showToast(t('mfaInvalid'));return;}const recoveryCodes=MerSecurity.generateRecoveryCodes(),recoveryCodeHashes=await Promise.all(recoveryCodes.map(MerSecurity.hashRecoveryCode));appState.mfa=MerSecurity.createMfaMethodState({enabled:true,method:'sms',phoneNumber:$('#mfaSmsPhone').value,recoveryCodeHashes,enabledAt:new Date().toISOString()});visibleRecoveryCodes=recoveryCodes;pendingSmsChallenge=null;window.MerMfaUnlock?.mark?.();save('mfa-enable-sms');renderMfa();showToast(t('mfaReady'));},'mfaInvalid'));
   $('#downloadRecoveryCodes').addEventListener('click',()=>downloadFile('mer-recovery-codes.txt',visibleRecoveryCodes.join('\r\n'),'text/plain;charset=utf-8'));
-  $('#disableMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!await verifyMfaCode($('#mfaDisableCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa={enabled:false,secret:null,recoveryCodeHashes:[]};sessionStorage.removeItem('mer-mfa-unlocked');visibleRecoveryCodes=[];save();renderMfa();showToast(t('mfaRemoved'));},'mfaInvalid'));
-  $('#mfaUnlockForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(async()=>{if(!await verifyMfaCode($('#mfaUnlockCode').value)){ $('#mfaUnlockError').textContent=t('unlockError');return;}sessionStorage.setItem('mer-mfa-unlocked','true');$('#mfaLockScreen').hidden=true;document.body.classList.remove('mfa-locked');window.MerOnboardingUi?.resume();},'mfaInvalid');});
+  $('#sendMfaDisableSmsCode').addEventListener('click',()=>runAsyncAction(async()=>{if(!appState.mfa.enabled||appState.mfa.method!=='sms'||!appState.mfa.phoneNumber)return;pendingSmsDisableChallenge=await MerSecurity.createSmsChallenge(appState.mfa.phoneNumber);renderMfa();$('#mfaDisableCode').focus({preventScroll:true});showToast(t('smsCodeSent'));},'mfaInvalid'));
+  $('#disableMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!await verifyDisableMfaCode($('#mfaDisableCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa=MerSecurity.createMfaMethodState({});window.MerMfaUnlock?.clear?.();visibleRecoveryCodes=[];pendingSmsUnlockChallenge=null;pendingSmsDisableChallenge=null;$('#mfaDisableCode').value='';save('mfa-disable');renderMfa();showToast(t('mfaRemoved'));},'mfaInvalid'));
+  $('#mfaUnlockForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(async()=>{if(!await verifyMfaCode($('#mfaUnlockCode').value)){ $('#mfaUnlockError').textContent=t('unlockError');return;}if(!window.MerMfaUnlock?.mark?.()){ $('#mfaUnlockError').textContent=t('unlockError');return;}pendingSmsUnlockChallenge=null;window.MerAuthSecurityUi?.completeUnlock?.();},'mfaInvalid');});
 
   $('#importFile').addEventListener('change',()=>{const file=$('#importFile').files?.[0];if(file)readImportFile(file);});$('#loadImportSample').addEventListener('click',loadLargeSample);$('#importPrev').addEventListener('click',()=>{importPage=Math.max(0,importPage-1);renderImportReview();});$('#importNext').addEventListener('click',()=>{importPage+=1;renderImportReview();});
   $('#bulkImportType').addEventListener('change',()=>{pendingBulkOverride=null;$('#bulkImportCategory').innerHTML=categoryOptions($('#bulkImportType').value);renderBulkOverrideState();});
@@ -359,5 +430,4 @@
   $('#deleteSavingsGoal').addEventListener('click',()=>{const goal=state.goalBuckets.find(item=>item.id===editingGoalId);if(!goal)return;if(state.goalBuckets.length===1){showToast(t('atLeastOneGoal'));return;}if(goal.current>0){showToast(t('goalHasBalance'));return;}state.goalBuckets=state.goalBuckets.filter(item=>item.id!==goal.id);state.savingsEntries=state.savingsEntries.filter(entry=>entry.goalId!==goal.id);if(goal.primary)state.goalBuckets[0].primary=true;save('savings-goal-delete');closeModal($('#goalModal'));showToast(t('goalDeleted'));editingGoalId=null;});
 
   applyStaticTranslations();renderAll();selectSettingsTab(selectedSettingsTab);
-  if(appState.mfa.enabled&&sessionStorage.getItem('mer-mfa-unlocked')!=='true'){$('#mfaLockScreen').hidden=false;document.body.classList.add('mfa-locked');}
 })();

@@ -32,10 +32,12 @@ test('cycle 1: secondary content uses progressive disclosure while the large imp
   assert.match(css, /\.premium-settings\[open\][^}]*max-height:min\(90dvh,calc\(100dvh - 24px\)\)[^}]*overflow:hidden/);
   assert.match(css, /\.settings-pane\.active[^}]*overflow:visible/);
   assert.match(css, /\.import-table-wrap[^}]*scrollbar-gutter:stable/);
-  for (const modal of ['overviewDetailsModal', 'budgetDetailsModal', 'savingsDetailsModal', 'insightsDetailsModal']) {
+  for (const modal of ['overviewDetailsModal', 'budgetDetailsModal', 'savingsDetailsModal']) {
     assert.match(html, new RegExp(`id="${modal}"`));
     assert.match(html, new RegExp(`data-open-detail="${modal}"`));
   }
+  assert.match(html, /id="insightsDetailsModal"/);
+  assert.doesNotMatch(html, /data-open-detail="insightsDetailsModal"/, 'Insights no longer exposes the redundant report-details trigger');
   assert.match(app, /\$\$\('\[data-open-detail\]'\)/);
   assert.match(css, /@media \(max-height:720px\)/);
   assert.match(css, /@media \(max-width:767px\)/);

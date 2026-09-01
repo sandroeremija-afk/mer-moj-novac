@@ -4,6 +4,122 @@
   if (root) root.MerSecurity = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function createMerSecurity() {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const MFA_METHODS = Object.freeze({ AUTHENTICATOR:'authenticator', SMS:'sms' });
+
+  function normalizeMfaMethod(value) {
+    const normalized = String(value || '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+    if (normalized === 'authenticator' || normalized === 'totp' || normalized === 'authenticatorapp') return MFA_METHODS.AUTHENTICATOR;
+    if (normalized === 'sms' || normalized === 'textmessage') return MFA_METHODS.SMS;
+    return null;
+  }
+
+  function normalizeSmsDestination(value) {
+    const raw = String(value || '').trim().replace(/[\s().-]/g, '');
+    const international = raw.startsWith('00') ? `+${raw.slice(2)}` : raw;
+    if (!/^\+[1-9]\d{7,14}$/.test(international)) return '';
+    return international;
+  }
+
+  function maskSmsDestination(value) {
+    const normalized = normalizeSmsDestination(value);
+    if (!normalized) return '';
+    const visible = normalized.slice(-4);
+    return `${normalized.slice(0, Math.min(4, normalized.length - 4))}${'•'.repeat(Math.max(2, normalized.length - visible.length - 4))}${visible}`;
+  }
+
+  function validIsoDate(value) {
+    const timestamp = Date.parse(String(value || ''));
+    return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
+  }
+
+  function createMfaMethodState(input = {}) {
+    const source = input && typeof input === 'object' ? input : {};
+    const inferredMethod = source.method || (source.secret ? MFA_METHODS.AUTHENTICATOR : source.phoneNumber || source.smsDestination ? MFA_METHODS.SMS : null);
+    const method = normalizeMfaMethod(inferredMethod);
+    const secret = method === MFA_METHODS.AUTHENTICATOR
+      ? String(source.secret || '').toUpperCase().replace(/[^A-Z2-7]/g, '')
+      : '';
+    const phoneNumber = method === MFA_METHODS.SMS
+      ? normalizeSmsDestination(source.phoneNumber || source.smsDestination)
+      : '';
+    const configured = method === MFA_METHODS.AUTHENTICATOR ? secret.length >= 16 : method === MFA_METHODS.SMS ? Boolean(phoneNumber) : false;
+    const enabled = Boolean(source.enabled && configured);
+    const enabledAt = enabled ? validIsoDate(source.enabledAt || source.verifiedAt) : null;
+    const recoveryCodeHashes = Array.isArray(source.recoveryCodeHashes)
+      ? source.recoveryCodeHashes.filter(hash => /^[a-f0-9]{64}$/i.test(String(hash)))
+      : [];
+
+    return {
+      enabled,
+      method,
+      secret:method === MFA_METHODS.AUTHENTICATOR ? secret || null : null,
+      phoneNumber:method === MFA_METHODS.SMS ? phoneNumber || null : null,
+      phoneMasked:method === MFA_METHODS.SMS ? maskSmsDestination(phoneNumber) || null : null,
+      recoveryCodeHashes,
+      enabledAt,
+      verifiedAt:enabledAt
+    };
+  }
+
+  function randomNumericToken() {
+    const upperBound = 0x100000000;
+    const acceptedBound = Math.floor(upperBound / 1000000) * 1000000;
+    const values = new Uint32Array(1);
+    do { cryptoApi().getRandomValues(values); } while (values[0] >= acceptedBound);
+    return String(values[0] % 1000000).padStart(6, '0');
+  }
+
+  function randomChallengeId() {
+    const bytes = new Uint8Array(16);
+    cryptoApi().getRandomValues(bytes);
+    return [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function hashSmsToken(challengeId, token) {
+    const payload = `${String(challengeId || '')}:${String(token || '')}`;
+    const digest = new Uint8Array(await cryptoApi().subtle.digest('SHA-256', new TextEncoder().encode(payload)));
+    return [...digest].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  function constantTimeTextEqual(first, second) {
+    const left = String(first || '');
+    const right = String(second || '');
+    if (left.length !== right.length) return false;
+    let difference = 0;
+    for (let index = 0; index < left.length; index += 1) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+    return difference === 0;
+  }
+
+  async function createSmsChallenge(phoneNumber, timeMs = Date.now()) {
+    const normalizedPhone = normalizeSmsDestination(phoneNumber);
+    if (!normalizedPhone) throw new TypeError('INVALID_SMS_DESTINATION');
+    const createdAt = Number(timeMs);
+    if (!Number.isFinite(createdAt)) throw new TypeError('INVALID_CHALLENGE_TIME');
+    const challengeId = randomChallengeId();
+    const demoCode = randomNumericToken();
+    return {
+      method:MFA_METHODS.SMS,
+      challengeId,
+      maskedPhone:maskSmsDestination(normalizedPhone),
+      codeHash:await hashSmsToken(challengeId, demoCode),
+      createdAt,
+      expiresAt:createdAt + 5 * 60 * 1000,
+      delivery:'local-demo',
+      demoCode
+    };
+  }
+
+  async function validateSmsChallenge(challenge, token, timeMs = Date.now()) {
+    const source = challenge && typeof challenge === 'object' ? challenge : {};
+    const normalizedToken = String(token || '').replace(/\s/g, '');
+    const timestamp = Number(timeMs);
+    if (!/^\d{6}$/.test(normalizedToken) || !Number.isFinite(timestamp)) return false;
+    if (!/^[a-f0-9]{32}$/i.test(String(source.challengeId || ''))) return false;
+    if (!/^[a-f0-9]{64}$/i.test(String(source.codeHash || ''))) return false;
+    if (!Number.isFinite(Number(source.expiresAt)) || timestamp >= Number(source.expiresAt)) return false;
+    const candidateHash = await hashSmsToken(source.challengeId, normalizedToken);
+    return constantTimeTextEqual(candidateHash, source.codeHash);
+  }
 
   function bytesToBase32(bytes) {
     let bits = '';
@@ -109,5 +225,23 @@
     return { valid: true, remainingHashes };
   }
 
-  return { bytesToBase32, base32ToBytes, generateSecret, generateTotp, validateTotp, buildOtpAuthUri, generateRecoveryCodes, hashRecoveryCode, createEnrollment, consumeRecoveryCode };
+  return {
+    MFA_METHODS,
+    normalizeMfaMethod,
+    normalizeSmsDestination,
+    maskSmsDestination,
+    createMfaMethodState,
+    createSmsChallenge,
+    validateSmsChallenge,
+    bytesToBase32,
+    base32ToBytes,
+    generateSecret,
+    generateTotp,
+    validateTotp,
+    buildOtpAuthUri,
+    generateRecoveryCodes,
+    hashRecoveryCode,
+    createEnrollment,
+    consumeRecoveryCode
+  };
 });
