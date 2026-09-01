@@ -18,8 +18,8 @@ function dialog(id) {
 }
 
 test('evaluation cycle 1: Insights uses the requested Croatian all-period copy everywhere', () => {
-  assert.match(html, /data-timeframe="all" data-i18n="allTime">Sveukupno</);
-  assert.match(app, /allTime:'Sveukupno'/);
+  assert.match(html, /data-timeframe="all" data-i18n="allTime">Sve ukupno</);
+  assert.match(app, /allTime:'Sve ukupno'/);
   assert.doesNotMatch(html, /data-timeframe="all"[^>]*>Sve vrijeme</);
 });
 

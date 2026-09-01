@@ -29,5 +29,5 @@ test('evaluation cycle 2: Dashboard Details keeps every chart and final action i
   assert.match(modal, /class="detail-modal-grid overview-detail-grid"/);
   assert.match(modal, /class="panel chart-panel"[\s\S]*class="line-chart"/);
   assert.match(modal, /class="panel goal-panel"[\s\S]*data-open-savings/);
-  assert.match(modal, /class="panel upcoming-panel"[\s\S]*data-go-view="activity"/);
+  assert.match(modal, /class="panel upcoming-panel"[\s\S]*data-detail-route="activity"[^>]*data-clear-activity-filters/);
 });

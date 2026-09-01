@@ -6,6 +6,8 @@
     finishLayout:'Završi prilagodbu',
     layoutEditStarted:'Raspored je otključan. Povucite kartice ili koristite Alt + strelice.',
     layoutEditFinished:'Prilagođeni raspored je spremljen.',
+    layoutEditActive:'Način prilagodbe rasporeda je aktivan',
+    saveAndFinish:'Spremi i završi',
     layoutCardHint:'Povucite za promjenu mjesta',
     layoutCardMoved:'Kartica je premještena na poziciju {position} od {total}.'
   });
@@ -14,6 +16,8 @@
     finishLayout:'Finish customizing',
     layoutEditStarted:'Layout unlocked. Drag cards or use Alt + arrow keys.',
     layoutEditFinished:'Your custom layout has been saved.',
+    layoutEditActive:'Layout customization mode is active',
+    saveAndFinish:'Save and finish',
     layoutCardHint:'Drag to reposition',
     layoutCardMoved:'Card moved to position {position} of {total}.'
   });
@@ -22,6 +26,8 @@
   const core = window.MerLayoutCore;
   const toggles = $$('[data-layout-edit-toggle]');
   const liveRegion = $('#layoutLiveRegion');
+  const editStatus = $('#layoutEditStatus');
+  const finishButton = $('#layoutEditFinish');
   if (!core || !toggles.length || !liveRegion) return;
   let persistentStorage = null;
   try { persistentStorage = window.localStorage; } catch { persistentStorage = null; }
@@ -252,6 +258,7 @@
       const label = toggle.querySelector('span');
       if (label) label.textContent = labelText;
     });
+    if (editStatus) editStatus.hidden = !editing;
   }
 
   function syncAll() {
@@ -279,6 +286,7 @@
   }
 
   toggles.forEach(toggle => toggle.addEventListener('click', () => setEditing(!editing)));
+  finishButton?.addEventListener('click', () => setEditing(false));
   document.addEventListener('click', event => {
     if (performance.now() < suppressClickUntil && event.target.closest?.('[data-layout-card]')) {
       event.preventDefault();

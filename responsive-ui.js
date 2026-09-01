@@ -91,6 +91,18 @@
       : { left:0, top:0, width:window.innerWidth, height:window.innerHeight };
   }
 
+  function floatingBounds(menu) {
+    const viewport = viewportBounds();
+    const dialog = menu.closest?.('dialog[open]');
+    if (!dialog) return viewport;
+    const rect = dialog.getBoundingClientRect();
+    const left = Math.max(viewport.left, rect.left);
+    const top = Math.max(viewport.top, rect.top);
+    const right = Math.min(viewport.left + viewport.width, rect.right);
+    const bottom = Math.min(viewport.top + viewport.height, rect.bottom);
+    return { left, top, width:Math.max(1, right - left), height:Math.max(1, bottom - top) };
+  }
+
   function elements(scope, selector) {
     const matches = scope instanceof Element && scope.matches(selector) ? [scope] : [];
     return matches.concat([...scope.querySelectorAll(selector)]);
@@ -272,17 +284,21 @@
     }
     const trigger = document.querySelector(`[aria-controls="${CSS.escape(menu.id)}"]`);
     if (!trigger) return;
-    const bounds = viewportBounds();
+    const bounds = floatingBounds(menu);
     const menuRect = menu.getBoundingClientRect();
     const placement = computeFloatingPosition({
       triggerRect:trigger.getBoundingClientRect(),
       menuSize:{ width:menuRect.width, height:menu.scrollHeight || menuRect.height },
       viewport:bounds
     });
+    const containingDialog = menu.closest?.('dialog[open]');
+    const containingRect = containingDialog?.getBoundingClientRect();
+    const offsetLeft = containingRect?.left || 0;
+    const offsetTop = containingRect?.top || 0;
     menu.dataset.floating = 'true';
     menu.dataset.side = placement.side;
     Object.assign(menu.style, {
-      left:`${placement.left}px`, top:`${placement.top}px`, right:'auto', bottom:'auto',
+      left:`${placement.left - offsetLeft}px`, top:`${placement.top - offsetTop}px`, right:'auto', bottom:'auto',
       width:`${placement.width}px`, maxHeight:`${placement.maxHeight}px`
     });
   }

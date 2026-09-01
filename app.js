@@ -48,11 +48,11 @@ Object.assign(translations.en, {
 });
 
 Object.assign(translations.hr, {
-  userSettings:'KORISNIČKE POSTAVKE', connectedBanks:'Povezane banke i kartice', connectedBanksIntro:'Povežite račune putem sigurnog demonstracijskog Open Banking sloja i odredite profil za svaku vezu.', profileIsolationTitle:'Odvajanje profila je uključeno', profileIsolationBody:'Sinkronizirane transakcije zapisuju se samo u profil dodijeljen tom računu.', yourConnections:'Vaše veze', addConnection:'Dodaj vezu', noBankConnections:'Još nema povezanih računa', noBankConnectionsBody:'Povežite demo banku kako biste isprobali automatski uvoz bez dijeljenja stvarnih vjerodajnica.', secureDemoConnection:'SIGURNA DEMO VEZA', chooseInstitution:'Odaberite instituciju', chooseAccounts:'Odaberite račune ili kartice', assignProfile:'Dodijeli profilu', demoConsent:'Ovo je modularni demo provider. Ne traži ni ne sprema bankovne lozinke.', connectAndSync:'Poveži i sinkroniziraj', exportCsvHint:'Preuzmite sažetak aktivnog profila.', bankSyncStatus:'Status sinkronizacije banke', bankSyncReady:'Bankovna sinkronizacija', connectBank:'Poveži banku', syncNow:'Sinkroniziraj sada', syncing:'Sinkronizacija…', noConnectedAccounts:'Nema povezanih računa', lastSyncedNow:'Upravo sinkronizirano', lastSyncedMinutes:'Zadnja sinkronizacija prije {count} min', lastSyncedHours:'Zadnja sinkronizacija prije {count} h', neverSynced:'Čeka prvu sinkronizaciju', connectionsSummary:'{count} povezanih računa · aktivni profil: {profile}', connectedAccount:'Povezano', syncFailed:'Sinkronizacija nije uspjela', tokenExpired:'Bankovno odobrenje je isteklo. Ponovno povežite račun.', connectionLost:'Banka više nije dostupna. Ponovno povežite račun.', rateLimited:'Banka je privremeno ograničila sinkronizaciju. Pokušajte za {count} s.', reconnect:'Ponovno poveži', refreshConnection:'Osvježi vezu', unlinkConnection:'Odspoji račun', confirmUnlink:'Potvrdi odspajanje', mappingUpdated:'Račun je premješten u profil {profile}.', connectionUnlinked:'Veza je uklonjena. Prethodno uvezene transakcije ostaju u profilu.', accountsConnected:'Povezano je {count} računa. Uvezeno: {imported}.', syncComplete:'Sinkronizacija dovršena · {imported} novih, {duplicates} duplikata preskočeno.', noNewTransactions:'Nema novih transakcija.', selectAccount:'Odaberite barem jedan račun.', manualSource:'Ručno', autoSource:'Automatski', needsReview:'Potrebna kategorija', needsReviewShort:'za pregled', uncategorizedQueue:'Nekategorizirane transakcije', reviewQueueCopy:'{count} automatskih transakcija treba potvrdu kategorije.', showAllTransactions:'Prikaži sve', categoryApproved:'Kategorija je potvrđena.', alertUncategorizedTitle:'Nove transakcije trebaju pregled', alertUncategorizedBody:'{count} uvezenih transakcija nema sigurnu kategoriju.', reviewCategories:'Pregledaj kategorije', backgroundSync:'Automatska sinkronizacija svakih 5 minuta dok je aplikacija otvorena.'
+  userSettings:'KORISNIČKE POSTAVKE', connectedBanks:'Povezane banke i kartice', connectedBanksIntro:'Povežite račune putem sigurnog demonstracijskog Open Banking sloja i odredite profil za svaku vezu.', profileIsolationTitle:'Odvajanje profila je uključeno', profileIsolationBody:'Sinkronizirane transakcije zapisuju se samo u profil dodijeljen tom računu.', yourConnections:'Vaše veze', addConnection:'Dodaj vezu', noBankConnections:'Još nema povezanih računa', noBankConnectionsBody:'Povežite demo banku kako biste isprobali automatski uvoz bez dijeljenja stvarnih vjerodajnica.', secureDemoConnection:'SIGURNA DEMO VEZA', chooseInstitution:'Odaberite instituciju', chooseAccounts:'Odaberite račune ili kartice', institutionStepHint:'Odaberite banku ili kartični servis koji želite povezati.', backToInstitutions:'Natrag na institucije', connectionAlias:'Naziv veze', connectionAliasPlaceholder:'npr. Glavni račun', apiAccessToken:'API pristupni token', apiTokenPlaceholder:'Demo token (neobavezno)', demoConsentExtended:'Demo token koristi se samo tijekom povezivanja i nikada se ne sprema. Bankovne lozinke nisu potrebne.', bankStepOne:'KORAK 1 OD 2', bankStepTwo:'KORAK 2 OD 2', selectInstitution:'Najprije odaberite instituciju.', assignProfile:'Dodijeli profilu', demoConsent:'Ovo je modularni demo provider. Ne traži ni ne sprema bankovne lozinke.', connectAndSync:'Poveži i sinkroniziraj', exportCsvHint:'Preuzmite sažetak aktivnog profila.', bankSyncStatus:'Status sinkronizacije banke', bankSyncReady:'Bankovna sinkronizacija', connectBank:'Poveži banku', syncNow:'Sinkroniziraj sada', syncing:'Sinkronizacija…', noConnectedAccounts:'Nema povezanih računa', lastSyncedNow:'Upravo sinkronizirano', lastSyncedMinutes:'Zadnja sinkronizacija prije {count} min', lastSyncedHours:'Zadnja sinkronizacija prije {count} h', neverSynced:'Čeka prvu sinkronizaciju', connectionsSummary:'{count} povezanih računa · aktivni profil: {profile}', connectedAccount:'Povezano', syncFailed:'Sinkronizacija nije uspjela', tokenExpired:'Bankovno odobrenje je isteklo. Ponovno povežite račun.', connectionLost:'Banka više nije dostupna. Ponovno povežite račun.', rateLimited:'Banka je privremeno ograničila sinkronizaciju. Pokušajte za {count} s.', reconnect:'Ponovno poveži', refreshConnection:'Osvježi vezu', manualBankSyncTooltip:'Ručno sinkroniziraj transakcije', unlinkConnection:'Odspoji račun', unlinkBankTooltip:'Prekini vezu s bankom', confirmUnlink:'Potvrdi odspajanje', mappingUpdated:'Račun je premješten u profil {profile}.', connectionUnlinked:'Veza je uklonjena. Prethodno uvezene transakcije ostaju u profilu.', accountsConnected:'Povezano je {count} računa. Uvezeno: {imported}.', syncComplete:'Sinkronizacija dovršena · {imported} novih, {duplicates} duplikata preskočeno.', noNewTransactions:'Nema novih transakcija.', selectAccount:'Odaberite barem jedan račun.', manualSource:'Ručno', autoSource:'Automatski', needsReview:'Potrebna kategorija', needsReviewShort:'za pregled', uncategorizedQueue:'Nekategorizirane transakcije', reviewQueueCopy:'{count} automatskih transakcija treba potvrdu kategorije.', showAllTransactions:'Prikaži sve', categoryApproved:'Kategorija je potvrđena.', alertUncategorizedTitle:'Nove transakcije trebaju pregled', alertUncategorizedBody:'{count} uvezenih transakcija nema sigurnu kategoriju.', reviewCategories:'Pregledaj kategorije', backgroundSync:'Automatska sinkronizacija svakih 5 minuta dok je aplikacija otvorena.'
 });
 
 Object.assign(translations.en, {
-  userSettings:'USER SETTINGS', connectedBanks:'Connected Banks & Cards', connectedBanksIntro:'Connect accounts through a secure demo Open Banking layer and choose a profile for every connection.', profileIsolationTitle:'Profile isolation is on', profileIsolationBody:'Synced transactions are written only to the profile assigned to that account.', yourConnections:'Your connections', addConnection:'Add connection', noBankConnections:'No connected accounts yet', noBankConnectionsBody:'Connect a demo bank to try automatic imports without sharing real banking credentials.', secureDemoConnection:'SECURE DEMO CONNECTION', chooseInstitution:'Choose an institution', chooseAccounts:'Choose accounts or cards', assignProfile:'Assign to profile', demoConsent:'This is a modular demo provider. It never asks for or stores bank passwords.', connectAndSync:'Connect and sync', exportCsvHint:'Download a summary for the active profile.', bankSyncStatus:'Bank sync status', bankSyncReady:'Bank sync', connectBank:'Connect bank', syncNow:'Sync now', syncing:'Syncing…', noConnectedAccounts:'No connected accounts', lastSyncedNow:'Synced just now', lastSyncedMinutes:'Last synced {count} min ago', lastSyncedHours:'Last synced {count} hr ago', neverSynced:'Waiting for first sync', connectionsSummary:'{count} connected accounts · active profile: {profile}', connectedAccount:'Connected', syncFailed:'Sync failed', tokenExpired:'Bank authorization expired. Reconnect this account.', connectionLost:'The bank account is no longer available. Reconnect it.', rateLimited:'The bank temporarily limited syncing. Try again in {count}s.', reconnect:'Reconnect', refreshConnection:'Refresh connection', unlinkConnection:'Unlink account', confirmUnlink:'Confirm unlink', mappingUpdated:'Account moved to the {profile} profile.', connectionUnlinked:'Connection removed. Previously imported transactions remain in the profile.', accountsConnected:'Connected {count} accounts. Imported: {imported}.', syncComplete:'Sync complete · {imported} new, {duplicates} duplicates skipped.', noNewTransactions:'No new transactions.', selectAccount:'Select at least one account.', manualSource:'Manual', autoSource:'Automatic', needsReview:'Needs category', needsReviewShort:'to review', uncategorizedQueue:'Uncategorized transactions', reviewQueueCopy:'{count} automatic transactions need a category check.', showAllTransactions:'Show all', categoryApproved:'Category confirmed.', alertUncategorizedTitle:'New transactions need review', alertUncategorizedBody:'{count} imported transactions do not have a confident category.', reviewCategories:'Review categories', backgroundSync:'Automatic sync runs every 5 minutes while the app is open.'
+  userSettings:'USER SETTINGS', connectedBanks:'Connected Banks & Cards', connectedBanksIntro:'Connect accounts through a secure demo Open Banking layer and choose a profile for every connection.', profileIsolationTitle:'Profile isolation is on', profileIsolationBody:'Synced transactions are written only to the profile assigned to that account.', yourConnections:'Your connections', addConnection:'Add connection', noBankConnections:'No connected accounts yet', noBankConnectionsBody:'Connect a demo bank to try automatic imports without sharing real banking credentials.', secureDemoConnection:'SECURE DEMO CONNECTION', chooseInstitution:'Choose an institution', chooseAccounts:'Choose accounts or cards', institutionStepHint:'Choose the bank or card provider you want to connect.', backToInstitutions:'Back to institutions', connectionAlias:'Connection name', connectionAliasPlaceholder:'e.g. Main account', apiAccessToken:'API access token', apiTokenPlaceholder:'Demo token (optional)', demoConsentExtended:'The demo token is used only while connecting and is never stored. Bank passwords are not required.', bankStepOne:'STEP 1 OF 2', bankStepTwo:'STEP 2 OF 2', selectInstitution:'Choose an institution first.', assignProfile:'Assign to profile', demoConsent:'This is a modular demo provider. It never asks for or stores bank passwords.', connectAndSync:'Connect and sync', exportCsvHint:'Download a summary for the active profile.', bankSyncStatus:'Bank sync status', bankSyncReady:'Bank sync', connectBank:'Connect bank', syncNow:'Sync now', syncing:'Syncing…', noConnectedAccounts:'No connected accounts', lastSyncedNow:'Synced just now', lastSyncedMinutes:'Last synced {count} min ago', lastSyncedHours:'Last synced {count} hr ago', neverSynced:'Waiting for first sync', connectionsSummary:'{count} connected accounts · active profile: {profile}', connectedAccount:'Connected', syncFailed:'Sync failed', tokenExpired:'Bank authorization expired. Reconnect this account.', connectionLost:'The bank account is no longer available. Reconnect it.', rateLimited:'The bank temporarily limited syncing. Try again in {count}s.', reconnect:'Reconnect', refreshConnection:'Refresh connection', manualBankSyncTooltip:'Manually sync transactions', unlinkConnection:'Unlink account', unlinkBankTooltip:'Disconnect bank', confirmUnlink:'Confirm unlink', mappingUpdated:'Account moved to the {profile} profile.', connectionUnlinked:'Connection removed. Previously imported transactions remain in the profile.', accountsConnected:'Connected {count} accounts. Imported: {imported}.', syncComplete:'Sync complete · {imported} new, {duplicates} duplicates skipped.', noNewTransactions:'No new transactions.', selectAccount:'Select at least one account.', manualSource:'Manual', autoSource:'Automatic', needsReview:'Needs category', needsReviewShort:'to review', uncategorizedQueue:'Uncategorized transactions', reviewQueueCopy:'{count} automatic transactions need a category check.', showAllTransactions:'Show all', categoryApproved:'Category confirmed.', alertUncategorizedTitle:'New transactions need review', alertUncategorizedBody:'{count} imported transactions do not have a confident category.', reviewCategories:'Review categories', backgroundSync:'Automatic sync runs every 5 minutes while the app is open.'
 });
 
 Object.assign(translations.hr,{logout:'Odjava',healthBeauty:'Drogerija i osobna njega',advancedInsights:'Napredni financijski uvidi',categoryDonutTitle:'Potrošnja po kategoriji',expensesShort:'troškovi',merchantBreakdown:'NAJVEĆE KATEGORIJE',topFiveMerchants:'Najveće kategorije',manageSubscriptions:'Upravljaj pretplatama',savingsHealth:'ZDRAVLJE ŠTEDNJE',ofIncome:'od prihoda',subscriptionManager:'UPRAVLJANJE PRETPLATAMA',recurringSubscriptions:'Ponavljajuće pretplate',subscriptionIntro:'Mer prepoznaje poznate servise i mjesečni ritam naplate. Prije obnove provjerite iznos i kategoriju.',detectedSubscriptions:'Otkrivene pretplate',monthlySubscriptionCost:'Procijenjeni mjesečni trošak',renewsIn:'Obnova za {days} dana',noSubscriptions:'Nema otkrivenih pretplata.',roundUps:'Zaokruživanje',roundUpsHint:'Razlika do sljedećeg punog eura ide u ovaj trezor.',monthlyRequired:'Potrebno mjesečno',daysToGoal:'{days} dana do cilja',openBankingArchitecture:'PSD2 adapteri spremni',dashboardGreeting:'Dobro jutro, Sandro',manageBankConnections:'Upravljaj vezama',connectedCount:'{count} povezano'});
@@ -68,8 +68,8 @@ Object.assign(translations.hr,{monthlyBudget:'Fleksibilni budžet za potrošnju'
 Object.assign(translations.en,{monthlyBudget:'Flexible spending budget',afterCommitments:'Income after bills, savings and buffer',remainingBudget:'Safe remainder after spending',allocatedCategories:'Allocated to categories',budgetOf:'{percent}% of the {budget} flexible budget',budgetOverageExact:'{percent}% · {amount} over limit',budgetRecoveryOverTitle:'Category plan exceeds the flexible budget',budgetRecoveryOverCopy:'Reduce only unused category headroom by {amount}; recorded spending stays untouched.',budgetRecoveryCategoryTitle:'One or more categories are over limit',budgetRecoveryCategoryCopy:'Move unused room from another category without changing the total budget.',autoBalanceBudget:'Balance plan',coverOverspending:'Cover overspending',rebalanceBudget:'BUDGET REALLOCATION',coverOverspendingIntro:'Move unused room from one category to an overspent category without changing the total budget.',overspentCategory:'Overspent category',fundFromCategory:'Move from category',transferAmount:'Transfer amount',confirmTransfer:'Confirm reallocation',transferContext:'Available to move: {available}. Overage: {overage}.',transferInvalid:'Choose valid categories and an amount.',transferSaved:'Moved {amount}. The total budget stayed unchanged.',balancePlanConfirm:'Only unused category headroom will be reduced. Recorded spending will not change. Continue?',balancePlanReady:'The plan was balanced by {amount}.',balancePlanPartial:'Reduced by {amount}, but {remaining} cannot be covered without changing the total plan.',spentCategory:'Spent: {spent}. The minimum allowed limit is {minimum}; the current plan allows up to {maximum}.',positiveAmountRequired:'Amount must be greater than zero.',demoWorkspace:'DEMO WORKSPACE',demoResetTitle:'Restore a clean demo workspace',demoResetHint:'Removes trial changes from both profiles and restores the original MER sample data. Display preferences stay saved.',resetDemoData:'Reset demo data',confirmDemoResetTitle:'Restore the original demo data?',confirmDemoResetBody:'All trial transactions, rules, goals and bank connections in Personal and Business will be replaced with the original examples. This cannot be undone.',confirmDemoReset:'Yes, restore data',demoResetComplete:'The demo workspace was restored.',demoResetUnavailable:'Reset is available only in demo mode.',cancel:'Cancel'});
 Object.assign(translations.hr,{activityFilters:'Filtri aktivnosti',filters:'Filteri',dateFrom:'Od datuma',dateTo:'Do datuma',sortTransactions:'Sortiraj transakcije',sortNewest:'Najnovije prvo',sortOldest:'Najstarije prvo',sortAmountHigh:'Iznos: veći prema manjem',sortAmountLow:'Iznos: manji prema većem',clearFilters:'Očisti filtere'});
 Object.assign(translations.en,{activityFilters:'Activity filters',filters:'Filters',dateFrom:'From date',dateTo:'To date',sortTransactions:'Sort transactions',sortNewest:'Newest first',sortOldest:'Oldest first',sortAmountHigh:'Amount: high to low',sortAmountLow:'Amount: low to high',clearFilters:'Clear filters'});
-Object.assign(translations.hr,{allTime:'Sveukupno',appLanguage:'Jezik aplikacije',appTheme:'Tema aplikacije',lightTheme:'Svijetla',darkTheme:'Tamna',editLayout:'Uredi',themeSettingHint:'Prilagodite izgled aplikacije uvjetima rada.',dashboardLayout:'Raspored nadzorne ploče',layoutSettingHint:'Promijenite redoslijed kartica povlačenjem.',openBanking:'OPEN BANKING',syncStatus:'Status sinkronizacije',reviewImportedTransactions:'Pregledajte uvezene transakcije bez potvrđene kategorije.',budgetDataActions:'Uvoz / izvoz budžeta',budgetDataOverline:'PODACI BUDŽETA',budgetDataIntro:'Uvezite promet za kategorizaciju ili preuzmite mjesečni plan grupiran po kategorijama.',budgetImportHint:'Pregledajte CSV, Excel ili CAMT.053 zapise prije potvrde.',budgetExportHint:'Preuzmite limite, potrošnju i iskorištenost po kategorijama.',importBankStatement:'Uvezi bankovni izvod',exportBudgetPlan:'Izvezi plan budžeta',exportInsightsReport:'Izvezi izvješće'});
-Object.assign(translations.en,{appLanguage:'App language',appTheme:'App theme',lightTheme:'Light',darkTheme:'Dark',editLayout:'Edit',themeSettingHint:'Adapt the interface to your working environment.',dashboardLayout:'Dashboard layout',layoutSettingHint:'Change card order with drag and drop.',openBanking:'OPEN BANKING',syncStatus:'Sync status',reviewImportedTransactions:'Review imported transactions without a confirmed category.',budgetDataActions:'Import / export budget',budgetDataOverline:'BUDGET DATA',budgetDataIntro:'Import activity for categorization or download the monthly plan grouped by category.',budgetImportHint:'Review CSV, Excel, or CAMT.053 records before confirming.',budgetExportHint:'Download category limits, spending, and usage.',importBankStatement:'Import bank statement',exportBudgetPlan:'Export budget plan',exportInsightsReport:'Export report'});
+Object.assign(translations.hr,{allTime:'Sve ukupno',appLanguage:'Jezik aplikacije',appTheme:'Tema aplikacije',lightTheme:'Svijetla',darkTheme:'Tamna',editLayout:'Uredi',themeSettingHint:'Prilagodite izgled aplikacije uvjetima rada.',dashboardLayout:'Raspored nadzorne ploče',layoutSettingHint:'Promijenite redoslijed kartica povlačenjem.',openBanking:'OPEN BANKING',syncStatus:'Status sinkronizacije',reviewImportedTransactions:'Pregledajte uvezene transakcije bez potvrđene kategorije.',budgetDataActions:'Uvoz / izvoz budžeta',budgetDataOverline:'PODACI BUDŽETA',budgetDataIntro:'Uvezite promet za kategorizaciju ili preuzmite mjesečni plan grupiran po kategorijama.',budgetImportHint:'Pregledajte CSV, Excel ili CAMT.053 zapise prije potvrde.',budgetExportHint:'Preuzmite limite, potrošnju i iskorištenost po kategorijama.',importBankStatement:'Uvezi bankovni izvod',exportBudgetPlan:'Izvezi plan budžeta',exportInsightsReport:'Izvezi izvješće',goToSavings:'Idi na Štednju',showAllTransactions:'Prikaži sve transakcije'});
+Object.assign(translations.en,{appLanguage:'App language',appTheme:'App theme',lightTheme:'Light',darkTheme:'Dark',editLayout:'Edit',themeSettingHint:'Adapt the interface to your working environment.',dashboardLayout:'Dashboard layout',layoutSettingHint:'Change card order with drag and drop.',openBanking:'OPEN BANKING',syncStatus:'Sync status',reviewImportedTransactions:'Review imported transactions without a confirmed category.',budgetDataActions:'Import / export budget',budgetDataOverline:'BUDGET DATA',budgetDataIntro:'Import activity for categorization or download the monthly plan grouped by category.',budgetImportHint:'Review CSV, Excel, or CAMT.053 records before confirming.',budgetExportHint:'Download category limits, spending, and usage.',importBankStatement:'Import bank statement',exportBudgetPlan:'Export budget plan',exportInsightsReport:'Export report',goToSavings:'Go to Savings',showAllTransactions:'Show all transactions'});
 
 const categoryMeta = {
   food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, healthBeauty:{icon:'N',className:'shopping'}, utilities:{icon:'R',className:'other'}, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
@@ -216,6 +216,7 @@ let insightsTimeframe = 'monthly';
 let activeInsightDetail = null;
 let activityReviewOnly = false;
 let selectedBankProviderId = null;
+let bankConnectionStep = 'overview';
 let bankSyncInProgress = false;
 let returnToBudgetManager = false;
 
@@ -536,16 +537,15 @@ function renderProviderPicker() {
   const providers=MerBankProviders.getProviders();
   $('#providerGrid').innerHTML=providers.map(provider=>`<button type="button" class="provider-option ${selectedBankProviderId===provider.id?'active':''}" data-provider-id="${provider.id}" aria-pressed="${selectedBankProviderId===provider.id}"><span class="institution-mark" style="background:${provider.color}">${escapeHtml(provider.name.slice(0,3))}</span><span><strong>${escapeHtml(provider.name)}</strong><small>${escapeHtml(provider.region)}</small></span></button>`).join('');
   $$('[data-provider-id]').forEach(button=>button.addEventListener('click',()=>selectBankProvider(button.dataset.providerId)));
-  if(selectedBankProviderId)renderProviderAccounts();
 }
 
 function selectBankProvider(providerId) {
   selectedBankProviderId=providerId;
   renderProviderPicker();
-  $('#bankAccountPicker').hidden=false;
-  $('#bankProfileLabel').hidden=false;
-  $('#bankConsentCopy').hidden=false;
-  $('#connectSelectedAccounts').hidden=false;
+  renderProviderAccounts();
+  const provider=MerBankProviders.getProvider(providerId);
+  if(provider&&!$('#bankConnectionAlias').value.trim())$('#bankConnectionAlias').value=provider.name;
+  setBankConnectionStep('accounts',{focus:true});
 }
 
 function renderProviderAccounts() {
@@ -554,35 +554,115 @@ function renderProviderAccounts() {
   $('#providerAccountList').innerHTML=provider.accounts.map(account=>`<label class="bank-account-choice"><input type="checkbox" name="bankAccount" value="${account.id}" ${alreadyConnected.has(account.id)?'disabled':''}><span><strong>${escapeHtml(account.name)} ${escapeHtml(account.mask)}</strong><small>${escapeHtml(currentLang==='hr'?account.kind:account.kindEn)}${alreadyConnected.has(account.id)?` · ${t('connectedAccount')}`:''}</small></span></label>`).join('');
 }
 
+function setBankConnectionStep(step,{focus=false}={}) {
+  const next=['overview','institution','accounts'].includes(step)?step:'overview';
+  bankConnectionStep=next;
+  const modal=$('#connectedBanksModal'),overview=$('#bankConnectionsView'),form=$('#bankConnectForm');
+  const connecting=next!=='overview';
+  modal.classList.toggle('is-connecting',connecting);
+  overview.hidden=connecting;
+  form.hidden=!connecting;
+  $('#bankInstitutionStep').hidden=next!=='institution';
+  $('#bankAccountStep').hidden=next!=='accounts';
+  $$('[data-bank-step-indicator]',form).forEach(marker=>marker.classList.toggle('active',marker.dataset.bankStepIndicator===next));
+  if(connecting){
+    const titleKey=next==='accounts'?'chooseAccounts':'chooseInstitution';
+    const labelKey=next==='accounts'?'bankStepTwo':'bankStepOne';
+    $('#bankConnectionStepTitle').dataset.i18n=titleKey;
+    $('#bankConnectionStepTitle').textContent=t(titleKey);
+    $('#bankConnectionStepLabel').dataset.i18n=labelKey;
+    $('#bankConnectionStepLabel').textContent=t(labelKey);
+  }
+  if(!focus)return;
+  requestAnimationFrame(()=>{
+    const target=next==='overview'?$('#startBankConnection'):next==='accounts'?$('input[name="bankAccount"]:not([disabled])',$('#bankAccountStep')):$('.provider-option',$('#bankInstitutionStep'));
+    target?.focus({preventScroll:true});
+  });
+}
+
+function resetBankConnectionFlow({focus=false}={}) {
+  selectedBankProviderId=null;
+  $('#bankConnectForm').reset();
+  $('#providerAccountList').replaceChildren();
+  $('#bankConnectionAlias').value='';
+  $('#bankApiToken').value='';
+  setBankConnectionStep('overview',{focus});
+}
+
+let activeBankActionTooltipTrigger=null;
+function showBankActionTooltip(trigger) {
+  if(!trigger?.isConnected)return;
+  const tip=$('#bankActionTooltip'),visual=window.visualViewport;
+  const bounds=visual?{left:visual.offsetLeft,top:visual.offsetTop,width:visual.width,height:visual.height}:{left:0,top:0,width:window.innerWidth,height:window.innerHeight};
+  clearTimeout(hideBankActionTooltip.timer);
+  if(activeBankActionTooltipTrigger&&activeBankActionTooltipTrigger!==trigger)activeBankActionTooltipTrigger.removeAttribute('aria-describedby');
+  activeBankActionTooltipTrigger=trigger;
+  tip.textContent=t(trigger.dataset.bankTooltipKey);
+  tip.hidden=false;
+  tip.style.left='0px';tip.style.top='0px';
+  const rect=trigger.getBoundingClientRect(),tipRect=tip.getBoundingClientRect(),edge=8,gap=8;
+  const left=Math.max(bounds.left+edge,Math.min(bounds.left+bounds.width-tipRect.width-edge,rect.left+rect.width/2-tipRect.width/2));
+  const above=rect.top-tipRect.height-gap>=bounds.top+edge;
+  const top=above?rect.top-tipRect.height-gap:Math.min(bounds.top+bounds.height-tipRect.height-edge,rect.bottom+gap);
+  tip.style.left=`${left}px`;tip.style.top=`${Math.max(bounds.top+edge,top)}px`;
+  trigger.setAttribute('aria-describedby','bankActionTooltip');
+}
+
+function hideBankActionTooltip(delay=0) {
+  clearTimeout(hideBankActionTooltip.timer);
+  const hide=()=>{const tip=$('#bankActionTooltip');if(tip)tip.hidden=true;activeBankActionTooltipTrigger?.removeAttribute('aria-describedby');activeBankActionTooltipTrigger=null;};
+  if(delay)hideBankActionTooltip.timer=setTimeout(hide,delay);else hide();
+}
+
+function bindBankActionTooltips() {
+  $$('[data-bank-action-tooltip]',$('#bankConnectionList')).forEach(trigger=>{
+    let pressTimer=null,longPressReleaseTimer=null,longPressed=false,startX=0,startY=0;
+    const cancelPending=()=>{clearTimeout(pressTimer);pressTimer=null;};
+    const releaseLongPress=()=>{clearTimeout(longPressReleaseTimer);hideBankActionTooltip(1600);longPressReleaseTimer=setTimeout(()=>{longPressed=false;},1600);};
+    trigger.addEventListener('mouseenter',()=>showBankActionTooltip(trigger));
+    trigger.addEventListener('mouseleave',event=>{if(event.pointerType!=='touch')hideBankActionTooltip();});
+    trigger.addEventListener('focus',()=>showBankActionTooltip(trigger));
+    trigger.addEventListener('blur',()=>hideBankActionTooltip());
+    trigger.addEventListener('pointerdown',event=>{
+      if(!['touch','pen'].includes(event.pointerType))return;
+      startX=event.clientX;startY=event.clientY;longPressed=false;cancelPending();
+      pressTimer=setTimeout(()=>{longPressed=true;showBankActionTooltip(trigger);},450);
+    });
+    trigger.addEventListener('pointermove',event=>{if(Math.hypot(event.clientX-startX,event.clientY-startY)>10){cancelPending();if(longPressed)hideBankActionTooltip();}});
+    trigger.addEventListener('pointercancel',()=>{cancelPending();longPressed=false;hideBankActionTooltip();});
+    trigger.addEventListener('pointerup',()=>{cancelPending();if(longPressed)releaseLongPress();});
+    trigger.addEventListener('contextmenu',event=>{event.preventDefault();longPressed=true;showBankActionTooltip(trigger);releaseLongPress();});
+    trigger.addEventListener('click',event=>{if(!longPressed)return;event.preventDefault();event.stopImmediatePropagation();clearTimeout(longPressReleaseTimer);longPressed=false;hideBankActionTooltip();},true);
+  });
+}
+
 function renderBankSettings() {
+  hideBankActionTooltip();
   const connections=appState.bankConnections;
   $('#settingsConnectionSummary').textContent=t('connectionsSummary',{count:connections.length,profile:t(state.accountLabel)});
   $('#bankEmptyState').hidden=connections.length>0;
-  $('#bankConnectionList').innerHTML=connections.map(connection=>{const provider=MerBankProviders.getProvider(connection.providerId);const status=connectionStatusLabel(connection);return `<article class="bank-connection-card"><span class="institution-mark" style="background:${provider?.color||'#16574b'}">${escapeHtml(connection.institution.slice(0,3))}</span><div class="connection-copy"><strong>${escapeHtml(connection.accountName)} ${escapeHtml(connection.accountMask)}</strong><span>${escapeHtml(currentLang==='hr'?connection.accountKind:connection.accountKindEn)}</span><small class="connection-status ${status.className}">${escapeHtml(status.text)}</small></div><label class="connection-mapping"><span>${t('assignProfile')}</span><select data-map-bank="${connection.id}" aria-label="${t('assignProfile')}"><option value="personal" ${connection.profileId==='personal'?'selected':''}>${t('personalAccount')}</option><option value="business" ${connection.profileId==='business'?'selected':''}>${t('businessAccount')}</option></select></label><div class="connection-actions"><button type="button" class="icon-button" data-refresh-bank="${connection.id}" aria-label="${t(connection.lastErrorCode==='TOKEN_EXPIRED'||connection.lastErrorCode==='DISCONNECTED'?'reconnect':'refreshConnection')}"><svg aria-hidden="true"><use href="#icon-refresh"></use></svg></button><button type="button" class="icon-button danger-icon" data-unlink-bank="${connection.id}" aria-label="${t('unlinkConnection')}"><svg aria-hidden="true"><use href="#icon-unlink"></use></svg></button></div></article>`;}).join('');
+  $('#bankConnectionList').innerHTML=connections.map(connection=>{const provider=MerBankProviders.getProvider(connection.providerId);const status=connectionStatusLabel(connection);const displayName=connection.connectionAlias||connection.accountName;return `<article class="bank-connection-card"><span class="institution-mark" style="background:${provider?.color||'#16574b'}">${escapeHtml(connection.institution.slice(0,3))}</span><div class="connection-copy"><strong>${escapeHtml(displayName)} ${escapeHtml(connection.accountMask)}</strong><span>${escapeHtml(currentLang==='hr'?connection.accountKind:connection.accountKindEn)}</span><small class="connection-status ${status.className}">${escapeHtml(status.text)}</small></div><label class="connection-mapping"><span>${t('assignProfile')}</span><select data-map-bank="${connection.id}" aria-label="${t('assignProfile')}"><option value="personal" ${connection.profileId==='personal'?'selected':''}>${t('personalAccount')}</option><option value="business" ${connection.profileId==='business'?'selected':''}>${t('businessAccount')}</option></select></label><div class="connection-actions"><button type="button" class="icon-button bank-action-button" data-bank-action-tooltip data-bank-tooltip-key="manualBankSyncTooltip" data-refresh-bank="${connection.id}" title="${t('manualBankSyncTooltip')}" aria-label="${t('manualBankSyncTooltip')}"><svg aria-hidden="true"><use href="#icon-refresh"></use></svg></button><button type="button" class="icon-button danger-icon bank-action-button" data-bank-action-tooltip data-bank-tooltip-key="unlinkBankTooltip" data-unlink-bank="${connection.id}" title="${t('unlinkBankTooltip')}" aria-label="${t('unlinkBankTooltip')}"><svg aria-hidden="true"><use href="#icon-unlink"></use></svg></button></div></article>`;}).join('');
   $$('[data-map-bank]').forEach(select=>select.addEventListener('change',()=>runAsyncAction(()=>mapBankConnection(select.dataset.mapBank,select.value))));
   $$('[data-refresh-bank]').forEach(button=>button.addEventListener('click',()=>runAsyncAction(()=>refreshBankConnection(button.dataset.refreshBank))));
   $$('[data-unlink-bank]').forEach(button=>button.addEventListener('click',()=>requestUnlinkBank(button)));
-  renderProviderPicker();
+  bindBankActionTooltips();
+  if(bankConnectionStep==='institution')renderProviderPicker();
 }
 
 function openBankSettings() {
-  selectedBankProviderId=null;
-  $('#bankConnectForm').hidden=true;
+  resetBankConnectionFlow();
   toggleAccountMenu(false);
   renderBankSettings();
   openModal($('#connectedBanksModal'));
 }
 
 function startBankConnection() {
-  openBankSettings();
   selectedBankProviderId=null;
   $('#bankProfileSelect').value=appState.activeAccount;
-  $('#bankConnectForm').hidden=false;
-  $('#bankAccountPicker').hidden=true;
-  $('#bankProfileLabel').hidden=true;
-  $('#bankConsentCopy').hidden=true;
-  $('#connectSelectedAccounts').hidden=true;
+  $('#bankConnectionAlias').value='';
+  $('#bankApiToken').value='';
   renderProviderPicker();
+  setBankConnectionStep('institution',{focus:true});
 }
 
 async function syncBankConnection(connection,{silent=false}={}) {
@@ -626,15 +706,19 @@ async function mapBankConnection(connectionId,profileId) {
 }
 
 function requestUnlinkBank(button) {
-  if(button.dataset.confirmUnlink!=='true'){button.dataset.confirmUnlink='true';button.classList.add('confirming');button.setAttribute('aria-label',t('confirmUnlink'));button.innerHTML='<svg aria-hidden="true"><use href="#icon-check"></use></svg>';setTimeout(()=>{if(button.isConnected){button.dataset.confirmUnlink='false';button.classList.remove('confirming');button.setAttribute('aria-label',t('unlinkConnection'));button.innerHTML='<svg aria-hidden="true"><use href="#icon-unlink"></use></svg>'; }},3500);return;}
+  if(button.dataset.confirmUnlink!=='true'){button.dataset.confirmUnlink='true';button.dataset.bankTooltipKey='confirmUnlink';button.classList.add('confirming');button.setAttribute('aria-label',t('confirmUnlink'));button.setAttribute('title',t('confirmUnlink'));button.innerHTML='<svg aria-hidden="true"><use href="#icon-check"></use></svg>';setTimeout(()=>{if(button.isConnected){button.dataset.confirmUnlink='false';button.dataset.bankTooltipKey='unlinkBankTooltip';button.classList.remove('confirming');button.setAttribute('aria-label',t('unlinkBankTooltip'));button.setAttribute('title',t('unlinkBankTooltip'));button.innerHTML='<svg aria-hidden="true"><use href="#icon-unlink"></use></svg>'; }},3500);return;}
   appState.bankConnections=appState.bankConnections.filter(connection=>connection.id!==button.dataset.unlinkBank);save('bank-unlink');renderBankSettings();showToast(t('connectionUnlinked'));
 }
 
 async function connectSelectedBankAccounts(event) {
   event.preventDefault();
+  if(!selectedBankProviderId){setBankConnectionStep('institution',{focus:true});showToast(t('selectInstitution'));return;}
   const selected=$$('input[name="bankAccount"]:checked',$('#bankConnectForm')).map(input=>input.value);if(!selected.length){showToast(t('selectAccount'));return;}
-  const profileId=$('#bankProfileSelect').value==='business'?'business':'personal';const connections=selected.map((accountId,index)=>MerBankProviders.createConnection(selectedBankProviderId,accountId,profileId,Date.now()+index));appState.bankConnections.push(...connections);
-  bankSyncInProgress=true;const results=[];for(const connection of connections)results.push(await syncBankConnection(connection,{silent:true}));bankSyncInProgress=false;selectedBankProviderId=null;$('#bankConnectForm').hidden=true;save('bank-connect');renderBankSettings();showToast(t('accountsConnected',{count:connections.length,imported:results.reduce((sum,result)=>sum+result.imported,0)}));
+  const profileId=$('#bankProfileSelect').value==='business'?'business':'personal',alias=$('#bankConnectionAlias').value.trim();
+  const connections=selected.map((accountId,index)=>{const connection=MerBankProviders.createConnection(selectedBankProviderId,accountId,profileId,Date.now()+index);if(alias)connection.connectionAlias=selected.length>1?`${alias} ${index+1}`:alias;return connection;});
+  $('#bankApiToken').value='';
+  appState.bankConnections.push(...connections);
+  bankSyncInProgress=true;const results=[];for(const connection of connections)results.push(await syncBankConnection(connection,{silent:true}));bankSyncInProgress=false;resetBankConnectionFlow();save('bank-connect');renderBankSettings();showToast(t('accountsConnected',{count:connections.length,imported:results.reduce((sum,result)=>sum+result.imported,0)}));
 }
 
 function formatIsoDate(value) { if(!validStoredDate(value))return '—';return new Intl.DateTimeFormat(locale(),{day:'numeric',month:'short',year:'numeric',timeZone:appState.settings.timezone||'Europe/Zagreb'}).format(new Date(`${String(value).slice(0,10)}T12:00:00Z`)); }
@@ -965,6 +1049,7 @@ function openModal(modal) {
 
 function closeModal(modal) {
   if(modal?.open)modal.close();
+  hideBankActionTooltip();
   syncModalLayer();
   const returnTarget=modal&&modalReturnFocus.get(modal);if(returnTarget?.isConnected&&!$('.modal[open]'))requestAnimationFrame(()=>returnTarget.focus({preventScroll:true}));
 }
@@ -1193,8 +1278,10 @@ $$('[data-open-savings]').forEach(button=>button.addEventListener('click',()=>op
 $('#openSettings').addEventListener('click',event=>{event.stopPropagation();toggleAccountMenu();closeNotifications();}); $('#openPlan').addEventListener('click',()=>openModal($('#breakdownModal'))); $('#safeBreakdown').addEventListener('click',()=>openModal($('#breakdownModal')));
 $('#manageBanks').addEventListener('click',openBankSettings);
 $('#startBankConnection').addEventListener('click',startBankConnection);
-$('#cancelBankConnection').addEventListener('click',()=>{selectedBankProviderId=null;$('#bankConnectForm').hidden=true;});
+$('#cancelBankConnection').addEventListener('click',()=>resetBankConnectionFlow({focus:true}));
+$('#bankConnectionBack').addEventListener('click',()=>setBankConnectionStep('institution',{focus:true}));
 $('#bankConnectForm').addEventListener('submit',event=>runAsyncAction(()=>connectSelectedBankAccounts(event)));
+$('#connectedBanksModal').addEventListener('close',()=>{hideBankActionTooltip();resetBankConnectionFlow();});
 $('#headerBankButton').addEventListener('click',openBankSettings);
 $('#syncNow').addEventListener('click',()=>{closeCardMenus();runAsyncAction(()=>syncActiveBankConnections());});
 $('#uncategorizedBadge').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
@@ -1218,11 +1305,21 @@ $('#themeToggle').addEventListener('click',event=>{const choice=event.target.clo
 $('#notificationButton').addEventListener('click',event=>{event.stopPropagation();toggleNotifications();});$('#closeNotifications').addEventListener('click',()=>closeNotifications(true));
 $$('[data-tooltip-key]').forEach(trigger=>{trigger.addEventListener('mouseenter',()=>showTooltip(trigger));trigger.addEventListener('mouseleave',hideTooltip);trigger.addEventListener('focus',()=>showTooltip(trigger));trigger.addEventListener('blur',hideTooltip);trigger.addEventListener('click',()=>$('#appTooltip').hidden?showTooltip(trigger):hideTooltip());});
 window.addEventListener('scroll',hideTooltip,{capture:true,passive:true});
+window.addEventListener('scroll',()=>hideBankActionTooltip(),{capture:true,passive:true});
 $$('[data-insight-detail]').forEach(card=>{
   card.addEventListener('click',event=>{if(event.target.closest('button,a'))return;openInsightDetail(card.dataset.insightDetail);});
   card.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a')){event.preventDefault();openInsightDetail(card.dataset.insightDetail);}});
 });
-$$('[data-card-menu]').forEach(trigger=>trigger.addEventListener('click',event=>{event.stopPropagation();const menuId=trigger.dataset.cardMenu;closeCardMenus(trigger.getAttribute('aria-expanded')==='true'?null:menuId);}));
+$$('[data-card-menu]').forEach(trigger=>trigger.addEventListener('click',()=>{const menuId=trigger.dataset.cardMenu;closeCardMenus(trigger.getAttribute('aria-expanded')==='true'?null:menuId);}));
+document.addEventListener('click',event=>{
+  const button=event.target.closest?.('[data-detail-route]');
+  if(!button)return;
+  event.preventDefault();
+  const target=button.dataset.detailRoute;
+  if(button.hasAttribute('data-clear-activity-filters'))resetActivityFilters({render:false});
+  showView(target);
+  if(target==='activity')renderActivity();
+});
 document.addEventListener('click',event=>{if(!event.target.closest('.sidebar-bottom'))toggleAccountMenu(false);if(!event.target.closest('.notification-wrap'))closeNotifications();if(!event.target.closest('.card-action-wrap'))closeCardMenus();if(!event.target.closest('.activity-toolbar'))setActivityFiltersOpen(false);});
 document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const modal=$('.modal[open]');if(modal){event.preventDefault();closeModal(modal);return;}if(!$('#activityFiltersPanel').hidden){event.preventDefault();setActivityFiltersOpen(false);$('#activityFiltersToggle').focus({preventScroll:true});return;}if(!$('#notificationCenter').hidden){event.preventDefault();closeNotifications(true);return;}if(!$('#accountMenu').hidden){event.preventDefault();toggleAccountMenu(false);$('#openSettings').focus({preventScroll:true});return;}closeCardMenus();});
 $$('.nav-item').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
@@ -1264,7 +1361,7 @@ function setActivityFiltersOpen(open) {
 $('#activitySearch').addEventListener('input',renderActivity);
 $('#activityFiltersToggle').addEventListener('click',()=>setActivityFiltersOpen($('#activityFiltersPanel').hidden));
 ['activityFilter','activityTypeFilter','activityDateFrom','activityDateTo','activitySort'].forEach(id=>$('#'+id).addEventListener('change',renderActivity));
-$('#clearActivityFilters').addEventListener('click',()=>{
+function resetActivityFilters({render=true}={}) {
   $('#activitySearch').value='';
   $('#activityFilter').value='all';
   $('#activityTypeFilter').value='all';
@@ -1272,8 +1369,10 @@ $('#clearActivityFilters').addEventListener('click',()=>{
   $('#activityDateTo').value='';
   $('#activitySort').value='date-desc';
   activityReviewOnly=false;
-  renderActivity();
-});
+  setActivityFiltersOpen(false);
+  if(render)renderActivity();
+}
+$('#clearActivityFilters').addEventListener('click',()=>resetActivityFilters());
 $$('#insightsFilters [data-timeframe]').forEach(button=>button.addEventListener('click',()=>{insightsTimeframe=button.dataset.timeframe;renderInsights();}));
 setInterval(()=>{renderSystemDate(new Date());renderBankSyncStatus();},60000);
 window.addEventListener('resize',()=>{if(window.innerWidth>=768)closeSidebar();renderSystemDate(new Date());});

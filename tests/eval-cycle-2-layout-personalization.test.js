@@ -39,12 +39,18 @@ test('evaluation cycle 2: General Settings exposes one localized accessible layo
     assert.equal((moduleMarkup.match(/data-layout-edit-toggle/g) || []).length, 0, `${moduleId} does not duplicate the global control`);
   }
   assert.match(html, /id="layoutLiveRegion"[^>]*aria-live="polite"/);
+  assert.match(html, /id="layoutEditStatus"[^>]*role="status"[^>]*hidden[\s\S]*id="layoutEditFinish"[^>]*data-i18n="saveAndFinish"/);
   assert.match(ui, /customizeLayout:'Uredi'/);
   assert.match(ui, /finishLayout:'Završi prilagodbu'/);
+  assert.match(ui, /layoutEditActive:'Način prilagodbe rasporeda je aktivan'/);
+  assert.match(ui, /saveAndFinish:'Spremi i završi'/);
   assert.match(ui, /const toggles = \$\$\('\[data-layout-edit-toggle\]'\)/);
   assert.match(ui, /function syncToggles\(\)[\s\S]*toggles\.forEach/);
   assert.match(ui, /toggle\.setAttribute\('aria-label', labelText\)/, 'icon-only responsive controls keep a localized accessible name');
   assert.match(ui, /toggles\.forEach\(toggle => toggle\.addEventListener\('click'/);
+  assert.match(ui, /if \(editStatus\) editStatus\.hidden = !editing/);
+  assert.match(ui, /finishButton\?\.addEventListener\('click', \(\) => setEditing\(false\)\)/);
+  assert.match(css, /\.layout-edit-status \{[\s\S]*position:fixed;[\s\S]*z-index:65;[\s\S]*transform:translateX\(-50%\)/);
 });
 
 test('evaluation cycle 2: customizable cards cover Dashboard, Budgets, Savings and Insights', () => {
