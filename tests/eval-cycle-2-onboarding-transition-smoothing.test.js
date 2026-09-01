@@ -20,7 +20,7 @@ test('evaluation cycle 2: positioning never hides the spotlight backdrop', () =>
   assert.match(css, /\.onboarding-tour\.is-positioning \.onboarding-popover \{[^}]*opacity:0;[^}]*pointer-events:none;/);
   assert.doesNotMatch(css, /\.onboarding-tour\.is-positioning \.onboarding-spotlight/);
   assert.doesNotMatch(css, /\.onboarding-tour\.is-positioning[^{]*\{[^}]*transition:none/);
-  assert.match(css, /\.onboarding-spotlight \{[\s\S]*?box-shadow:0 0 0 100vmax[\s\S]*?transition:left \.3s ease-in-out,top \.3s ease-in-out,width \.3s ease-in-out,height \.3s ease-in-out;/);
+  assert.match(css, /\.onboarding-spotlight \{[\s\S]*?box-shadow:0 0 0 100vmax[\s\S]*?transition:left \.5s ease-in-out,top \.5s ease-in-out,width \.5s ease-in-out,height \.5s ease-in-out;/);
 });
 
 test('evaluation cycle 2: step changes keep the tour mounted while geometry is remeasured', () => {
@@ -49,4 +49,3 @@ test('evaluation cycle 2: controller next and previous transitions preserve the 
 test('evaluation cycle 2: reduced-motion users retain a non-animated fallback', () => {
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.onboarding-spotlight,[\s\S]*?transition:none;/);
 });
-

@@ -266,12 +266,12 @@
       return { category: pickIncome('otherIncome') || (profile?.incomeCategories?.[0]?.id ?? 'otherIncome'), confidence: 'fallback', rule: null };
     }
 
-    if (/uber|bolt|\bzet\b|\bhz\b|croatia airlines|petrol|\bina\b|shell|lukoil|fuel|taxi|autobus|tramvaj/.test(descriptor)) return { category: pickExpense('transport', 'travel', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'transport' };
-    if (/konzum|lidl|interspar|\bspar\b|plodine|eurospin|studenac|supermarket|\bmarket\b|restaurant|restoran|wolt|glovo|pekara/.test(descriptor)) return { category: pickExpense('food', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'groceries' };
-    if (/(^|\s)dm(\s|$)|muller|bipa|drogerij|pharmacy|ljekarn/.test(descriptor)) return { category: pickExpense('healthBeauty', 'shopping', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'health-beauty' };
+    if (/uber|bolt|\bzet\b|\bhz\b|croatia airlines|petrol|\bina\b|shell|lukoil|crodux|\bhac\b|\benc\b|fuel|taxi|autobus|tramvaj/.test(descriptor)) return { category: pickExpense('transport', 'travel', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'transport' };
+    if (/konzum|lidl|interspar|\bspar\b|plodine|eurospin|studenac|tommy|kaufland|supermarket|\bmarket\b|restaurant|restoran|wolt|glovo|mcdonald|\bkfc\b|mlinar|dubravica|pekara/.test(descriptor)) return { category: pickExpense('food', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'groceries-dining' };
+    if (/(^|\s)dm(\s|$)|muller|bipa|drogerij|pharmacy|ljekarn|farmacia/.test(descriptor)) return { category: pickExpense('healthBeauty', 'shopping', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'health-beauty' };
     if (/eventim|entrio|cinestar|caffe|nightclub|netflix|spotify|cinema|kino|steam|playstation/.test(descriptor)) return { category: pickExpense('entertainment', 'software', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'entertainment' };
-    if (/\bhep\b|t-com|hrvatski telekom|\ba1\b|telemach|zagreb holding|komunal|vodovod|utilities/.test(descriptor)) return { category: pickExpense('utilities', 'other', 'office') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'utilities' };
-    if (/amazon|h&m|zara|shop|store|trgovina/.test(descriptor)) return { category: pickExpense('shopping', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'shopping' };
+    if (/\bhep\b|t-com|hrvatski telekom|\bht\b|\ba1\b|telemach|zagreb holding|\bholding\b|komunal|vodovod|cistoca|utilities/.test(descriptor)) return { category: pickExpense('utilities', 'other', 'office') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'utilities' };
+    if (/amazon|aliexpress|h&m|zara|ikea|tisak|shop|store|trgovina/.test(descriptor)) return { category: pickExpense('shopping', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'shopping' };
     if (/adobe|microsoft|github|software|hosting|cloud/.test(descriptor)) return { category: pickExpense('software', 'office', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'software' };
     if (/google ads|meta ads|marketing|advertising/.test(descriptor)) return { category: pickExpense('marketing', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'marketing' };
     if (/airlines|airways|hotel|booking|travel|putovanje/.test(descriptor)) return { category: pickExpense('travel', 'transport', 'other') || profile?.categories?.[0]?.id, confidence: 'rule', rule: 'travel' };
@@ -455,6 +455,28 @@
       return left.index - right.index;
     });
     return rows.map(row => row.transaction);
+  }
+
+  function paginateItems(items, page = 1, pageSize = 8) {
+    const source = Array.isArray(items) ? items : [];
+    const normalizedSize = Number.isFinite(Number(pageSize)) && Number(pageSize) > 0
+      ? Math.max(1, Math.floor(Number(pageSize)))
+      : 8;
+    const totalItems = source.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / normalizedSize));
+    const requestedPage = Number.isFinite(Number(page)) ? Math.floor(Number(page)) : 1;
+    const currentPage = Math.min(totalPages, Math.max(1, requestedPage));
+    const startIndex = totalItems ? (currentPage - 1) * normalizedSize : 0;
+    const endIndex = Math.min(totalItems, startIndex + normalizedSize);
+    return {
+      items:source.slice(startIndex, endIndex),
+      page:currentPage,
+      pageSize:normalizedSize,
+      totalItems,
+      totalPages,
+      startIndex,
+      endIndex
+    };
   }
 
   function transactionTotals(transactions, timeframe = 'monthly', referenceValue = new Date()) {
@@ -759,6 +781,7 @@
     importBankTransactions,
     filterTransactions,
     filterActivityTransactions,
+    paginateItems,
     transactionTotals,
     calculateFinancials,
     FinancialEngine,

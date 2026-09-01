@@ -1,0 +1,24 @@
+{
+  "institution": "PSD2 Sandbox",
+  "account": { "iban": "HR1723600001101234565", "bic": "ZABAHR2X", "currency": "EUR" },
+  "transactions": {
+    "booked": [
+      {
+        "transactionId": "psd2-001",
+        "bookingDateTime": "2026-08-20T08:45:00Z",
+        "creditDebitIndicator": "DBIT",
+        "creditorName": "WOLT ZAGREB",
+        "instructedAmount": { "amount": "24.50", "currency": "EUR" },
+        "remittanceInformationUnstructured": "Narudžba hrane"
+      },
+      {
+        "transactionId": "psd2-002",
+        "bookingDateTime": "2026-08-21T10:00:00Z",
+        "creditDebitIndicator": "CRDT",
+        "debtorName": "POSLODAVAC D.O.O.",
+        "transactionAmount": { "amount": "2100.00", "currency": "EUR" },
+        "remittanceInformationUnstructured": "PLAĆA KOLOVOZ"
+      }
+    ]
+  }
+}

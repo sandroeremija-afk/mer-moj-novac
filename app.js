@@ -71,6 +71,8 @@ Object.assign(translations.hr,{monthlyBudget:'Fleksibilni budžet za potrošnju'
 Object.assign(translations.en,{monthlyBudget:'Flexible spending budget',afterCommitments:'Income after bills, savings and buffer',remainingBudget:'Safe remainder after spending',allocatedCategories:'Allocated to categories',budgetOf:'{percent}% of the {budget} flexible budget',budgetOverageExact:'{percent}% · {amount} over limit',budgetRecoveryOverTitle:'Category plan exceeds the flexible budget',budgetRecoveryOverCopy:'Reduce only unused category headroom by {amount}; recorded spending stays untouched.',budgetRecoveryCategoryTitle:'One or more categories are over limit',budgetRecoveryCategoryCopy:'Move unused room from another category without changing the total budget.',autoBalanceBudget:'Balance plan',coverOverspending:'Cover overspending',rebalanceBudget:'BUDGET REALLOCATION',coverOverspendingIntro:'Move unused room from one category to an overspent category without changing the total budget.',overspentCategory:'Overspent category',fundFromCategory:'Move from category',transferAmount:'Transfer amount',confirmTransfer:'Confirm reallocation',transferContext:'Available to move: {available}. Overage: {overage}.',transferInvalid:'Choose valid categories and an amount.',transferSaved:'Moved {amount}. The total budget stayed unchanged.',balancePlanConfirm:'Only unused category headroom will be reduced. Recorded spending will not change. Continue?',balancePlanReady:'The plan was balanced by {amount}.',balancePlanPartial:'Reduced by {amount}, but {remaining} cannot be covered without changing the total plan.',spentCategory:'Spent: {spent}. The minimum allowed limit is {minimum}; the current plan allows up to {maximum}.',positiveAmountRequired:'Amount must be greater than zero.',demoWorkspace:'DEMO WORKSPACE',demoResetTitle:'Restore a clean demo workspace',demoResetHint:'Removes trial changes from both profiles and restores the original MER sample data. Display preferences stay saved.',resetDemoData:'Reset demo data',confirmDemoResetTitle:'Restore the original demo data?',confirmDemoResetBody:'All trial transactions, rules, goals and bank connections in Personal and Business will be replaced with the original examples. This cannot be undone.',confirmDemoReset:'Yes, restore data',demoResetComplete:'The demo workspace was restored.',demoResetUnavailable:'Reset is available only in demo mode.',cancel:'Cancel'});
 Object.assign(translations.hr,{activityFilters:'Filtri aktivnosti',filters:'Filteri',dateFrom:'Od datuma',dateTo:'Do datuma',sortTransactions:'Sortiraj transakcije',sortNewest:'Najnovije prvo',sortOldest:'Najstarije prvo',sortAmountHigh:'Iznos: veći prema manjem',sortAmountLow:'Iznos: manji prema većem',clearFilters:'Očisti filtere'});
 Object.assign(translations.en,{activityFilters:'Activity filters',filters:'Filters',dateFrom:'From date',dateTo:'To date',sortTransactions:'Sort transactions',sortNewest:'Newest first',sortOldest:'Oldest first',sortAmountHigh:'Amount: high to low',sortAmountLow:'Amount: low to high',clearFilters:'Clear filters'});
+Object.assign(translations.hr,{activityViewMode:'Način prikaza aktivnosti',activityPages:'Stranice',activityContinuous:'Prikaži sve (Kontinuirani scroll)',activityPagination:'Stranice aktivnosti',previousPage:'Prethodna',nextPage:'Sljedeća',activityPageLabel:'Stranica {page} od {pages}',activityResultCount:'Prikazano {visible} od {total} transakcija'});
+Object.assign(translations.en,{activityViewMode:'Activity view mode',activityPages:'Pages',activityContinuous:'Show all (Continuous scroll)',activityPagination:'Activity pages',previousPage:'Previous',nextPage:'Next',activityPageLabel:'Page {page} of {pages}',activityResultCount:'Showing {visible} of {total} transactions'});
 Object.assign(translations.hr,{allTime:'Sve ukupno',appLanguage:'Jezik aplikacije',appTheme:'Tema aplikacije',lightTheme:'Svijetla',darkTheme:'Tamna',editLayout:'Uredi',themeSettingHint:'Prilagodite izgled aplikacije uvjetima rada.',dashboardLayout:'Raspored nadzorne ploče',layoutSettingHint:'Promijenite redoslijed kartica povlačenjem.',openBanking:'OPEN BANKING',syncStatus:'Status sinkronizacije',reviewImportedTransactions:'Pregledajte uvezene transakcije bez potvrđene kategorije.',budgetDataActions:'Uvoz / izvoz budžeta',budgetDataOverline:'PODACI BUDŽETA',budgetDataIntro:'Uvezite promet za kategorizaciju ili preuzmite mjesečni plan grupiran po kategorijama.',budgetImportHint:'Pregledajte CSV, Excel ili CAMT.053 zapise prije potvrde.',budgetExportHint:'Preuzmite limite, potrošnju i iskorištenost po kategorijama.',importBankStatement:'Uvezi bankovni izvod',exportBudgetPlan:'Izvezi plan budžeta',exportInsightsReport:'Izvezi izvješće',goToSavings:'Idi na Štednju',showAllTransactions:'Prikaži sve transakcije'});
 Object.assign(translations.en,{appLanguage:'App language',appTheme:'App theme',lightTheme:'Light',darkTheme:'Dark',editLayout:'Edit',themeSettingHint:'Adapt the interface to your working environment.',dashboardLayout:'Dashboard layout',layoutSettingHint:'Change card order with drag and drop.',openBanking:'OPEN BANKING',syncStatus:'Sync status',reviewImportedTransactions:'Review imported transactions without a confirmed category.',budgetDataActions:'Import / export budget',budgetDataOverline:'BUDGET DATA',budgetDataIntro:'Import activity for categorization or download the monthly plan grouped by category.',budgetImportHint:'Review CSV, Excel, or CAMT.053 records before confirming.',budgetExportHint:'Download category limits, spending, and usage.',importBankStatement:'Import bank statement',exportBudgetPlan:'Export budget plan',exportInsightsReport:'Export report',goToSavings:'Go to Savings',showAllTransactions:'Show all transactions'});
 Object.assign(translations.hr,{bankAccountSelectionRequired:'Molimo označite banku ili karticu prije nastavka.',unlinkBankTitle:'Prekid veze',unlinkBankQuestion:'Jeste li sigurni da želite prekinuti vezu s ovom bankom/karticom?',unlinkBankConfirm:'Prekini vezu',unlinkBankCancel:'Odustani'});
@@ -83,7 +85,13 @@ Object.assign(translations.hr,{savedInPeriod:'Ušteđeno u razdoblju',savingsHis
 Object.assign(translations.en,{savedInPeriod:'Saved in this period',savingsHistorySummary:'Savings history summary',monthlyAverage:'Monthly average',bestSavingsMonth:'Best month',savingsTrendUp:'more than last month',savingsTrendDown:'less than last month',savingsTrendFlat:'Same as last month',savingsPointLabel:'{month}: {amount}'});
 
 const categoryMeta = {
-  food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, healthBeauty:{icon:'N',className:'shopping'}, utilities:{icon:'R',className:'other'}, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
+  food:{ icon:'H', iconId:'icon-utensils', className:'food' },
+  transport:{ icon:'P', iconId:'icon-car', className:'transport' },
+  shopping:{ icon:'K', iconId:'icon-shopping-cart', className:'shopping' },
+  healthBeauty:{ icon:'N', iconId:'icon-heart-pulse', className:'health' },
+  utilities:{ icon:'R', iconId:'icon-home', className:'utilities' },
+  entertainment:{ icon:'Z', iconId:'icon-ticket', className:'entertainment' },
+  other:{ icon:'O', iconId:'icon-receipt', className:'other' }
 };
 const defaultIncomeCategories = [
   {id:'salary',nameKey:'salary',icon:'P',isCustom:false},
@@ -93,7 +101,7 @@ const defaultIncomeCategories = [
 ];
 
 const personalDefaults = {
-  accountName:'Moj eRačun', accountLabel:'personalAccount', initials:'ME', income:4300, bills:1180, savingsTarget:620, savingsBalance:6240, savingsGoal:10000, guard:0.10, spent:1574.25, availableBalance:3840.60,
+  profileId:'personal', accountName:'Moj eRačun', accountLabel:'personalAccount', initials:'ME', income:4300, bills:1180, savingsTarget:620, savingsBalance:6240, savingsGoal:10000, guard:0.10, spent:1574.25, availableBalance:3840.60,
   categories:[{id:'food',spent:428.10,limit:520},{id:'transport',spent:164.20,limit:260},{id:'shopping',spent:354.40,limit:370},{id:'healthBeauty',spent:27.60,limit:80},{id:'entertainment',spent:145.49,limit:180},{id:'utilities',spent:454.46,limit:470},{id:'other',spent:0,limit:190}],
   incomeCategories:structuredClone(defaultIncomeCategories),
   transactions:[
@@ -110,7 +118,7 @@ const personalDefaults = {
 };
 
 const businessDefaults = {
-  accountName:'Elektronički računi d.o.o.', accountLabel:'businessAccount', initials:'ER', income:8200, bills:3150, savingsTarget:1200, savingsBalance:12800, savingsGoal:25000, guard:0.15, spent:2460.70, availableBalance:9150.30,
+  profileId:'business', accountName:'Elektronički računi d.o.o.', accountLabel:'businessAccount', initials:'ER', income:8200, bills:3150, savingsTarget:1200, savingsBalance:12800, savingsGoal:25000, guard:0.15, spent:2460.70, availableBalance:9150.30,
   categories:[{id:'software',name:'Softver',icon:'S',spent:620.40,limit:900,isCustom:true},{id:'travel',name:'Putovanja',icon:'P',spent:780.30,limit:1100,isCustom:true},{id:'marketing',name:'Marketing',icon:'M',spent:540,limit:850,isCustom:true},{id:'office',name:'Ured',icon:'U',spent:520,limit:700,isCustom:true}],
   incomeCategories:structuredClone(defaultIncomeCategories),
   transactions:[{id:'bi1',type:'income',name:'Klijentski računi',amount:8200,category:'freelance',date:'2026-08-03T09:00:00'},{id:'b1',type:'expense',name:'Adobe',amount:72.50,category:'software',date:'2026-08-20T08:30:00'},{id:'b2',type:'expense',name:'Google Ads',amount:240,category:'marketing',date:'2026-08-19T12:10:00'},{id:'b3',type:'expense',name:'Croatia Airlines',amount:310.30,category:'travel',date:'2026-08-18T10:20:00'},{id:'be-rest',type:'expense',name:'Ostali poslovni troškovi',amount:1837.90,category:'office',date:'2026-08-10T12:00:00'},{id:'bi-jul',type:'income',name:'Klijentski računi',amount:7900,category:'freelance',date:'2026-07-03T09:00:00'},{id:'be-jul',type:'expense',name:'Poslovni troškovi',amount:2710,category:'office',date:'2026-07-15T12:00:00'}],
@@ -131,6 +139,8 @@ try {
 if(!appState||typeof appState!=='object'||!appState.accounts||typeof appState.accounts!=='object')appState=MerCore.createAccountStore(structuredClone(personalDefaults),structuredClone(businessDefaults),{language:'hr',theme:'light'});
 appState.accounts.personal=appState.accounts.personal&&typeof appState.accounts.personal==='object'?appState.accounts.personal:structuredClone(personalDefaults);
 appState.accounts.business=appState.accounts.business&&typeof appState.accounts.business==='object'?appState.accounts.business:structuredClone(businessDefaults);
+appState.accounts.personal.profileId='personal';
+appState.accounts.business.profileId='business';
 appState.activeAccount=appState.activeAccount==='business'?'business':'personal';
 appState.version=6;
 const safeIdentifier=(value,fallback)=>String(value??fallback).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,100)||fallback;
@@ -291,6 +301,9 @@ let transactionType = 'expense';
 let insightsTimeframe = 'monthly';
 let activeInsightDetail = null;
 let activityReviewOnly = false;
+const ACTIVITY_PAGE_SIZE = 8;
+let activityPage = 1;
+let activityViewMode = 'pages';
 let selectedBankProviderId = null;
 let bankConnectionStep = 'overview';
 let pendingBankUnlinkId = null;
@@ -306,9 +319,23 @@ const locale = () => currentLang === 'hr' ? 'hr-HR' : 'en-IE';
 const currency = (value, whole = false) => {const amount=Number(value);return new Intl.NumberFormat(locale(), { style:'currency', currency:appState.settings.currency||'EUR', minimumFractionDigits:whole ? 0 : 2, maximumFractionDigits:whole ? 0 : 2 }).format(Number.isFinite(amount)?amount:0);};
 const number = (value, digits = 1) => {const amount=Number(value);return new Intl.NumberFormat(locale(), { maximumFractionDigits:digits }).format(Number.isFinite(amount)?amount:0);};
 const categoryName = id => { const cat=state?.categories?.find(item=>item.id===id);return cat?.name || t(id); };
-const categoryVisual = cat => categoryMeta[cat?.id] || { icon:cat?.icon || (cat?.name || '?').slice(0,1).toUpperCase(), className:'custom' };
+function inferredCategoryIconId(cat) {
+  const descriptor=`${cat?.id||''} ${cat?.name||''}`.toLocaleLowerCase('hr-HR');
+  if(/zdrav|njeg|ljek|farmac|bipa|müller|muller|\bdm\b/.test(descriptor))return 'icon-heart-pulse';
+  if(/režij|rezij|stanov|hep|holding|vodovod|čistoć|cistoc|telekom|telemach/.test(descriptor))return 'icon-home';
+  if(/goriv|fuel|ina|petrol|lukoil|crodux|shell/.test(descriptor))return 'icon-fuel';
+  if(/prijevoz|transport|zet|uber|bolt|\bhž\b|\bhz\b|\bhac\b/.test(descriptor))return 'icon-car';
+  if(/hran|namir|restoran|dostav|wolt|glovo|konzum|lidl|spar|plodine|studenac|tommy|eurospin|kaufland/.test(descriptor))return 'icon-utensils';
+  if(/kupovin|shopping|amazon|aliexpress|zara|h&m|ikea|tisak/.test(descriptor))return 'icon-shopping-cart';
+  if(/zabav|entertain|kino|event|netflix|spotify/.test(descriptor))return 'icon-ticket';
+  return null;
+}
+const categoryVisual = cat => categoryMeta[cat?.id] || { icon:cat?.icon || (cat?.name || '?').slice(0,1).toUpperCase(), iconId:inferredCategoryIconId(cat), className:'custom' };
 const incomeCategoryName = id => { const cat=state?.incomeCategories?.find(item=>item.id===id);return cat?.name || t(cat?.nameKey||id); };
-const incomeCategoryVisual = cat => ({icon:cat?.icon||(incomeCategoryName(cat?.id||'otherIncome').slice(0,1).toUpperCase()),className:'income-category'});
+const incomeCategoryVisual = cat => ({icon:cat?.icon||(incomeCategoryName(cat?.id||'otherIncome').slice(0,1).toUpperCase()),iconId:'icon-wallet',className:'income-category'});
+const categoryIconMarkup = visual => visual?.iconId
+  ? `<svg aria-hidden="true" focusable="false"><use href="#${visual.iconId}"></use></svg>`
+  : escapeHtml(visual?.icon||'?');
 reactiveStore.subscribe(event => {
   appState=event.state;
   state=event.activeProfile;
@@ -476,7 +503,7 @@ function renderBudgetLists() {
     const pct = Math.round(state.derived?.categoryMetrics?.[cat.id]?.percent ?? MerCore.budgetThreshold(cat.spent,cat.limit).percent);
     const meta = categoryVisual(cat);
     const overage=Math.max(0,cat.spent-cat.limit),status=pct>=100?t('budgetOverageExact',{percent:pct,amount:currency(overage,true)}):thresholdMessage(pct);
-    return `<div class="budget-item${pct>100?' is-over-budget':''}"><div class="budget-item-header"><span class="category-icon ${meta.className}">${escapeHtml(meta.icon)}</span><div><div class="budget-item-title"><strong>${escapeHtml(categoryName(cat.id))}</strong><span>${t('usedOf',{spent:currency(cat.spent,true),limit:currency(cat.limit,true)})}</span></div><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div>${pct>=80?`<small class="threshold-warning ${pct>=100?'is-red overage-label':''}">${status}</small>`:''}</div><span class="budget-percent">${pct}%</span></div></div>`;
+    return `<div class="budget-item${pct>100?' is-over-budget':''}"><div class="budget-item-header"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div><div class="budget-item-title"><strong>${escapeHtml(categoryName(cat.id))}</strong><span>${t('usedOf',{spent:currency(cat.spent,true),limit:currency(cat.limit,true)})}</span></div><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div>${pct>=80?`<small class="threshold-warning ${pct>=100?'is-red overage-label':''}">${status}</small>`:''}</div><span class="budget-percent">${pct}%</span></div></div>`;
   }).join('');
 }
 
@@ -516,7 +543,7 @@ function budgetCategoryPercent(cat) { return Math.round(state.derived?.categoryM
 
 function budgetCategoryRow(cat, manager=false) {
   const pct=budgetCategoryPercent(cat),meta=categoryVisual(cat),remaining=Math.max(0,cat.limit-cat.spent),overage=Math.max(0,cat.spent-cat.limit),name=categoryName(cat.id),safeId=escapeHtml(cat.id),safeName=escapeHtml(name),status=pct>=100?t('budgetOverageExact',{percent:pct,amount:currency(overage,true)}):pct>=80?thresholdMessage(pct):`${currency(remaining,true)} ${currentLang==='hr'?'preostalo':'remaining'}`;
-  return `<div class="budget-row${manager?' budget-manager-row':''}${pct>100?' is-over-budget':''}"><div class="budget-category"><span class="category-icon ${meta.className}">${escapeHtml(meta.icon)}</span><div><strong>${safeName}</strong><small class="${pct>=80?'threshold-warning':''}${pct>=100?' overage-label':''}">${status}</small></div></div><div class="budget-row-progress"><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div><span class="budget-percent">${pct}%</span></div><div class="budget-row-value">${currency(cat.spent,true)} / ${currency(cat.limit,true)}</div><button type="button" class="icon-button small edit-budget" data-edit-budget="${safeId}" aria-label="${currentLang==='hr'?'Uredi budžet za':'Edit budget for'} ${safeName}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
+  return `<div class="budget-row${manager?' budget-manager-row':''}${pct>100?' is-over-budget':''}"><div class="budget-category"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div><strong>${safeName}</strong><small class="${pct>=80?'threshold-warning':''}${pct>=100?' overage-label':''}">${status}</small></div></div><div class="budget-row-progress"><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div><span class="budget-percent">${pct}%</span></div><div class="budget-row-value">${currency(cat.spent,true)} / ${currency(cat.limit,true)}</div><button type="button" class="icon-button small edit-budget" data-edit-budget="${safeId}" aria-label="${currentLang==='hr'?'Uredi budžet za':'Edit budget for'} ${safeName}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
 }
 
 function budgetCategoryMatchesStatus(cat,status) {
@@ -950,6 +977,28 @@ function formatTransactionDate(iso) {
   return key ? t(key) : Number.isNaN(date.getTime())?'—':new Intl.DateTimeFormat(locale(),{day:'numeric',month:'long',year:'numeric',timeZone:appState.settings.timezone||'Europe/Zagreb'}).format(date);
 }
 
+function activityPageSequence(totalPages,currentPage,compact=window.matchMedia('(max-width: 520px)').matches) {
+  if(compact&&totalPages>3){const start=Math.max(1,Math.min(currentPage-1,totalPages-2));return [start,start+1,start+2];}
+  if(totalPages<=7)return Array.from({length:totalPages},(_,index)=>index+1);
+  const pages=[1,totalPages,currentPage-1,currentPage,currentPage+1].filter(page=>page>=1&&page<=totalPages).filter((page,index,all)=>all.indexOf(page)===index).sort((a,b)=>a-b);
+  return pages.reduce((result,page,index)=>{if(index&&page-pages[index-1]>1)result.push(null);result.push(page);return result;},[]);
+}
+
+function renderActivityPagination(pagination) {
+  activityPage=pagination.page;
+  const continuous=activityViewMode==='continuous';
+  const visible=continuous?pagination.totalItems:pagination.items.length;
+  $('#transactionList').classList.toggle('continuous',continuous);
+  $('#activityResultSummary').textContent=t('activityResultCount',{visible,total:pagination.totalItems});
+  $$('[data-activity-view-mode]').forEach(button=>{const active=button.dataset.activityViewMode===activityViewMode;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+  const navigation=$('#activityPagination');
+  navigation.hidden=continuous||pagination.totalItems<=pagination.pageSize;
+  $('#activityPreviousPage').disabled=pagination.page<=1;
+  $('#activityNextPage').disabled=pagination.page>=pagination.totalPages;
+  $('#activityPageNumbers').innerHTML=activityPageSequence(pagination.totalPages,pagination.page).map(page=>page===null?'<span class="activity-page-ellipsis" aria-hidden="true">…</span>':`<button type="button" class="activity-page-button${page===pagination.page?' active':''}" data-activity-page="${page}" ${page===pagination.page?'aria-current="page"':''} aria-label="${t('activityPageLabel',{page,pages:pagination.totalPages})}">${page}</button>`).join('');
+  $$('[data-activity-page]').forEach(button=>button.addEventListener('click',()=>{activityPage=Number(button.dataset.activityPage);renderActivity();$('#transactionList').scrollTop=0;$('#activityPageNumbers [aria-current="page"]')?.focus({preventScroll:true});}));
+}
+
 function renderActivity() {
   const search = ($('#activitySearch').value || '').trim();
   const filter = $('#activityFilter').value || 'all';
@@ -972,9 +1021,12 @@ function renderActivity() {
     reviewOnly:activityReviewOnly,
     getCategoryLabel:(tx,type)=>type==='income'?incomeCategoryName(tx.category):categoryName(tx.category)
   });
+  const pagination=MerCore.paginateItems(filtered,activityPage,ACTIVITY_PAGE_SIZE);
+  const visibleTransactions=activityViewMode==='continuous'?filtered:pagination.items;
+  renderActivityPagination(pagination);
   $('#activityEmpty').hidden = filtered.length > 0;
   let lastDate = '';
-  $('#transactionList').innerHTML = filtered.map(tx => {
+  $('#transactionList').innerHTML = visibleTransactions.map(tx => {
     const dateLabel = formatTransactionDate(tx.date);
     const amountSort=sort.startsWith('amount-');
     const header = !amountSort&&dateLabel!==lastDate ? `<div class="transaction-date">${dateLabel}</div>` : '';
@@ -983,7 +1035,7 @@ function renderActivity() {
     const sourceLabel=tx.source||t('manualSource');
     const transactionClock=new Intl.DateTimeFormat(locale(),{hour:'2-digit',minute:'2-digit',timeZone:appState.settings.timezone||'Europe/Zagreb'}).format(new Date(tx.date));
     const activityDateLabel=amountSort?`${formatIsoDate(String(tx.date).slice(0,10))} · ${transactionClock}`:transactionClock;
-    return `${header}<div class="transaction-item ${type}"><span class="category-icon ${meta.className}">${escapeHtml(meta.icon)}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><div class="transaction-meta"><small>${activityDateLabel}</small><span class="transaction-source ${tx.sourceType==='auto'||tx.sourceType==='import'?'auto':''}">${escapeHtml(sourceLabel)}</span>${tx.needsReview?`<span class="needs-review-tag">${t('needsReview')}</span>`:''}</div></div><span class="transaction-category">${escapeHtml(displayCategory)}</span><span class="transaction-amount ${type}">${type==='income'?'+':'−'}${currency(tx.amount)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
+    return `${header}<div class="transaction-item ${type}"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><div class="transaction-meta"><small>${activityDateLabel}</small><span class="transaction-source ${tx.sourceType==='auto'||tx.sourceType==='import'?'auto':''}">${escapeHtml(sourceLabel)}</span>${tx.needsReview?`<span class="needs-review-tag">${t('needsReview')}</span>`:''}</div></div><span class="transaction-category">${escapeHtml(displayCategory)}</span><span class="transaction-amount ${type}">${type==='income'?'+':'−'}${currency(tx.amount)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
   }).join('');
   $$('[data-edit-transaction]').forEach(button=>button.addEventListener('click',()=>openTransaction(button.dataset.editTransaction)));
 }
@@ -998,7 +1050,7 @@ function cashflowLabel(key) {
 }
 
 function renderIncomeCategories() {
-  $('#incomeCategoryList').innerHTML=state.incomeCategories.map(cat=>{const visual=incomeCategoryVisual(cat);const count=state.transactions.filter(tx=>MerCore.transactionType(tx)==='income'&&tx.category===cat.id).length;return `<div class="income-category-item"><span class="category-icon ${visual.className}">${escapeHtml(visual.icon)}</span><div><strong>${escapeHtml(incomeCategoryName(cat.id))}</strong><small>${count} ${t('transactionsShort')}</small></div>${cat.isCustom?`<button type="button" class="icon-button small" data-edit-income-category="${cat.id}" aria-label="${t('editIncome')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button>`:'<span class="default-category-mark">mer</span>'}</div>`;}).join('');
+  $('#incomeCategoryList').innerHTML=state.incomeCategories.map(cat=>{const visual=incomeCategoryVisual(cat);const count=state.transactions.filter(tx=>MerCore.transactionType(tx)==='income'&&tx.category===cat.id).length;return `<div class="income-category-item"><span class="category-icon ${visual.className}">${categoryIconMarkup(visual)}</span><div><strong>${escapeHtml(incomeCategoryName(cat.id))}</strong><small>${count} ${t('transactionsShort')}</small></div>${cat.isCustom?`<button type="button" class="icon-button small" data-edit-income-category="${cat.id}" aria-label="${t('editIncome')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button>`:'<span class="default-category-mark">mer</span>'}</div>`;}).join('');
   $$('[data-edit-income-category]').forEach(button=>button.addEventListener('click',()=>openIncomeCategoryEditor(button.dataset.editIncomeCategory)));
 }
 
@@ -1271,7 +1323,7 @@ function closeSidebar() { $('#sidebar').classList.remove('open'); $('#sidebarScr
 function toggleAccountMenu(force) { const menu=$('#accountMenu'),willOpen=typeof force==='boolean'?force:menu.hidden;menu.hidden=!willOpen;$('#openSettings').setAttribute('aria-expanded',String(willOpen)); }
 function closeNotifications(restoreFocus=false) { const wasOpen=!$('#notificationCenter').hidden;$('#notificationCenter').hidden=true;$('#notificationButton').setAttribute('aria-expanded','false');if(restoreFocus&&wasOpen)requestAnimationFrame(()=>$('#notificationButton').focus({preventScroll:true})); }
 function toggleNotifications() { const open=$('#notificationCenter').hidden;$('#notificationCenter').hidden=!open;$('#notificationButton').setAttribute('aria-expanded',String(open));if(open)toggleAccountMenu(false); }
-function switchAccount(accountId) { if(!appState.accounts[accountId]||accountId===appState.activeAccount)return;appState.activeAccount=accountId;state=appState.accounts[accountId];activityReviewOnly=false;processDueRecurring(state);save('account-switch');toggleAccountMenu(false);showView('overview');showToast(t('accountSwitched',{account:state.accountName})); }
+function switchAccount(accountId) { if(!appState.accounts[accountId]||accountId===appState.activeAccount)return;appState.activeAccount=accountId;state=appState.accounts[accountId];activityReviewOnly=false;activityPage=1;processDueRecurring(state);save('account-switch');toggleAccountMenu(false);showView('overview');showToast(t('accountSwitched',{account:state.accountName})); }
 function setTheme(nextTheme) { currentTheme=nextTheme==='dark'?'dark':'light';applyTheme();save('theme-change'); }
 
 function processDueRecurring(profile) {
@@ -1468,12 +1520,12 @@ $('#confirmBankUnlink').addEventListener('click',confirmBankUnlink);
 $('#unlinkBankModal').addEventListener('close',()=>{pendingBankUnlinkId=null;});
 $('#headerBankButton').addEventListener('click',openBankSettings);
 $('#syncNow').addEventListener('click',()=>{closeCardMenus();runAsyncAction(()=>syncActiveBankConnections());});
-$('#reviewUncategorizedTransactions').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
+$('#reviewUncategorizedTransactions').addEventListener('click',()=>{activityReviewOnly=true;activityPage=1;showView('activity');renderActivity();});
 const resolveAlertFromButton=(button,options={})=>resolveNotification({key:button.dataset.notificationKey,fingerprint:button.dataset.notificationFingerprint},options);
 $('#resolveUncategorized').addEventListener('click',event=>{event.stopPropagation();resolveAlertFromButton(event.currentTarget);});
 $('#resolveBudgetRecovery').addEventListener('click',event=>resolveAlertFromButton(event.currentTarget));
 $('#resolveReviewQueue').addEventListener('click',event=>{activityReviewOnly=false;resolveAlertFromButton(event.currentTarget);});
-$('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;renderActivity();});
+$('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;activityPage=1;renderActivity();});
 $('#addCategory').addEventListener('click',()=>{returnToBudgetManager=false;openBudgetEditor();});
 $('#manageBudgetCategories')?.addEventListener('click',()=>openBudgetCategoryManager({reset:true}));
 $('#openBudgetTransfer').addEventListener('click',openBudgetTransfer);
@@ -1546,9 +1598,13 @@ function setActivityFiltersOpen(open) {
   toggle.setAttribute('aria-expanded',String(open));
 }
 
-$('#activitySearch').addEventListener('input',renderActivity);
+function renderActivityFromFirstPage(){activityPage=1;renderActivity();}
+$('#activitySearch').addEventListener('input',renderActivityFromFirstPage);
 $('#activityFiltersToggle').addEventListener('click',()=>setActivityFiltersOpen($('#activityFiltersPanel').hidden));
-['activityFilter','activityTypeFilter','activityDateFrom','activityDateTo','activitySort'].forEach(id=>$('#'+id).addEventListener('change',renderActivity));
+['activityFilter','activityTypeFilter','activityDateFrom','activityDateTo','activitySort'].forEach(id=>$('#'+id).addEventListener('change',renderActivityFromFirstPage));
+$$('[data-activity-view-mode]').forEach(button=>button.addEventListener('click',()=>{activityViewMode=button.dataset.activityViewMode==='continuous'?'continuous':'pages';activityPage=1;renderActivity();$('#transactionList').scrollTop=0;}));
+$('#activityPreviousPage').addEventListener('click',()=>{if(activityPage<=1)return;activityPage-=1;renderActivity();$('#transactionList').scrollTop=0;});
+$('#activityNextPage').addEventListener('click',()=>{activityPage+=1;renderActivity();$('#transactionList').scrollTop=0;});
 function resetActivityFilters({render=true}={}) {
   $('#activitySearch').value='';
   $('#activityFilter').value='all';
@@ -1557,6 +1613,7 @@ function resetActivityFilters({render=true}={}) {
   $('#activityDateTo').value='';
   $('#activitySort').value='date-desc';
   activityReviewOnly=false;
+  activityPage=1;
   setActivityFiltersOpen(false);
   if(render)renderActivity();
 }

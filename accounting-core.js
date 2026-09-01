@@ -28,15 +28,18 @@
 
   function normalizePsd2Transaction(provider, payload, account = {}) {
     const id = clean(payload.transactionId || payload.id || payload.entryReference || payload.extra?.id);
-    const rawAmount = Number(payload.transactionAmount?.amount ?? payload.amount ?? payload.extra?.amount);
-    const indicator = clean(payload.creditDebitIndicator || payload.status === 'credit' ? payload.creditDebitIndicator || 'CRDT' : payload.credit_debit_indicator).toUpperCase();
+    const amountContainer = payload.transactionAmount || payload.instructedAmount;
+    const rawAmount = Number(amountContainer?.amount ?? payload.amount ?? payload.extra?.amount);
+    const status = clean(payload.status).toLowerCase();
+    const indicator = clean(payload.creditDebitIndicator || payload.credit_debit_indicator || (status === 'credit' ? 'CRDT' : status === 'debit' ? 'DBIT' : '')).toUpperCase();
     const timestamp = dateValue(payload.bookingDateTime || payload.bookedAt || payload.bookingDate || payload.made_on || payload.created_at || payload.date);
     if (!id || !Number.isFinite(rawAmount) || rawAmount === 0 || !timestamp) return null;
     const creditDebitIndicator = indicator === 'CRDT' || (!indicator && rawAmount > 0) ? 'CRDT' : 'DBIT';
-    const merchantName = clean(payload.merchantName || payload.creditorName || payload.debtorName || payload.extra?.merchant || payload.remittanceInformationUnstructured || payload.description || 'Bank transaction').slice(0, 100);
+    const counterparty = creditDebitIndicator === 'CRDT' ? payload.debtorName || payload.creditorName : payload.creditorName || payload.debtorName;
+    const merchantName = clean(payload.merchantName || counterparty || payload.extra?.merchant || payload.remittanceInformationUnstructured || payload.description || 'Bank transaction').slice(0, 100);
     return {
       transactionId:id, accountId:clean(account.accountId || account.id), iban:clean(payload.iban || account.iban), bic:clean(payload.bic || account.bic),
-      merchantName, timestamp, amount:Math.abs(rawAmount), currency:clean(payload.transactionAmount?.currency || payload.currency || account.currency || 'EUR').toUpperCase(),
+      merchantName, timestamp, amount:Math.abs(rawAmount), currency:clean(amountContainer?.currency || payload.currency || account.currency || 'EUR').toUpperCase(),
       creditDebitIndicator, remittanceInformation:clean(payload.remittanceInformationUnstructured || payload.description || merchantName), provider:PROVIDERS.includes(provider) ? provider : 'custom'
     };
   }
