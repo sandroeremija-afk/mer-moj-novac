@@ -112,18 +112,40 @@
     const blob=new Blob([content],{type});const link=document.createElement('a');link.download=name;link.href=URL.createObjectURL(blob);document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),0);
   }
 
-  function csvCell(value){const text=String(value??'');return /[",\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text;}
+  function safeCsvText(value){const text=String(value??'');return /^[=+\-@\t]/.test(text)?`'${text}`:text;}
+  function csvCell(value){const text=String(value??'');return /[",\r\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text;}
 
   function exportActiveProfileCsv() {
-    const rows=[['Date','Description','Type','Category','Amount','Currency','Source']];
-    (state.transactions||[]).filter(tx=>tx&&Number.isFinite(Number(tx.amount))).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(tx=>rows.push([String(tx.date||'').slice(0,10),tx.name||'',MerCore.transactionType(tx),tx.category||'',Number(tx.amount).toFixed(2),appState.settings.currency,tx.source||'Manual']));
-    downloadFile(`mer-${appState.activeAccount}-transactions.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
+    const labels=currentLang==='hr'
+      ? ['ID','Vrijeme','Datum','Opis','Vrsta','Kategorija','Iznos','Valuta','Izvor','Status pregleda']
+      : ['ID','Timestamp','Date','Description','Type','Category','Amount','Currency','Source','Review status'];
+    const rows=[labels];
+    (state.transactions||[]).filter(tx=>tx&&Number.isFinite(Number(tx.amount))).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(tx=>{
+      const type=MerCore.transactionType(tx),timestamp=String(tx.timestamp||tx.date||''),category=type==='income'?incomeCategoryName(tx.category):categoryName(tx.category);
+      rows.push([safeCsvText(tx.id||''),safeCsvText(timestamp),timestamp.slice(0,10),safeCsvText(tx.name||''),currentLang==='hr'?(type==='income'?'Prihod':'Trošak'):type,safeCsvText(category),Number(tx.amount).toFixed(2),safeCsvText(tx.currency||appState.settings.currency),safeCsvText(tx.source||'Manual'),tx.needsReview?(currentLang==='hr'?'Potreban pregled':'Needs review'):(currentLang==='hr'?'Potvrđeno':'Confirmed')]);
+    });
+    downloadFile(`mer-${appState.activeAccount}-transactions-${appReferenceDate}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
   }
 
   function exportBudgetPlanCsv() {
     const spentByCategory=MerCore.categoryExpenseTotals(state.transactions,'monthly',appReferenceDate);
-    const rows=[[currentLang==='hr'?'Kategorija':'Category',currentLang==='hr'?'Potrošeno':'Spent',currentLang==='hr'?'Limit':'Limit',currentLang==='hr'?'Preostalo':'Remaining',currentLang==='hr'?'Iskorištenost (%)':'Usage (%)',currentLang==='hr'?'Valuta':'Currency']];
-    (state.categories||[]).forEach(category=>{const spent=Number(spentByCategory[category.id]||0),limit=Math.max(0,Number(category.limit)||0),remaining=limit-spent,usage=limit>0?spent/limit*100:spent>0?100:0;rows.push([categoryName(category.id),spent.toFixed(2),limit.toFixed(2),remaining.toFixed(2),usage.toFixed(1),appState.settings.currency]);});
+    const categories=(state.categories||[]).map(category=>{const spent=Number(spentByCategory[category.id]||0),limit=Math.max(0,Number(category.limit)||0);return {category,spent,limit,remaining:limit-spent,usage:limit>0?spent/limit*100:spent>0?100:0};});
+    const totals=categories.reduce((sum,item)=>({spent:sum.spent+item.spent,limit:sum.limit+item.limit,remaining:sum.remaining+item.remaining}),{spent:0,limit:0,remaining:0});
+    const hr=currentLang==='hr',currencyCode=appState.settings.currency;
+    const rows=[
+      [hr?'Izvješće':'Report',hr?'Mjesečni plan budžeta':'Monthly budget plan'],
+      [hr?'Profil':'Profile',safeCsvText(state.accountName)],
+      [hr?'Mjesec':'Month',appReferenceDate.slice(0,7)],
+      [hr?'Valuta':'Currency',currencyCode],
+      [],
+      [hr?'Sažetak':'Summary',hr?'Iznos':'Amount'],
+      [hr?'Ukupni limit':'Total limit',totals.limit.toFixed(2)],
+      [hr?'Ukupno potrošeno':'Total spent',totals.spent.toFixed(2)],
+      [hr?'Ukupno preostalo':'Total remaining',totals.remaining.toFixed(2)],
+      [],
+      [hr?'Kategorija':'Category',hr?'Potrošeno':'Spent',hr?'Limit':'Limit',hr?'Preostalo':'Remaining',hr?'Iskorištenost (%)':'Usage (%)',hr?'Valuta':'Currency']
+    ];
+    categories.forEach(item=>rows.push([safeCsvText(categoryName(item.category.id)),item.spent.toFixed(2),item.limit.toFixed(2),item.remaining.toFixed(2),item.usage.toFixed(1),currencyCode]));
     downloadFile(`mer-${appState.activeAccount}-budget-${appReferenceDate.slice(0,7)}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
     showToast(t('csvExported'));
   }
@@ -131,10 +153,27 @@
   function exportInsightsReportCsv() {
     const totals=MerCore.transactionTotals(state.transactions,insightsTimeframe,appReferenceDate);
     const byCategory=MerCore.categoryExpenseTotals(state.transactions,insightsTimeframe,appReferenceDate);
-    const label=currentLang==='hr'?{metric:'Pokazatelj',value:'Vrijednost',category:'Kategorija',amount:'Trošak',income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto ukupno',rate:'Stopa štednje (%)'}:{metric:'Metric',value:'Value',category:'Category',amount:'Expense',income:'Total income',expenses:'Total expenses',net:'Net total',rate:'Savings rate (%)'};
+    const filtered=MerCore.filterTransactions(state.transactions,insightsTimeframe,appReferenceDate).filter(tx=>tx&&Number.isFinite(Number(tx.amount)));
+    const hr=currentLang==='hr',label=hr?{metric:'Pokazatelj',value:'Vrijednost',category:'Kategorija',amount:'Trošak',share:'Udio troškova (%)',income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto ukupno',rate:'Stopa štednje (%)'}:{metric:'Metric',value:'Value',category:'Category',amount:'Expense',share:'Expense share (%)',income:'Total income',expenses:'Total expenses',net:'Net total',rate:'Savings rate (%)'};
     const savingsRate=totals.income>0?(totals.net/totals.income)*100:null;
-    const rows=[[label.metric,label.value],[currentLang==='hr'?'Profil':'Profile',state.accountName],[currentLang==='hr'?'Razdoblje':'Timeframe',insightsTimeframe],[label.income,Number(totals.income||0).toFixed(2)],[label.expenses,Number(totals.expenses||0).toFixed(2)],[label.net,Number(totals.net||0).toFixed(2)],[label.rate,savingsRate===null?'—':savingsRate.toFixed(1)],[],[label.category,label.amount]];
-    Object.entries(byCategory).filter(([,amount])=>Number(amount)>0).sort((a,b)=>b[1]-a[1]).forEach(([categoryId,amount])=>rows.push([categoryName(categoryId),Number(amount).toFixed(2)]));
+    const timeframeLabel=t({daily:'daily',monthly:'monthly',ytd:'yearToDate',all:'allTime'}[insightsTimeframe]||'monthly');
+    const rows=[
+      [hr?'Izvješće':'Report',hr?'Snimka analitike':'Analytics snapshot'],
+      [hr?'Profil':'Profile',safeCsvText(state.accountName)],
+      [hr?'Razdoblje':'Timeframe',timeframeLabel],
+      [hr?'Datum izvješća':'Report date',appReferenceDate],
+      [hr?'Valuta':'Currency',appState.settings.currency],
+      [hr?'Broj transakcija':'Transaction count',String(filtered.length)],
+      [],
+      [label.metric,label.value],
+      [label.income,Number(totals.income||0).toFixed(2)],
+      [label.expenses,Number(totals.expenses||0).toFixed(2)],
+      [label.net,Number(totals.net||0).toFixed(2)],
+      [label.rate,savingsRate===null?'—':savingsRate.toFixed(1)],
+      [],
+      [label.category,label.amount,label.share]
+    ];
+    Object.entries(byCategory).filter(([,amount])=>Number(amount)>0).sort((a,b)=>b[1]-a[1]).forEach(([categoryId,amount])=>rows.push([safeCsvText(categoryName(categoryId)),Number(amount).toFixed(2),totals.expenses>0?(Number(amount)/totals.expenses*100).toFixed(1):'0.0']));
     downloadFile(`mer-${appState.activeAccount}-insights-${insightsTimeframe}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
     showToast(t('csvExported'));
   }
@@ -142,6 +181,7 @@
   function openGlobalImport() {
     closeCardMenus();
     if($('#transactionModal').open)closeModal($('#transactionModal'));
+    if($('#budgetDataModal').open)closeModal($('#budgetDataModal'));
     if($('#bankSettingsModal').open)closeModal($('#bankSettingsModal'));
     if(importStage&&!MerImport.stageBelongsToProfile(importStage,appState.activeAccount)){
       importStage=null;pendingBulkOverride=null;lastBulkOverride=null;showToast(t('importProfileChanged'));
@@ -291,7 +331,7 @@
   $('#layoutEditToggle').addEventListener('click',()=>closeModal($('#bankSettingsModal')));
   $$('[data-open-global-import]').forEach(button=>button.addEventListener('click',openGlobalImport));
   $$('[data-export-active]').forEach(button=>button.addEventListener('click',exportActiveProfileCsv));
-  $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();exportBudgetPlanCsv();}));
+  $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();if($('#budgetDataModal').open)closeModal($('#budgetDataModal'));exportBudgetPlanCsv();}));
   $$('[data-export-insights]').forEach(button=>button.addEventListener('click',exportInsightsReportCsv));
 
   $('#startMfa').addEventListener('click',()=>runAsyncAction(async()=>{pendingEnrollment=await MerSecurity.createEnrollment(state.accountName);visibleRecoveryCodes=[];renderMfa();},'mfaInvalid'));

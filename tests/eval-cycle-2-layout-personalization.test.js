@@ -26,9 +26,11 @@ test('evaluation cycle 2: General Settings exposes one localized accessible layo
   const generalEnd = html.indexOf('data-settings-panel="security"', generalStart);
   const general = html.slice(generalStart, generalEnd);
   assert.match(general, /id="settingsLanguage"/);
-  assert.match(general, /id="themeToggle"[^>]*aria-pressed="false"/);
+  assert.match(general, /id="themeToggle"[^>]*role="group"/);
+  assert.match(general, /data-theme-choice="light"[^>]*aria-pressed="true"/);
+  assert.match(general, /data-theme-choice="dark"[^>]*aria-pressed="false"/);
   assert.match(general, /id="layoutEditToggle"[^>]*data-layout-edit-toggle[^>]*aria-pressed="false"/);
-  assert.match(general, /id="layoutEditToggle"[\s\S]*?data-i18n="customizeLayout"/);
+  assert.match(general, /id="layoutEditToggle"[\s\S]*?data-i18n="editLayout"/);
   assert.equal((html.match(/data-layout-edit-toggle/g) || []).length, 1);
   for (const moduleId of ['overview','budgets','savings','activity','insights']) {
     const start = html.indexOf(`data-view-panel="${moduleId}"`);
@@ -37,7 +39,7 @@ test('evaluation cycle 2: General Settings exposes one localized accessible layo
     assert.equal((moduleMarkup.match(/data-layout-edit-toggle/g) || []).length, 0, `${moduleId} does not duplicate the global control`);
   }
   assert.match(html, /id="layoutLiveRegion"[^>]*aria-live="polite"/);
-  assert.match(ui, /customizeLayout:'Prilagodi raspored'/);
+  assert.match(ui, /customizeLayout:'Uredi'/);
   assert.match(ui, /finishLayout:'Završi prilagodbu'/);
   assert.match(ui, /const toggles = \$\$\('\[data-layout-edit-toggle\]'\)/);
   assert.match(ui, /function syncToggles\(\)[\s\S]*toggles\.forEach/);

@@ -43,7 +43,9 @@ test('evaluation cycle 1: display controls live in General Settings and the topb
   const generalEnd = html.indexOf('data-settings-panel="security"', generalStart);
   const general = html.slice(generalStart, generalEnd);
   assert.match(general, /id="settingsLanguage"/);
-  assert.match(general, /id="themeToggle"[^>]*aria-pressed="false"/);
+  assert.match(general, /id="themeToggle"[^>]*role="group"/);
+  assert.match(general, /data-theme-choice="light"[^>]*aria-pressed="true"/);
+  assert.match(general, /data-theme-choice="dark"[^>]*aria-pressed="false"/);
   assert.match(general, /id="layoutEditToggle"[^>]*data-layout-edit-toggle[^>]*aria-pressed="false"/);
   const pageStart = html.indexOf('<div class="page">');
   assert.doesNotMatch(html.slice(pageStart, html.indexOf('</main>', pageStart)), /data-layout-edit-toggle/);

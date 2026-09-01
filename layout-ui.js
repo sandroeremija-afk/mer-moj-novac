@@ -2,7 +2,7 @@
   'use strict';
 
   Object.assign(translations.hr, {
-    customizeLayout:'Prilagodi raspored',
+    customizeLayout:'Uredi',
     finishLayout:'Završi prilagodbu',
     layoutEditStarted:'Raspored je otključan. Povucite kartice ili koristite Alt + strelice.',
     layoutEditFinished:'Prilagođeni raspored je spremljen.',
@@ -10,7 +10,7 @@
     layoutCardMoved:'Kartica je premještena na poziciju {position} od {total}.'
   });
   Object.assign(translations.en, {
-    customizeLayout:'Customize layout',
+    customizeLayout:'Edit',
     finishLayout:'Finish customizing',
     layoutEditStarted:'Layout unlocked. Drag cards or use Alt + arrow keys.',
     layoutEditFinished:'Your custom layout has been saved.',

@@ -45,13 +45,15 @@ test('cycle 1: secondary content uses progressive disclosure while the large imp
 test('cycle 2: data actions are contextual to Budget, Activity and Insights', () => {
   const viewHeading = view => {
     const start = html.indexOf(`id="${view}"`);
-    const end = html.indexOf('</section>', start);
+    const next = html.indexOf('<section class="view"', start);
+    const end = next >= 0 ? next : html.indexOf('</main>', start);
     return html.slice(start, end);
   };
   const budgets = viewHeading('budgetsView');
   const activity = viewHeading('activityView');
   const insights = viewHeading('insightsView');
-  assert.match(budgets, /id="budgetDataMenu"/);
+  assert.match(budgets, /data-open-detail="budgetDataModal"/);
+  assert.match(budgets, /id="budgetDataModal"/);
   assert.match(budgets, /data-open-global-import/);
   assert.match(budgets, /data-export-budget/);
   assert.match(activity, /class="data-action-pair"/);
@@ -61,13 +63,13 @@ test('cycle 2: data actions are contextual to Budget, Activity and Insights', ()
   assert.doesNotMatch(insights, /data-open-global-import|data-export-active/);
 });
 
-test('cycle 2: Add Transaction offers batch import and paired active-profile export', () => {
+test('cycle 2: Add Transaction offers batch import without an unrelated export action', () => {
   const start = html.indexOf('id="transactionModal"');
   const end = html.indexOf('</dialog>', start);
   const modal = html.slice(start, end);
   assert.match(modal, /class="bulk-entry-card"/);
   assert.match(modal, /data-open-global-import/);
-  assert.match(modal, /data-export-active/);
+  assert.doesNotMatch(modal, /data-export-active/);
   assert.match(modal, /data-i18n="bulkImport"/);
 });
 
@@ -87,7 +89,7 @@ test('cycle 2: Settings owns preferences while import and export stay contextual
   assert.doesNotMatch(settings, /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv|settingsImportJsonFile/);
   assert.match(html, /id="importDataModal"/);
   assert.match(html, /id="importFile"/);
-  assert.match(html, /id="budgetDataMenu"/);
+  assert.match(html, /id="budgetDataModal"/);
   assert.match(html, /data-export-budget/);
   assert.match(html, /data-export-insights/);
 });

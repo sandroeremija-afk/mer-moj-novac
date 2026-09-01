@@ -78,7 +78,7 @@ test('Cycle 2: settings UI exposes MFA, review pagination, privacy, display pref
   const settingsEnd = html.indexOf('</dialog>', settingsStart);
   const settings = html.slice(settingsStart, settingsEnd);
   assert.doesNotMatch(settings, /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv|settingsImportJsonFile/);
-  assert.match(html, /id="budgetDataMenu"/);
+  assert.match(html, /id="budgetDataModal"/);
   assert.match(html, /data-export-budget/);
   assert.match(html, /data-export-insights/);
   assert.match(script, /const importPageSize = 50/);
