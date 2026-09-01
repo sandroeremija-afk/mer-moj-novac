@@ -20,11 +20,19 @@ test('evaluation cycle 2: Activity exposes date, category, type, amount sorting 
   assert.match(app, /\['activityFilter','activityTypeFilter','activityDateFrom','activityDateTo','activitySort'\]/);
 });
 
-test('evaluation cycle 2: the 375px Settings sheet is bounded and scrolls only its body', () => {
+test('evaluation cycle 2: the 375px Settings and standalone Banks sheets are bounded with internal body scrolling', () => {
   assert.match(html, /class="settings-modal-body"/);
+  const bankStart = html.indexOf('id="connectedBanksModal"');
+  const bankEnd = html.indexOf('</dialog>', bankStart);
+  const banks = html.slice(bankStart, bankEnd);
+  assert.ok(bankStart >= 0 && bankEnd > bankStart);
+  assert.match(banks, /class="[^"]*connected-banks-modal[^"]*"/);
+  assert.match(banks, /class="connected-banks-modal-body"/);
   assert.match(css, /\.premium-settings\[open\] \{[\s\S]*?height:90dvh;[\s\S]*?max-height:90dvh;[\s\S]*?overflow:hidden;/);
-  assert.match(css, /\.premium-settings \.settings-modal-body \{[^}]*flex:1 1 auto;[^}]*overflow-y:auto;/);
-  assert.match(css, /\.premium-settings \.settings-tabs \{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /\.settings-modal-body,\s*\.connected-banks-modal-body \{[^}]*flex:1 1 auto;[^}]*overflow-x:hidden;[^}]*overflow-y:auto;/);
+  assert.match(css, /\.premium-settings \.settings-modal-body,\s*\.premium-settings \.connected-banks-modal-body \{[^}]*flex:1 1 auto;[^}]*overflow-y:auto;/);
+  assert.match(css, /\.connected-banks-modal-body \{[^}]*flex:1 1 auto;[^}]*overflow-x:hidden;[^}]*overflow-y:auto;/);
+  assert.match(css, /\.premium-settings \.settings-tabs \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 });
 
 test('evaluation cycle 2: MER recommendation and weekly review cannot overflow a narrow Savings canvas', () => {

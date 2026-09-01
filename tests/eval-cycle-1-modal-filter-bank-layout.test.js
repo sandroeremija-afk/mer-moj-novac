@@ -8,17 +8,19 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 
-test('evaluation cycle 1: Banke places both CSV exports side by side in the same two-column grid', () => {
-  const banksStart = html.indexOf('data-settings-panel="banks"');
-  const banksEnd = html.indexOf('</section>', banksStart);
-  const banks = html.slice(banksStart, banksEnd);
-  const gridStart = banks.indexOf('<div class="export-grid">');
-  const gridEnd = banks.indexOf('</div><input type="file"', gridStart);
-  const grid = banks.slice(gridStart, gridEnd);
-  assert.ok(gridStart >= 0 && gridEnd > gridStart);
-  assert.match(grid, /id="settingsExportAllCsv"[\s\S]*id="settingsExportCsv"/);
-  assert.equal((grid.match(/class="settings-export"/g) || []).length, 4);
-  assert.match(css, /\.export-grid \{ display:grid; grid-template-columns:1fr 1fr; gap:10px; \}/);
+test('evaluation cycle 1: standalone bank modal keeps bank controls but no generic data portability', () => {
+  const bankStart = html.indexOf('id="connectedBanksModal"');
+  const bankEnd = html.indexOf('</dialog>', bankStart);
+  const banks = html.slice(bankStart, bankEnd);
+  assert.ok(bankStart >= 0 && bankEnd > bankStart);
+  for (const id of ['bankSyncStatus', 'syncNow', 'bankConnectionList', 'startBankConnection', 'bankConnectForm', 'bankProfileSelect']) {
+    assert.match(banks, new RegExp(`id="${id}"`));
+  }
+  assert.doesNotMatch(banks, /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv/);
+  const settingsStart = html.indexOf('id="bankSettingsModal"');
+  const settingsEnd = html.indexOf('</dialog>', settingsStart);
+  assert.doesNotMatch(html.slice(settingsStart, settingsEnd), /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv/);
+  assert.match(app, /data-map-bank="\$\{connection\.id\}"/);
 });
 
 test('evaluation cycle 1: wizard header reserves a dedicated close-button lane', () => {

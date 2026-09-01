@@ -103,7 +103,7 @@
   function markPrimitives(scope = document) {
     setUi(scope, 'dialog.modal, dialog.auth-reset-modal', 'dialog');
     setUi(scope, '.modal-actions', 'dialog-footer');
-    setUi(scope, '.detail-modal-grid, .settings-modal-body, .help-assistant-body', 'scroll-area');
+    setUi(scope, '.detail-modal-grid, .settings-modal-body, .connected-banks-modal-body, .help-assistant-body', 'scroll-area');
     setUi(scope, '.card-action-menu, .account-menu', 'menu');
     setUi(scope, '.notification-center, .app-tooltip, .activity-filter-panel', 'popover');
     setUi(scope, '.settings-tabs, .help-nav-grid, .timeframe-switch, .transaction-type-switch, .auth-tabs', 'tabs');
@@ -268,10 +268,6 @@
   function positionMenu(menu) {
     if (menu.hidden || !menu.classList.contains('card-action-menu')) {
       if (menu.hidden) clearFloatingPosition(menu);
-      return;
-    }
-    if (menu.classList.contains('header-bank-menu')) {
-      clearFloatingPosition(menu);
       return;
     }
     const trigger = document.querySelector(`[aria-controls="${CSS.escape(menu.id)}"]`);

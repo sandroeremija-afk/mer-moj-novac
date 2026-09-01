@@ -17,10 +17,10 @@
   Object.assign(translations.en,{confirmBulkOverrideTitle:'Confirm bulk change',bulkOverrideCopy:'You are about to change type and category for {count} included rows to “{category}”.',confirmBulkOverride:'Change included rows',bulkOverrideApplied:'Changed {count} rows.',undoBulkOverride:'Undo bulk change',bulkOverrideUndone:'Bulk change undone.',importProfileChanged:'The active profile changed. The previous import review was safely discarded.'});
 
   Object.assign(translations.hr, {
-    activeModule:'AKTIVNI MODUL', viewDetails:'Detalji', overviewDetailsOverline:'DETALJI PREGLEDA', overviewDetailsTitle:'Trendovi i sljedeći koraci', budgetDetailsOverline:'AUTOMATIZACIJA BUDŽETA', savingsDetailsOverline:'DETALJI ŠTEDNJE', reportDetails:'Detalji izvještaja', insightsDetailsOverline:'DUBINSKA ANALIZA', settingsIntroClean:'Privatnost, sigurnost, pravila i povezane banke na jednom mjestu.'
+    activeModule:'AKTIVNI MODUL', viewDetails:'Detalji', overviewDetailsOverline:'DETALJI PREGLEDA', overviewDetailsTitle:'Trendovi i sljedeći koraci', budgetDetailsOverline:'AUTOMATIZACIJA BUDŽETA', savingsDetailsOverline:'DETALJI ŠTEDNJE', reportDetails:'Detalji izvještaja', insightsDetailsOverline:'DUBINSKA ANALIZA', settingsIntroClean:'Prilagodite prikaz, privatnost, sigurnost i pravila automatizacije.'
   });
   Object.assign(translations.en, {
-    activeModule:'ACTIVE MODULE', viewDetails:'Details', overviewDetailsOverline:'OVERVIEW DETAILS', overviewDetailsTitle:'Trends and next steps', budgetDetailsOverline:'BUDGET AUTOMATION', savingsDetailsOverline:'SAVINGS DETAILS', reportDetails:'Report details', insightsDetailsOverline:'DEEP-DIVE ANALYSIS', settingsIntroClean:'Privacy, security, rules and connected banks in one place.'
+    activeModule:'ACTIVE MODULE', viewDetails:'Details', overviewDetailsOverline:'OVERVIEW DETAILS', overviewDetailsTitle:'Trends and next steps', budgetDetailsOverline:'BUDGET AUTOMATION', savingsDetailsOverline:'SAVINGS DETAILS', reportDetails:'Report details', insightsDetailsOverline:'DEEP-DIVE ANALYSIS', settingsIntroClean:'Customize display, privacy, security and automation rules.'
   });
 
   let selectedSettingsTab = 'general';
@@ -34,10 +34,9 @@
   const importPageSize = 50;
 
   function selectSettingsTab(tab) {
-    selectedSettingsTab = ['general', 'security', 'automation', 'banks'].includes(tab) ? tab : 'general';
+    selectedSettingsTab = ['general', 'security', 'automation'].includes(tab) ? tab : 'general';
     $$('[data-settings-tab]').forEach(button => { const active=button.dataset.settingsTab===selectedSettingsTab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1; });
     $$('[data-settings-panel]').forEach(panel => { const active=panel.dataset.settingsPanel===selectedSettingsTab;panel.hidden=!active;panel.classList.toggle('active',active); });
-    if(selectedSettingsTab==='banks')renderBankSettings();
   }
 
   function openSettings(tab='general') {
@@ -82,6 +81,7 @@
     $('#baseCurrency').value=appState.settings.currency;
     $('#dateFormat').value=appState.settings.dateFormat;
     $('#timezone').value=appState.settings.timezone;
+    $('#settingsLanguage').value=currentLang;
     $('#hideBalances').checked=Boolean(appState.settings.hideBalances);
     $('#importProfileBadge').textContent=t(state.accountLabel);
     $('#rulesProfileBadge').textContent=t(state.accountLabel);
@@ -112,17 +112,7 @@
     const blob=new Blob([content],{type});const link=document.createElement('a');link.download=name;link.href=URL.createObjectURL(blob);document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),0);
   }
 
-  function safePortableState() {
-    return {version:appState.version,exportedAt:new Date().toISOString(),language:appState.language,theme:appState.theme,settings:{...appState.settings},bankConnections:(appState.bankConnections||[]).map(({token,...connection})=>connection),accounts:structuredClone(appState.accounts)};
-  }
-
-  function exportAllJson() { downloadFile('mer-moj-novac-data.json',JSON.stringify(safePortableState(),null,2),'application/json;charset=utf-8');showToast(t('dataExported')); }
   function csvCell(value){const text=String(value??'');return /[",\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text;}
-  function exportAllCsv() {
-    const rows=[['Profile','Date','Description','Type','Category','Amount', 'Currency','Source']];
-    Object.entries(appState.accounts).forEach(([profileId,profile])=>(profile.transactions||[]).filter(tx=>tx&&Number.isFinite(Number(tx.amount))).forEach(tx=>rows.push([profileId,String(tx.date||'').slice(0,10),tx.name||'',MerCore.transactionType(tx),tx.category||'',Number(tx.amount).toFixed(2),appState.settings.currency,tx.source||'Manual'])));
-    downloadFile('mer-moj-novac-all-transactions.csv',`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
-  }
 
   function exportActiveProfileCsv() {
     const rows=[['Date','Description','Type','Category','Amount','Currency','Source']];
@@ -130,7 +120,27 @@
     downloadFile(`mer-${appState.activeAccount}-transactions.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
   }
 
+  function exportBudgetPlanCsv() {
+    const spentByCategory=MerCore.categoryExpenseTotals(state.transactions,'monthly',appReferenceDate);
+    const rows=[[currentLang==='hr'?'Kategorija':'Category',currentLang==='hr'?'Potrošeno':'Spent',currentLang==='hr'?'Limit':'Limit',currentLang==='hr'?'Preostalo':'Remaining',currentLang==='hr'?'Iskorištenost (%)':'Usage (%)',currentLang==='hr'?'Valuta':'Currency']];
+    (state.categories||[]).forEach(category=>{const spent=Number(spentByCategory[category.id]||0),limit=Math.max(0,Number(category.limit)||0),remaining=limit-spent,usage=limit>0?spent/limit*100:spent>0?100:0;rows.push([categoryName(category.id),spent.toFixed(2),limit.toFixed(2),remaining.toFixed(2),usage.toFixed(1),appState.settings.currency]);});
+    downloadFile(`mer-${appState.activeAccount}-budget-${appReferenceDate.slice(0,7)}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
+    showToast(t('csvExported'));
+  }
+
+  function exportInsightsReportCsv() {
+    const totals=MerCore.transactionTotals(state.transactions,insightsTimeframe,appReferenceDate);
+    const byCategory=MerCore.categoryExpenseTotals(state.transactions,insightsTimeframe,appReferenceDate);
+    const label=currentLang==='hr'?{metric:'Pokazatelj',value:'Vrijednost',category:'Kategorija',amount:'Trošak',income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto ukupno',rate:'Stopa štednje (%)'}:{metric:'Metric',value:'Value',category:'Category',amount:'Expense',income:'Total income',expenses:'Total expenses',net:'Net total',rate:'Savings rate (%)'};
+    const savingsRate=totals.income>0?(totals.net/totals.income)*100:null;
+    const rows=[[label.metric,label.value],[currentLang==='hr'?'Profil':'Profile',state.accountName],[currentLang==='hr'?'Razdoblje':'Timeframe',insightsTimeframe],[label.income,Number(totals.income||0).toFixed(2)],[label.expenses,Number(totals.expenses||0).toFixed(2)],[label.net,Number(totals.net||0).toFixed(2)],[label.rate,savingsRate===null?'—':savingsRate.toFixed(1)],[],[label.category,label.amount]];
+    Object.entries(byCategory).filter(([,amount])=>Number(amount)>0).sort((a,b)=>b[1]-a[1]).forEach(([categoryId,amount])=>rows.push([categoryName(categoryId),Number(amount).toFixed(2)]));
+    downloadFile(`mer-${appState.activeAccount}-insights-${insightsTimeframe}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
+    showToast(t('csvExported'));
+  }
+
   function openGlobalImport() {
+    closeCardMenus();
     if($('#transactionModal').open)closeModal($('#transactionModal'));
     if($('#bankSettingsModal').open)closeModal($('#bankSettingsModal'));
     if(importStage&&!MerImport.stageBelongsToProfile(importStage,appState.activeAccount)){
@@ -139,31 +149,6 @@
     $('#importProfileBadge').textContent=t(state.accountLabel);
     renderImportReview();
     if(!$('#importDataModal').open)openModal($('#importDataModal'));
-  }
-
-  async function importJsonBackup(file) {
-    try {
-      if(!file||file.size>MerImport.MAX_TEXT_LENGTH)throw new Error('backup-too-large');
-      const backup=JSON.parse(await file.text());
-      if(!backup?.accounts?.personal||!backup?.accounts?.business||typeof backup.accounts.personal!=='object'||typeof backup.accounts.business!=='object')throw new Error('invalid-backup');
-      const nextAccounts=structuredClone(backup.accounts);
-      nextAccounts.personal=normalizeProfile(nextAccounts.personal,personalDefaults);nextAccounts.business=normalizeProfile(nextAccounts.business,businessDefaults);
-      appState.accounts=nextAccounts;
-      appState.activeAccount=backup.activeAccount==='business'?'business':'personal';
-      appState.settings=normalizeAppSettings({...appState.settings,...(backup.settings&&typeof backup.settings==='object'?backup.settings:{})});
-      currentLang=backup.language==='en'?'en':'hr';
-      currentTheme=backup.theme==='dark'?'dark':'light';
-      state=appState.accounts[appState.activeAccount];
-      applyStaticTranslations();
-      save('json-backup-import');
-      selectSettingsTab('general');
-      showToast(t('dataImported'));
-    } catch(error) {
-      window.MerRuntime?.report?.(error,{silent:true});
-      showToast(t('invalidBackup'));
-    } finally {
-      $('#settingsImportJsonFile').value='';
-    }
   }
 
   function categoryOptions(type,selected) {
@@ -302,11 +287,12 @@
   $('#manageSettings').addEventListener('click',()=>openSettings('general'));
   $('#bankSettingsModal').addEventListener('close',()=>{visibleRecoveryCodes=[];pendingEnrollment=null;renderMfa();});
   ['baseCurrency','dateFormat','timezone','hideBalances'].forEach(id=>$('#'+id).addEventListener('change',()=>{appState.settings.currency=$('#baseCurrency').value;appState.settings.dateFormat=$('#dateFormat').value;appState.settings.timezone=$('#timezone').value;appState.settings.hideBalances=$('#hideBalances').checked;save('settings-change');showToast(t('settingsSaved'));}));
-  $('#settingsExportJson').addEventListener('click',exportAllJson);$('#settingsExportAllCsv').addEventListener('click',exportAllCsv);
+  $('#settingsLanguage').addEventListener('change',event=>setLanguage(event.target.value));
+  $('#layoutEditToggle').addEventListener('click',()=>closeModal($('#bankSettingsModal')));
   $$('[data-open-global-import]').forEach(button=>button.addEventListener('click',openGlobalImport));
   $$('[data-export-active]').forEach(button=>button.addEventListener('click',exportActiveProfileCsv));
-  $('#settingsImportJson').addEventListener('click',()=>$('#settingsImportJsonFile').click());
-  $('#settingsImportJsonFile').addEventListener('change',()=>{const file=$('#settingsImportJsonFile').files?.[0];if(file)importJsonBackup(file);});
+  $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();exportBudgetPlanCsv();}));
+  $$('[data-export-insights]').forEach(button=>button.addEventListener('click',exportInsightsReportCsv));
 
   $('#startMfa').addEventListener('click',()=>runAsyncAction(async()=>{pendingEnrollment=await MerSecurity.createEnrollment(state.accountName);visibleRecoveryCodes=[];renderMfa();},'mfaInvalid'));
   $('#copyMfaSecret').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingEnrollment)return;if(!navigator.clipboard?.writeText)throw new Error('clipboard-unavailable');await navigator.clipboard.writeText(pendingEnrollment.secret);showToast(t('secretCopied'));},'mfaInvalid'));

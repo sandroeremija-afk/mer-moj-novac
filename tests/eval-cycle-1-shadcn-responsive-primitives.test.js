@@ -79,7 +79,7 @@ test('evaluation cycle 1: shadcn-style state, focus, menu, tab and sheet semanti
 
 test('evaluation cycle 1: the responsive layer is present on cold load and packaged for production', () => {
   assert.match(html, /name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/);
-  const responsiveIndex = html.indexOf('responsive-ui.js?v=20260828-shadcn-responsive');
+  const responsiveIndex = html.indexOf('responsive-ui.js');
   const authIndex = html.indexOf('auth-ui.js');
   assert.ok(responsiveIndex > 0 && responsiveIndex < authIndex);
   assert.match(build, /'responsive-ui\.js'/);

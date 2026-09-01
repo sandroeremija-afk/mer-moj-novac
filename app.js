@@ -68,6 +68,8 @@ Object.assign(translations.hr,{monthlyBudget:'Fleksibilni budžet za potrošnju'
 Object.assign(translations.en,{monthlyBudget:'Flexible spending budget',afterCommitments:'Income after bills, savings and buffer',remainingBudget:'Safe remainder after spending',allocatedCategories:'Allocated to categories',budgetOf:'{percent}% of the {budget} flexible budget',budgetOverageExact:'{percent}% · {amount} over limit',budgetRecoveryOverTitle:'Category plan exceeds the flexible budget',budgetRecoveryOverCopy:'Reduce only unused category headroom by {amount}; recorded spending stays untouched.',budgetRecoveryCategoryTitle:'One or more categories are over limit',budgetRecoveryCategoryCopy:'Move unused room from another category without changing the total budget.',autoBalanceBudget:'Balance plan',coverOverspending:'Cover overspending',rebalanceBudget:'BUDGET REALLOCATION',coverOverspendingIntro:'Move unused room from one category to an overspent category without changing the total budget.',overspentCategory:'Overspent category',fundFromCategory:'Move from category',transferAmount:'Transfer amount',confirmTransfer:'Confirm reallocation',transferContext:'Available to move: {available}. Overage: {overage}.',transferInvalid:'Choose valid categories and an amount.',transferSaved:'Moved {amount}. The total budget stayed unchanged.',balancePlanConfirm:'Only unused category headroom will be reduced. Recorded spending will not change. Continue?',balancePlanReady:'The plan was balanced by {amount}.',balancePlanPartial:'Reduced by {amount}, but {remaining} cannot be covered without changing the total plan.',spentCategory:'Spent: {spent}. The minimum allowed limit is {minimum}; the current plan allows up to {maximum}.',positiveAmountRequired:'Amount must be greater than zero.',demoWorkspace:'DEMO WORKSPACE',demoResetTitle:'Restore a clean demo workspace',demoResetHint:'Removes trial changes from both profiles and restores the original MER sample data. Display preferences stay saved.',resetDemoData:'Reset demo data',confirmDemoResetTitle:'Restore the original demo data?',confirmDemoResetBody:'All trial transactions, rules, goals and bank connections in Personal and Business will be replaced with the original examples. This cannot be undone.',confirmDemoReset:'Yes, restore data',demoResetComplete:'The demo workspace was restored.',demoResetUnavailable:'Reset is available only in demo mode.',cancel:'Cancel'});
 Object.assign(translations.hr,{activityFilters:'Filtri aktivnosti',filters:'Filteri',dateFrom:'Od datuma',dateTo:'Do datuma',sortTransactions:'Sortiraj transakcije',sortNewest:'Najnovije prvo',sortOldest:'Najstarije prvo',sortAmountHigh:'Iznos: veći prema manjem',sortAmountLow:'Iznos: manji prema većem',clearFilters:'Očisti filtere'});
 Object.assign(translations.en,{activityFilters:'Activity filters',filters:'Filters',dateFrom:'From date',dateTo:'To date',sortTransactions:'Sort transactions',sortNewest:'Newest first',sortOldest:'Oldest first',sortAmountHigh:'Amount: high to low',sortAmountLow:'Amount: low to high',clearFilters:'Clear filters'});
+Object.assign(translations.hr,{appLanguage:'Jezik aplikacije',themeSettingHint:'Prilagodite izgled aplikacije uvjetima rada.',dashboardLayout:'Raspored nadzorne ploče',layoutSettingHint:'Promijenite redoslijed kartica povlačenjem.',openBanking:'OPEN BANKING',syncStatus:'Status sinkronizacije',reviewImportedTransactions:'Pregledajte uvezene transakcije bez potvrđene kategorije.',budgetDataActions:'Uvoz / izvoz budžeta',importBankStatement:'Uvezi bankovni izvod',exportBudgetPlan:'Izvezi plan budžeta',exportInsightsReport:'Izvezi izvješće'});
+Object.assign(translations.en,{appLanguage:'App language',themeSettingHint:'Adapt the interface to your working environment.',dashboardLayout:'Dashboard layout',layoutSettingHint:'Change card order with drag and drop.',openBanking:'OPEN BANKING',syncStatus:'Sync status',reviewImportedTransactions:'Review imported transactions without a confirmed category.',budgetDataActions:'Import / export budget',importBankStatement:'Import bank statement',exportBudgetPlan:'Export budget plan',exportInsightsReport:'Export report'});
 
 const categoryMeta = {
   food:{ icon:'H', className:'food' }, transport:{ icon:'↗', className:'transport' }, shopping:{ icon:'K', className:'shopping' }, healthBeauty:{icon:'N',className:'shopping'}, utilities:{icon:'R',className:'other'}, entertainment:{ icon:'▶', className:'entertainment' }, other:{ icon:'O', className:'other' }
@@ -509,7 +511,7 @@ function renderBankSyncStatus() {
   $('#connectedBankCount').textContent=connections.length;
   $('#uncategorizedCount').textContent=reviewCount;
   $('#uncategorizedBadge').hidden=reviewCount===0;
-  const status=$('#bankSyncStatus'),button=$('#syncNow'),trigger=$('#headerBankButton'),dot=$('#headerBankDot'),label=$('#headerBankLabel'),list=$('#headerBankAccountList');
+  const status=$('#bankSyncStatus'),button=$('#syncNow'),trigger=$('#headerBankButton'),dot=$('#headerBankDot'),label=$('#headerBankLabel');
   const connected=connections.length>0;
   button.hidden=!connected;
   button.disabled=bankSyncInProgress;
@@ -521,15 +523,11 @@ function renderBankSyncStatus() {
   label.textContent=connected?t('connectedCount',{count:connections.length}):t('connectBank');
   if(!connected){
     status.textContent=t('noConnectedAccounts');
-    list.innerHTML=`<p class="header-bank-empty">${escapeHtml(t('noConnectedAccounts'))}</p>`;
-    $('#headerBankMenu').hidden=true;
-    trigger.setAttribute('aria-expanded','false');
     return;
   }
   const latest=connections.filter(item=>item.lastSyncedAt).sort((a,b)=>new Date(b.lastSyncedAt)-new Date(a.lastSyncedAt))[0];
   const error=connections.find(item=>item.status==='error');
   status.textContent=error?connectionStatusLabel(error).text:`${lastSyncedLabel(latest)} · ${t('backgroundSync')}`;
-  list.innerHTML=connections.map(connection=>{const provider=MerBankProviders.getProvider(connection.providerId);const connectionStatus=connectionStatusLabel(connection);const kind=currentLang==='hr'?connection.accountKind:connection.accountKindEn;return `<div class="header-bank-account"><span class="institution-mark" style="background:${provider?.color||'#16574b'}">${escapeHtml((connection.institution||provider?.name||'MER').slice(0,3))}</span><span><strong>${escapeHtml(connection.accountName)} ${escapeHtml(connection.accountMask||'')}</strong><small>${escapeHtml(kind||'')} · ${escapeHtml(connectionStatus.text)}</small></span></div>`;}).join('');
 }
 
 function renderProviderPicker() {
@@ -568,10 +566,9 @@ function renderBankSettings() {
 function openBankSettings() {
   selectedBankProviderId=null;
   $('#bankConnectForm').hidden=true;
-  if(window.MerSettings?.open){window.MerSettings.open('banks');return;}
   toggleAccountMenu(false);
   renderBankSettings();
-  openModal($('#bankSettingsModal'));
+  openModal($('#connectedBanksModal'));
 }
 
 function startBankConnection() {
@@ -905,7 +902,7 @@ function openInsightDetail(kind) {
 }
 
 function renderAll() {
-  renderMonth();renderModuleTitle();renderAccountContext();renderOverview();renderBudgetLists();renderBudgetView();renderSavingsView();renderSavingsEntries();renderUpcoming();renderRecurring();renderCategorySelects();renderActivity();renderInsights();renderSubscriptions();renderNotifications();renderBankSyncStatus();if($('#bankSettingsModal').open)renderBankSettings();applyTheme();
+  renderMonth();renderModuleTitle();renderAccountContext();renderOverview();renderBudgetLists();renderBudgetView();renderSavingsView();renderSavingsEntries();renderUpcoming();renderRecurring();renderCategorySelects();renderActivity();renderInsights();renderSubscriptions();renderNotifications();renderBankSyncStatus();if($('#connectedBanksModal').open)renderBankSettings();applyTheme();
 }
 
 function setLanguage(lang) {
@@ -1016,10 +1013,6 @@ function processDueRecurring(profile) {
   let imported=0;
   profile.recurring.forEach(rule=>{if(!rule||!validStoredDate(rule.startDate)||rule.enabled===false)return;const start=new Date(`${String(rule.startDate).slice(0,10)}T12:00:00Z`);const from=validStoredDate(rule.lastProcessed)?String(rule.lastProcessed).slice(0,10):new Date(start.getTime()-86400000).toISOString().slice(0,10);MerCore.occurrencesBetween(rule,from,appReferenceDate).forEach(date=>{const key=`${rule.id}:${date}`;if(profile.transactions.some(tx=>tx?.recurringKey===key))return;const cat=profile.categories.find(item=>item.id===rule.category)||profile.categories[0];if(!cat)return;profile.transactions.unshift({id:`rec-${key}`,type:'expense',name:String(rule.name||'Ponavljajući trošak').slice(0,80),amount:Math.abs(Number(rule.amount)||0),category:cat.id,date:`${date}T08:00:00`,recurringKey:key,source:'Manual',sourceType:'manual',needsReview:false});imported+=1;});rule.lastProcessed=appReferenceDate;});
   return imported;
-}
-
-function exportCsv() {
-  const month=appReferenceDate.slice(0,7),csv=MerCore.monthlyExpenseCsv(state,month,appState.settings.currency);const fileName=t('csvFileName',{account:appState.activeAccount,month});const blob=new Blob([`\ufeff${csv}`],{type:'text/csv;charset=utf-8'});const link=document.createElement('a');link.download=fileName;link.href=typeof URL.createObjectURL==='function'?URL.createObjectURL(blob):`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;document.body.appendChild(link);link.click();link.remove();if(link.href.startsWith('blob:'))setTimeout(()=>URL.revokeObjectURL(link.href),0);showToast(t('csvExported'));
 }
 
 let activeTooltipTrigger=null;
@@ -1199,13 +1192,10 @@ $('#manageBanks').addEventListener('click',openBankSettings);
 $('#startBankConnection').addEventListener('click',startBankConnection);
 $('#cancelBankConnection').addEventListener('click',()=>{selectedBankProviderId=null;$('#bankConnectForm').hidden=true;});
 $('#bankConnectForm').addEventListener('submit',event=>runAsyncAction(()=>connectSelectedBankAccounts(event)));
-$('#headerBankButton').addEventListener('click',event=>{if(bankConnectionsFor().length)return;event.preventDefault();event.stopImmediatePropagation();closeCardMenus();openBankSettings();});
-$('#headerAddBank').addEventListener('click',()=>{closeCardMenus();startBankConnection();});
-$('#headerManageBanks').addEventListener('click',()=>{closeCardMenus();openBankSettings();});
+$('#headerBankButton').addEventListener('click',openBankSettings);
 $('#syncNow').addEventListener('click',()=>{closeCardMenus();runAsyncAction(()=>syncActiveBankConnections());});
 $('#uncategorizedBadge').addEventListener('click',()=>{activityReviewOnly=true;showView('activity');renderActivity();});
 $('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;renderActivity();});
-$('#settingsExportCsv').addEventListener('click',exportCsv);
 $('#addCategory').addEventListener('click',()=>{returnToBudgetManager=false;openBudgetEditor();});
 $('#manageBudgetCategories')?.addEventListener('click',()=>openBudgetCategoryManager({reset:true}));
 $('#openBudgetTransfer').addEventListener('click',openBudgetTransfer);

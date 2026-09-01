@@ -42,15 +42,23 @@ test('cycle 1: secondary content uses progressive disclosure while the large imp
   assert.match(css, /@media \(max-width:540px\)/);
 });
 
-test('cycle 2: Budget, Activity and Insights expose symmetrical import/export pairs', () => {
-  for (const view of ['budgetsView', 'activityView', 'insightsView']) {
+test('cycle 2: data actions are contextual to Budget, Activity and Insights', () => {
+  const viewHeading = view => {
     const start = html.indexOf(`id="${view}"`);
     const end = html.indexOf('</section>', start);
-    const heading = html.slice(start, end);
-    assert.match(heading, /class="data-action-pair"/);
-    assert.match(heading, /data-open-global-import/);
-    assert.match(heading, /data-export-active/);
-  }
+    return html.slice(start, end);
+  };
+  const budgets = viewHeading('budgetsView');
+  const activity = viewHeading('activityView');
+  const insights = viewHeading('insightsView');
+  assert.match(budgets, /id="budgetDataMenu"/);
+  assert.match(budgets, /data-open-global-import/);
+  assert.match(budgets, /data-export-budget/);
+  assert.match(activity, /class="data-action-pair"/);
+  assert.match(activity, /data-open-global-import/);
+  assert.match(activity, /data-export-active/);
+  assert.match(insights, /data-export-insights/);
+  assert.doesNotMatch(insights, /data-open-global-import|data-export-active/);
 });
 
 test('cycle 2: Add Transaction offers batch import and paired active-profile export', () => {
@@ -63,19 +71,25 @@ test('cycle 2: Add Transaction offers batch import and paired active-profile exp
   assert.match(modal, /data-i18n="bulkImport"/);
 });
 
-test('cycle 2: Settings removes the redundant CSV import section but keeps data portability', () => {
-  assert.match(html, /id="settingsImportJson"/);
-  assert.match(html, /id="settingsExportJson"/);
-  assert.match(html, /id="settingsImportJsonFile"[^>]*accept="application\/json,\.json"/);
-  assert.match(html, /id="settingsExportAllCsv"/);
+test('cycle 2: Settings owns preferences while import and export stay contextual', () => {
   const settingsStart = html.indexOf('id="bankSettingsModal"');
   const settingsEnd = html.indexOf('</dialog>', settingsStart);
   const settings = html.slice(settingsStart, settingsEnd);
+  const generalStart = settings.indexOf('data-settings-panel="general"');
+  const generalEnd = settings.indexOf('data-settings-panel=', generalStart + 1);
+  const general = settings.slice(generalStart, generalEnd < 0 ? settings.length : generalEnd);
+  assert.match(general, /id="settingsLanguage"/);
+  assert.match(general, /id="themeToggle"/);
+  assert.match(general, /id="layoutEditToggle"/);
   assert.doesNotMatch(settings, /data-settings-tab="import"/);
   assert.doesNotMatch(settings, /data-settings-panel="import"/);
   assert.doesNotMatch(settings, /data-open-global-import/);
+  assert.doesNotMatch(settings, /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv|settingsImportJsonFile/);
   assert.match(html, /id="importDataModal"/);
   assert.match(html, /id="importFile"/);
+  assert.match(html, /id="budgetDataMenu"/);
+  assert.match(html, /data-export-budget/);
+  assert.match(html, /data-export-insights/);
 });
 
 test('cycle 2: account dropdown is clean and the sidebar/header order is stable', () => {
@@ -95,15 +109,16 @@ test('cycle 2: account dropdown is clean and the sidebar/header order is stable'
   const actionsIndex = html.indexOf('class="top-actions"', moduleIndex);
   const dateIndex = html.indexOf('class="date-switcher"', actionsIndex);
   const clusterIndex = html.indexOf('class="header-action-cluster"', dateIndex);
-  const themeIndex = html.indexOf('id="themeToggle"', clusterIndex);
-  const notificationIndex = html.indexOf('class="notification-wrap"', themeIndex);
-  const languageIndex = html.indexOf('class="language-switch"', notificationIndex);
+  const notificationIndex = html.indexOf('class="notification-wrap"', clusterIndex);
+  const bankIndex = html.indexOf('id="headerBankButton"', notificationIndex);
   assert.ok(moduleIndex > 0 && moduleIndex < actionsIndex);
   assert.doesNotMatch(html, /id="activeModuleTitle"/);
-  assert.ok(actionsIndex < dateIndex && dateIndex < clusterIndex && clusterIndex < themeIndex && themeIndex < notificationIndex && notificationIndex < languageIndex);
+  assert.ok(actionsIndex < dateIndex && dateIndex < clusterIndex && clusterIndex < notificationIndex && notificationIndex < bankIndex);
   const sidebarMarkup = html.slice(sidebarIndex, html.indexOf('</aside>', sidebarIndex));
   assert.doesNotMatch(sidebarMarkup, /id="themeToggle"/);
-  assert.doesNotMatch(html.slice(actionsIndex, html.indexOf('</header>', actionsIndex)), /data-open-transaction/);
+  const headerMarkup = html.slice(actionsIndex, html.indexOf('</header>', actionsIndex));
+  assert.doesNotMatch(headerMarkup, /id="themeToggle"|id="layoutEditToggle"|class="language-switch"|data-lang=/);
+  assert.doesNotMatch(headerMarkup, /data-open-transaction/);
   assert.doesNotMatch(html, /id="systemTime"/);
   assert.match(app, /const moduleTitleKeys = \{overview:'navOverview',budgets:'navBudgets',savings:'navSavings',activity:'navActivity',insights:'navInsights'\}/);
   assert.match(app, /function renderModuleTitle\(now=new Date\(\)\)/);

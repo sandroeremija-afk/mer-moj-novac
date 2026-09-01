@@ -9,7 +9,6 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
-const premium = fs.readFileSync(path.join(root, 'premium.js'), 'utf8');
 
 function settingsPanel(name) {
   const start = html.indexOf(`data-settings-panel="${name}"`);
@@ -18,14 +17,16 @@ function settingsPanel(name) {
   return html.slice(start, next < 0 ? html.indexOf('</dialog>', start) : next);
 }
 
-test('evaluation cycle 2: data transfer belongs only to Banks and Settings has no tour action', () => {
-  assert.doesNotMatch(settingsPanel('general'), /dataPortability|settingsImportJson|settingsExportAllCsv/);
-  assert.match(settingsPanel('banks'), /dataPortability/);
-  assert.match(settingsPanel('banks'), /id="settingsImportJson"/);
-  assert.match(settingsPanel('banks'), /id="settingsExportJson"/);
-  assert.match(settingsPanel('banks'), /id="settingsExportAllCsv"/);
+test('evaluation cycle 2: General owns display preferences and Settings has no generic data controls', () => {
+  const general = settingsPanel('general');
+  const settingsStart = html.indexOf('id="bankSettingsModal"');
+  const settingsEnd = html.indexOf('</dialog>', settingsStart);
+  const settings = html.slice(settingsStart, settingsEnd);
+  assert.match(general, /id="settingsLanguage"/);
+  assert.match(general, /id="themeToggle"/);
+  assert.match(general, /id="layoutEditToggle"/);
+  assert.doesNotMatch(settings, /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv|settingsImportJsonFile/);
   assert.doesNotMatch(html, /id="restartOnboarding"/);
-  assert.match(premium, /dataPortability:'Prijenos podataka'/);
 });
 
 test('evaluation cycle 2: Insights labels and donut metrics never rely on ellipsis', () => {

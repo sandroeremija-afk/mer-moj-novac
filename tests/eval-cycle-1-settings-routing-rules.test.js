@@ -5,6 +5,7 @@ const path = require('node:path');
 const MerCore = require('../core.js');
 
 const root = path.resolve(__dirname, '..');
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const premium = fs.readFileSync(path.join(root, 'premium.js'), 'utf8');
 
@@ -16,12 +17,18 @@ function profile(category) {
   };
 }
 
-test('cycle 1: dashboard Connect Bank opens Settings directly on the Banks tab', () => {
-  assert.match(app, /function openBankSettings\(\)[\s\S]*window\.MerSettings\?\.open[\s\S]*\.open\('banks'\)/);
+test('cycle 1: banks are a standalone dialog and no longer a User Settings tab', () => {
+  const settingsStart = html.indexOf('id="bankSettingsModal"');
+  const settingsEnd = html.indexOf('</dialog>', settingsStart);
+  const settings = html.slice(settingsStart, settingsEnd);
+  assert.ok(settingsStart >= 0 && settingsEnd > settingsStart);
+  assert.doesNotMatch(settings, /data-settings-tab="banks"|data-settings-panel="banks"/);
+  assert.match(html, /id="connectedBanksModal"/);
+  assert.match(app, /function openBankSettings\(\)[\s\S]*openModal\(\$\('#connectedBanksModal'\)\)/);
   assert.match(premium, /window\.MerSettings=Object\.freeze\(\{open:openSettings,selectTab:selectSettingsTab\}\)/);
   assert.match(premium, /function openSettings\(tab='general'\)[\s\S]*selectSettingsTab\(tab\)/);
-  assert.match(premium, /if\(selectedSettingsTab==='banks'\)renderBankSettings\(\)/);
-  assert.doesNotMatch(premium, /#manageBanks'\)\.addEventListener\('click',\(\)=>selectSettingsTab/);
+  assert.doesNotMatch(premium, /selectedSettingsTab==='banks'|\.open\('banks'\)|selectSettingsTab\('banks'\)/);
+  assert.doesNotMatch(settings, /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv/);
 });
 
 test('cycle 1: a rule created from the If/Then payload categorizes future imports', () => {

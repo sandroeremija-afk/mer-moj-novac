@@ -19,14 +19,21 @@ class MemoryStorage {
   removeItem(key) { this.values.delete(String(key)); }
 }
 
-test('evaluation cycle 2: the top header exposes one localized accessible layout edit toggle', () => {
-  assert.match(html, /id="layoutEditToggle"[^>]*aria-pressed="false"/);
-  assert.match(html, /id="layoutEditToggle"[\s\S]*?data-i18n="customizeLayout"/);
+test('evaluation cycle 2: General Settings exposes one localized accessible layout edit toggle', () => {
+  const topbar = html.slice(html.indexOf('<header class="topbar">'), html.indexOf('</header>'));
+  assert.doesNotMatch(topbar, /id="layoutEditToggle"|data-layout-edit-toggle/);
+  const generalStart = html.indexOf('data-settings-panel="general"');
+  const generalEnd = html.indexOf('data-settings-panel="security"', generalStart);
+  const general = html.slice(generalStart, generalEnd);
+  assert.match(general, /id="settingsLanguage"/);
+  assert.match(general, /id="themeToggle"[^>]*aria-pressed="false"/);
+  assert.match(general, /id="layoutEditToggle"[^>]*data-layout-edit-toggle[^>]*aria-pressed="false"/);
+  assert.match(general, /id="layoutEditToggle"[\s\S]*?data-i18n="customizeLayout"/);
   assert.equal((html.match(/data-layout-edit-toggle/g) || []).length, 1);
   for (const moduleId of ['overview','budgets','savings','activity','insights']) {
     const start = html.indexOf(`data-view-panel="${moduleId}"`);
     const next = html.indexOf('data-view-panel=', start + 1);
-    const moduleMarkup = html.slice(start, next < 0 ? html.length : next);
+    const moduleMarkup = html.slice(start, next < 0 ? html.indexOf('</main>', start) : next);
     assert.equal((moduleMarkup.match(/data-layout-edit-toggle/g) || []).length, 0, `${moduleId} does not duplicate the global control`);
   }
   assert.match(html, /id="layoutLiveRegion"[^>]*aria-live="polite"/);

@@ -38,11 +38,12 @@ test('cycle 2: the outer document and every main application module remain viewp
 
 test('cycle 2: official logo geometry is stable and theme-adaptive in its two allowed locations', () => {
   assert.match(css, /\.brand-wordmark-image \{ width:132px; height:39\.78px; \}/);
-  assert.match(css, /\.auth-card-logo \{ width:128px; height:38\.58px/);
+  assert.match(css, /\.auth-brand-logo \{[^}]*width:clamp\(150px,17vw,228px\)[^}]*height:auto/);
   assert.match(css, /mer-logo\[variant="negative"\] \{ --logo-wordmark:#fff; \}/);
   assert.match(css, /mer-logo\[variant="positive"\],[\s\S]*--logo-wordmark:#040606/);
   assert.match(css, /mer-logo:not\(:defined\)|mer-logo \{/);
   assert.equal((html.match(/<mer-logo\b/g) || []).length, 2);
-  assert.match(html, /class="auth-card-logo" variant="auto"/);
+  assert.match(html, /class="auth-brand-logo" variant="negative"/);
+  assert.match(html, /class="auth-brand-tagline"[^>]*data-auth-copy="heroTagline"/);
   assert.match(html, /class="brand-wordmark-image" variant="negative"/);
 });

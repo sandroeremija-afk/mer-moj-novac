@@ -31,7 +31,12 @@ test('cycle 1: official brand-book vectors power one Auth logo and one sidebar l
   const appMarkup = html.slice(html.indexOf('id="appShell"'), html.indexOf('id="bankSettingsModal"'));
   assert.equal((authMarkup.match(/<mer-logo\b/g) || []).length, 1);
   assert.equal((appMarkup.match(/<mer-logo\b/g) || []).length, 1);
-  assert.match(authMarkup, /class="auth-card-logo" variant="auto"/);
+  assert.match(authMarkup, /class="auth-brand-logo" variant="negative"/);
+  const authBrand = authMarkup.slice(authMarkup.indexOf('class="auth-brand-panel"'), authMarkup.indexOf('class="auth-form-panel"'));
+  assert.match(authBrand, /class="auth-brand-tagline"[^>]*data-auth-copy="heroTagline"[^>]*>Upravljajte financijama s lakoćom\.<\/p>/);
+  assert.doesNotMatch(authBrand, /<h1\b|<ul\b|<li\b|data-auth-copy="(?:heroTitle|heroBody|benefitOne|benefitTwo|benefitThree)"/);
+  const authForm = authMarkup.slice(authMarkup.indexOf('class="auth-form-panel"'));
+  assert.doesNotMatch(authForm, /<mer-logo\b/);
   assert.match(appMarkup, /<aside[\s\S]*class="brand-wordmark-image" variant="negative"/);
   assert.doesNotMatch(html.slice(html.indexOf('<main'), html.indexOf('</main>')), /<mer-logo\b/);
   assert.doesNotMatch(html.slice(html.indexOf('id="bankSettingsModal"')), /<mer-logo\b/);
@@ -46,6 +51,8 @@ test('cycle 1: official brand-book vectors power one Auth logo and one sidebar l
   assert.equal((logo.match(/M419\.169 89\.377/g) || []).length, 1);
   assert.match(css, /mer-logo \{[^}]*aspect-ratio:531\.352 \/ 160\.076[^}]*overflow:hidden/s);
   assert.match(css, /\[data-theme="dark"\] mer-logo\[variant="auto"\] \{ --logo-wordmark:#fff; \}/);
+  assert.match(css, /\.auth-brand-logo \{[^}]*width:clamp\(150px,17vw,228px\)/);
+  assert.match(css, /\.auth-visible \.auth-card \{[^}]*animation:auth-card-mount/);
   assert.doesNotMatch(html, /mer-wordmark-(?:positive|negative)\.(?:png|svg)/);
   assert.doesNotMatch(css, /content:url\([^)]*mer-wordmark/);
   const logoScriptIndex=html.search(/<script src="logo\.js(?:\?[^\"]*)?"><\/script>/);
@@ -62,10 +69,12 @@ test('cycle 1: official brand-book vectors power one Auth logo and one sidebar l
   assert.match(fs.readFileSync(path.join(root, 'assets', 'mer-logo-negative.svg'), 'utf8'), /fill="#fff"/);
 });
 
-test('cycle 1: Auth removes the old subtitle and exposes a localized password recovery dialog', () => {
+test('cycle 1: Auth keeps minimalist copy and exposes a localized password recovery dialog', () => {
   assert.doesNotMatch(html, /Nastavite ondje gdje ste stali\.|Continue exactly where you left off\./);
   assert.doesNotMatch(html, /<div class="auth-brand-panel"[\s\S]*?<p class="overline">MER MOJ NOVAC<\/p>/);
   assert.doesNotMatch(html, /class="auth-intro"/);
+  assert.match(auth, /heroTagline: 'Upravljajte financijama s lakoćom\.'/);
+  assert.match(auth, /heroTagline: 'Manage your finances with ease\.'/);
   assert.match(html, /id="forgotPassword"[^>]*href="#password-reset"[^>]*aria-controls="passwordResetModal"/);
   for (const id of ['passwordResetModal', 'passwordResetForm', 'passwordResetEmail', 'passwordResetSuccess', 'passwordResetDone']) {
     assert.match(html, new RegExp(`id="${id}"`));

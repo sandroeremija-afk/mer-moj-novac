@@ -31,15 +31,22 @@ test('evaluation cycle 1: contextual titles replace every generic topbar module 
   assert.doesNotMatch(contextTitleRule, /text-transform\s*:\s*uppercase/);
 });
 
-test('evaluation cycle 1: one icon-only layout control lives between the Date and theme controls', () => {
+test('evaluation cycle 1: display controls live in General Settings and the topbar stays streamlined', () => {
   assert.equal((html.match(/data-layout-edit-toggle/g) || []).length, 1);
   const topbar = html.slice(html.indexOf('<header class="topbar">'), html.indexOf('</header>'));
   const date = topbar.indexOf('id="systemDate"');
-  const layout = topbar.indexOf('id="layoutEditToggle"');
-  const theme = topbar.indexOf('id="themeToggle"');
-  assert.ok(date >= 0 && layout > date && theme > layout);
-  assert.match(topbar, /class="[^"]*icon-button[^"]*"[^>]*id="layoutEditToggle"/);
-  assert.doesNotMatch(html.slice(html.indexOf('<div class="page">')), /data-layout-edit-toggle/);
+  const notification = topbar.indexOf('id="notificationButton"');
+  const bank = topbar.indexOf('id="headerBankButton"');
+  assert.ok(date >= 0 && notification > date && bank > notification);
+  assert.doesNotMatch(topbar, /id="(?:layoutEditToggle|themeToggle|settingsLanguage)"|class="language-switch"|data-lang=/);
+  const generalStart = html.indexOf('data-settings-panel="general"');
+  const generalEnd = html.indexOf('data-settings-panel="security"', generalStart);
+  const general = html.slice(generalStart, generalEnd);
+  assert.match(general, /id="settingsLanguage"/);
+  assert.match(general, /id="themeToggle"[^>]*aria-pressed="false"/);
+  assert.match(general, /id="layoutEditToggle"[^>]*data-layout-edit-toggle[^>]*aria-pressed="false"/);
+  const pageStart = html.indexOf('<div class="page">');
+  assert.doesNotMatch(html.slice(pageStart, html.indexOf('</main>', pageStart)), /data-layout-edit-toggle/);
   assert.match(css, /\.actions-only-heading\s*\{[^}]*display:flex[^}]*justify-content:flex-end/);
 });
 

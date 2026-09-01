@@ -72,8 +72,15 @@ test('Cycle 2: custom automation rules stay isolated to their profile', () => {
   assert.equal(MerCore.autoCategorizeBankTransaction({ description: 'Studio X charge', amount: -20 }, business).category, 'transport');
 });
 
-test('Cycle 2: settings UI exposes MFA, review pagination, privacy, export and goals', () => {
-  ['mfaSetup','recoveryCodes','importReviewRows','importPrev','importNext','hideBalances','settingsExportJson','settingsExportAllCsv','goalBucketGrid','automationRuleForm'].forEach(id => assert.match(html, new RegExp(`id="${id}"`)));
+test('Cycle 2: settings UI exposes MFA, review pagination, privacy, display preferences and goals', () => {
+  ['mfaSetup','recoveryCodes','importReviewRows','importPrev','importNext','hideBalances','settingsLanguage','themeToggle','layoutEditToggle','goalBucketGrid','automationRuleForm'].forEach(id => assert.match(html, new RegExp(`id="${id}"`)));
+  const settingsStart = html.indexOf('id="bankSettingsModal"');
+  const settingsEnd = html.indexOf('</dialog>', settingsStart);
+  const settings = html.slice(settingsStart, settingsEnd);
+  assert.doesNotMatch(settings, /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv|settingsImportJsonFile/);
+  assert.match(html, /id="budgetDataMenu"/);
+  assert.match(html, /data-export-budget/);
+  assert.match(html, /data-export-insights/);
   assert.match(script, /const importPageSize = 50/);
   assert.match(script, /MerSecurity\.validateTotp/);
   assert.match(script, /MerImport\.commitReviewStage/);

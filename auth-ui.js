@@ -1,6 +1,7 @@
 (function initializeAuthUi() {
   const copy = {
     hr: {
+      heroTagline: 'Upravljajte financijama s lakoćom.',
       heroTitle: 'Mirnije odluke počinju jasnom slikom novca.',
       heroBody: 'Budžeti, pametna štednja i bankovni uvoz u jednom sigurnom radnom prostoru.',
       benefitOne: 'Osobni i poslovni podaci ostaju odvojeni',
@@ -37,6 +38,7 @@
       invalidForm: 'Provjerite unesene podatke.'
     },
     en: {
+      heroTagline: 'Manage your finances with ease.',
       heroTitle: 'Calmer decisions start with a clear view of your money.',
       heroBody: 'Budgets, smart savings and bank imports in one focused workspace.',
       benefitOne: 'Personal and Business data remain isolated',
