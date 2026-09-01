@@ -10,6 +10,9 @@ const translations = {
   }
 };
 
+translations.hr.merRecommendation = 'MER Preporuka';
+translations.en.merRecommendation = 'MER Recommendation';
+
 Object.assign(translations.hr, {
   businessAccount:'Poslovni račun', darkMode:'Tamni način', lightMode:'Svijetli način', switchAccount:'PROMIJENI RAČUN', settings:'POSTAVKE', exportCsv:'Izvezi mjesečni CSV', notificationCenter:'Centar obavijesti',
   balanceTooltip:'Iznos dostupan na aktivnom računu nakon evidentiranih transakcija i uplata u štednju.', safeTooltip:'Iznos koji možete potrošiti bez zadiranja u račune, cilj štednje i sigurnosnu rezervu.',
@@ -1436,7 +1439,7 @@ $$('[data-open-transaction]').forEach(button=>button.addEventListener('click',()
 $$('[data-open-income]').forEach(button=>button.addEventListener('click',openIncomeTransaction));
 $$('[data-open-assessment]').forEach(button=>button.addEventListener('click',openAssessment));
 $$('[data-open-savings]').forEach(button=>button.addEventListener('click',()=>openSavingsDeposit()));
-$('#openSettings').addEventListener('click',event=>{event.stopPropagation();toggleAccountMenu();closeNotifications();}); $('#openPlan').addEventListener('click',()=>openModal($('#breakdownModal'))); $('#safeBreakdown').addEventListener('click',()=>openModal($('#breakdownModal')));
+$('#openSettings').addEventListener('click',event=>{event.stopPropagation();toggleAccountMenu();closeNotifications();}); $('#safeBreakdown').addEventListener('click',()=>openModal($('#breakdownModal')));
 $('#manageBanks').addEventListener('click',openBankSettings);
 $('#startBankConnection').addEventListener('click',startBankConnection);
 $('#cancelBankConnection').addEventListener('click',()=>resetBankConnectionFlow({focus:true}));

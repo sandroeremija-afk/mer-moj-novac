@@ -29,41 +29,47 @@ function cssRule(selector, source = css) {
   return match[1];
 }
 
-test('evaluation cycle 2: Savings keeps Weekly Review compact instead of stretching it into a third column', () => {
+test('evaluation cycle 2: Savings merges the weekly insight into one equal-height recommendation card', () => {
   const savingsStart = html.indexOf('id="savingsView"');
   const savingsEnd = html.indexOf('id="activityView"', savingsStart);
   const savings = html.slice(savingsStart, savingsEnd);
-  const stackStart = savings.indexOf('class="savings-side-stack"');
-  const recommendation = savings.indexOf('class="panel recommendation-panel"', stackStart);
-  const weekly = savings.indexOf('class="panel weekly-review-card"', recommendation);
-  assert.ok(stackStart >= 0 && recommendation > stackStart && weekly > recommendation);
+  const layoutStart = savings.indexOf('class="savings-layout"');
+  const layoutEnd = savings.indexOf('</section>', layoutStart);
+  const topLayout = savings.slice(layoutStart, layoutEnd);
+  const recommendationStart = savings.indexOf('id="savingsRecommendationCard"', layoutStart);
+  const recommendationEnd = savings.indexOf('</aside>', recommendationStart);
+  const recommendation = savings.slice(recommendationStart, recommendationEnd);
 
-  const desktopStart = css.indexOf('@media (min-width:1025px)', css.indexOf('/* Savings occupies'));
-  const desktopEnd = css.indexOf('@media (min-width:1025px) and', desktopStart);
-  const stackRule = cssRule('#savingsView .savings-side-stack', css.slice(desktopStart, desktopEnd));
-  assert.match(stackRule, /display:flex/);
-  assert.match(stackRule, /flex-direction:column/);
-  assert.match(stackRule, /justify-content:space-between/);
-  assert.match(stackRule, /gap:16px/);
-  assert.doesNotMatch(css, /\.savings-side-stack\s*\{[^}]*display\s*:\s*contents/);
-  assert.doesNotMatch(css, /#savingsView \.savings-side-stack\s*\{[^}]*display\s*:\s*contents/);
+  assert.equal((topLayout.match(/class="[^"]*\bpanel\b/g) || []).length, 2);
+  assert.equal((savings.match(/id="savingsRecommendationCard"/g) || []).length, 1);
+  assert.match(recommendation, /recommendation-badge[\s\S]*?recommendation-stat[\s\S]*?recommendation-weekly[\s\S]*?id="tipSavings"[\s\S]*?recommendation-action/);
+  assert.doesNotMatch(savings, /\bsavings-side-stack\b|\bweekly-review-card\b|id="openPlan"/);
 
-  const compactDesktop = css.slice(css.lastIndexOf('@media (min-width:1025px) {'));
-  const compactStackRule = cssRule('#savingsView .savings-side-stack', compactDesktop);
-  const compactWeeklyRule = cssRule('#savingsView .weekly-review-card', compactDesktop);
-  assert.match(compactStackRule, /gap:8px/, 'the final desktop cascade compacts the side-card gap');
-  assert.match(compactWeeklyRule, /min-height:64px/, 'Weekly Review has a compact desktop height floor');
+  const unifiedMarker = css.indexOf('/* Unified Savings recommendation');
+  const unified = css.slice(unifiedMarker);
+  const desktopStart = unified.indexOf('@media (min-width:1025px) {');
+  const desktopEnd = unified.indexOf('@media (min-width:1025px) and', desktopStart);
+  const desktop = unified.slice(desktopStart, desktopEnd);
+  const cardRule = cssRule('#savingsView .savings-insight-card', unified.slice(0, desktopStart));
+  const layoutRule = cssRule('#savingsView > .savings-layout', desktop);
 
-  const weeklyRule = cssRule('.weekly-review-card');
-  assert.match(weeklyRule, /display:grid/);
-  assert.match(weeklyRule, /padding:(?:1[012]|[0-9])px\s+(?:1[0-4]|[0-9])px/);
-  assert.match(weeklyRule, /gap:(?:1[0-2]|[0-9])px/);
-  assert.match(css, /@media \(max-width:1024px\)[\s\S]*?\.savings-side-stack \{ grid-template-rows:auto auto; \}/);
+  assert.match(cardRule, /height:100%/);
+  assert.match(cardRule, /display:flex/);
+  assert.match(cardRule, /flex-direction:column/);
+  assert.match(cardRule, /justify-content:space-between/);
+  assert.match(cardRule, /padding:20px/);
+  assert.match(layoutRule, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(layoutRule, /gap:20px/);
+  assert.match(layoutRule, /align-items:stretch/);
+  assert.match(desktop, /#savingsView \.savings-top-card \{ grid-column:span 2; \}/);
+  assert.match(desktop, /#savingsView \.unified-recommendation-card \{ grid-column:span 1; \}/);
+  assert.match(desktop, /#savingsView \.savings-hero,\s*#savingsView \.savings-insight-card \{[^}]*height:100%[^}]*padding:20px/s);
 });
 
 test('evaluation cycle 2: Savings preserves the fixed desktop canvas and fluid mobile flow', () => {
+  const unified = css.slice(css.indexOf('/* Unified Savings recommendation'));
   assert.match(css, /#savingsView \{[^}]*display:flex;[^}]*min-height:0;[^}]*overflow:hidden;/);
-  assert.match(css, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView \{[^}]*grid-template-rows:auto clamp\(236px,31dvh,252px\) minmax\(0,1fr\)/);
+  assert.match(unified, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView \{[^}]*grid-template-rows:auto clamp\(226px,29dvh,252px\) minmax\(0,1fr\)/);
   assert.match(css, /@media \(min-width:1025px\) \{[\s\S]*?#savingsView > \.goal-buckets-panel \{[\s\S]*?height:100%;[\s\S]*?overflow:visible;/);
   assert.match(css, /@media \(max-width:1024px\) \{[\s\S]*?#savingsView \{[\s\S]*?height:auto;[\s\S]*?overflow:visible;/);
   assert.match(css, /@media \(max-height:720px\) and \(min-width:1025px\)/);

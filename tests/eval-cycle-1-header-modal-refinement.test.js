@@ -78,12 +78,13 @@ test('evaluation cycle 1: native backdrop dismissal remains centralized and mobi
   assert.doesNotMatch(css.slice(css.indexOf('Contextual workspace header')), /width:100vw;[\s\S]*height:100dvh;[\s\S]*border-radius:0;/);
 });
 
-test('evaluation cycle 1: weekly review lives only in Savings and the account switcher owns the sidebar bottom', () => {
+test('evaluation cycle 1: weekly insight lives inside the single Savings recommendation card and the account switcher owns the sidebar bottom', () => {
   const sidebar = html.slice(html.indexOf('id="sidebar"'), html.indexOf('</aside>'));
   const savings = html.slice(html.indexOf('id="savingsView"'), html.indexOf('id="activityView"'));
   assert.doesNotMatch(sidebar, /weeklyCheck|tipSavings|openPlan/);
-  assert.match(savings, /class="panel weekly-review-card"/);
-  assert.match(savings, /id="tipSavings"/);
-  assert.match(savings, /id="openPlan"/);
+  assert.equal((savings.match(/\bsavings-insight-card\b/g) || []).length, 1);
+  assert.match(savings, /id="savingsRecommendationCard"[\s\S]*?recommendation-badge[\s\S]*?recommendation-weekly[\s\S]*?id="tipSavings"[\s\S]*?data-open-assessment[\s\S]*?data-i18n="reviewStrategy"/);
+  assert.doesNotMatch(savings, /\bsavings-side-stack\b|\bweekly-review-card\b|id="openPlan"/);
+  assert.doesNotMatch(app, /\$\('#openPlan'\)/);
   assert.match(css, /\.sidebar-bottom \{ margin-top:auto; flex:0 0 auto; \}/);
 });

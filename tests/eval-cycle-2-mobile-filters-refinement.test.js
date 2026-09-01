@@ -35,11 +35,24 @@ test('evaluation cycle 2: the 375px Settings and standalone Banks sheets are bou
   assert.match(css, /\.premium-settings \.settings-tabs \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 });
 
-test('evaluation cycle 2: MER recommendation and weekly review cannot overflow a narrow Savings canvas', () => {
-  assert.match(css, /#savingsView \.recommendation-panel \{[\s\S]*?width:100%;[\s\S]*?min-width:0;[\s\S]*?overflow:hidden;/);
-  assert.match(css, /#savingsView \.recommendation-panel h2,[\s\S]*?overflow-wrap:anywhere/);
-  assert.match(css, /\.weekly-review-card \{ grid-template-columns:38px minmax\(0,1fr\); \}/);
-  assert.match(css, /\.weekly-review-card \.link-button \{ grid-column:2; justify-self:start; \}/);
+test('evaluation cycle 2: the unified MER recommendation uses natural mobile flow without hiding its weekly insight', () => {
+  const savings = html.slice(html.indexOf('id="savingsView"'), html.indexOf('id="activityView"'));
+  const unifiedMarker = css.indexOf('/* Unified Savings recommendation');
+  const unified = css.slice(unifiedMarker);
+  const mobileStart = unified.indexOf('@media (max-width:1024px)');
+  const phoneStart = unified.indexOf('@media (max-width:414px)', mobileStart);
+  const mobile = unified.slice(mobileStart, phoneStart);
+  const phoneEnd = unified.indexOf('[data-theme="dark"]', phoneStart);
+  const phone = unified.slice(phoneStart, phoneEnd);
+
+  assert.equal((savings.match(/id="savingsRecommendationCard"/g) || []).length, 1);
+  assert.match(savings, /id="savingsRecommendationCard"[\s\S]*?recommendation-badge[\s\S]*?recommendation-weekly[\s\S]*?id="tipSavings"[\s\S]*?recommendation-action/);
+  assert.doesNotMatch(savings, /\bsavings-side-stack\b|\bweekly-review-card\b|id="openPlan"/);
+  assert.match(mobile, /#savingsView > \.savings-layout \{[^}]*grid-template-columns:1fr[^}]*align-items:stretch/);
+  assert.match(mobile, /#savingsView \.savings-hero,\s*#savingsView \.savings-insight-card \{[^}]*width:100%[^}]*height:auto[^}]*min-height:0/s);
+  assert.match(mobile, /#savingsView \.savings-insight-card \{[^}]*overflow:visible/);
+  assert.match(phone, /#savingsView \.savings-insight-card > \.recommendation-action \{[^}]*min-height:44px/);
+  assert.doesNotMatch(`${mobile}\n${phone}`, /#savingsView \.recommendation-weekly\s*\{[^}]*(?:display:none|visibility:hidden)/);
 });
 
 test('evaluation cycle 2: Activity keeps search and filter trigger compact while the mobile panel flows in one column', () => {
