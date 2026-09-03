@@ -2092,9 +2092,42 @@ select:not([multiple]) {
   will-change:left,top,width,height;
   transition:left .5s ease-in-out,top .5s ease-in-out,width .5s ease-in-out,height .5s ease-in-out;
 }
-.onboarding-popover {
+.onboarding-context-spotlight {
   position:fixed;
   z-index:2;
+  display:flex;
+  align-items:center;
+  min-width:0;
+  overflow:hidden;
+  border:2px solid var(--blue);
+  border-radius:10px;
+  color:#fff;
+  background:#07110e;
+  box-shadow:0 0 0 5px rgba(0,169,228,.2),0 12px 28px rgba(0,0,0,.24);
+  opacity:0;
+  pointer-events:none;
+  will-change:left,top,width,height;
+  transition:left .5s ease-in-out,top .5s ease-in-out,width .5s ease-in-out,height .5s ease-in-out,opacity .18s ease;
+}
+.onboarding-context-spotlight.is-visible { opacity:1; }
+.onboarding-context-spotlight.is-docked { border-radius:12px; box-shadow:0 0 0 4px rgba(0,169,228,.18),0 12px 28px rgba(0,0,0,.28); }
+.onboarding-context-spotlight-content {
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 14px;
+  color:#fff;
+  background:rgba(0,169,228,.16);
+  font-size:.875rem;
+  font-weight:700;
+  white-space:nowrap;
+}
+.onboarding-context-spotlight-content svg { width:18px; height:18px; flex:0 0 auto; }
+.onboarding-popover {
+  position:fixed;
+  z-index:3;
   width:min(350px,calc(100vw - 24px));
   max-width:350px;
   max-height:calc(100dvh - 24px);
@@ -2108,11 +2141,9 @@ select:not([multiple]) {
   box-shadow:0 22px 64px rgba(2,20,16,.28);
   transition:left .5s ease-in-out,top .5s ease-in-out,opacity .2s ease,transform .2s ease;
 }
-.onboarding-popover[data-step-kind="navigation"] { border-color:color-mix(in srgb,var(--blue) 52%,var(--line)); background:linear-gradient(145deg,color-mix(in srgb,var(--blue-soft) 34%,var(--panel)),var(--panel) 58%); }
 .onboarding-popover.is-compact { padding:16px; }
 .onboarding-popover.is-compact .onboarding-progress-row { gap:8px; }
-.onboarding-popover.is-compact > .overline { margin-top:11px; }
-.onboarding-popover.is-compact h2 { margin-top:4px; font-size:1.2rem; line-height:1.2; }
+.onboarding-popover.is-compact h2 { margin-top:4px; font-size:1.25rem; line-height:1.25; }
 .onboarding-popover.is-compact > p:not(.overline) { margin-top:7px; line-height:1.42; }
 .onboarding-popover.is-compact .onboarding-tip { margin:10px 0 11px; padding:9px 10px; font-size:.875rem; line-height:1.35; }
 .onboarding-popover.is-compact .onboarding-actions { padding-top:10px; }
@@ -2124,9 +2155,8 @@ select:not([multiple]) {
 .onboarding-popover-close svg { width:18px; }
 .onboarding-progress-row { display:flex; align-items:center; gap:11px; margin-right:34px; color:var(--ink); font-size:.875rem; font-weight:700; }
 .onboarding-progress-track { height:4px; flex:1; overflow:hidden; border-radius:999px; background:var(--line); }
-.onboarding-progress-track i { display:block; width:9.09%; height:100%; border-radius:inherit; background:var(--blue); transition:width .5s ease-in-out; }
-.onboarding-popover > .overline { margin-top:20px; color:var(--blue-dark); font-size:.8125rem; }
-.onboarding-popover h2 { margin-top:7px; padding-right:8px; font-size:1.375rem; line-height:1.25; }
+.onboarding-progress-track i { display:block; width:20%; height:100%; border-radius:inherit; background:var(--blue); transition:width .5s ease-in-out; }
+.onboarding-popover h2 { margin-top:18px; padding-right:8px; font-size:1.375rem; line-height:1.25; }
 .onboarding-popover > p:not(.overline) { margin:10px 0 0; color:var(--ink); font-size:1rem; line-height:1.6; }
 .onboarding-tip { display:flex; align-items:flex-start; gap:9px; margin:16px 0 18px; padding:12px; border:1px solid color-mix(in srgb,var(--blue) 34%,var(--line)); border-radius:9px; color:var(--ink); background:var(--blue-soft); font-size:.9375rem; line-height:1.55; }
 .onboarding-tip svg { width:16px; flex:0 0 auto; }
@@ -2140,9 +2170,8 @@ body.tour-active { overflow:hidden; }
 @media (max-height:540px) {
   .onboarding-popover { padding:12px 14px; }
   .onboarding-popover .onboarding-tip { display:none; }
-  .onboarding-popover > .overline { margin-top:8px; }
-  .onboarding-popover h2 { margin-top:3px; font-size:1.125rem; }
-  .onboarding-popover > p:not(.overline) { margin-top:5px; font-size:.9375rem; line-height:1.35; }
+  .onboarding-popover h2 { margin-top:3px; font-size:1.25rem; }
+  .onboarding-popover > p:not(.overline) { margin-top:5px; font-size:1rem; line-height:1.4; }
   .onboarding-actions { margin-top:8px; padding-top:8px; }
 }
 
@@ -2766,6 +2795,7 @@ body.layout-editing [data-layout-card].layout-card-drop-after { box-shadow:inset
 
 @media (prefers-reduced-motion: reduce) {
   .onboarding-spotlight,
+  .onboarding-context-spotlight,
   .onboarding-popover,
   .assistant-fab,
   .assistant-widget,

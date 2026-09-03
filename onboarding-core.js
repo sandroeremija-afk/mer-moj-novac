@@ -4,18 +4,31 @@
   if (root) root.MerOnboardingCore = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function createMerOnboardingCore() {
   const STORAGE_PREFIX = 'mer-onboarding-v1:';
+  const copy = (hrTitle, hrDescription, enTitle, enDescription) => Object.freeze({
+    hr:Object.freeze({ title:hrTitle, description:hrDescription }),
+    en:Object.freeze({ title:enTitle, description:enDescription })
+  });
   const DEFAULT_STEPS = Object.freeze([
-    { id:'overview', view:'overview', target:'#safeRing', mobileTarget:'#safeRing', placement:'right', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody' },
-    { id:'transaction', view:'overview', target:'#sidebar .sidebar-transaction-button[data-open-transaction]', mobileTarget:'#sidebar .sidebar-transaction-button[data-open-transaction]', placement:'right', openSidebar:true, titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody' },
-    { id:'budgetsNavigation', view:'budgets', target:'.nav-item[data-view="budgets"]', mobileTarget:'.nav-item[data-view="budgets"]', placement:'right', openSidebar:true, navigationStep:true, titleKey:'onboardingBudgetsNavigationTitle', bodyKey:'onboardingBudgetsNavigationBody' },
-    { id:'budgets', view:'budgets', target:'#budgetsView .table-panel .panel-heading', mobileTarget:'#budgetsView .budget-summary .summary-card:first-child', placement:'bottom', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody' },
-    { id:'savingsNavigation', view:'savings', target:'.nav-item[data-view="savings"]', mobileTarget:'.nav-item[data-view="savings"]', placement:'right', openSidebar:true, navigationStep:true, titleKey:'onboardingSavingsNavigationTitle', bodyKey:'onboardingSavingsNavigationBody' },
-    { id:'savings', view:'savings', target:'#savingsView .savings-hero-head', mobileTarget:'#savingsView .savings-hero-head', placement:'bottom', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody' },
-    { id:'activityNavigation', view:'activity', target:'.nav-item[data-view="activity"]', mobileTarget:'.nav-item[data-view="activity"]', placement:'right', openSidebar:true, navigationStep:true, titleKey:'onboardingActivityNavigationTitle', bodyKey:'onboardingActivityNavigationBody' },
-    { id:'activity', view:'activity', target:'#activityView .activity-toolbar', mobileTarget:'#activityView .activity-toolbar', placement:'bottom', titleKey:'onboardingActivityTitle', bodyKey:'onboardingActivityBody' },
-    { id:'insightsNavigation', view:'insights', target:'.nav-item[data-view="insights"]', mobileTarget:'.nav-item[data-view="insights"]', placement:'right', openSidebar:true, navigationStep:true, titleKey:'onboardingInsightsNavigationTitle', bodyKey:'onboardingInsightsNavigationBody' },
-    { id:'insights', view:'insights', target:'#insightsFilters', mobileTarget:'#insightsFilters', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody' },
-    { id:'settings', view:'insights', contextKey:'onboardingSettingsLabel', target:'#openSettings', mobileTarget:'#openSettings', placement:'right', openSidebar:true, titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody' }
+    {
+      id:'overview', view:'overview', target:'#overviewView .summary-card.balance-card', mobileTarget:'#overviewView .summary-card.balance-card', contextTarget:'.nav-item[data-view="overview"]', placement:'bottom', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody',
+      copy:copy('Vaš financijski pregled', 'Ovdje u svakom trenutku vidite koliko novca imate na raspolaganju i brzi pregled mjesečne potrošnje.', 'Your financial overview', 'See how much money you have available and a quick view of monthly spending at any time.')
+    },
+    {
+      id:'transaction', view:'overview', target:'#sidebar .sidebar-transaction-button[data-open-transaction]', mobileTarget:'#sidebar .sidebar-transaction-button[data-open-transaction]', contextTarget:'.nav-item[data-view="overview"]', placement:'right', openSidebar:true, titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody',
+      copy:copy('Unos prihoda i troškova', 'Jednim klikom možete ručno unijeti novi trošak ili prihod, ili uvoziti izvod iz vaše banke.', 'Income and expense entry', 'Add a new expense or income in one click, or import a statement from your bank.')
+    },
+    {
+      id:'budgets', view:'budgets', target:'#budgetsView .table-panel .panel-heading', mobileTarget:'#budgetsView .table-panel .panel-heading', contextTarget:'.nav-item[data-view="budgets"]', placement:'bottom', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody',
+      copy:copy('Mesečni plan i limiti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.', 'Monthly plan and limits', 'Set spending limits by category (food, transport, utilities) to make saving easier.')
+    },
+    {
+      id:'savings', view:'savings', target:'#savingsView .savings-hero', mobileTarget:'#savingsView .savings-hero-head', contextTarget:'.nav-item[data-view="savings"]', placement:'bottom', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody',
+      copy:copy('Ciljevi štednje', 'Pratite napredak svojih fondova za hitne slučajeve i postavite automatska pravila zaokruživanja.', 'Savings goals', 'Track progress toward emergency funds and set automatic round-up rules.')
+    },
+    {
+      id:'insights', view:'insights', target:'#insightsView .monthly-bars-card', mobileTarget:'#insightsView .monthly-bars-card .panel-heading', contextTarget:'.nav-item[data-view="insights"]', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody',
+      copy:copy('Izvješća i analitika', 'Pregledajte kretanje prihoda i troškova po razdobljima te prilagodite postavke profila u bilo kojem trenutku.', 'Reports and analytics', 'Review income and expense trends by period and adjust profile settings at any time.')
+    }
   ].map(step => Object.freeze(step)));
 
   const cleanUserId = value => String(value || 'anonymous').trim().toLowerCase().replace(/[^a-z0-9._@-]+/g, '-') || 'anonymous';

@@ -14,7 +14,7 @@ const ui = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 test('evaluation cycle 1: onboarding steps describe real spotlight targets in a deliberate order', () => {
   assert.deepEqual(
     MerOnboarding.DEFAULT_STEPS.map(step => step.id),
-    ['overview', 'transaction', 'budgetsNavigation', 'budgets', 'savingsNavigation', 'savings', 'activityNavigation', 'activity', 'insightsNavigation', 'insights', 'settings']
+    ['overview', 'transaction', 'budgets', 'savings', 'insights']
   );
   MerOnboarding.DEFAULT_STEPS.forEach(step => {
     assert.equal(typeof step.target, 'string', `${step.id} has a target selector`);
@@ -25,16 +25,9 @@ test('evaluation cycle 1: onboarding steps describe real spotlight targets in a 
   assert.equal(transactionStep.target, '#sidebar .sidebar-transaction-button[data-open-transaction]');
   assert.equal(transactionStep.mobileTarget, '#sidebar .sidebar-transaction-button[data-open-transaction]');
   assert.equal(transactionStep.openSidebar, true, 'the sidebar is opened before the primary action is measured');
-  assert.match(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'overview').target, /safe-panel|safeRing/);
-  assert.match(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'settings').target, /openSettings/);
-  for (const view of ['budgets', 'savings', 'activity', 'insights']) {
-    const navigationStep = MerOnboarding.DEFAULT_STEPS.find(step => step.id === `${view}Navigation`);
-    assert.equal(navigationStep.target, `.nav-item[data-view="${view}"]`);
-    assert.equal(navigationStep.mobileTarget, navigationStep.target);
-    assert.equal(navigationStep.openSidebar, true);
-    assert.equal(navigationStep.navigationStep, true);
-    const featureIndex = MerOnboarding.DEFAULT_STEPS.findIndex(step => step.id === view);
-    assert.equal(MerOnboarding.DEFAULT_STEPS[featureIndex - 1], navigationStep, `${view} navigation is spotlighted before module content`);
+  assert.equal(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'overview').target, '#overviewView .summary-card.balance-card');
+  for (const view of ['overview', 'budgets', 'savings', 'insights']) {
+    assert.equal(MerOnboarding.DEFAULT_STEPS.find(step => step.id === view).contextTarget, `.nav-item[data-view="${view}"]`);
   }
 });
 

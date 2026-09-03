@@ -17,7 +17,7 @@ test('evaluation cycle 2: senior-friendly tour uses legible controls and Croatia
   assert.match(html, /id="onboardingSkip"[^>]*>Preskoči</);
   assert.match(onboarding, /onboardingBack:'Natrag'/);
   assert.match(onboarding, /onboardingNext:'Dalje'/);
-  assert.match(onboarding, /Ovdje možete pronaći, filtrirati i urediti svaku transakciju\./);
+  assert.match(onboarding, /Odaberite dan, mjesec, godinu ili sveukupni prikaz\./);
   assert.match(css, /\.onboarding-popover > p:not\(\.overline\) \{[^}]*font-size:1rem;[^}]*line-height:1\.6;/);
   assert.match(css, /\.onboarding-actions button \{[^}]*min-height:44px;[^}]*font-size:1rem;/);
 });

@@ -50,11 +50,12 @@ test('evaluation cycle 2: reduced-motion users retain a non-animated fallback', 
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.onboarding-spotlight,[\s\S]*?transition:none;/);
 });
 
-test('evaluation cycle 2: module changes expose persistent sidebar and popover context', () => {
-  assert.match(ui, /function moduleContextFor\(step\)/);
-  assert.match(ui, /\.nav-item\[data-view=/);
+test('evaluation cycle 2: module changes expose a simultaneous visual sidebar context without meta copy', () => {
+  assert.match(ui, /step\.contextTarget \? document\.querySelector\(step\.contextTarget\) : null/);
   assert.match(ui, /tour-context-active/);
-  assert.match(ui, /onboardingModuleContext/);
-  assert.match(ui, /popover\.dataset\.moduleContext/);
+  assert.match(ui, /renderContextSpotlight/);
+  assert.match(ui, /contextSpotlight\.replaceChildren/);
   assert.match(css, /\.nav-item\.tour-context-active\s*\{/);
+  assert.match(css, /\.onboarding-context-spotlight\s*\{/);
+  assert.doesNotMatch(ui, /\$\('#onboardingEyebrow'\)|toLocaleUpperCase\(locale\(\)\)|dataset\.moduleContext/);
 });
