@@ -6,12 +6,12 @@
   const STORAGE_PREFIX = 'mer-onboarding-v1:';
   const DEFAULT_STEPS = Object.freeze([
     { id:'navigation', view:'overview', target:'.nav-list', mobileTarget:'#menuToggle', placement:'right', openSidebar:true, titleKey:'onboardingNavigationTitle', bodyKey:'onboardingNavigationBody' },
-    { id:'transaction', view:'overview', target:'#overviewView .heading-actions [data-open-transaction]', mobileTarget:'#overviewView .heading-actions [data-open-transaction]', placement:'bottom', titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody' },
-    { id:'overview', view:'overview', target:'#overviewView .safe-panel', mobileTarget:'#safeRing', placement:'right', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody' },
-    { id:'budgets', view:'budgets', target:'#budgetsView .table-panel', mobileTarget:'#budgetsView .budget-summary', placement:'left', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody' },
-    { id:'savings', view:'savings', target:'#savingsView .savings-hero', placement:'right', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody' },
+    { id:'transaction', view:'overview', target:'#sidebar .sidebar-transaction-button[data-open-transaction]', mobileTarget:'#sidebar .sidebar-transaction-button[data-open-transaction]', placement:'right', openSidebar:true, titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody' },
+    { id:'overview', view:'overview', target:'#safeRing', mobileTarget:'#safeRing', placement:'right', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody' },
+    { id:'budgets', view:'budgets', target:'#budgetsView .table-panel .panel-heading', mobileTarget:'#budgetsView .budget-summary .summary-card:first-child', placement:'bottom', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody' },
+    { id:'savings', view:'savings', target:'#savingsView .savings-hero-head', mobileTarget:'#savingsView .savings-hero-head', placement:'bottom', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody' },
     { id:'activity', view:'activity', target:'#activityView .activity-toolbar', mobileTarget:'#activityView .activity-toolbar', placement:'bottom', titleKey:'onboardingActivityTitle', bodyKey:'onboardingActivityBody' },
-    { id:'insights', view:'insights', target:'#insightsView .advanced-insights-grid', mobileTarget:'#insightsView .insights-kpis', placement:'left', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody' },
+    { id:'insights', view:'insights', target:'#insightsFilters', mobileTarget:'#insightsFilters', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody' },
     { id:'settings', view:'overview', target:'#openSettings', mobileTarget:'#menuToggle', placement:'right', openSidebar:true, titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody' }
   ].map(step => Object.freeze(step)));
 
@@ -66,30 +66,52 @@
     const remaining = ['right', 'left', 'bottom', 'top'].filter(side => side !== preferred && side !== opposite[preferred]);
     const order = [preferred, opposite[preferred], ...remaining];
     const required = side => (side === 'left' || side === 'right' ? popoverWidth : popoverHeight) + gap;
-    const placement = order.find(side => spaces[side] >= required(side)) || order.sort((a,b) => spaces[b] - spaces[a])[0];
-    let left;
-    let top;
-    if (placement === 'right') {
-      left = spotlight.left + spotlight.width + gap;
-      top = spotlight.top + spotlight.height / 2 - popoverHeight / 2;
-    } else if (placement === 'left') {
-      left = spotlight.left - popoverWidth - gap;
-      top = spotlight.top + spotlight.height / 2 - popoverHeight / 2;
-    } else if (placement === 'bottom') {
-      left = spotlight.left + spotlight.width / 2 - popoverWidth / 2;
-      top = spotlight.top + spotlight.height + gap;
-    } else {
-      left = spotlight.left + spotlight.width / 2 - popoverWidth / 2;
-      top = spotlight.top - popoverHeight - gap;
-    }
+    const candidateFor = (placement, sizeOverride = {}) => {
+      const candidateWidth = Math.max(1, finite(sizeOverride.width, popoverWidth));
+      const candidateHeight = Math.max(1, finite(sizeOverride.height, popoverHeight));
+      let left;
+      let top;
+      if (placement === 'right') {
+        left = spotlight.left + spotlight.width + gap;
+        top = spotlight.top + spotlight.height / 2 - candidateHeight / 2;
+      } else if (placement === 'left') {
+        left = spotlight.left - candidateWidth - gap;
+        top = spotlight.top + spotlight.height / 2 - candidateHeight / 2;
+      } else if (placement === 'bottom') {
+        left = spotlight.left + spotlight.width / 2 - candidateWidth / 2;
+        top = spotlight.top + spotlight.height + gap;
+      } else {
+        left = spotlight.left + spotlight.width / 2 - candidateWidth / 2;
+        top = spotlight.top - candidateHeight - gap;
+      }
+      left = clamp(left, viewport.left + edge, viewportRight - edge - candidateWidth);
+      top = clamp(top, viewport.top + edge, viewportBottom - edge - candidateHeight);
+      const right = left + candidateWidth;
+      const bottom = top + candidateHeight;
+      const overlapWidth = Math.max(0, Math.min(right, spotlight.left + spotlight.width) - Math.max(left, spotlight.left));
+      const overlapHeight = Math.max(0, Math.min(bottom, spotlight.top + spotlight.height) - Math.max(top, spotlight.top));
+      return { placement, left, top, width:candidateWidth, height:candidateHeight, overlapArea:overlapWidth * overlapHeight };
+    };
+    const candidates = order.map(candidateFor);
+    const fittingSides = new Set(order.filter(side => spaces[side] >= required(side)));
+    const naturalCandidate = candidates.find(candidate => fittingSides.has(candidate.placement) && candidate.overlapArea === 0)
+      || candidates.find(candidate => candidate.overlapArea === 0);
+    const constrainedCandidates = order.map(side => {
+      if (side === 'left' || side === 'right') return candidateFor(side, { width:Math.max(1, Math.min(popoverWidth, spaces[side] - gap)) });
+      return candidateFor(side, { height:Math.max(1, Math.min(popoverHeight, spaces[side] - gap)) });
+    }).filter(candidate => candidate.overlapArea === 0);
+    const selected = naturalCandidate
+      || [...constrainedCandidates].sort((a,b) => (b.width * b.height) - (a.width * a.height))[0]
+      || [...candidates].sort((a,b) => a.overlapArea - b.overlapArea || spaces[b.placement] - spaces[a.placement])[0];
     return Object.freeze({
       spotlight:Object.freeze(spotlight),
       popover:Object.freeze({
-        left:clamp(left, viewport.left + edge, viewportRight - edge - popoverWidth),
-        top:clamp(top, viewport.top + edge, viewportBottom - edge - popoverHeight),
-        width:popoverWidth,
-        height:popoverHeight,
-        placement
+        left:selected.left,
+        top:selected.top,
+        width:selected.width,
+        height:selected.height,
+        placement:selected.placement,
+        overlapsTarget:selected.overlapArea > 0
       })
     });
   }

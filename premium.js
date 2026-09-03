@@ -48,6 +48,7 @@
   let visibleRecoveryCodes = [];
   let importStage = null;
   let importPage = 0;
+  let returnToTransactionEntry = false;
   let pendingBulkOverride = null;
   let lastBulkOverride = null;
   let editingGoalId = null;
@@ -177,6 +178,15 @@
     const blob=new Blob([content],{type});const link=document.createElement('a');link.download=name;link.href=URL.createObjectURL(blob);document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),0);
   }
 
+  const croatianMonths=['Sijecanj','Veljaca','Ozujak','Travanj','Svibanj','Lipanj','Srpanj','Kolovoz','Rujan','Listopad','Studeni','Prosinac'];
+  function exportFileName(context,timeframe='') {
+    const [year,month]=String(appReferenceDate).slice(0,7).split('-').map(Number);
+    if(context==='activity')return 'Aktivnost_Sve_Transakcije.csv';
+    if(context==='budget')return `Budzeti_Izvoz_${croatianMonths[Math.max(0,Math.min(11,(month||1)-1))]}_${year}.csv`;
+    if(context==='insights')return `Uvidi_Izvjestaj_${({daily:'Dan',monthly:'Mjesec',ytd:'Godina',all:'Sve_Ukupno'})[timeframe]||'Mjesec'}.csv`;
+    return 'MER_Izvoz.csv';
+  }
+
   function safeCsvText(value){const text=String(value??'');return /^[=+\-@\t]/.test(text)?`'${text}`:text;}
   function csvCell(value){const text=String(value??'');return /[",\r\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text;}
 
@@ -189,7 +199,7 @@
       const type=MerCore.transactionType(tx),timestamp=String(tx.timestamp||tx.date||''),category=type==='income'?incomeCategoryName(tx.category):categoryName(tx.category);
       rows.push([safeCsvText(tx.id||''),safeCsvText(timestamp),timestamp.slice(0,10),safeCsvText(tx.name||''),currentLang==='hr'?(type==='income'?'Prihod':'Trošak'):type,safeCsvText(category),Number(tx.amount).toFixed(2),safeCsvText(tx.currency||appState.settings.currency),safeCsvText(tx.source||'Manual'),tx.needsReview?(currentLang==='hr'?'Potreban pregled':'Needs review'):(currentLang==='hr'?'Potvrđeno':'Confirmed')]);
     });
-    downloadFile(`mer-${appState.activeAccount}-transactions-${appReferenceDate}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
+    downloadFile(exportFileName('activity'),`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
   }
 
   function exportBudgetPlanCsv() {
@@ -211,7 +221,7 @@
       [hr?'Kategorija':'Category',hr?'Potrošeno':'Spent',hr?'Limit':'Limit',hr?'Preostalo':'Remaining',hr?'Iskorištenost (%)':'Usage (%)',hr?'Valuta':'Currency']
     ];
     categories.forEach(item=>rows.push([safeCsvText(categoryName(item.category.id)),item.spent.toFixed(2),item.limit.toFixed(2),item.remaining.toFixed(2),item.usage.toFixed(1),currencyCode]));
-    downloadFile(`mer-${appState.activeAccount}-budget-${appReferenceDate.slice(0,7)}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
+    downloadFile(exportFileName('budget'),`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
     showToast(t('csvExported'));
   }
 
@@ -244,11 +254,13 @@
     report.series.forEach(item=>rows.push([item.key,item.income.toFixed(2),item.expenses.toFixed(2),item.net.toFixed(2),String(item.count)]));
     rows.push([], [label.category,label.amount,label.share]);
     report.categories.forEach(item=>rows.push([safeCsvText(categoryName(item.category)),item.amount.toFixed(2),item.share.toFixed(1)]));
-    downloadFile(`mer-${appState.activeAccount}-insights-${report.timeframe}.csv`,`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
+    downloadFile(exportFileName('insights',report.timeframe),`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
     showToast(t('csvExported'));
   }
 
-  function openGlobalImport() {
+  function openGlobalImport({fromTransaction=false}={}) {
+    returnToTransactionEntry=Boolean(fromTransaction);
+    $('#importTransactionBackWrap').hidden=!returnToTransactionEntry;
     closeCardMenus();
     if($('#transactionModal').open)closeModal($('#transactionModal'));
     if($('#budgetDataModal').open)closeModal($('#budgetDataModal'));
@@ -259,6 +271,15 @@
     $('#importProfileBadge').textContent=t(state.accountLabel);
     renderImportReview();
     if(!$('#importDataModal').open)openModal($('#importDataModal'));
+  }
+
+  function backToManualTransaction() {
+    if(!returnToTransactionEntry)return;
+    returnToTransactionEntry=false;
+    $('#importTransactionBackWrap').hidden=true;
+    closeModal($('#importDataModal'));
+    openModal($('#transactionModal'));
+    setTimeout(()=>$('#transactionName').focus({preventScroll:true}),50);
   }
 
   function categoryOptions(type,selected) {
@@ -399,7 +420,8 @@
   ['baseCurrency','dateFormat','timezone','hideBalances'].forEach(id=>$('#'+id).addEventListener('change',()=>{appState.settings.currency=$('#baseCurrency').value;appState.settings.dateFormat=$('#dateFormat').value;appState.settings.timezone=$('#timezone').value;appState.settings.hideBalances=$('#hideBalances').checked;save('settings-change');showToast(t('settingsSaved'));}));
   $('#settingsLanguage').addEventListener('change',event=>setLanguage(event.target.value));
   $('#layoutEditToggle').addEventListener('click',()=>closeModal($('#bankSettingsModal')));
-  $$('[data-open-global-import]').forEach(button=>button.addEventListener('click',openGlobalImport));
+  $$('[data-open-global-import]').forEach(button=>button.addEventListener('click',()=>openGlobalImport({fromTransaction:Boolean(button.closest('#transactionModal'))})));
+  $('#backToTransactionEntry').addEventListener('click',backToManualTransaction);
   $$('[data-export-active]').forEach(button=>button.addEventListener('click',exportActiveProfileCsv));
   $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();if($('#budgetDataModal').open)closeModal($('#budgetDataModal'));exportBudgetPlanCsv();}));
   $$('[data-export-insights]').forEach(button=>button.addEventListener('click',exportInsightsReportCsv));
@@ -412,7 +434,7 @@
   $('#confirmMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingEnrollment||!await MerSecurity.validateTotp(pendingEnrollment.secret,$('#mfaVerificationCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa=MerSecurity.createMfaMethodState({enabled:true,method:'authenticator',secret:pendingEnrollment.secret,recoveryCodeHashes:pendingEnrollment.recoveryCodeHashes,enabledAt:new Date().toISOString()});visibleRecoveryCodes=pendingEnrollment.recoveryCodes;pendingEnrollment=null;window.MerMfaUnlock?.mark?.();save('mfa-enable-authenticator');renderMfa();showToast(t('mfaReady'));},'mfaInvalid'));
   $('#sendMfaSmsCode').addEventListener('click',()=>runAsyncAction(async()=>{const phone=MerSecurity.normalizeSmsDestination($('#mfaSmsPhone').value);if(!phone){showToast(t('smsInvalidPhone'));return;}pendingSmsChallenge=await MerSecurity.createSmsChallenge(phone);$('#mfaSmsDemoDelivery').textContent=t('smsDemoDelivery',{phone:pendingSmsChallenge.maskedPhone,code:pendingSmsChallenge.demoCode});renderMfa();$('#mfaSmsCode').focus({preventScroll:true});showToast(t('smsCodeSent'));},'mfaInvalid'));
   $('#confirmSmsMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!pendingSmsChallenge||!await MerSecurity.validateSmsChallenge(pendingSmsChallenge,$('#mfaSmsCode').value)){showToast(t('mfaInvalid'));return;}const recoveryCodes=MerSecurity.generateRecoveryCodes(),recoveryCodeHashes=await Promise.all(recoveryCodes.map(MerSecurity.hashRecoveryCode));appState.mfa=MerSecurity.createMfaMethodState({enabled:true,method:'sms',phoneNumber:$('#mfaSmsPhone').value,recoveryCodeHashes,enabledAt:new Date().toISOString()});visibleRecoveryCodes=recoveryCodes;pendingSmsChallenge=null;window.MerMfaUnlock?.mark?.();save('mfa-enable-sms');renderMfa();showToast(t('mfaReady'));},'mfaInvalid'));
-  $('#downloadRecoveryCodes').addEventListener('click',()=>downloadFile('mer-recovery-codes.txt',visibleRecoveryCodes.join('\r\n'),'text/plain;charset=utf-8'));
+  $('#downloadRecoveryCodes').addEventListener('click',()=>downloadFile('MER_Kodovi_Za_Oporavak.txt',visibleRecoveryCodes.join('\r\n'),'text/plain;charset=utf-8'));
   $('#sendMfaDisableSmsCode').addEventListener('click',()=>runAsyncAction(async()=>{if(!appState.mfa.enabled||appState.mfa.method!=='sms'||!appState.mfa.phoneNumber)return;pendingSmsDisableChallenge=await MerSecurity.createSmsChallenge(appState.mfa.phoneNumber);renderMfa();$('#mfaDisableCode').focus({preventScroll:true});showToast(t('smsCodeSent'));},'mfaInvalid'));
   $('#disableMfa').addEventListener('click',()=>runAsyncAction(async()=>{if(!await verifyDisableMfaCode($('#mfaDisableCode').value)){showToast(t('mfaInvalid'));return;}appState.mfa=MerSecurity.createMfaMethodState({});window.MerMfaUnlock?.clear?.();visibleRecoveryCodes=[];pendingSmsUnlockChallenge=null;pendingSmsDisableChallenge=null;$('#mfaDisableCode').value='';save('mfa-disable');renderMfa();showToast(t('mfaRemoved'));},'mfaInvalid'));
   $('#mfaUnlockForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(async()=>{if(!await verifyMfaCode($('#mfaUnlockCode').value)){ $('#mfaUnlockError').textContent=t('unlockError');return;}if(!window.MerMfaUnlock?.mark?.()){ $('#mfaUnlockError').textContent=t('unlockError');return;}pendingSmsUnlockChallenge=null;window.MerAuthSecurityUi?.completeUnlock?.();},'mfaInvalid');});
@@ -424,7 +446,7 @@
   $('#bulkOverrideCancel').addEventListener('click',()=>{pendingBulkOverride=null;renderBulkOverrideState();});
   $('#bulkOverrideConfirm').addEventListener('click',confirmBulkOverride);
   $('#undoBulkOverride').addEventListener('click',undoLastBulkOverride);
-  $('#confirmImport').addEventListener('click',()=>{if(!importStage)return;const stagedDuplicates=importStage.duplicates||0,result=MerImport.commitReviewStage(state,importStage,appState.activeAccount);if(result.error){importStage=null;pendingBulkOverride=null;lastBulkOverride=null;renderImportReview();showToast(t('importProfileChanged'));return;}result.imported.forEach(tx=>MerAccounting.applyRoundUp(state,tx));const duplicates=stagedDuplicates+result.duplicates;importStage=null;pendingBulkOverride=null;lastBulkOverride=null;$('#importFile').value='';save('bulk-import');closeModal($('#importDataModal'));showToast(t('importFinished',{count:result.imported.length,duplicates}));});
+  $('#confirmImport').addEventListener('click',()=>{if(!importStage)return;const stagedDuplicates=importStage.duplicates||0,result=MerImport.commitReviewStage(state,importStage,appState.activeAccount,appReferenceDate);if(result.error){importStage=null;pendingBulkOverride=null;lastBulkOverride=null;renderImportReview();showToast(t('importProfileChanged'));return;}result.imported.forEach(tx=>MerAccounting.applyRoundUp(state,tx,appReferenceDate));const duplicates=stagedDuplicates+result.duplicates;importStage=null;pendingBulkOverride=null;lastBulkOverride=null;returnToTransactionEntry=false;$('#importTransactionBackWrap').hidden=true;$('#importFile').value='';save('bulk-import');closeModal($('#importDataModal'));showToast(t('importFinished',{count:result.imported.length,duplicates}));});
 
   $('#resetDemoData').addEventListener('click',()=>openModal($('#demoResetModal')));
   $('#confirmDemoReset').addEventListener('click',resetDemoWorkspace);

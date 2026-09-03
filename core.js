@@ -100,6 +100,39 @@
     return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
   }
 
+  function transactionDate(transaction) {
+    try {
+      const candidate = String(transaction?.date || '').slice(0, 10);
+      return isoDate(dateOnly(candidate));
+    } catch {
+      return null;
+    }
+  }
+
+  function isFutureTransaction(transaction, referenceValue = new Date()) {
+    const date = transactionDate(transaction);
+    if (!date) return false;
+    try { return date > isoDate(dateOnly(referenceValue)); } catch { return false; }
+  }
+
+  function transactionStatusAt(transaction, referenceValue = new Date()) {
+    const date = transactionDate(transaction);
+    if (!transaction || typeof transaction !== 'object' || !date) return 'invalid';
+    try { return date > isoDate(dateOnly(referenceValue)) ? 'scheduled' : 'posted'; } catch { return 'invalid'; }
+  }
+
+  function updateTransactionSchedule(transaction, referenceValue = new Date()) {
+    const status = transactionStatusAt(transaction, referenceValue);
+    if (status === 'invalid') return transaction;
+    transaction.status = status;
+    transaction.scheduled = status === 'scheduled';
+    return transaction;
+  }
+
+  function isTransactionEffective(transaction, referenceValue = new Date()) {
+    return transactionStatusAt(transaction, referenceValue) === 'posted';
+  }
+
   function monthlyCandidate(year, monthIndex, day) {
     const normalizedYear = year + Math.floor(monthIndex / 12);
     const normalizedMonth = ((monthIndex % 12) + 12) % 12;
@@ -223,6 +256,24 @@
     return Math.round((amount + Math.sign(amount) * Number.EPSILON) * 100) / 100;
   }
 
+  function formatCurrency(value, options = {}) {
+    const amount = roundMoney(value);
+    const normalized = Object.is(amount, -0) ? 0 : amount;
+    const categoryBudgetLimit = Boolean(options.categoryBudgetLimit);
+    const omitDecimals = normalized === 0 || (categoryBudgetLimit && Number.isInteger(normalized));
+    const formatterOptions = {
+      style:'currency',
+      currency:String(options.currency || 'EUR').toUpperCase(),
+      minimumFractionDigits:omitDecimals ? 0 : 2,
+      maximumFractionDigits:omitDecimals ? 0 : 2
+    };
+    try {
+      return new Intl.NumberFormat(options.locale || 'hr-HR', formatterOptions).format(normalized);
+    } catch {
+      return new Intl.NumberFormat('hr-HR', { ...formatterOptions, currency:'EUR' }).format(normalized);
+    }
+  }
+
   function ratioPercent(value, total, maximum = Infinity) {
     const safeValue = Math.max(0, financialAmount(value));
     const safeTotal = Math.max(0, financialAmount(total));
@@ -278,7 +329,7 @@
     return { category: pickExpense('other') || profile?.categories?.[0]?.id, confidence: 'fallback', rule: null };
   }
 
-  function normalizeBankTransaction(rawTransaction, connection, profile) {
+  function normalizeBankTransaction(rawTransaction, connection, profile, referenceValue = new Date()) {
     if (!rawTransaction || !connection) return null;
     const rawAmount = Number(rawTransaction.amount ?? rawTransaction.transactionAmount?.amount);
     if (!Number.isFinite(rawAmount) || rawAmount === 0) return null;
@@ -292,7 +343,7 @@
     const identityParts = [connection.providerId, connection.accountId, externalId || dateValue, amount.toFixed(2), name.toLocaleLowerCase('en')];
     const importHash = stableTransactionHash(identityParts);
     const category = autoCategorizeBankTransaction({ ...rawTransaction, amount: type === 'income' ? amount : -amount }, profile);
-    return {
+    return updateTransactionSchedule({
       id: `bank-${connection.id}-${importHash}`,
       type,
       name,
@@ -314,7 +365,7 @@
       merchantName: String(rawTransaction.merchantName || name),
       timestamp: String(rawTransaction.timestamp || rawTransaction.bookedAt || rawTransaction.bookingDate || dateValue),
       currency: String(rawTransaction.currency || rawTransaction.transactionAmount?.currency || connection.currency || 'EUR').toUpperCase()
-    };
+    }, referenceValue);
   }
 
   function greetingFor(dateValue = new Date(), language = 'hr', displayName = '') {
@@ -325,7 +376,7 @@
     return `${hour < 12 ? 'Dobro jutro' : hour < 18 ? 'Dobar dan' : 'Dobra večer'}, ${firstName}.`;
   }
 
-  function importBankTransactions(profile, connection, rawTransactions) {
+  function importBankTransactions(profile, connection, rawTransactions, referenceValue = new Date()) {
     if (!profile || !connection || !Array.isArray(rawTransactions)) return { imported: [], duplicates: 0, invalid: rawTransactions?.length || 0, uncategorized: 0 };
     profile.transactions = profile.transactions || [];
     const knownIds = new Set(profile.transactions.filter(transaction=>transaction&&typeof transaction==='object').flatMap(transaction => [transaction.bankTransactionId, transaction.importHash].filter(Boolean)));
@@ -333,7 +384,7 @@
     let duplicates = 0;
     let invalid = 0;
     rawTransactions.forEach(rawTransaction => {
-      const transaction = normalizeBankTransaction(rawTransaction, connection, profile);
+      const transaction = normalizeBankTransaction(rawTransaction, connection, profile, referenceValue);
       if (!transaction) { invalid += 1; return; }
       if (knownIds.has(transaction.bankTransactionId) || knownIds.has(transaction.importHash)) { duplicates += 1; return; }
       knownIds.add(transaction.bankTransactionId);
@@ -353,9 +404,8 @@
     const normalized = timeframe === 'yearly' || timeframe === 'this-year' ? 'ytd' : timeframe;
     return (transactions || []).filter(transaction => {
       if (!transaction || typeof transaction !== 'object') return false;
-      const date = String(transaction.date || '').slice(0, 10);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
-      try { if (isoDate(dateOnly(date)) !== date) return false; } catch { return false; }
+      const date = transactionDate(transaction);
+      if (!date || !isTransactionEffective(transaction, reference)) return false;
       if (normalized === 'daily') return date === referenceIso;
       if (normalized === 'monthly') return date.startsWith(monthPrefix) && date <= referenceIso;
       if (normalized === 'ytd') return date.startsWith(yearPrefix) && date <= referenceIso;
@@ -640,7 +690,8 @@
     const reference = dateOnly(referenceValue);
     const currentPrefix = monthPrefix(reference.getUTCFullYear(), reference.getUTCMonth());
     const previousPrefix = monthPrefix(reference.getUTCFullYear(), reference.getUTCMonth() - 1);
-    const expenseTotal = prefix => (transactions || []).reduce((sum, transaction) => {
+    const effectiveTransactions = filterTransactions(transactions, 'all', reference);
+    const expenseTotal = prefix => effectiveTransactions.reduce((sum, transaction) => {
       if (transactionType(transaction) !== 'expense' || !String(transaction.date || '').startsWith(prefix)) return sum;
       return sum + financialAmount(transaction.amount);
     }, 0);
@@ -772,8 +823,14 @@
     transferBudgetAllocation,
     trimBudgetAllocation,
     transactionType,
+    transactionDate,
+    isFutureTransaction,
+    transactionStatusAt,
+    updateTransactionSchedule,
+    isTransactionEffective,
     financialAmount,
     roundMoney,
+    formatCurrency,
     ratioPercent,
     stableTransactionHash,
     autoCategorizeBankTransaction,

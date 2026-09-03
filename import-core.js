@@ -362,7 +362,7 @@
     return parseCsvImport(source, profile, options);
   }
 
-  function commitImport(profile, reviewRows, sourceName = 'import.csv') {
+  function commitImport(profile, reviewRows, sourceName = 'import.csv', referenceValue = new Date()) {
     if (!profile || typeof profile !== 'object') return { imported:[], duplicates:0, invalid: Array.isArray(reviewRows) ? reviewRows.length : 0 };
     profile.transactions = Array.isArray(profile.transactions) ? profile.transactions : [];
     const imported = [];
@@ -388,7 +388,7 @@
       if (known.has(hash)) { duplicates += 1; return; }
       known.add(hash);
       const currency=/^[A-Z]{3}$/.test(String(row.currency||'').toUpperCase())?String(row.currency).toUpperCase():'EUR';
-      imported.push({ id:`import-${hash}`, externalId:row.externalId || null, bankTransactionId:row.bankTransactionId || null, type, name, title:String(row.title || name).slice(0,100), rawDescription:String(row.rawDescription || name).slice(0,500), amount, category, categoryId:category, profileId:String(row.profileId || '').slice(0,80), date:`${date}T12:00:00`, source:`Import: ${safeSource}`, sourceType:'import', importHash:hash, needsReview:Boolean(row.needsReview)||category!==row.category, categoryConfidence:category===row.category?row.categoryConfidence:suggested.confidence, categorizationRule:category===row.category?(row.categorizationRule || null):suggested.rule, iban:String(row.iban||'').slice(0,34), bic:String(row.bic||'').slice(0,11), merchantName:String(row.merchantName||name).slice(0,100), timestamp:validTimestamp(row.timestamp,date), currency, fee:Number.isFinite(Number(row.fee))?Math.abs(Number(row.fee)):0, reference:String(row.reference||'').slice(0,140), bankSchema:String(row.bankSchema||'generic') });
+      imported.push(MerCore.updateTransactionSchedule({ id:`import-${hash}`, externalId:row.externalId || null, bankTransactionId:row.bankTransactionId || null, type, name, title:String(row.title || name).slice(0,100), rawDescription:String(row.rawDescription || name).slice(0,500), amount, category, categoryId:category, profileId:String(row.profileId || '').slice(0,80), date:`${date}T12:00:00`, source:`Import: ${safeSource}`, sourceType:'import', importHash:hash, needsReview:Boolean(row.needsReview)||category!==row.category, categoryConfidence:category===row.category?row.categoryConfidence:suggested.confidence, categorizationRule:category===row.category?(row.categorizationRule || null):suggested.rule, iban:String(row.iban||'').slice(0,34), bic:String(row.bic||'').slice(0,11), merchantName:String(row.merchantName||name).slice(0,100), timestamp:validTimestamp(row.timestamp,date), currency, fee:Number.isFinite(Number(row.fee))?Math.abs(Number(row.fee)):0, reference:String(row.reference||'').slice(0,140), bankSchema:String(row.bankSchema||'generic') }, referenceValue));
     });
     if (imported.length) profile.transactions.unshift(...imported);
     return { imported, duplicates, invalid };
@@ -452,12 +452,12 @@
     return { valid:true, reason:null, count };
   }
 
-  function commitReviewStage(profile, stage, profileId) {
+  function commitReviewStage(profile, stage, profileId, referenceValue = new Date()) {
     const expectedProfileId = String(profileId || '');
     const targetProfileId = String(profile?.profileId || profile?.id || '');
     const rowsMatch = Array.isArray(stage?.reviewRows) && stage.reviewRows.every(row => !row?.profileId || String(row.profileId) === expectedProfileId);
     if (!stageBelongsToProfile(stage, expectedProfileId) || (targetProfileId && targetProfileId !== expectedProfileId) || !rowsMatch) return { imported:[], duplicates:0, invalid:0, error:'profile-changed' };
-    return commitImport(profile, stage.reviewRows, stage.fileName);
+    return commitImport(profile, stage.reviewRows, stage.fileName, referenceValue);
   }
 
   function validTimestamp(value, fallbackDate) {

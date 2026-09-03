@@ -21,7 +21,10 @@ test('evaluation cycle 1: onboarding steps describe real spotlight targets in a 
     assert.ok(step.target.length > 1, `${step.id} has a useful target selector`);
     assert.equal(typeof step.placement, 'string', `${step.id} declares popover placement`);
   });
-  assert.match(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'transaction').target, /data-open-transaction/);
+  const transactionStep = MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'transaction');
+  assert.equal(transactionStep.target, '#sidebar .sidebar-transaction-button[data-open-transaction]');
+  assert.equal(transactionStep.mobileTarget, '#sidebar .sidebar-transaction-button[data-open-transaction]');
+  assert.equal(transactionStep.openSidebar, true, 'the sidebar is opened before the primary action is measured');
   assert.match(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'overview').target, /safe-panel|safeRing/);
   assert.match(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'settings').target, /openSettings/);
 });
@@ -53,6 +56,25 @@ test('evaluation cycle 1: target and popover geometry react to scrolling, resizi
   assert.match(ui, /visualViewport/);
   assert.match(ui, /scrollIntoView/);
   assert.match(ui, /Math\.(?:min|max)/, 'placement is clamped to the viewport');
+});
+
+test('evaluation cycle 1: smart placement keeps the popover outside feasible spotlight targets', () => {
+  const viewport = { left:0, top:0, width:1366, height:768 };
+  const layouts = [
+    { targetRect:{ left:28, top:126, width:192, height:44 }, preferredPlacement:'right' },
+    { targetRect:{ left:410, top:190, width:520, height:70 }, preferredPlacement:'bottom' },
+    { targetRect:{ left:1010, top:300, width:240, height:52 }, preferredPlacement:'right' }
+  ].map(input => MerOnboarding.computeSpotlightLayout({ ...input, viewport, popoverSize:{ width:350, height:280 }, gap:14, padding:8, edge:12 }));
+  layouts.forEach(layout => assert.equal(layout.popover.overlapsTarget, false));
+
+  const constrainedMobile = MerOnboarding.computeSpotlightLayout({
+    viewport:{ left:0, top:0, width:375, height:667 },
+    targetRect:{ left:16, top:298, width:343, height:60 },
+    popoverSize:{ width:340, height:430 },
+    preferredPlacement:'bottom', gap:14, padding:8, edge:12
+  });
+  assert.equal(constrainedMobile.popover.overlapsTarget, false, 'a short viewport constrains the scrollable popover instead of covering its target');
+  assert.ok(constrainedMobile.popover.height < 430);
 });
 
 test('evaluation cycle 1: spotlight tour owns focus without making the application permanently inert', () => {

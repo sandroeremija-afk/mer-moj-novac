@@ -37,6 +37,7 @@
   function recalculateProfile(profile, referenceDate = new Date().toISOString().slice(0,10)) {
     if (!profile) return null;
     profile.transactions = Array.isArray(profile.transactions) ? profile.transactions : [];
+    profile.transactions.forEach(transaction => MerCore.updateTransactionSchedule(transaction, referenceDate));
     profile.categories = Array.isArray(profile.categories) ? profile.categories.filter(category=>category&&typeof category==='object'&&category.id) : [];
     profile.goalBuckets = Array.isArray(profile.goalBuckets) ? profile.goalBuckets.filter(goal=>goal&&typeof goal==='object') : [];
 

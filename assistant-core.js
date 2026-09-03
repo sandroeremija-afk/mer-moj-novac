@@ -32,7 +32,8 @@
   }
 
   function amount(value, currency, locale) {
-    return new Intl.NumberFormat(locale === 'en' ? 'en-IE' : 'hr-HR', { style:'currency', currency:currency || 'EUR', maximumFractionDigits:2 }).format(Number(value) || 0);
+    const numeric=Number(value)||0,zero=Math.abs(numeric)<.005;
+    return new Intl.NumberFormat(locale === 'en' ? 'en-IE' : 'hr-HR', { style:'currency', currency:currency || 'EUR', minimumFractionDigits:zero?0:2, maximumFractionDigits:zero?0:2 }).format(numeric);
   }
 
   function localReply(message, context = {}, locale = 'hr') {

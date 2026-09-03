@@ -38,7 +38,8 @@ test('evaluation cycle 2: Activity pagination fails soft for empty and malformed
 test('evaluation cycle 2: Activity exposes accessible page and continuous-scroll controls', () => {
   assert.match(index, /id="activityPagesMode"[^>]+data-activity-view-mode="pages"[^>]+aria-pressed="true"/);
   assert.match(index, /id="activityContinuousMode"[^>]+data-activity-view-mode="continuous"[^>]+aria-pressed="false"/);
-  assert.match(index, /Prikaži sve \(Kontinuirani scroll\)/);
+  assert.match(index, /data-i18n="activityContinuous">Prikaži sve<\/button>/);
+  assert.doesNotMatch(index, /Kontinuirani scroll/);
   assert.match(index, /id="activityPreviousPage"[^>]+data-i18n="previousPage">Prethodna/);
   assert.match(index, /id="activityPageNumbers"/);
   assert.match(index, /id="activityNextPage"[^>]+data-i18n="nextPage">Sljedeća/);

@@ -71,8 +71,8 @@ Object.assign(translations.hr,{monthlyBudget:'Fleksibilni budžet za potrošnju'
 Object.assign(translations.en,{monthlyBudget:'Flexible spending budget',afterCommitments:'Income after bills, savings and buffer',remainingBudget:'Safe remainder after spending',allocatedCategories:'Allocated to categories',budgetOf:'{percent}% of the {budget} flexible budget',budgetOverageExact:'{percent}% · {amount} over limit',budgetRecoveryOverTitle:'Category plan exceeds the flexible budget',budgetRecoveryOverCopy:'Reduce only unused category headroom by {amount}; recorded spending stays untouched.',budgetRecoveryCategoryTitle:'One or more categories are over limit',budgetRecoveryCategoryCopy:'Move unused room from another category without changing the total budget.',autoBalanceBudget:'Balance plan',coverOverspending:'Cover overspending',rebalanceBudget:'BUDGET REALLOCATION',coverOverspendingIntro:'Move unused room from one category to an overspent category without changing the total budget.',overspentCategory:'Overspent category',fundFromCategory:'Move from category',transferAmount:'Transfer amount',confirmTransfer:'Confirm reallocation',transferContext:'Available to move: {available}. Overage: {overage}.',transferInvalid:'Choose valid categories and an amount.',transferSaved:'Moved {amount}. The total budget stayed unchanged.',balancePlanConfirm:'Only unused category headroom will be reduced. Recorded spending will not change. Continue?',balancePlanReady:'The plan was balanced by {amount}.',balancePlanPartial:'Reduced by {amount}, but {remaining} cannot be covered without changing the total plan.',spentCategory:'Spent: {spent}. The minimum allowed limit is {minimum}; the current plan allows up to {maximum}.',positiveAmountRequired:'Amount must be greater than zero.',demoWorkspace:'DEMO WORKSPACE',demoResetTitle:'Restore a clean demo workspace',demoResetHint:'Removes trial changes from both profiles and restores the original MER sample data. Display preferences stay saved.',resetDemoData:'Reset demo data',confirmDemoResetTitle:'Restore the original demo data?',confirmDemoResetBody:'All trial transactions, rules, goals and bank connections in Personal and Business will be replaced with the original examples. This cannot be undone.',confirmDemoReset:'Yes, restore data',demoResetComplete:'The demo workspace was restored.',demoResetUnavailable:'Reset is available only in demo mode.',cancel:'Cancel'});
 Object.assign(translations.hr,{activityFilters:'Filtri aktivnosti',filters:'Filteri',dateFrom:'Od datuma',dateTo:'Do datuma',sortTransactions:'Sortiraj transakcije',sortNewest:'Najnovije prvo',sortOldest:'Najstarije prvo',sortAmountHigh:'Iznos: veći prema manjem',sortAmountLow:'Iznos: manji prema većem',clearFilters:'Očisti filtere'});
 Object.assign(translations.en,{activityFilters:'Activity filters',filters:'Filters',dateFrom:'From date',dateTo:'To date',sortTransactions:'Sort transactions',sortNewest:'Newest first',sortOldest:'Oldest first',sortAmountHigh:'Amount: high to low',sortAmountLow:'Amount: low to high',clearFilters:'Clear filters'});
-Object.assign(translations.hr,{activityViewMode:'Način prikaza aktivnosti',activityPages:'Stranice',activityContinuous:'Prikaži sve (Kontinuirani scroll)',activityPagination:'Stranice aktivnosti',previousPage:'Prethodna',nextPage:'Sljedeća',activityPageLabel:'Stranica {page} od {pages}',activityResultCount:'Prikazano {visible} od {total} transakcija'});
-Object.assign(translations.en,{activityViewMode:'Activity view mode',activityPages:'Pages',activityContinuous:'Show all (Continuous scroll)',activityPagination:'Activity pages',previousPage:'Previous',nextPage:'Next',activityPageLabel:'Page {page} of {pages}',activityResultCount:'Showing {visible} of {total} transactions'});
+Object.assign(translations.hr,{activityViewMode:'Način prikaza aktivnosti',activityPages:'Stranice',activityContinuous:'Prikaži sve',activityPagination:'Stranice aktivnosti',previousPage:'Prethodna',nextPage:'Sljedeća',activityPageLabel:'Stranica {page} od {pages}',activityResultCount:'Prikazano {visible} od {total} transakcija'});
+Object.assign(translations.en,{activityViewMode:'Activity view mode',activityPages:'Pages',activityContinuous:'Show all',activityPagination:'Activity pages',previousPage:'Previous',nextPage:'Next',activityPageLabel:'Page {page} of {pages}',activityResultCount:'Showing {visible} of {total} transactions'});
 Object.assign(translations.hr,{allTime:'Sve ukupno',appLanguage:'Jezik aplikacije',appTheme:'Tema aplikacije',lightTheme:'Svijetla',darkTheme:'Tamna',editLayout:'Uredi',themeSettingHint:'Prilagodite izgled aplikacije uvjetima rada.',dashboardLayout:'Raspored nadzorne ploče',layoutSettingHint:'Promijenite redoslijed kartica povlačenjem.',openBanking:'OPEN BANKING',syncStatus:'Status sinkronizacije',reviewImportedTransactions:'Pregledajte uvezene transakcije bez potvrđene kategorije.',budgetDataActions:'Uvoz / izvoz budžeta',budgetDataOverline:'PODACI BUDŽETA',budgetDataIntro:'Uvezite promet za kategorizaciju ili preuzmite mjesečni plan grupiran po kategorijama.',budgetImportHint:'Pregledajte CSV, Excel ili CAMT.053 zapise prije potvrde.',budgetExportHint:'Preuzmite limite, potrošnju i iskorištenost po kategorijama.',importBankStatement:'Uvezi bankovni izvod',exportBudgetPlan:'Izvezi plan budžeta',exportInsightsReport:'Izvezi izvješće',goToSavings:'Idi na Štednju',showAllTransactions:'Prikaži sve transakcije'});
 Object.assign(translations.en,{appLanguage:'App language',appTheme:'App theme',lightTheme:'Light',darkTheme:'Dark',editLayout:'Edit',themeSettingHint:'Adapt the interface to your working environment.',dashboardLayout:'Dashboard layout',layoutSettingHint:'Change card order with drag and drop.',openBanking:'OPEN BANKING',syncStatus:'Sync status',reviewImportedTransactions:'Review imported transactions without a confirmed category.',budgetDataActions:'Import / export budget',budgetDataOverline:'BUDGET DATA',budgetDataIntro:'Import activity for categorization or download the monthly plan grouped by category.',budgetImportHint:'Review CSV, Excel, or CAMT.053 records before confirming.',budgetExportHint:'Download category limits, spending, and usage.',importBankStatement:'Import bank statement',exportBudgetPlan:'Export budget plan',exportInsightsReport:'Export report',goToSavings:'Go to Savings',showAllTransactions:'Show all transactions'});
 Object.assign(translations.hr,{bankAccountSelectionRequired:'Molimo označite banku ili karticu prije nastavka.',unlinkBankTitle:'Prekid veze',unlinkBankQuestion:'Jeste li sigurni da želite prekinuti vezu s ovom bankom/karticom?',unlinkBankConfirm:'Prekini vezu',unlinkBankCancel:'Odustani'});
@@ -83,6 +83,8 @@ Object.assign(translations.hr,{profileBrandName:'Moj eRačun',profileBrandOrgani
 Object.assign(translations.en,{profileBrandName:'Moj eRačun',profileBrandOrganization:'Elektronički računi d.o.o.',budgetDataActions:'Export budget',budgetDataIntro:'Download category limits, spending, and usage grouped by category.',exportBudgetPlan:'Export budget',exportInsightsReport:'Export report',savingsStrategyOverline:'SAVINGS STRATEGY',savingsStrategyTitle:'Strategy overview',savingsStrategyIntro:'Review the active profile’s emergency reserve, risk buffer, and sustainable contribution pace.',strategyCurrentCoverage:'Current coverage',strategyCoverageBody:'Aim for three to six months of essential costs before increasing higher-risk investments.',strategyTargetBuffer:'Monthly safety buffer',strategyBufferBody:'The buffer is calculated from your selected protection rate and monthly income.',strategyMonthlyContribution:'Planned monthly contribution',strategyContributionBody:'Regular contributions keep the goal predictable while protecting the day-to-day budget.',strategyRecommendationTitle:'MER recommendation',strategyRecommendationBody:'Maintain the reserve first, then increase contributions while the monthly net remains positive.',strategyBuildReserve:'Build the reserve',strategyMaintainPace:'Maintain the pace',strategyDiversify:'Diversify the surplus'});
 Object.assign(translations.hr,{savedInPeriod:'Ušteđeno u razdoblju',savingsHistorySummary:'Sažetak povijesti štednje',monthlyAverage:'Mjesečni prosjek',bestSavingsMonth:'Najbolji mjesec',savingsTrendUp:'više od prošlog mjeseca',savingsTrendDown:'manje od prošlog mjeseca',savingsTrendFlat:'Jednako kao prošli mjesec',savingsPointLabel:'{month}: {amount}'});
 Object.assign(translations.en,{savedInPeriod:'Saved in this period',savingsHistorySummary:'Savings history summary',monthlyAverage:'Monthly average',bestSavingsMonth:'Best month',savingsTrendUp:'more than last month',savingsTrendDown:'less than last month',savingsTrendFlat:'Same as last month',savingsPointLabel:'{month}: {amount}'});
+Object.assign(translations.hr,{addExpense:'Dodaj trošak',addExpenseSubmit:'Dodaj trošak',transactionDate:'Datum',transactionDateRequired:'Odaberite valjani datum transakcije.',scheduledTransaction:'Zakazano',scheduledTransactionNotice:'Ova će se transakcija evidentirati {date} i do tada neće utjecati na stanje, budžete ni uvide.',scheduledTransactionSaved:'Transakcija je zakazana za {date}.'});
+Object.assign(translations.en,{addExpense:'Add expense',addExpenseSubmit:'Add expense',transactionDate:'Date',transactionDateRequired:'Choose a valid transaction date.',scheduledTransaction:'Scheduled',scheduledTransactionNotice:'This transaction will be posted on {date} and will not affect balances, budgets, or insights before then.',scheduledTransactionSaved:'Transaction scheduled for {date}.'});
 
 const categoryMeta = {
   food:{ icon:'H', iconId:'icon-utensils', className:'food' },
@@ -316,7 +318,8 @@ const t = (key, values = {}) => {
   return text;
 };
 const locale = () => currentLang === 'hr' ? 'hr-HR' : 'en-IE';
-const currency = (value, whole = false) => {const amount=Number(value);return new Intl.NumberFormat(locale(), { style:'currency', currency:appState.settings.currency||'EUR', minimumFractionDigits:whole ? 0 : 2, maximumFractionDigits:whole ? 0 : 2 }).format(Number.isFinite(amount)?amount:0);};
+const currency = (value, options = {}) => MerCore.formatCurrency(value,{locale:locale(),currency:appState.settings.currency||'EUR',...(options&&typeof options==='object'?options:{})});
+const categoryLimitCurrency = value => currency(value,{categoryBudgetLimit:true});
 const number = (value, digits = 1) => {const amount=Number(value);return new Intl.NumberFormat(locale(), { maximumFractionDigits:digits }).format(Number.isFinite(amount)?amount:0);};
 const categoryName = id => { const cat=state?.categories?.find(item=>item.id===id);return cat?.name || t(id); };
 function inferredCategoryIconId(cat) {
@@ -465,7 +468,9 @@ function renderOverview() {
 }
 
 function compactChartCurrency(value) {
-  return new Intl.NumberFormat(locale(),{style:'currency',currency:appState.settings.currency||'EUR',notation:'compact',maximumFractionDigits:1}).format(Number(value)||0);
+  const amount=Number(value)||0;
+  if(Math.abs(amount)<.005)return currency(0);
+  return new Intl.NumberFormat(locale(),{style:'currency',currency:appState.settings.currency||'EUR',notation:'compact',minimumFractionDigits:2,maximumFractionDigits:2}).format(amount);
 }
 
 function renderSpendingPaceChart() {
@@ -503,7 +508,7 @@ function renderBudgetLists() {
     const pct = Math.round(state.derived?.categoryMetrics?.[cat.id]?.percent ?? MerCore.budgetThreshold(cat.spent,cat.limit).percent);
     const meta = categoryVisual(cat);
     const overage=Math.max(0,cat.spent-cat.limit),status=pct>=100?t('budgetOverageExact',{percent:pct,amount:currency(overage,true)}):thresholdMessage(pct);
-    return `<div class="budget-item${pct>100?' is-over-budget':''}"><div class="budget-item-header"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div><div class="budget-item-title"><strong>${escapeHtml(categoryName(cat.id))}</strong><span>${t('usedOf',{spent:currency(cat.spent,true),limit:currency(cat.limit,true)})}</span></div><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div>${pct>=80?`<small class="threshold-warning ${pct>=100?'is-red overage-label':''}">${status}</small>`:''}</div><span class="budget-percent">${pct}%</span></div></div>`;
+    return `<div class="budget-item${pct>100?' is-over-budget':''}"><div class="budget-item-header"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div><div class="budget-item-title"><strong>${escapeHtml(categoryName(cat.id))}</strong><span>${t('usedOf',{spent:currency(cat.spent),limit:categoryLimitCurrency(cat.limit)})}</span></div><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div>${pct>=80?`<small class="threshold-warning ${pct>=100?'is-red overage-label':''}">${status}</small>`:''}</div><span class="budget-percent">${pct}%</span></div></div>`;
   }).join('');
 }
 
@@ -543,7 +548,7 @@ function budgetCategoryPercent(cat) { return Math.round(state.derived?.categoryM
 
 function budgetCategoryRow(cat, manager=false) {
   const pct=budgetCategoryPercent(cat),meta=categoryVisual(cat),remaining=Math.max(0,cat.limit-cat.spent),overage=Math.max(0,cat.spent-cat.limit),name=categoryName(cat.id),safeId=escapeHtml(cat.id),safeName=escapeHtml(name),status=pct>=100?t('budgetOverageExact',{percent:pct,amount:currency(overage,true)}):pct>=80?thresholdMessage(pct):`${currency(remaining,true)} ${currentLang==='hr'?'preostalo':'remaining'}`;
-  return `<div class="budget-row${manager?' budget-manager-row':''}${pct>100?' is-over-budget':''}"><div class="budget-category"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div><strong>${safeName}</strong><small class="${pct>=80?'threshold-warning':''}${pct>=100?' overage-label':''}">${status}</small></div></div><div class="budget-row-progress"><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div><span class="budget-percent">${pct}%</span></div><div class="budget-row-value">${currency(cat.spent,true)} / ${currency(cat.limit,true)}</div><button type="button" class="icon-button small edit-budget" data-edit-budget="${safeId}" aria-label="${currentLang==='hr'?'Uredi budžet za':'Edit budget for'} ${safeName}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
+  return `<div class="budget-row${manager?' budget-manager-row':''}${pct>100?' is-over-budget':''}"><div class="budget-category"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div><strong>${safeName}</strong><small class="${pct>=80?'threshold-warning':''}${pct>=100?' overage-label':''}">${status}</small></div></div><div class="budget-row-progress"><div class="budget-bar${pct>100?' over-cap':''}"><span class="${levelClass(pct)}" style="width:${Math.min(100,pct)}%"></span></div><span class="budget-percent">${pct}%</span></div><div class="budget-row-value">${currency(cat.spent)} / ${categoryLimitCurrency(cat.limit)}</div><button type="button" class="icon-button small edit-budget" data-edit-budget="${safeId}" aria-label="${currentLang==='hr'?'Uredi budžet za':'Edit budget for'} ${safeName}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
 }
 
 function budgetCategoryMatchesStatus(cat,status) {
@@ -852,8 +857,8 @@ async function syncBankConnection(connection,{silent=false}={}) {
   const profile=appState.accounts[connection.profileId];if(!profile)return {imported:0,duplicates:0,uncategorized:0,error:'DISCONNECTED'};
   try{
     const response=await MerBankProviders.fetchTransactions(connection);
-    const result=MerCore.importBankTransactions(profile,connection,response.transactions);
-    result.imported.forEach(transaction=>MerAccounting.applyRoundUp(profile,transaction));
+    const result=MerCore.importBankTransactions(profile,connection,response.transactions,appReferenceDate);
+    result.imported.forEach(transaction=>MerAccounting.applyRoundUp(profile,transaction,appReferenceDate));
     connection.cursor=response.nextCursor;connection.lastSyncedAt=response.fetchedAt;connection.status='connected';connection.lastErrorCode=null;connection.retryAfterSeconds=null;
     return {imported:result.imported.length,duplicates:result.duplicates,uncategorized:result.uncategorized,error:null};
   }catch(error){
@@ -1033,9 +1038,10 @@ function renderActivity() {
     lastDate = dateLabel;
     const type=MerCore.transactionType(tx);const txCategory=type==='income'?state.incomeCategories.find(cat=>cat.id===tx.category):state.categories.find(cat=>cat.id===tx.category);const meta=type==='income'?incomeCategoryVisual(txCategory):(txCategory?categoryVisual(txCategory):categoryMeta.other);const displayCategory=type==='income'?incomeCategoryName(tx.category):categoryName(tx.category);
     const sourceLabel=tx.source||t('manualSource');
+    const isScheduled=!MerCore.isTransactionEffective(tx,appReferenceDate);
     const transactionClock=new Intl.DateTimeFormat(locale(),{hour:'2-digit',minute:'2-digit',timeZone:appState.settings.timezone||'Europe/Zagreb'}).format(new Date(tx.date));
     const activityDateLabel=amountSort?`${formatIsoDate(String(tx.date).slice(0,10))} · ${transactionClock}`:transactionClock;
-    return `${header}<div class="transaction-item ${type}"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><div class="transaction-meta"><small>${activityDateLabel}</small><span class="transaction-source ${tx.sourceType==='auto'||tx.sourceType==='import'?'auto':''}">${escapeHtml(sourceLabel)}</span>${tx.needsReview?`<span class="needs-review-tag">${t('needsReview')}</span>`:''}</div></div><span class="transaction-category">${escapeHtml(displayCategory)}</span><span class="transaction-amount ${type}">${type==='income'?'+':'−'}${currency(tx.amount)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
+    return `${header}<div class="transaction-item ${type}${isScheduled?' is-scheduled':''}"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><div class="transaction-meta"><small>${activityDateLabel}</small><span class="transaction-source ${tx.sourceType==='auto'||tx.sourceType==='import'?'auto':''}">${escapeHtml(sourceLabel)}</span>${isScheduled?`<span class="scheduled-transaction-tag">${t('scheduledTransaction')}</span>`:''}${tx.needsReview?`<span class="needs-review-tag">${t('needsReview')}</span>`:''}</div></div><span class="transaction-category">${escapeHtml(displayCategory)}</span><span class="transaction-amount ${type}">${type==='income'?'+':'−'}${currency(tx.amount)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
   }).join('');
   $$('[data-edit-transaction]').forEach(button=>button.addEventListener('click',()=>openTransaction(button.dataset.editTransaction)));
 }
@@ -1350,13 +1356,16 @@ function hideTooltip() { const tip=$('#appTooltip');tip.hidden=true;activeToolti
 function resetTransactionCheck() {
   $('#transactionSubmit').disabled=true;
   $('#transactionAmount').setAttribute('aria-invalid','false');
+  $('#transactionDate').setAttribute('aria-invalid','false');
   const check=$('#spendCheck');
   check.className='spend-check';check.hidden=true;
   check.dataset.budgetWarning='';check.dataset.monthlyOver='0';check.dataset.categoryOver='0';
   check.replaceChildren();
 }
 
-function transactionAffectsCurrentBudget(transaction) { return String(transaction?.date||'').startsWith(appReferenceDate.slice(0,7)); }
+function transactionAffectsCurrentBudget(transaction) {
+  return MerCore.isTransactionEffective(transaction,appReferenceDate)&&String(transaction?.date||'').startsWith(appReferenceDate.slice(0,7));
+}
 
 function setTransactionType(type) {
   transactionType=type==='income'?'income':'expense';
@@ -1365,25 +1374,33 @@ function setTransactionType(type) {
   $('#transactionIntro').textContent=t(transactionType==='income'?'incomeIntro':'transactionIntro');
   $('#transactionName').setAttribute('placeholder',t(transactionType==='income'?'incomePlaceholder':'merchantPlaceholder'));
   const existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
-  $('#transactionTitle').textContent=t(existing?(transactionType==='income'?'editIncome':'editExpense'):(transactionType==='income'?'addIncome':'addTransaction'));
-  $('#transactionSubmit').textContent=t(existing?(transactionType==='income'?'updateIncome':'updateExpense'):(transactionType==='income'?'addIncomeSubmit':'checkAddTransaction'));
+  $('#transactionTitle').textContent=t(existing?(transactionType==='income'?'editIncome':'editExpense'):(transactionType==='income'?'addIncome':'addExpense'));
+  $('#transactionSubmit').textContent=t(existing?(transactionType==='income'?'updateIncome':'updateExpense'):(transactionType==='income'?'addIncomeSubmit':'addExpenseSubmit'));
   renderCategorySelects();resetTransactionCheck();evaluateTransaction();
 }
 
 function evaluateTransaction() {
   const amountInput=$('#transactionAmount'),rawAmount=amountInput.value.trim(),amount=Number(rawAmount);
+  const dateInput=$('#transactionDate'),dateValue=String(dateInput.value||'').slice(0,10);
   const existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
   const check=$('#spendCheck');
   if(!rawAmount){resetTransactionCheck();return false;}
   check.hidden=false;
+  if(!validStoredDate(dateValue)){check.className='spend-check danger';check.innerHTML=`<svg aria-hidden="true"><use href="#icon-alert"></use></svg><div><strong>${t('transactionDateRequired')}</strong></div>`;dateInput.setAttribute('aria-invalid','true');$('#transactionSubmit').disabled=true;return false;}
+  dateInput.setAttribute('aria-invalid','false');
   if(!Number.isFinite(amount)||amount<=0){check.className='spend-check danger';check.dataset.budgetWarning='';check.dataset.monthlyOver='0';check.dataset.categoryOver='0';check.innerHTML=`<svg aria-hidden="true"><use href="#icon-alert"></use></svg><div><strong>${t('positiveAmountRequired')}</strong></div>`;amountInput.setAttribute('aria-invalid','true');$('#transactionSubmit').disabled=true;return false;}
   amountInput.setAttribute('aria-invalid','false');
+  if(dateValue>appReferenceDate){
+    check.className='spend-check scheduled';check.dataset.budgetWarning='';check.dataset.monthlyOver='0';check.dataset.categoryOver='0';
+    check.innerHTML=`<svg aria-hidden="true"><use href="#icon-calendar"></use></svg><div><strong>${t('scheduledTransaction')}</strong><span>${t('scheduledTransactionNotice',{date:formatIsoDate(dateValue)})}</span></div>`;
+    $('#transactionSubmit').disabled=false;return true;
+  }
   if(transactionType==='income'){
     check.className='spend-check success';
     check.dataset.budgetWarning='';check.dataset.monthlyOver='0';check.dataset.categoryOver='0';
-    const existingAdjustment=existing?(MerCore.transactionType(existing)==='income'?-existing.amount:existing.amount):0;
-    const existingSafeAdjustment=existing?(MerCore.transactionType(existing)==='income'?-existing.amount:existing.amount):0;
-    const projectedSafe=getPlan().safeRemaining+existingSafeAdjustment+amount;
+    const existingAdjustment=existing&&MerCore.isTransactionEffective(existing,appReferenceDate)?(MerCore.transactionType(existing)==='income'?-existing.amount:existing.amount):0;
+    const existingSafeAdjustment=existing&&transactionAffectsCurrentBudget(existing)?(MerCore.transactionType(existing)==='income'?-existing.amount:existing.amount):0;
+    const projectedSafe=getPlan().safeRemaining+existingSafeAdjustment+(dateValue.startsWith(appReferenceDate.slice(0,7))?amount:0);
     check.innerHTML=`<svg aria-hidden="true"><use href="#icon-up"></use></svg><div><strong>${t('incomeReady')}</strong><span>${t('incomeImpact',{balance:currency(state.availableBalance+existingAdjustment+amount),safe:currency(projectedSafe)})}</span></div>`;
     $('#transactionSubmit').disabled=false;return true;
   }
@@ -1407,12 +1424,13 @@ function evaluateTransaction() {
 function openTransaction(id=null) {
   editingTransactionId=id===null?null:id;$('#transactionForm').reset();
   const existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
+  $('#transactionDate').value=String(existing?.date||appReferenceDate).slice(0,10);
   transactionType=MerCore.transactionType(existing);setTransactionType(transactionType);$('#deleteTransaction').hidden=!existing;
   if(existing){$('#transactionName').value=existing.name;$('#transactionAmount').value=existing.amount;renderCategorySelects();$('#transactionCategory').value=existing.category;evaluateTransaction();}
   openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50);
 }
 
-function openIncomeTransaction() { editingTransactionId=null;$('#transactionForm').reset();transactionType='income';setTransactionType('income');$('#deleteTransaction').hidden=true;openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50); }
+function openIncomeTransaction() { editingTransactionId=null;$('#transactionForm').reset();$('#transactionDate').value=appReferenceDate;transactionType='income';setTransactionType('income');$('#deleteTransaction').hidden=true;openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50); }
 
 function setAssessmentStep(step) {
   assessmentStep=step;
@@ -1568,9 +1586,32 @@ $('[data-home]').addEventListener('click',event=>{event.preventDefault();showVie
 $$('[data-lang]').forEach(button=>button.addEventListener('click',()=>setLanguage(button.dataset.lang)));
 $('#menuToggle').addEventListener('click',()=>$('#sidebar').classList.contains('open')?closeSidebar():openSidebar()); $('#sidebarScrim').addEventListener('click',closeSidebar);
 
-$('#transactionAmount').addEventListener('input',evaluateTransaction); $('#transactionCategory').addEventListener('change',evaluateTransaction);
+$('#transactionAmount').addEventListener('input',evaluateTransaction); $('#transactionDate').addEventListener('input',evaluateTransaction); $('#transactionCategory').addEventListener('change',evaluateTransaction);
 $$('[data-transaction-type]').forEach(button=>button.addEventListener('click',()=>setTransactionType(button.dataset.transactionType)));
-$('#transactionForm').addEventListener('submit',event=>{event.preventDefault();const selectedType=$('[data-transaction-type][aria-pressed="true"]')?.dataset.transactionType;transactionType=selectedType==='income'?'income':'expense';const amount=Number($('#transactionAmount').value),name=$('#transactionName').value.trim();if(!name||!Number.isFinite(amount)||amount<=0||!evaluateTransaction()){showToast(t('positiveAmountRequired'));return;}const warning=$('#spendCheck').dataset.budgetWarning||'',monthlyOver=Number($('#spendCheck').dataset.monthlyOver)||0,categoryOver=Number($('#spendCheck').dataset.categoryOver)||0,overage=warning==='monthly-over'?monthlyOver:categoryOver,category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;if(existing)MerAccounting.undoRoundUp(state,existing);const payload={type:transactionType,name,amount,category,date:existing?.date||`${appReferenceDate}T12:00:00`};if(existing){Object.assign(existing,payload);if(existing.sourceType==='auto'){existing.needsReview=false;existing.categoryConfidence='manual';}MerAccounting.applyRoundUp(state,existing);}else{const created={id:uniqueId('transaction'),...payload,source:'Manual',sourceType:'manual',needsReview:false,merchantName:payload.name,timestamp:payload.date,currency:appState.settings.currency};state.transactions.unshift(created);MerAccounting.applyRoundUp(state,created);}save(existing?'transaction-edit':'transaction-add');closeModal($('#transactionModal'));const successMessage=transactionType==='expense'&&(warning==='monthly-over'||warning==='category-over')?t('transactionAddedOverBudget',{amount:currency(overage)}):existing?.sourceType==='auto'?t('categoryApproved'):t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded'));showToast(successMessage);editingTransactionId=null;});
+$('#transactionForm').addEventListener('submit',event=>{
+  event.preventDefault();
+  const selectedType=$('[data-transaction-type][aria-pressed="true"]')?.dataset.transactionType;
+  transactionType=selectedType==='income'?'income':'expense';
+  const amount=Number($('#transactionAmount').value),name=$('#transactionName').value.trim(),dateValue=String($('#transactionDate').value||'').slice(0,10);
+  if(!name||!Number.isFinite(amount)||amount<=0||!validStoredDate(dateValue)||!evaluateTransaction()){showToast(t(validStoredDate(dateValue)?'positiveAmountRequired':'transactionDateRequired'));return;}
+  const warning=$('#spendCheck').dataset.budgetWarning||'',monthlyOver=Number($('#spendCheck').dataset.monthlyOver)||0,categoryOver=Number($('#spendCheck').dataset.categoryOver)||0,overage=warning==='monthly-over'?monthlyOver:categoryOver,category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
+  if(existing)MerAccounting.undoRoundUp(state,existing);
+  const payload={type:transactionType,name,amount,category,date:`${dateValue}T12:00:00`,timestamp:`${dateValue}T12:00:00`};
+  let savedTransaction;
+  if(existing){
+    Object.assign(existing,payload);
+    MerCore.updateTransactionSchedule(existing,appReferenceDate);
+    if(existing.sourceType==='auto'){existing.needsReview=false;existing.categoryConfidence='manual';}
+    MerAccounting.applyRoundUp(state,existing,appReferenceDate);
+    savedTransaction=existing;
+  }else{
+    const created=MerCore.updateTransactionSchedule({id:uniqueId('transaction'),...payload,source:'Manual',sourceType:'manual',needsReview:false,merchantName:payload.name,currency:appState.settings.currency},appReferenceDate);
+    state.transactions.unshift(created);MerAccounting.applyRoundUp(state,created,appReferenceDate);savedTransaction=created;
+  }
+  save(existing?'transaction-edit':'transaction-add');closeModal($('#transactionModal'));
+  const successMessage=savedTransaction.status==='scheduled'?t('scheduledTransactionSaved',{date:formatIsoDate(dateValue)}):transactionType==='expense'&&(warning==='monthly-over'||warning==='category-over')?t('transactionAddedOverBudget',{amount:currency(overage)}):existing?.sourceType==='auto'?t('categoryApproved'):t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded'));
+  showToast(successMessage);editingTransactionId=null;
+});
 $('#deleteTransaction').addEventListener('click',()=>{const existing=state.transactions.find(tx=>String(tx.id)===String(editingTransactionId));if(!existing)return;const type=MerCore.transactionType(existing);MerAccounting.undoRoundUp(state,existing);state.transactions=state.transactions.filter(tx=>String(tx.id)!==String(editingTransactionId));save('transaction-delete');closeModal($('#transactionModal'));showToast(t(type==='income'?'incomeDeleted':'expenseDeleted'));editingTransactionId=null;});
 
 $('#assessmentNext').addEventListener('click',()=>{const active=$(`.assessment-step[data-step="${assessmentStep}"]`);const inputs=$$('input[required]',active);if(!inputs.every(input=>input.reportValidity()))return;if(assessmentStep===1&&Number($('#incomeInput').value)<=Number($('#billsInput').value)){showToast(t('planInvalid'));return;}setAssessmentStep(Math.min(3,assessmentStep+1));});

@@ -52,7 +52,8 @@ test('evaluation cycle 2: the exporter consumes one canonical report built from 
   assert.match(body, /report\.categories/);
   assert.match(body, /report\.series/);
   assert.match(body, /\{daily:'daily',monthly:'monthly',ytd:'yearToDate',all:'allTime'\}\[insightsTimeframe\]/);
-  assert.match(body, /insights-\$\{report\.timeframe\}\.csv/);
+  assert.match(body, /exportFileName\('insights',report\.timeframe\)/);
+  assert.match(premium, /Uvidi_Izvjestaj_\$\{\(\{daily:'Dan',monthly:'Mjesec',ytd:'Godina',all:'Sve_Ukupno'\}\)\[timeframe\]\|\|'Mjesec'\}\.csv/);
   assert.doesNotMatch(body, /transactionTotals\(state\.transactions,insightsTimeframe|filterTransactions\(state\.transactions,insightsTimeframe|categoryExpenseTotals\(state\.transactions,insightsTimeframe/);
   assert.match(premium, /\$\$\('\[data-export-insights\]'\)\.forEach\(button=>button\.addEventListener\('click',exportInsightsReportCsv\)\)/);
 });

@@ -49,3 +49,12 @@ test('evaluation cycle 2: controller next and previous transitions preserve the 
 test('evaluation cycle 2: reduced-motion users retain a non-animated fallback', () => {
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.onboarding-spotlight,[\s\S]*?transition:none;/);
 });
+
+test('evaluation cycle 2: module changes expose persistent sidebar and popover context', () => {
+  assert.match(ui, /function moduleContextFor\(step\)/);
+  assert.match(ui, /\.nav-item\[data-view=/);
+  assert.match(ui, /tour-context-active/);
+  assert.match(ui, /onboardingModuleContext/);
+  assert.match(ui, /popover\.dataset\.moduleContext/);
+  assert.match(css, /\.nav-item\.tour-context-active\s*\{/);
+});

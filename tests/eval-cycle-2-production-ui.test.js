@@ -22,5 +22,5 @@ test('cycle 2: accounting review accepts CSV Excel and CAMT while the outer view
 });
 
 test('cycle 2: subscription alerts, manager and reactive round-ups use the shared transaction paths',()=>{
-  assert.match(html,/id="subscriptionsModal"/);assert.match(app,/MerAccounting\.detectSubscriptions/);assert.match(app,/MerAccounting\.applyRoundUp\(profile,transaction\)/);assert.match(app,/MerAccounting\.undoRoundUp\(state,existing\)/);assert.match(premium,/MerAccounting\.applyRoundUp\(state,tx\)/);assert.match(app,/save\('bank-sync'\)/);assert.match(premium,/save\('bulk-import'\)/);
+  assert.match(html,/id="subscriptionsModal"/);assert.match(app,/MerAccounting\.detectSubscriptions/);assert.match(app,/MerAccounting\.applyRoundUp\(profile,transaction,appReferenceDate\)/);assert.match(app,/MerAccounting\.undoRoundUp\(state,existing\)/);assert.match(premium,/MerAccounting\.applyRoundUp\(state,tx,appReferenceDate\)/);assert.match(app,/save\('bank-sync'\)/);assert.match(premium,/save\('bulk-import'\)/);
 });

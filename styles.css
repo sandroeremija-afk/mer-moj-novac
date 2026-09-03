@@ -308,11 +308,16 @@ h2 { font-size: 18px; line-height: 1.3; }
 .modal input, .modal select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 8px; outline: none; color: var(--ink); background: #fff; }
 .modal input:focus, .modal select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,169,228,.13); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.transaction-details-row { grid-template-columns:minmax(0,.9fr) minmax(0,1.2fr) minmax(150px,.9fr); }
+input[type="number"] { appearance:textfield; -moz-appearance:textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { margin:0; -webkit-appearance:none; }
 .input-suffix { position: relative; }
 .input-suffix > span { position: absolute; top: 50%; right: 13px; color: var(--muted); transform: translateY(-50%); }
 .input-suffix input { padding-right: 32px; }
 .spend-check { display: flex; align-items: center; gap: 11px; margin: 3px 0 18px; padding: 13px; border-radius: 8px; color: var(--blue-dark); background: var(--blue-soft); }
 .spend-check.success { color: var(--green-dark); background: var(--green-soft); }
+.spend-check.scheduled { color:var(--blue-dark); background:var(--blue-soft); }
 .spend-check.warning { color: #8a4d00; background: #fff3e4; }
 .spend-check.danger { color: #bd3a41; background: var(--red-soft); }
 .spend-check svg { width: 21px; flex: 0 0 auto; }
@@ -405,6 +410,8 @@ h2 { font-size: 18px; line-height: 1.3; }
 .transaction-source { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 20px; color: var(--muted); background: var(--canvas); font-size: .625rem; font-weight: 700; }
 .transaction-source.auto { color: var(--blue-dark); background: var(--blue-soft); }
 .needs-review-tag { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 20px; color: #754800; background: var(--yellow-soft); font-size: .625rem; font-weight: 700; }
+.scheduled-transaction-tag { display:inline-flex; align-items:center; min-height:22px; padding:0 8px; border-radius:20px; color:var(--blue-dark); background:var(--blue-soft); font-size:.625rem; font-weight:700; }
+.transaction-item.is-scheduled .transaction-amount { opacity:.62; }
 .settings-modal { width: min(720px,calc(100vw - 30px)); max-width: 720px; max-height: min(820px,calc(100vh - 30px)); overflow: hidden; }
 .isolation-note { display: flex; align-items: flex-start; gap: 10px; margin: 17px 0; padding: 12px 13px; border: 1px solid #bce8da; border-radius: 9px; color: var(--dark-green); background: var(--green-soft); }
 .isolation-note svg { width: 18px; flex: 0 0 auto; }
@@ -2116,6 +2123,7 @@ select:not([multiple]) {
 .onboarding-actions > div { display:flex; gap:8px; }
 .onboarding-actions button { min-height:44px; font-size:1rem; }
 .tour-target-active { scroll-margin:96px; }
+.nav-item.tour-context-active { color:#fff; background:rgba(0,169,228,.18); box-shadow:inset 3px 0 var(--blue),0 0 0 1px rgba(0,169,228,.3); }
 body.tour-active { overflow:hidden; }
 
 .help-assistant-modal { width:min(880px,calc(100vw - 32px)); max-width:880px; height:min(720px,calc(100dvh - 32px)); padding:28px 30px 22px; overflow:hidden; }
@@ -3408,7 +3416,11 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 .savings-entry-profile { width:max-content; margin-top:5px; padding:3px 7px; border-radius:999px; color:var(--blue-dark); background:var(--blue-soft); font-size:.625rem; font-weight:700; }
 .savings-entries-modal { width:min(720px,calc(100vw - 32px)); }
 .savings-entries-modal[open] { display:flex; min-height:0; max-height:min(90dvh,720px); flex-direction:column; overflow:hidden; }
-.savings-entry-list-all { min-height:0; max-height:400px; flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain; padding-right:6px; scrollbar-gutter:stable; }
+.savings-entry-list-all { min-height:0; max-height:400px; flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain; padding-right:6px; scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent; }
+.savings-entry-list-all::-webkit-scrollbar { width:7px; }
+.savings-entry-list-all::-webkit-scrollbar-track { background:transparent; }
+.savings-entry-list-all::-webkit-scrollbar-thumb { border:2px solid transparent; border-radius:999px; background:var(--line-strong); background-clip:padding-box; }
+.import-context-back { margin:0 44px 10px 0; }
 
 /* Production-style security management in the existing local auth adapter. */
 .security-management-card { margin-bottom:14px; padding:15px; border:1px solid var(--line); border-radius:11px; background:var(--canvas); }

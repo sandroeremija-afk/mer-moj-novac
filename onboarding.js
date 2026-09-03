@@ -3,25 +3,25 @@
     helpAssistant:'Pomoć & AI Asistent', helpAssistantHint:'Vodič i financijska pitanja',
     onboardingTourCardTitle:'Interaktivni vodič', onboardingSettingsHint:'Ponovno prođite kroz najvažnije module i postavke.', restartOnboarding:'Pokreni vodič ponovno', onboardingSteps:'Koraci vodiča', skipTour:'Preskoči', onboardingBack:'Natrag', onboardingNext:'Dalje', finishTour:'Završi',
     onboardingNavigationTitle:'Sve je nadohvat ruke', onboardingNavigationBody:'Ovdje birate Pregled, Budžete, Štednju, Aktivnost ili Uvide.', onboardingNavigationTip:'Osobni i poslovni podaci uvijek ostaju odvojeni.', onboardingNavigationLabel:'Navigacija',
-    onboardingTransactionTitle:'Zabilježite stvarno stanje', onboardingTransactionBody:'Ovdje unosite prihod ili trošak. Upozorenje vas informira, ali ne zaustavlja unos.', onboardingTransactionTip:'Svaki unos odmah osvježava sve iznose i grafikone.', onboardingTransactionLabel:'Transakcije',
+    onboardingTransactionTitle:'Zabilježite stvarno stanje', onboardingTransactionBody:'Gumb Dodaj transakciju uvijek je pri vrhu bočne navigacije. Njime unosite prihod ili trošak.', onboardingTransactionTip:'Upozorenje vas informira, ali ne zaustavlja unos. Svaki unos odmah osvježava sve iznose i grafikone.', onboardingTransactionLabel:'Transakcije',
     onboardingOverviewTitle:'Zaštita budžeta u stvarnom vremenu', onboardingOverviewBody:'Ovdje vidite koliko danas možete sigurno potrošiti.', onboardingOverviewTip:'Novi prihod odmah povećava raspoloživi iznos.', onboardingOverviewLabel:'Pregled',
     onboardingBudgetsTitle:'Smjernice, ne zabrane', onboardingBudgetsBody:'Postavite mjesečni limit za svaku kategoriju i pratite potrošnju bojama.', onboardingBudgetsTip:'Žuto upozorenje pojavljuje se na 80%, a crveno na 100%.', onboardingBudgetsLabel:'Budžeti',
     onboardingSavingsTitle:'Ciljevi s jasnim sljedećim korakom', onboardingSavingsBody:'Ovdje pratite fond, ciljeve, rokove i zaokruživanje sitniša.', onboardingSavingsTip:'Zaokruživanje možete usmjeriti u jedan aktivni cilj.', onboardingSavingsLabel:'Štednja',
     onboardingActivityTitle:'Pronađite i uredite svaki zapis', onboardingActivityBody:'Ovdje možete pronaći, filtrirati i urediti svaku transakciju.', onboardingActivityTip:'Filtri prikazuju samo podatke aktivnog profila.', onboardingActivityLabel:'Aktivnost',
     onboardingInsightsTitle:'Pretvorite brojke u odluke', onboardingInsightsBody:'Usporedite prihode, troškove i štednju kroz odabrano razdoblje.', onboardingInsightsTip:'Odaberite dan, mjesec, godinu ili sveukupni prikaz.', onboardingInsightsLabel:'Uvidi',
-    onboardingSettingsTitle:'Postavke i automatizacija', onboardingSettingsBody:'Ovdje podešavate banke, privatnost, valutu i pravila kategorizacije.', onboardingSettingsTip:'Vodič možete ponovno pokrenuti iz Pomoći i FAQ-a.', onboardingSettingsLabel:'Postavke'
+    onboardingSettingsTitle:'Postavke i automatizacija', onboardingSettingsBody:'Ovdje podešavate banke, privatnost, valutu i pravila kategorizacije.', onboardingSettingsTip:'Vodič možete ponovno pokrenuti iz Pomoći i FAQ-a.', onboardingSettingsLabel:'Postavke', onboardingModuleContext:'Trenutačni modul'
   });
   Object.assign(translations.en, {
     helpAssistant:'Help & AI Assistant', helpAssistantHint:'Guide and money questions',
     onboardingTourCardTitle:'Interactive tour', onboardingSettingsHint:'Walk through the key modules and settings again.', restartOnboarding:'Re-run tour', onboardingSteps:'Tour steps', skipTour:'Skip', onboardingBack:'Back', onboardingNext:'Next', finishTour:'Finish',
     onboardingNavigationTitle:'Everything is within reach', onboardingNavigationBody:'The sidebar takes you to Overview, Budgets, Savings, Activity and Insights without losing context.', onboardingNavigationTip:'Personal and Business data always remain completely isolated.', onboardingNavigationLabel:'Navigation',
-    onboardingTransactionTitle:'Record financial reality', onboardingTransactionBody:'Add transaction opens one form for income or expenses. Budget overages warn you but never block saving.', onboardingTransactionTip:'A new amount instantly refreshes balances, budgets, savings and charts.', onboardingTransactionLabel:'Transactions',
+    onboardingTransactionTitle:'Record financial reality', onboardingTransactionBody:'The Add transaction button always sits at the top of the sidebar. Use it to enter income or an expense.', onboardingTransactionTip:'Budget overages warn you but never block saving. Each entry instantly refreshes every total and chart.', onboardingTransactionLabel:'Transactions',
     onboardingOverviewTitle:'Real-time Budget Protection', onboardingOverviewBody:'This card combines monthly income and expenses into your safe-to-spend amount and daily pace.', onboardingOverviewTip:'New income immediately increases both safe and daily available amounts.', onboardingOverviewLabel:'Overview',
     onboardingBudgetsTitle:'Guardrails, not roadblocks', onboardingBudgetsBody:'Set monthly category limits and follow green, yellow and red spending thresholds.', onboardingBudgetsTip:'Warnings appear at 80% and 100% of a category limit.', onboardingBudgetsLabel:'Budgets',
     onboardingSavingsTitle:'Goals with a clear next step', onboardingSavingsBody:'Your fund, goal buckets, deadlines and round-ups show exactly how close you are to each goal.', onboardingSavingsTip:'Round-ups can be routed to one active savings goal.', onboardingSavingsLabel:'Savings',
     onboardingActivityTitle:'Find and edit every record', onboardingActivityBody:'Search, date range, category and type filters help locate manual and bank-imported transactions quickly.', onboardingActivityTip:'Filters only read the currently active profile.', onboardingActivityLabel:'Activity',
     onboardingInsightsTitle:'Turn numbers into decisions', onboardingInsightsBody:'Insights connects net total, spending mix, merchants, monthly trends and savings rate.', onboardingInsightsTip:'Choose daily, monthly, year-to-date or all-time analysis.', onboardingInsightsLabel:'Insights',
-    onboardingSettingsTitle:'Settings and automation', onboardingSettingsBody:'From the user menu, connect banks, choose privacy and currency options, or edit If/Then categorization rules.', onboardingSettingsTip:'You can restart this tour from Help and FAQ at any time.', onboardingSettingsLabel:'Settings'
+    onboardingSettingsTitle:'Settings and automation', onboardingSettingsBody:'From the user menu, connect banks, choose privacy and currency options, or edit If/Then categorization rules.', onboardingSettingsTip:'You can restart this tour from Help and FAQ at any time.', onboardingSettingsLabel:'Settings', onboardingModuleContext:'Current module'
   });
   applyStaticTranslations();
 
@@ -34,6 +34,7 @@
   let controller = null;
   let pendingSession = null;
   let currentTarget = null;
+  let currentContextLink = null;
   let previousDescription = null;
   let resizeObserver = null;
   let geometryFrame = 0;
@@ -70,6 +71,8 @@
       if (previousDescription === null) currentTarget.removeAttribute('aria-describedby');
       else currentTarget.setAttribute('aria-describedby', previousDescription);
     }
+    currentContextLink?.classList.remove('tour-context-active');
+    currentContextLink = null;
     currentTarget = null;
     previousDescription = null;
   }
@@ -90,6 +93,11 @@
     const primary = visibleTarget(step.target);
     if (primary) return primary;
     return visibleTarget(step.mobileTarget) || $('#menuToggle') || appShell;
+  }
+
+  function moduleContextFor(step) {
+    const moduleKeys = { overview:'navOverview', budgets:'navBudgets', savings:'navSavings', activity:'navActivity', insights:'navInsights' };
+    return t(moduleKeys[step.view] || 'navOverview');
   }
 
   function scheduleGeometry() {
@@ -115,7 +123,12 @@
     Object.assign(spotlight.style, {
       left:`${layout.spotlight.left}px`, top:`${layout.spotlight.top}px`, width:`${layout.spotlight.width}px`, height:`${layout.spotlight.height}px`
     });
-    Object.assign(popover.style, { left:`${layout.popover.left}px`, top:`${layout.popover.top}px` });
+    Object.assign(popover.style, {
+      left:`${layout.popover.left}px`,
+      top:`${layout.popover.top}px`,
+      maxWidth:`${layout.popover.width}px`,
+      maxHeight:`${layout.popover.height}px`
+    });
     popover.dataset.placement = layout.popover.placement;
   }
 
@@ -127,10 +140,12 @@
     else if (mobileViewport()) closeSidebar();
 
     currentTarget = targetFor(step);
+    currentContextLink = document.querySelector(`.nav-item[data-view="${step.view || 'overview'}"]`);
+    currentContextLink?.classList.add('tour-context-active');
     previousDescription = currentTarget.getAttribute('aria-describedby');
     currentTarget.setAttribute('aria-describedby', 'onboardingBody');
     currentTarget.classList.add('tour-target-active');
-    currentTarget.scrollIntoView({ behavior:reducedMotion()?'auto':'smooth', block:'center', inline:'nearest' });
+    currentTarget.scrollIntoView({ behavior:reducedMotion()?'auto':'smooth', block:mobileViewport()?'start':'center', inline:'nearest' });
     resizeObserver = new ResizeObserver(scheduleGeometry);
     resizeObserver.observe(currentTarget);
     requestAnimationFrame(() => requestAnimationFrame(scheduleGeometry));
@@ -144,9 +159,14 @@
     if (!snapshot) return;
     const step = snapshot.step;
     const stepNumber = snapshot.stepIndex + 1;
+    popover.style.removeProperty('max-width');
+    popover.style.removeProperty('max-height');
     $('#onboardingTitle').textContent = t(step.titleKey);
     $('#onboardingBody').textContent = t(step.bodyKey);
-    $('#onboardingEyebrow').textContent = t(stepKey(step, 'Label')).toLocaleUpperCase(locale());
+    const moduleContext = moduleContextFor(step);
+    const stepLabel = t(stepKey(step, 'Label'));
+    $('#onboardingEyebrow').textContent = `${t('onboardingModuleContext')}: ${moduleContext} · ${stepLabel}`.toLocaleUpperCase(locale());
+    popover.dataset.moduleContext = step.view || 'overview';
     $('#onboardingTip span').textContent = t(stepKey(step, 'Tip'));
     $('#onboardingProgress').textContent = currentLang === 'hr' ? `Korak ${stepNumber} od ${controller.steps.length}` : `Step ${stepNumber} of ${controller.steps.length}`;
     $('#onboardingProgressBar').style.width = `${stepNumber / controller.steps.length * 100}%`;

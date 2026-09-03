@@ -88,12 +88,13 @@
   function monthSeries(transactions, reference, count = 6) {
     const referenceIso=validDate(reference);
     const date = referenceIso ? new Date(`${referenceIso}T12:00:00`) : new Date();
+    const effectiveTransactions = MerCore.filterTransactions(transactions, 'all', referenceIso || date.toISOString().slice(0,10));
     const result = [];
     const safeCount=Math.max(1,Math.min(36,Math.floor(Number(count)||6)));
     for (let offset=safeCount-1; offset>=0; offset-=1) {
       const point = new Date(date.getFullYear(), date.getMonth()-offset, 1);
       const key = `${point.getFullYear()}-${String(point.getMonth()+1).padStart(2,'0')}`;
-      const totals = (transactions||[]).filter(tx=>String(tx.date||'').startsWith(key)).reduce((sum,tx)=>{sum[MerCore.transactionType(tx)==='income'?'income':'expenses']+=MerCore.financialAmount(tx.amount);return sum;},{income:0,expenses:0});
+      const totals = effectiveTransactions.filter(tx=>String(tx.date||'').startsWith(key)).reduce((sum,tx)=>{sum[MerCore.transactionType(tx)==='income'?'income':'expenses']+=MerCore.financialAmount(tx.amount);return sum;},{income:0,expenses:0});
       totals.income=Math.max(0,MerCore.roundMoney(totals.income));totals.expenses=Math.max(0,MerCore.roundMoney(totals.expenses));
       result.push({key,...totals});
     }
@@ -135,8 +136,8 @@
   }
 
   const roundUpAmount = amount => Math.round((Math.ceil((Number(amount)||0)-1e-8)-(Number(amount)||0))*100)/100;
-  function applyRoundUp(profile, transaction) {
-    if (!profile || MerCore.transactionType(transaction)!=='expense' || transaction.sourceType==='round-up' || transaction.roundUpAmount) return null;
+  function applyRoundUp(profile, transaction, reference = new Date()) {
+    if (!profile || !MerCore.isTransactionEffective(transaction, reference) || MerCore.transactionType(transaction)!=='expense' || transaction.sourceType==='round-up' || transaction.roundUpAmount) return null;
     const goal=(profile.goalBuckets||[]).find(item=>item.roundUpsEnabled) || null;
     const amount=roundUpAmount(transaction.amount); if(!goal||amount<=0)return null;
     const contribution=MerCore.applySavingsContribution(profile,goal.id,amount,1); if(!contribution.valid)return null;
