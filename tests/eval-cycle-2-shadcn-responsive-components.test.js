@@ -54,11 +54,11 @@ test('evaluation cycle 2: dropdown menus are collision-aware and fully keyboard 
   assert.match(css, /\.card-action-menu\[data-floating="true"\] \{[\s\S]*?position:fixed/);
 });
 
-test('evaluation cycle 2: wizards and long secondary panels preserve headers and actions while bodies scroll', () => {
+test('evaluation cycle 2: form wizards scroll safely while onboarding popovers fit without scrollbars', () => {
   assert.match(css, /\[data-ui-kind="wizard"\]\[open\] \{[\s\S]*?display:flex;[\s\S]*?overflow:hidden/);
   assert.match(css, /\[data-ui-kind="wizard"\] \[data-ui="wizard-step"\]\.active \{[\s\S]*?overflow-y:auto/);
   assert.match(css, /\.subscriptions-modal \.subscription-list \{[\s\S]*?flex:1 1 auto;[\s\S]*?overflow-y:auto/);
-  assert.match(css, /\[data-ui="tour-popover"\] \{[\s\S]*?overflow-y:auto/);
+  assert.match(css, /\[data-ui="tour-popover"\] \{[^}]*max-block-size:calc\(var\(--ui-visual-height\) - 24px\);[^}]*overflow:hidden;[^}]*overscroll-behavior:none;/);
   assert.match(responsive, /wizard\.dataset\.uiKind = 'wizard'/);
 });
 

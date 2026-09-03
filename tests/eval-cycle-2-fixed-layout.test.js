@@ -54,8 +54,7 @@ test('cycle 2: data actions are contextual to Budget, Activity and Insights', ()
   const budgets = viewHeading('budgetsView');
   const activity = viewHeading('activityView');
   const insights = viewHeading('insightsView');
-  assert.match(budgets, /data-open-detail="budgetDataModal"/);
-  assert.match(budgets, /id="budgetDataModal"/);
+  assert.doesNotMatch(budgets, /data-open-detail="budgetDataModal"|id="budgetDataModal"/);
   assert.doesNotMatch(budgets, /data-open-global-import/);
   assert.match(budgets, /data-export-budget/);
   assert.doesNotMatch(budgets.slice(0, budgets.indexOf('<dialog')), /data-open-assessment/);
@@ -92,7 +91,7 @@ test('cycle 2: Settings owns preferences while import and export stay contextual
   assert.doesNotMatch(settings, /dataPortability|settingsImportJson|settingsExportJson|settingsExportAllCsv|settingsExportCsv|settingsImportJsonFile/);
   assert.match(html, /id="importDataModal"/);
   assert.match(html, /id="importFile"/);
-  assert.match(html, /id="budgetDataModal"/);
+  assert.doesNotMatch(html, /id="budgetDataModal"/);
   assert.match(html, /data-export-budget/);
   assert.match(html, /data-export-insights/);
 });

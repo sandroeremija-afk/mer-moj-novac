@@ -14,7 +14,7 @@ const ui = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 test('evaluation cycle 1: onboarding steps describe real spotlight targets in a deliberate order', () => {
   assert.deepEqual(
     MerOnboarding.DEFAULT_STEPS.map(step => step.id),
-    ['navigation', 'transaction', 'overview', 'budgets', 'savings', 'activity', 'insights', 'settings']
+    ['overview', 'transaction', 'budgetsNavigation', 'budgets', 'savingsNavigation', 'savings', 'activityNavigation', 'activity', 'insightsNavigation', 'insights', 'settings']
   );
   MerOnboarding.DEFAULT_STEPS.forEach(step => {
     assert.equal(typeof step.target, 'string', `${step.id} has a target selector`);
@@ -27,6 +27,15 @@ test('evaluation cycle 1: onboarding steps describe real spotlight targets in a 
   assert.equal(transactionStep.openSidebar, true, 'the sidebar is opened before the primary action is measured');
   assert.match(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'overview').target, /safe-panel|safeRing/);
   assert.match(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'settings').target, /openSettings/);
+  for (const view of ['budgets', 'savings', 'activity', 'insights']) {
+    const navigationStep = MerOnboarding.DEFAULT_STEPS.find(step => step.id === `${view}Navigation`);
+    assert.equal(navigationStep.target, `.nav-item[data-view="${view}"]`);
+    assert.equal(navigationStep.mobileTarget, navigationStep.target);
+    assert.equal(navigationStep.openSidebar, true);
+    assert.equal(navigationStep.navigationStep, true);
+    const featureIndex = MerOnboarding.DEFAULT_STEPS.findIndex(step => step.id === view);
+    assert.equal(MerOnboarding.DEFAULT_STEPS[featureIndex - 1], navigationStep, `${view} navigation is spotlighted before module content`);
+  }
 });
 
 test('evaluation cycle 1: the text-heavy onboarding dialog is replaced by a compact spotlight surface', () => {
@@ -70,11 +79,11 @@ test('evaluation cycle 1: smart placement keeps the popover outside feasible spo
   const constrainedMobile = MerOnboarding.computeSpotlightLayout({
     viewport:{ left:0, top:0, width:375, height:667 },
     targetRect:{ left:16, top:298, width:343, height:60 },
-    popoverSize:{ width:340, height:430 },
+    popoverSize:{ width:340, height:260 },
     preferredPlacement:'bottom', gap:14, padding:8, edge:12
   });
-  assert.equal(constrainedMobile.popover.overlapsTarget, false, 'a short viewport constrains the scrollable popover instead of covering its target');
-  assert.ok(constrainedMobile.popover.height < 430);
+  assert.equal(constrainedMobile.popover.overlapsTarget, false, 'compact copy keeps the natural popover outside its target');
+  assert.equal(constrainedMobile.popover.height, 260, 'the popover keeps its natural height instead of becoming scrollable');
 });
 
 test('evaluation cycle 1: spotlight tour owns focus without making the application permanently inert', () => {

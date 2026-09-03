@@ -34,7 +34,7 @@ function controller(storage, userId, timer = clock()) {
 test('evaluation cycle 1: the guided tour covers every core module and Settings', () => {
   assert.deepEqual(
     MerOnboarding.DEFAULT_STEPS.map(step => step.id),
-    ['navigation', 'transaction', 'overview', 'budgets', 'savings', 'activity', 'insights', 'settings']
+    ['overview', 'transaction', 'budgetsNavigation', 'budgets', 'savingsNavigation', 'savings', 'activityNavigation', 'activity', 'insightsNavigation', 'insights', 'settings']
   );
   for (const step of MerOnboarding.DEFAULT_STEPS) {
     assert.equal(typeof step.titleKey, 'string');
@@ -53,11 +53,11 @@ test('evaluation cycle 1: a first login launches once, walks in order and persis
   let view = firstSession.start();
   assert.equal(view.open, true);
   assert.equal(view.stepIndex, 0);
-  assert.equal(view.stepId, 'navigation');
+  assert.equal(view.stepId, 'overview');
   assert.ok(view.record.launchedAt);
   assert.equal(firstSession.shouldAutoStart(), false, 'opening the tour immediately consumes the one-time auto launch');
 
-  for (const expected of ['transaction', 'overview', 'budgets', 'savings', 'activity', 'insights', 'settings']) {
+  for (const expected of ['transaction', 'budgetsNavigation', 'budgets', 'savingsNavigation', 'savings', 'activityNavigation', 'activity', 'insightsNavigation', 'insights', 'settings']) {
     timer.tick();
     view = firstSession.next();
     assert.equal(view.stepId, expected);
@@ -74,7 +74,7 @@ test('evaluation cycle 1: a first login launches once, walks in order and persis
   timer.tick();
   const manualRestart = reloadedSession.start({ force:true });
   assert.equal(manualRestart.open, true);
-  assert.equal(manualRestart.stepId, 'navigation');
+  assert.equal(manualRestart.stepId, 'overview');
   assert.equal(manualRestart.record.completedAt, view.record.completedAt, 'manual replay never erases completion history');
 });
 
@@ -98,7 +98,7 @@ test('evaluation cycle 1: dismissal prevents idle relaunch while Settings can ma
   timer.tick();
   const manual = afterReload.start({ force:true });
   assert.equal(manual.open, true);
-  assert.equal(manual.stepId, 'navigation');
+  assert.equal(manual.stepId, 'overview');
   assert.equal(manual.record.dismissedAt, dismissed.record.dismissedAt, 'manual restart preserves the audit record');
 });
 

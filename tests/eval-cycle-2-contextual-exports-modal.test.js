@@ -7,7 +7,6 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 const premium = fs.readFileSync(path.join(root, 'premium.js'), 'utf8');
 
 function functionBody(name, nextName) {
@@ -17,18 +16,15 @@ function functionBody(name, nextName) {
   return premium.slice(start, end);
 }
 
-test('evaluation cycle 2: Budget export opens a centered responsive native dialog without import', () => {
-  assert.match(html, /data-open-detail="budgetDataModal"[^>]*aria-controls="budgetDataModal"[^>]*aria-haspopup="dialog"/);
-  assert.match(html, /<dialog class="modal budget-data-modal" id="budgetDataModal"/);
-  const budgetStart = html.indexOf('id="budgetDataModal"');
-  const budgetEnd = html.indexOf('</dialog>', budgetStart);
-  const budgetModal = html.slice(budgetStart, budgetEnd);
-  assert.match(budgetModal, /data-export-budget[\s\S]*data-close-modal data-i18n="cancel"/);
-  assert.doesNotMatch(budgetModal, /data-open-global-import|importBankStatement/);
-  assert.doesNotMatch(html, /id="budgetDataMenu"|data-card-menu="budgetDataMenu"/);
-  assert.match(css, /\.budget-data-modal\s*\{[\s\S]*position:fixed;[\s\S]*inset:0;[\s\S]*margin:auto;[\s\S]*overflow-y:auto;/);
-  assert.match(css, /\.budget-data-modal::backdrop\s*\{[^}]*background:[^}]*backdrop-filter:blur\(3px\)/);
-  assert.match(css, /@media \(max-width:640px\)[\s\S]*\[data-ui="dialog"\]\.budget-data-modal\s*\{[\s\S]*inset:0;[\s\S]*height:fit-content;[\s\S]*margin:auto;/);
+test('evaluation cycle 2: Budget export is a one-click download with no intermediary dialog', () => {
+  const budgetsStart = html.indexOf('id="budgetsView"');
+  const budgetsEnd = html.indexOf('<section class="view"', budgetsStart);
+  const budgets = html.slice(budgetsStart, budgetsEnd);
+  assert.match(budgets, /<button type="button" class="secondary-button" data-export-budget>/);
+  assert.match(budgets, /data-i18n="budgetDataActions">Izvoz budžeta<\/span>/);
+  assert.doesNotMatch(budgets, /data-open-detail="budgetDataModal"|aria-haspopup="dialog"/);
+  assert.doesNotMatch(html, /id="budgetDataModal"|id="budgetExportCsv"/);
+  assert.match(premium, /\$\$\('\[data-export-budget\]'\)\.forEach\(button=>button\.addEventListener\('click',\(\)=>\{closeCardMenus\(\);exportBudgetPlanCsv\(\);\}\)\);/);
 });
 
 test('evaluation cycle 2: Activity exports every transaction with item-level audit fields', () => {

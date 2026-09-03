@@ -263,7 +263,6 @@
     $('#importTransactionBackWrap').hidden=!returnToTransactionEntry;
     closeCardMenus();
     if($('#transactionModal').open)closeModal($('#transactionModal'));
-    if($('#budgetDataModal').open)closeModal($('#budgetDataModal'));
     if($('#bankSettingsModal').open)closeModal($('#bankSettingsModal'));
     if(importStage&&!MerImport.stageBelongsToProfile(importStage,appState.activeAccount)){
       importStage=null;pendingBulkOverride=null;lastBulkOverride=null;showToast(t('importProfileChanged'));
@@ -423,7 +422,7 @@
   $$('[data-open-global-import]').forEach(button=>button.addEventListener('click',()=>openGlobalImport({fromTransaction:Boolean(button.closest('#transactionModal'))})));
   $('#backToTransactionEntry').addEventListener('click',backToManualTransaction);
   $$('[data-export-active]').forEach(button=>button.addEventListener('click',exportActiveProfileCsv));
-  $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();if($('#budgetDataModal').open)closeModal($('#budgetDataModal'));exportBudgetPlanCsv();}));
+  $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();exportBudgetPlanCsv();}));
   $$('[data-export-insights]').forEach(button=>button.addEventListener('click',exportInsightsReportCsv));
 
   $('#changePasswordForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(async()=>{const feedback=$('#passwordChangeFeedback'),result=await window.MerAuthProvider?.changePassword?.({currentPassword:$('#currentPasswordInput').value,newPassword:$('#newPasswordInput').value,confirmPassword:$('#confirmNewPasswordInput').value});const errorKeys={DEMO_READ_ONLY:'demoPasswordUnavailable',INVALID_CURRENT_PASSWORD:'invalidCurrentPassword',PASSWORD_MISMATCH:'passwordMismatch',PASSWORD_REUSED:'passwordReused',WEAK_PASSWORD:'passwordWeak'};feedback.className=`security-form-feedback ${result?.ok?'success':'error'}`;feedback.textContent=t(result?.ok?'passwordUpdated':(errorKeys[result?.code]||'passwordChangeFailed'));if(result?.ok){window.MerMfaState?.activate?.(result.session);window.MerMfaUnlock?.mark?.(result.session);event.currentTarget.reset();renderActiveSessions();}},'passwordChangeFailed');});

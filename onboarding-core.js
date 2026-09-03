@@ -5,14 +5,17 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function createMerOnboardingCore() {
   const STORAGE_PREFIX = 'mer-onboarding-v1:';
   const DEFAULT_STEPS = Object.freeze([
-    { id:'navigation', view:'overview', target:'.nav-list', mobileTarget:'#menuToggle', placement:'right', openSidebar:true, titleKey:'onboardingNavigationTitle', bodyKey:'onboardingNavigationBody' },
-    { id:'transaction', view:'overview', target:'#sidebar .sidebar-transaction-button[data-open-transaction]', mobileTarget:'#sidebar .sidebar-transaction-button[data-open-transaction]', placement:'right', openSidebar:true, titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody' },
     { id:'overview', view:'overview', target:'#safeRing', mobileTarget:'#safeRing', placement:'right', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody' },
+    { id:'transaction', view:'overview', target:'#sidebar .sidebar-transaction-button[data-open-transaction]', mobileTarget:'#sidebar .sidebar-transaction-button[data-open-transaction]', placement:'right', openSidebar:true, titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody' },
+    { id:'budgetsNavigation', view:'budgets', target:'.nav-item[data-view="budgets"]', mobileTarget:'.nav-item[data-view="budgets"]', placement:'right', openSidebar:true, navigationStep:true, titleKey:'onboardingBudgetsNavigationTitle', bodyKey:'onboardingBudgetsNavigationBody' },
     { id:'budgets', view:'budgets', target:'#budgetsView .table-panel .panel-heading', mobileTarget:'#budgetsView .budget-summary .summary-card:first-child', placement:'bottom', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody' },
+    { id:'savingsNavigation', view:'savings', target:'.nav-item[data-view="savings"]', mobileTarget:'.nav-item[data-view="savings"]', placement:'right', openSidebar:true, navigationStep:true, titleKey:'onboardingSavingsNavigationTitle', bodyKey:'onboardingSavingsNavigationBody' },
     { id:'savings', view:'savings', target:'#savingsView .savings-hero-head', mobileTarget:'#savingsView .savings-hero-head', placement:'bottom', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody' },
+    { id:'activityNavigation', view:'activity', target:'.nav-item[data-view="activity"]', mobileTarget:'.nav-item[data-view="activity"]', placement:'right', openSidebar:true, navigationStep:true, titleKey:'onboardingActivityNavigationTitle', bodyKey:'onboardingActivityNavigationBody' },
     { id:'activity', view:'activity', target:'#activityView .activity-toolbar', mobileTarget:'#activityView .activity-toolbar', placement:'bottom', titleKey:'onboardingActivityTitle', bodyKey:'onboardingActivityBody' },
+    { id:'insightsNavigation', view:'insights', target:'.nav-item[data-view="insights"]', mobileTarget:'.nav-item[data-view="insights"]', placement:'right', openSidebar:true, navigationStep:true, titleKey:'onboardingInsightsNavigationTitle', bodyKey:'onboardingInsightsNavigationBody' },
     { id:'insights', view:'insights', target:'#insightsFilters', mobileTarget:'#insightsFilters', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody' },
-    { id:'settings', view:'overview', target:'#openSettings', mobileTarget:'#menuToggle', placement:'right', openSidebar:true, titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody' }
+    { id:'settings', view:'insights', contextKey:'onboardingSettingsLabel', target:'#openSettings', mobileTarget:'#openSettings', placement:'right', openSidebar:true, titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody' }
   ].map(step => Object.freeze(step)));
 
   const cleanUserId = value => String(value || 'anonymous').trim().toLowerCase().replace(/[^a-z0-9._@-]+/g, '-') || 'anonymous';
@@ -96,12 +99,7 @@
     const fittingSides = new Set(order.filter(side => spaces[side] >= required(side)));
     const naturalCandidate = candidates.find(candidate => fittingSides.has(candidate.placement) && candidate.overlapArea === 0)
       || candidates.find(candidate => candidate.overlapArea === 0);
-    const constrainedCandidates = order.map(side => {
-      if (side === 'left' || side === 'right') return candidateFor(side, { width:Math.max(1, Math.min(popoverWidth, spaces[side] - gap)) });
-      return candidateFor(side, { height:Math.max(1, Math.min(popoverHeight, spaces[side] - gap)) });
-    }).filter(candidate => candidate.overlapArea === 0);
     const selected = naturalCandidate
-      || [...constrainedCandidates].sort((a,b) => (b.width * b.height) - (a.width * a.height))[0]
       || [...candidates].sort((a,b) => a.overlapArea - b.overlapArea || spaces[b.placement] - spaces[a.placement])[0];
     return Object.freeze({
       spotlight:Object.freeze(spotlight),
