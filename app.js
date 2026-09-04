@@ -86,6 +86,8 @@ Object.assign(translations.en,{savedInPeriod:'Saved in this period',savingsHisto
 Object.assign(translations.hr,{addExpense:'Dodaj trošak',addExpenseSubmit:'Dodaj trošak',transactionDate:'Datum',transactionDateRequired:'Odaberite valjani datum transakcije.',scheduledTransaction:'Zakazano',scheduledTransactionNotice:'Ova će se transakcija evidentirati {date} i do tada neće utjecati na stanje, budžete ni uvide.',scheduledTransactionSaved:'Transakcija je zakazana za {date}.'});
 Object.assign(translations.en,{addExpense:'Add expense',addExpenseSubmit:'Add expense',transactionDate:'Date',transactionDateRequired:'Choose a valid transaction date.',scheduledTransaction:'Scheduled',scheduledTransactionNotice:'This transaction will be posted on {date} and will not affect balances, budgets, or insights before then.',scheduledTransactionSaved:'Transaction scheduled for {date}.'});
 
+Object.assign(translations.hr,{savingsDepositsOnly:'Evidentirane uplate u ciljeve štednje'});
+Object.assign(translations.en,{savingsDepositsOnly:'Recorded deposits into savings goals'});
 const categoryMeta = {
   food:{ icon:'H', iconId:'icon-utensils', className:'food' },
   transport:{ icon:'P', iconId:'icon-car', className:'transport' },
@@ -102,32 +104,9 @@ const defaultIncomeCategories = [
   {id:'otherIncome',nameKey:'otherIncome',icon:'O',isCustom:false}
 ];
 
-const personalDefaults = {
-  profileId:'personal', accountName:'Moj eRačun', accountLabel:'personalAccount', initials:'ME', income:4300, bills:1180, savingsTarget:620, savingsBalance:6240, savingsGoal:10000, guard:0.10, spent:1574.25, availableBalance:3840.60,
-  categories:[{id:'food',spent:428.10,limit:520},{id:'transport',spent:164.20,limit:260},{id:'shopping',spent:354.40,limit:370},{id:'healthBeauty',spent:27.60,limit:80},{id:'entertainment',spent:145.49,limit:180},{id:'utilities',spent:454.46,limit:470},{id:'other',spent:0,limit:190}],
-  incomeCategories:structuredClone(defaultIncomeCategories),
-  transactions:[
-    {id:'i-aug-salary',type:'income',name:'Plaća',amount:4300,category:'salary',date:'2026-08-01T08:00:00'}, {id:'i-aug-freelance',type:'income',name:'Dizajn projekta',amount:450,category:'freelance',date:'2026-08-10T14:00:00'},
-    {id:1,type:'expense',name:'Konzum',amount:42.18,category:'food',date:'2026-08-20T09:15:00'}, {id:2,type:'expense',name:'ZET',amount:15.93,category:'transport',date:'2026-08-20T08:10:00'}, {id:3,type:'expense',name:'dm',amount:27.60,category:'healthBeauty',date:'2026-08-19T17:45:00'}, {id:4,type:'expense',name:'Netflix',amount:15.49,category:'entertainment',date:'2026-08-19T06:30:00'}, {id:5,type:'expense',name:'Tržnica Dolac',amount:31.80,category:'food',date:'2026-08-18T11:20:00'}, {id:6,type:'expense',name:'H&M',amount:68.00,category:'shopping',date:'2026-08-17T14:05:00'}, {id:7,type:'expense',name:'INA',amount:54.20,category:'transport',date:'2026-08-16T10:40:00'},
-    {id:'aug-food',type:'expense',name:'Restorani i namirnice',amount:354.12,category:'food',date:'2026-08-14T19:00:00'}, {id:'aug-transport',type:'expense',name:'Prijevoz i gorivo',amount:94.07,category:'transport',date:'2026-08-13T09:00:00'}, {id:'aug-shopping',type:'expense',name:'Kućanske potrepštine',amount:286.40,category:'shopping',date:'2026-08-11T16:00:00'}, {id:'aug-entertainment',type:'expense',name:'Kino i događaji',amount:130,category:'entertainment',date:'2026-08-09T20:00:00'}, {id:'aug-other',type:'expense',name:'Računi i ostalo',amount:454.46,category:'utilities',date:'2026-08-05T10:00:00'},
-    {id:'i-jul-salary',type:'income',name:'Plaća',amount:4300,category:'salary',date:'2026-07-01T08:00:00'}, {id:'i-jul-gift',type:'income',name:'Rođendanski dar',amount:100,category:'gift',date:'2026-07-12T12:00:00'}, {id:'e-jul-food',type:'expense',name:'Hrana i restorani',amount:520,category:'food',date:'2026-07-15T12:00:00'}, {id:'e-jul-transport',type:'expense',name:'Prijevoz',amount:260,category:'transport',date:'2026-07-13T12:00:00'}, {id:'e-jul-shopping',type:'expense',name:'Kupovina',amount:410,category:'shopping',date:'2026-07-10T12:00:00'}, {id:'e-jul-other',type:'expense',name:'Računi i ostalo',amount:610,category:'other',date:'2026-07-05T12:00:00'},
-    {id:'i-jun-salary',type:'income',name:'Plaća',amount:4300,category:'salary',date:'2026-06-01T08:00:00'}, {id:'i-jun-freelance',type:'income',name:'Fotografiranje',amount:300,category:'freelance',date:'2026-06-18T12:00:00'}, {id:'e-jun-food',type:'expense',name:'Hrana i restorani',amount:490,category:'food',date:'2026-06-14T12:00:00'}, {id:'e-jun-other',type:'expense',name:'Ostali mjesečni troškovi',amount:1010,category:'other',date:'2026-06-06T12:00:00'},
-    {id:'i-may-salary',type:'income',name:'Plaća',amount:4300,category:'salary',date:'2026-05-01T08:00:00'}, {id:'e-may',type:'expense',name:'Mjesečni troškovi',amount:1720,category:'other',date:'2026-05-15T12:00:00'}, {id:'i-apr-salary',type:'income',name:'Plaća',amount:4300,category:'salary',date:'2026-04-01T08:00:00'}, {id:'e-apr',type:'expense',name:'Mjesečni troškovi',amount:1680,category:'other',date:'2026-04-15T12:00:00'}, {id:'i-mar-salary',type:'income',name:'Plaća',amount:4300,category:'salary',date:'2026-03-01T08:00:00'}, {id:'e-mar',type:'expense',name:'Mjesečni troškovi',amount:1810,category:'other',date:'2026-03-15T12:00:00'}, {id:'i-feb-salary',type:'income',name:'Plaća',amount:4300,category:'salary',date:'2026-02-01T08:00:00'}, {id:'e-feb',type:'expense',name:'Mjesečni troškovi',amount:1590,category:'other',date:'2026-02-15T12:00:00'}, {id:'i-jan-salary',type:'income',name:'Plaća',amount:4300,category:'salary',date:'2026-01-01T08:00:00'}, {id:'e-jan',type:'expense',name:'Mjesečni troškovi',amount:1760,category:'other',date:'2026-01-15T12:00:00'}
-  ],
-  savingsHistory:[420,480,500,540,580,580,600,620],
-  savingsEntries:[{id:'s1',amount:300,note:'Automatska štednja',date:'2026-08-03T08:00:00'},{id:'s2',amount:200,note:'Dodatna uplata',date:'2026-08-12T08:00:00'},{id:'s3',amount:120,note:'Zaokruživanje potrošnje',date:'2026-08-18T08:00:00'}],
-  recurring:[{id:'r1',name:'Najamnina',amount:780,category:'other',day:1,startDate:'2026-09-01',enabled:true,lastProcessed:null},{id:'r2',name:'Internet',amount:29.90,category:'other',day:15,startDate:'2026-09-15',enabled:true,lastProcessed:null}]
-};
-
-const businessDefaults = {
-  profileId:'business', accountName:'Elektronički računi d.o.o.', accountLabel:'businessAccount', initials:'ER', income:8200, bills:3150, savingsTarget:1200, savingsBalance:12800, savingsGoal:25000, guard:0.15, spent:2460.70, availableBalance:9150.30,
-  categories:[{id:'software',name:'Softver',icon:'S',spent:620.40,limit:900,isCustom:true},{id:'travel',name:'Putovanja',icon:'P',spent:780.30,limit:1100,isCustom:true},{id:'marketing',name:'Marketing',icon:'M',spent:540,limit:850,isCustom:true},{id:'office',name:'Ured',icon:'U',spent:520,limit:700,isCustom:true}],
-  incomeCategories:structuredClone(defaultIncomeCategories),
-  transactions:[{id:'bi1',type:'income',name:'Klijentski računi',amount:8200,category:'freelance',date:'2026-08-03T09:00:00'},{id:'b1',type:'expense',name:'Adobe',amount:72.50,category:'software',date:'2026-08-20T08:30:00'},{id:'b2',type:'expense',name:'Google Ads',amount:240,category:'marketing',date:'2026-08-19T12:10:00'},{id:'b3',type:'expense',name:'Croatia Airlines',amount:310.30,category:'travel',date:'2026-08-18T10:20:00'},{id:'be-rest',type:'expense',name:'Ostali poslovni troškovi',amount:1837.90,category:'office',date:'2026-08-10T12:00:00'},{id:'bi-jul',type:'income',name:'Klijentski računi',amount:7900,category:'freelance',date:'2026-07-03T09:00:00'},{id:'be-jul',type:'expense',name:'Poslovni troškovi',amount:2710,category:'office',date:'2026-07-15T12:00:00'}],
-  savingsHistory:[800,900,950,1000,1050,1100,1150,1200],
-  savingsEntries:[{id:'bs1',amount:700,note:'Porezna pričuva',date:'2026-08-05T08:00:00'},{id:'bs2',amount:500,note:'Poslovna rezerva',date:'2026-08-16T08:00:00'}],
-  recurring:[{id:'br1',name:'Uredski najam',amount:950,category:'office',day:1,startDate:'2026-09-01',enabled:true,lastProcessed:null},{id:'br2',name:'Adobe Creative Cloud',amount:72.50,category:'software',day:15,startDate:'2026-09-15',enabled:true,lastProcessed:null}]
-};
+const initialDemoProfiles = MerDemoData.createProfiles();
+const personalDefaults = initialDemoProfiles.personal;
+const businessDefaults = initialDemoProfiles.business;
 
 let appState;
 try {
@@ -427,10 +406,12 @@ function renderOverview() {
   const monthName = new Intl.DateTimeFormat(locale(), { month:'long' }).format(new Date(`${appReferenceDate.slice(0,4)}-${String(activeMonth+1).padStart(2,'0')}-01T12:00:00`));
   $('#availableBalance').textContent = currency(state.availableBalance);
   $('#availableBalance').classList.toggle('negative-value',state.availableBalance<0);
+  $('#availableBalance').classList.toggle('positive-value',state.availableBalance>0);
   $('#spentValue').textContent = currency(state.spent);
-  const monthlySavings=state.derived?.monthlySavings||0;
+  const monthlySavings=state.derived?.monthlyContributions||0;
   $('#savedValue').textContent = currency(monthlySavings);
   $('#savedValue').classList.toggle('negative-value',monthlySavings<0);
+  $('#savedValue').classList.toggle('positive-value',monthlySavings>0);
   $('#tipSavings').textContent = currency(state.savingsTarget, true);
   $('#chartSpent').textContent = currency(state.spent, true);
   $('#budgetPercent').textContent = t('budgetOf', { percent, budget:currency(plan.monthlyBudget, true) });
@@ -514,8 +495,8 @@ function renderBudgetLists() {
 
 function renderBudgetView() {
   const plan = getPlan();
-  const allocated = state.categories.reduce((sum,cat) => sum + cat.limit, 0);
-  const difference = plan.monthlyBudget - allocated;
+  const allocated = state.categories.reduce((sum,cat) => sum + Math.round(cat.limit * 100), 0) / 100;
+  const difference = MerCore.roundMoney(plan.monthlyBudget - allocated);
   const allocationPercent = plan.monthlyBudget>0?Math.round(MerCore.ratioPercent(allocated,plan.monthlyBudget)):allocated>0?100:0;
   $('#fullBudgetValue').textContent = currency(plan.monthlyBudget, true);
   $('#fullRemainingValue').textContent = currency(plan.safeRemaining);
@@ -1442,24 +1423,64 @@ function setAssessmentStep(step) {
 
 function openAssessment() {
   $('#incomeInput').value=state.income; $('#billsInput').value=state.bills; $('#savingsInput').value=state.savingsTarget; $('#savingsBalanceInput').value=state.savingsBalance;
-  const radio=$$('input[name="guard"]').find(input=>Number(input.value)===Number(state.guard)); if(radio)radio.checked=true;
+  $('#savingsBalancePlanHint').textContent=currentLang==='hr'?'Ukupno u svim ciljevima. Stanje mijenjajte uplatama ili uređivanjem ciljeva štednje.':'Total across all goals. Update this balance through deposits or savings goal edits.';
+  const guardInputs=$$('#assessmentForm input[name="guard"]');
+  const selected=guardInputs.find(input=>Number(input.value)===Number(state.guard))||guardInputs.find(input=>Number(input.value)===.1);
+  guardInputs.forEach(input=>{input.checked=input===selected;});
+  $$('#assessmentForm input[type="number"]').forEach(input=>{input.step='0.01';});
   setAssessmentStep(1); openModal($('#assessmentModal'));
 }
 
+function readAssessmentPlan() {
+  const fields=['incomeInput','billsInput','savingsInput'].map(id=>$(`#${id}`));
+  const values=fields.map(input=>Number(input.value));
+  const [income,bills,savings]=values;
+  const guard=Number($('#assessmentForm input[name="guard"]:checked')?.value);
+  const valid=fields.every((input,index)=>input.value.trim()!==''&&Number.isFinite(values[index])&&values[index]>=0&&Number.isSafeInteger(Math.round(values[index]*100)))&&[.05,.1,.15].includes(guard);
+  return {income,bills,savings,guard,valid,budget:valid?MerCore.roundMoney(income-bills-savings-income*guard):0};
+}
+
 function updateRecommendation() {
-  const income=Number($('#incomeInput').value)||0,bills=Number($('#billsInput').value)||0,savings=Number($('#savingsInput').value)||0,guard=Number($('input[name="guard"]:checked')?.value||.1);
-  const budget=income-bills-savings-income*guard;
-  $('#recommendedBudget').textContent=t('planPerMonth',{amount:currency(Math.max(0,budget),true)});
-  $('#assessmentSave').disabled=budget<state.spent || budget<=0;
-  $('.plan-preview').classList.toggle('invalid',budget<state.spent || budget<=0);
+  const plan=readAssessmentPlan();
+  $('#recommendedBudget').textContent=t('planPerMonth',{amount:currency(Math.max(0,plan.budget),true)});
+  $('#assessmentSave').disabled=!plan.valid;
+  $('.plan-preview').classList.toggle('invalid',!plan.valid||plan.budget<0);
+  const notice=$('#assessmentNotice');
+  if(notice){
+    const copy=currentLang==='hr'?{
+      invalid:'Unesite valjane nenegativne iznose i odaberite sigurnosnu rezervu.',
+      commitments:'Obveze, štednja i rezerva prelaze planirani prihod. Plan možete spremiti, ali za kategorije trenutačno ostaje 0 €.',
+      spent:'Nova ograničenja niža su od već zabilježene potrošnje. Plan možete spremiti; postojeće transakcije ostaju nepromijenjene.'
+    }:{
+      invalid:'Enter valid non-negative amounts and choose a safety reserve.',
+      commitments:'Bills, savings and reserve exceed planned income. You can save this plan, but category budgets will be zero for now.',
+      spent:'The new limits are below spending already recorded. You can save this plan; existing transactions remain unchanged.'
+    };
+    notice.textContent=!plan.valid?copy.invalid:plan.budget<0?copy.commitments:plan.budget<state.spent?copy.spent:'';
+    notice.hidden=!notice.textContent;
+  }
+  return plan;
 }
 
 function scaleCategoryLimits(newBudget) {
-  const totalSpent=state.categories.reduce((sum,cat)=>sum+cat.spent,0);
-  const totalHeadroom=state.categories.reduce((sum,cat)=>sum+Math.max(0,cat.limit-cat.spent),0);
-  if(totalHeadroom<=0)return;
-  const availableHeadroom=Math.max(0,newBudget-totalSpent);
-  state.categories.forEach(cat=>{const share=Math.max(0,cat.limit-cat.spent)/totalHeadroom;cat.limit=Math.round(cat.spent+availableHeadroom*share);});
+  const categories=state.categories||[];
+  if(!categories.length)return;
+  const targetCents=Math.max(0,Math.round(newBudget*100));
+  const weights=categories.map(cat=>Math.max(0,Number(cat.limit)||0));
+  const totalWeight=weights.reduce((sum,value)=>sum+value,0);
+  const shares=categories.map((cat,index)=>{const exact=targetCents*(totalWeight?weights[index]/totalWeight:1/categories.length);return {cat,index,cents:Math.floor(exact),remainder:exact-Math.floor(exact)};});
+  const remaining=targetCents-shares.reduce((sum,item)=>sum+item.cents,0);
+  shares.sort((a,b)=>b.remainder-a.remainder||a.index-b.index).forEach((item,index)=>{item.cat.limit=(item.cents+(index<remaining?1:0))/100;});
+}
+
+function applyAssessmentPlan(event) {
+  event.preventDefault();
+  const plan=updateRecommendation();
+  if(!plan.valid){showToast(currentLang==='hr'?'Provjerite iznose i odaberite rezervu.':'Check the amounts and choose a reserve.');return;}
+  // Planning assumptions never create transactions or overwrite actual savings balances.
+  state.income=plan.income;state.bills=plan.bills;state.savingsTarget=plan.savings;state.guard=plan.guard;
+  scaleCategoryLimits(Math.max(0,plan.budget));
+  save('plan-update');closeModal($('#assessmentModal'));showToast(t('planReady'));
 }
 
 function openBudgetEditor(id=null) {
@@ -1614,10 +1635,10 @@ $('#transactionForm').addEventListener('submit',event=>{
 });
 $('#deleteTransaction').addEventListener('click',()=>{const existing=state.transactions.find(tx=>String(tx.id)===String(editingTransactionId));if(!existing)return;const type=MerCore.transactionType(existing);MerAccounting.undoRoundUp(state,existing);state.transactions=state.transactions.filter(tx=>String(tx.id)!==String(editingTransactionId));save('transaction-delete');closeModal($('#transactionModal'));showToast(t(type==='income'?'incomeDeleted':'expenseDeleted'));editingTransactionId=null;});
 
-$('#assessmentNext').addEventListener('click',()=>{const active=$(`.assessment-step[data-step="${assessmentStep}"]`);const inputs=$$('input[required]',active);if(!inputs.every(input=>input.reportValidity()))return;if(assessmentStep===1&&Number($('#incomeInput').value)<=Number($('#billsInput').value)){showToast(t('planInvalid'));return;}setAssessmentStep(Math.min(3,assessmentStep+1));});
+$('#assessmentNext').addEventListener('click',()=>{const active=$(`.assessment-step[data-step="${assessmentStep}"]`);const inputs=$$('input[required]',active);if(!inputs.every(input=>input.reportValidity()))return;setAssessmentStep(Math.min(3,assessmentStep+1));});
 $('#assessmentBack').addEventListener('click',()=>setAssessmentStep(Math.max(1,assessmentStep-1)));
-$$('#assessmentForm input').forEach(input=>input.addEventListener('input',()=>{if(assessmentStep===3)updateRecommendation();}));
-$('#assessmentForm').addEventListener('submit',event=>{event.preventDefault();const income=Number($('#incomeInput').value),bills=Number($('#billsInput').value),savings=Number($('#savingsInput').value),balance=Number($('#savingsBalanceInput').value),guard=Number($('input[name="guard"]:checked').value);const newBudget=income-bills-savings-income*guard;if(newBudget<state.spent||newBudget<=0){showToast(t('planInvalid'));return;}state.income=income;state.bills=bills;state.savingsTarget=savings;state.guard=guard;const primaryGoal=state.goalBuckets?.find(goal=>goal.primary)||state.goalBuckets?.[0];if(primaryGoal)primaryGoal.current=balance;const allocated=state.categories.reduce((sum,cat)=>sum+cat.limit,0);if(allocated>newBudget)scaleCategoryLimits(newBudget);save('plan-update');closeModal($('#assessmentModal'));showToast(t('planReady'));});
+$$('#assessmentForm input').forEach(input=>['input','change'].forEach(eventName=>input.addEventListener(eventName,()=>{if(assessmentStep===3)updateRecommendation();})));
+$('#assessmentForm').addEventListener('submit',applyAssessmentPlan);
 
 $('#budgetForm').addEventListener('submit',event=>{event.preventDefault();const cat=editingCategoryId?state.categories.find(item=>item.id===editingCategoryId):null,name=$('#categoryNameInput').value.trim(),value=Number($('#budgetLimitInput').value),plan=getPlan(),otherAllocated=state.categories.reduce((sum,item)=>sum+item.limit,0)-(cat?.limit||0),validation=MerCore.validateCategoryLimit(value,cat?.spent||0,otherAllocated,plan.monthlyBudget);if(!name){showToast(t('categoryNameRequired'));return;}if(state.categories.some(item=>item.id!==editingCategoryId&&categoryName(item.id).toLocaleLowerCase(locale())===name.toLocaleLowerCase(locale()))){showToast(t('duplicateCategory'));return;}if(!validation.valid){showToast(t(validation.reason==='below-spent'?'limitTooLow':'allocationTooHigh'));return;}if(cat){if(cat.isCustom){cat.name=name;cat.icon=$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase();}cat.limit=value;}else{state.categories.push({id:uniqueId('custom-category'),name,icon:$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase(),spent:0,limit:value,isCustom:true});}save(cat?'category-edit':'category-add');closeModal($('#budgetModal'));showToast(t(cat?'categoryUpdated':'categoryCreated'));if(returnToBudgetManager){returnToBudgetManager=false;openBudgetCategoryManager();}});
 $('#deleteCategory').addEventListener('click',()=>{const cat=state.categories.find(item=>item.id===editingCategoryId);if(!cat?.isCustom)return;const fallback=fallbackCategory(cat.id);fallback.spent+=cat.spent;fallback.limit+=cat.limit;state.transactions.forEach(tx=>{if(tx.category===cat.id)tx.category=fallback.id;});(state.recurring||[]).forEach(rule=>{if(rule.category===cat.id)rule.category=fallback.id;});state.categories=state.categories.filter(item=>item.id!==cat.id);save('category-delete');closeModal($('#budgetModal'));showToast(t('categoryDeleted'));editingCategoryId=null;if(returnToBudgetManager){returnToBudgetManager=false;openBudgetCategoryManager();}});

@@ -10,24 +10,32 @@
   });
   const DEFAULT_STEPS = Object.freeze([
     {
-      id:'overview', view:'overview', target:'#overviewView .summary-card.balance-card', mobileTarget:'#overviewView .summary-card.balance-card', contextTarget:'.nav-item[data-view="overview"]', placement:'bottom', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody',
-      copy:copy('Vaš financijski pregled', 'Ovdje u svakom trenutku vidite koliko novca imate na raspolaganju i brzi pregled mjesečne potrošnje.', 'Your financial overview', 'See how much money you have available and a quick view of monthly spending at any time.')
+      id:'overview', view:'overview', target:'#overviewView .summary-grid', mobileTarget:'#overviewView .summary-grid', contextTarget:'.nav-item[data-view="overview"]', placement:'bottom', titleKey:'onboardingOverviewTitle', bodyKey:'onboardingOverviewBody',
+      copy:copy('Glavni pregled', 'Ovdje u svakom trenutku vidite koliko novca imate na raspolaganju i brzi pregled mjesečne potrošnje.', 'Your overview', 'See how much money you have available and a quick view of monthly spending at any time.')
     },
     {
       id:'transaction', view:'overview', target:'#sidebar .sidebar-transaction-button[data-open-transaction]', mobileTarget:'#sidebar .sidebar-transaction-button[data-open-transaction]', contextTarget:'.nav-item[data-view="overview"]', placement:'right', openSidebar:true, titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody',
-      copy:copy('Unos prihoda i troškova', 'Jednim klikom možete ručno unijeti novi trošak ili prihod, ili uvoziti izvod iz vaše banke.', 'Income and expense entry', 'Add a new expense or income in one click, or import a statement from your bank.')
+      copy:copy('Unos transakcija', 'Jednim klikom možete ručno unijeti novi trošak ili prihod, ili uvoziti izvod iz vaše banke.', 'Add transactions', 'Add a new expense or income in one click, or import a statement from your bank.')
     },
     {
-      id:'budgets', view:'budgets', target:'#budgetsView .table-panel .panel-heading', mobileTarget:'#budgetsView .table-panel .panel-heading', contextTarget:'.nav-item[data-view="budgets"]', placement:'bottom', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody',
-      copy:copy('Mesečni plan i limiti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.', 'Monthly plan and limits', 'Set spending limits by category (food, transport, utilities) to make saving easier.')
+      id:'budgets', view:'budgets', target:'#budgetsView .table-panel', mobileTarget:'#budgetsView .table-panel', contextTarget:'.nav-item[data-view="budgets"]', placement:'top', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody',
+      copy:copy('Mesečni budžeti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.', 'Monthly budgets', 'Set spending limits by category (food, transport, utilities) to make saving easier.')
     },
     {
-      id:'savings', view:'savings', target:'#savingsView .savings-hero', mobileTarget:'#savingsView .savings-hero-head', contextTarget:'.nav-item[data-view="savings"]', placement:'bottom', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody',
+      id:'savings', view:'savings', target:'#savingsView .goal-buckets-panel', mobileTarget:'#savingsView .goal-buckets-panel', contextTarget:'.nav-item[data-view="savings"]', placement:'top', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody',
       copy:copy('Ciljevi štednje', 'Pratite napredak svojih fondova za hitne slučajeve i postavite automatska pravila zaokruživanja.', 'Savings goals', 'Track progress toward emergency funds and set automatic round-up rules.')
     },
     {
-      id:'insights', view:'insights', target:'#insightsView .monthly-bars-card', mobileTarget:'#insightsView .monthly-bars-card .panel-heading', contextTarget:'.nav-item[data-view="insights"]', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody',
-      copy:copy('Izvješća i analitika', 'Pregledajte kretanje prihoda i troškova po razdobljima te prilagodite postavke profila u bilo kojem trenutku.', 'Reports and analytics', 'Review income and expense trends by period and adjust profile settings at any time.')
+      id:'insights', view:'insights', target:'#insightsView .monthly-bars-card', mobileTarget:'#insightsView .monthly-bars-card', contextTarget:'.nav-item[data-view="insights"]', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody',
+      copy:copy('Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.', 'Analytics and reports', 'Compare income and expenses by period. Choose a day, a month, a year or your full history.')
+    },
+    {
+      id:'settings', view:'insights', target:'#openSettings', mobileTarget:'#openSettings', contextTarget:'.nav-item[data-view="insights"]', placement:'right', openSidebar:true, titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody',
+      copy:copy('Korisničke postavke', 'Otvorite izbornik računa za temu, jezik i sigurnost. Ovdje možete i zamijeniti Osobni i Poslovni profil.', 'User settings', 'Open the account menu to change theme, language and security. You can also switch between Personal and Business profiles here.')
+    },
+    {
+      id:'help', view:'insights', target:'#openHelpAssistant', mobileTarget:'#openHelpAssistant', contextTarget:'.nav-item[data-view="insights"]', placement:'right', openSidebar:true, titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
+      copy:copy('Pomoć i AI Asistent', 'Ovdje pronađite odgovore, ponovno pokrenite vodič ili pitajte AI asistenta za objašnjenje svojih financija.', 'Help and AI Assistant', 'Find answers, restart this tour or ask the AI assistant to explain your finances at any time.')
     }
   ].map(step => Object.freeze(step)));
 
@@ -112,8 +120,29 @@
     const fittingSides = new Set(order.filter(side => spaces[side] >= required(side)));
     const naturalCandidate = candidates.find(candidate => fittingSides.has(candidate.placement) && candidate.overlapArea === 0)
       || candidates.find(candidate => candidate.overlapArea === 0);
-    const selected = naturalCandidate
+    let selected = naturalCandidate
       || [...candidates].sort((a,b) => a.overlapArea - b.overlapArea || spaces[b.placement] - spaces[a.placement])[0];
+    // A long card may exceed a phone's viewport. Keep its visible content lit and
+    // reserve a separate lane for the natural-height tooltip instead of covering
+    // the card or shrinking its text. The actual target remains the full card.
+    if (options.allowPartialTarget && !naturalCandidate && spotlight.height > 120) {
+      const bottomPopoverTop = viewportBottom - edge - popoverHeight;
+      const topSliceBottom = Math.min(spotlight.top + spotlight.height, bottomPopoverTop - gap);
+      const topSliceHeight = topSliceBottom - spotlight.top;
+      const topPopoverBottom = viewport.top + edge + popoverHeight;
+      const bottomSliceTop = Math.max(spotlight.top, topPopoverBottom + gap);
+      const bottomSliceHeight = spotlight.top + spotlight.height - bottomSliceTop;
+      if (topSliceHeight >= 80) {
+        spotlight.height = topSliceHeight;
+        spotlight.partial = true;
+        selected = { ...selected, left:clamp(spotlight.left, viewport.left + edge, viewportRight - edge - popoverWidth), top:bottomPopoverTop, placement:'bottom', overlapArea:0 };
+      } else if (bottomSliceHeight >= 80) {
+        spotlight.top = bottomSliceTop;
+        spotlight.height = bottomSliceHeight;
+        spotlight.partial = true;
+        selected = { ...selected, left:clamp(spotlight.left, viewport.left + edge, viewportRight - edge - popoverWidth), top:viewport.top + edge, placement:'top', overlapArea:0 };
+      }
+    }
     return Object.freeze({
       spotlight:Object.freeze(spotlight),
       popover:Object.freeze({

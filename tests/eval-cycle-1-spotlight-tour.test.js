@@ -14,7 +14,7 @@ const ui = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 test('evaluation cycle 1: onboarding steps describe real spotlight targets in a deliberate order', () => {
   assert.deepEqual(
     MerOnboarding.DEFAULT_STEPS.map(step => step.id),
-    ['overview', 'transaction', 'budgets', 'savings', 'insights']
+    ['overview', 'transaction', 'budgets', 'savings', 'insights', 'settings', 'help']
   );
   MerOnboarding.DEFAULT_STEPS.forEach(step => {
     assert.equal(typeof step.target, 'string', `${step.id} has a target selector`);
@@ -25,7 +25,7 @@ test('evaluation cycle 1: onboarding steps describe real spotlight targets in a 
   assert.equal(transactionStep.target, '#sidebar .sidebar-transaction-button[data-open-transaction]');
   assert.equal(transactionStep.mobileTarget, '#sidebar .sidebar-transaction-button[data-open-transaction]');
   assert.equal(transactionStep.openSidebar, true, 'the sidebar is opened before the primary action is measured');
-  assert.equal(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'overview').target, '#overviewView .summary-card.balance-card');
+  assert.equal(MerOnboarding.DEFAULT_STEPS.find(step => step.id === 'overview').target, '#overviewView .summary-grid');
   for (const view of ['overview', 'budgets', 'savings', 'insights']) {
     assert.equal(MerOnboarding.DEFAULT_STEPS.find(step => step.id === view).contextTarget, `.nav-item[data-view="${view}"]`);
   }

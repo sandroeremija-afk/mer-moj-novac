@@ -545,6 +545,8 @@ input[type="number"]::-webkit-inner-spin-button { margin:0; -webkit-appearance:n
 .timeframe-switch { width: fit-content; display: flex; gap: 4px; margin: -6px 0 19px; padding: 4px; border: 1px solid var(--line); border-radius: 9px; background: var(--canvas); }
 .insights-kpis { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 13px; margin-bottom: 13px; }
 .income-value, .transaction-amount.income { color: var(--green-dark) !important; }
+.positive-value { color: var(--green-dark); }
+.balance-card .positive-value { color: #c5ee98; }
 .negative-value { color: var(--red) !important; }
 .category-icon.income-category { color: #2f6b12; background: var(--green-soft); }
 .insight-widget-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 13px; margin-bottom: 13px; }
@@ -2155,7 +2157,7 @@ select:not([multiple]) {
 .onboarding-popover-close svg { width:18px; }
 .onboarding-progress-row { display:flex; align-items:center; gap:11px; margin-right:34px; color:var(--ink); font-size:.875rem; font-weight:700; }
 .onboarding-progress-track { height:4px; flex:1; overflow:hidden; border-radius:999px; background:var(--line); }
-.onboarding-progress-track i { display:block; width:20%; height:100%; border-radius:inherit; background:var(--blue); transition:width .5s ease-in-out; }
+.onboarding-progress-track i { display:block; width:calc(100% / 7); height:100%; border-radius:inherit; background:var(--blue); transition:width .5s ease-in-out; }
 .onboarding-popover h2 { margin-top:18px; padding-right:8px; font-size:1.375rem; line-height:1.25; }
 .onboarding-popover > p:not(.overline) { margin:10px 0 0; color:var(--ink); font-size:1rem; line-height:1.6; }
 .onboarding-tip { display:flex; align-items:flex-start; gap:9px; margin:16px 0 18px; padding:12px; border:1px solid color-mix(in srgb,var(--blue) 34%,var(--line)); border-radius:9px; color:var(--ink); background:var(--blue-soft); font-size:.9375rem; line-height:1.55; }

@@ -41,9 +41,9 @@ test('evaluation cycle 2: popover has no visible uppercase context prefix or int
   assert.doesNotMatch(css, /\.onboarding-popover\s*\{[^}]*overflow-y\s*:\s*(?:auto|scroll)/);
 });
 
-test('evaluation cycle 2: five-step static state keeps senior-friendly controls', () => {
-  assert.match(html, /id="onboardingProgress"[^>]*>Korak 1 od 5<\/span>/);
-  assert.match(css, /\.onboarding-progress-track i\s*\{[^}]*width:20%/);
+test('evaluation cycle 2: seven-step static state keeps senior-friendly controls', () => {
+  assert.match(html, /id="onboardingProgress"[^>]*>Korak 1 od 7<\/span>/);
+  assert.match(css, /\.onboarding-progress-track i\s*\{[^}]*width:calc\(100% \/ 7\)/);
   assert.match(css, /\.onboarding-actions button \{[^}]*min-height:44px;[^}]*font-size:1rem;/);
   assert.match(css, /\.onboarding-popover h2 \{[^}]*font-size:1\.375rem/);
   assert.match(css, /\.onboarding-popover > p:not\(\.overline\) \{[^}]*font-size:1rem;[^}]*line-height:1\.6/);

@@ -368,13 +368,18 @@
 
   function resetDemoWorkspace() {
     if(!window.MerAuthProvider?.currentSession?.()?.demo){showToast(t('demoResetUnavailable'));return false;}
-    appState.accounts.personal=normalizeProfile(structuredClone(personalDefaults),personalDefaults);
-    appState.accounts.business=normalizeProfile(structuredClone(businessDefaults),businessDefaults);
+    const freshReferenceDate=dateInTimezone(new Date(),appState.settings.timezone);
+    const freshDemoProfiles=MerDemoData.createProfiles(freshReferenceDate);
+    appState.accounts.personal=normalizeProfile(freshDemoProfiles.personal,personalDefaults);
+    appState.accounts.business=normalizeProfile(freshDemoProfiles.business,businessDefaults);
     appState.bankConnections=[];
     appState.activeAccount='personal';
     state=appState.accounts.personal;
+    appReferenceDate=freshReferenceDate;
+    activeMonth=Number(freshReferenceDate.slice(5,7))-1;
     Object.values(appState.accounts).forEach(alignSavingsHistory);
     importStage=null;pendingBulkOverride=null;lastBulkOverride=null;activityReviewOnly=false;
+    reactiveStore.setReferenceDate(freshReferenceDate);
     save('demo-reset');
     showView('overview');
     showToast(t('demoResetComplete'));

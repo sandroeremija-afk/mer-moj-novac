@@ -6,7 +6,8 @@
     onboardingOverviewTitle:'Zaštita budžeta u stvarnom vremenu', onboardingOverviewBody:'Ovdje vidite koliko danas možete sigurno potrošiti.', onboardingOverviewTip:'Novi prihod odmah povećava raspoloživi iznos.',
     onboardingBudgetsTitle:'Smjernice, ne zabrane', onboardingBudgetsBody:'Postavite mjesečni limit za svaku kategoriju i pratite potrošnju bojama.', onboardingBudgetsTip:'Žuto upozorenje pojavljuje se na 80%, a crveno na 100%.',
     onboardingSavingsTitle:'Ciljevi s jasnim sljedećim korakom', onboardingSavingsBody:'Ovdje pratite fond, ciljeve, rokove i zaokruživanje sitniša.', onboardingSavingsTip:'Zaokruživanje možete usmjeriti u jedan aktivni cilj.',
-    onboardingInsightsTitle:'Pretvorite brojke u odluke', onboardingInsightsBody:'Usporedite prihode, troškove i štednju kroz odabrano razdoblje.', onboardingInsightsTip:'Odaberite dan, mjesec, godinu ili sveukupni prikaz.'
+    onboardingInsightsTitle:'Pretvorite brojke u odluke', onboardingInsightsBody:'Usporedite prihode, troškove i štednju kroz odabrano razdoblje.', onboardingInsightsTip:'Odaberite dan, mjesec, godinu ili sveukupni prikaz.',
+    onboardingSettingsTip:'Podaci Osobnog i Poslovnog profila ostaju odvojeni.', onboardingHelpTip:'AI odgovor uvijek provjerite prije važne financijske odluke.'
   });
   Object.assign(translations.en, {
     helpAssistant:'Help & AI Assistant', helpAssistantHint:'Guide and money questions',
@@ -15,7 +16,8 @@
     onboardingOverviewTitle:'Real-time Budget Protection', onboardingOverviewBody:'This card combines monthly income and expenses into your safe-to-spend amount and daily pace.', onboardingOverviewTip:'New income immediately increases both safe and daily available amounts.',
     onboardingBudgetsTitle:'Guardrails, not roadblocks', onboardingBudgetsBody:'Set monthly category limits and follow green, yellow and red spending thresholds.', onboardingBudgetsTip:'Warnings appear at 80% and 100% of a category limit.',
     onboardingSavingsTitle:'Goals with a clear next step', onboardingSavingsBody:'Your fund, goal buckets, deadlines and round-ups show exactly how close you are to each goal.', onboardingSavingsTip:'Round-ups can be routed to one active savings goal.',
-    onboardingInsightsTitle:'Turn numbers into decisions', onboardingInsightsBody:'Insights connects net total, spending mix, merchants, monthly trends and savings rate.', onboardingInsightsTip:'Choose daily, monthly, year-to-date or all-time analysis.'
+    onboardingInsightsTitle:'Turn numbers into decisions', onboardingInsightsBody:'Insights connects net total, spending mix, merchants, monthly trends and savings rate.', onboardingInsightsTip:'Choose daily, monthly, year-to-date or all-time analysis.',
+    onboardingSettingsTip:'Personal and Business profile data stays separate.', onboardingHelpTip:'Always verify AI answers before important financial decisions.'
   });
   applyStaticTranslations();
 
@@ -111,12 +113,13 @@
     };
   }
 
-  function spotlightLayout(targetRect, popoverSize, viewport) {
+  function spotlightLayout(targetRect, popoverSize, viewport, allowPartialTarget = false) {
     return MerOnboardingCore.computeSpotlightLayout({
       targetRect,
       popoverSize,
       viewport,
       preferredPlacement:controller?.snapshot().step.placement,
+      allowPartialTarget,
       padding:8,
       gap:14,
       edge:12
@@ -201,9 +204,11 @@
       popoverSize = { width:Math.min(compactRect.width || 340, Math.max(1, viewport.width - 24)), height:Math.min(popover.scrollHeight || compactRect.height || 200, Math.max(1, viewport.height - 24)) };
       layout = spotlightLayout(targetRect, popoverSize, viewport);
     }
+    if (layout.popover.overlapsTarget) layout = spotlightLayout(targetRect, popoverSize, viewport, true);
     Object.assign(spotlight.style, {
       left:`${layout.spotlight.left}px`, top:`${layout.spotlight.top}px`, width:`${layout.spotlight.width}px`, height:`${layout.spotlight.height}px`
     });
+    spotlight.dataset.partialTarget = String(Boolean(layout.spotlight.partial));
     Object.assign(popover.style, {
       left:`${layout.popover.left}px`,
       top:`${layout.popover.top}px`,

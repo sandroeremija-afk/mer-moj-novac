@@ -6,7 +6,7 @@ const { minify } = require('terser');
 
 const root = path.resolve(__dirname, '..');
 const output = path.join(root, 'dist');
-const jsFiles = ['runtime.js','logo.js','core.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','layout-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','layout-ui.js','responsive-ui.js','auth-ui.js'];
+const jsFiles = ['runtime.js','logo.js','core.js','demo-data.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','layout-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','layout-ui.js','responsive-ui.js','auth-ui.js'];
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source

@@ -8,6 +8,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+const demo = require('../demo-data.js');
 
 function accountOption(accountId) {
   const match = html.match(new RegExp(`<button[^>]*class="[^"]*account-option[^"]*"[^>]*data-account="${accountId}"[^>]*>([\\s\\S]*?)<\\/button>`));
@@ -35,6 +36,9 @@ test('evaluation cycle 1: expanded switcher exposes exact Personal and Business 
 });
 
 test('evaluation cycle 1: persisted profile defaults use the same presentation labels as the switcher', () => {
-  assert.match(app, /const personalDefaults\s*=\s*\{[\s\S]*?accountName:'Moj eRačun',[\s\S]*?accountLabel:'personalAccount',[\s\S]*?initials:'ME'/);
-  assert.match(app, /const businessDefaults\s*=\s*\{[\s\S]*?accountName:'Elektronički računi d\.o\.o\.',[\s\S]*?accountLabel:'businessAccount',[\s\S]*?initials:'E(?:R|L)'/);
+  const profiles = demo.createProfiles('2026-09-04');
+  assert.deepEqual([profiles.personal.accountName, profiles.personal.accountLabel, profiles.personal.initials], ['Moj eRačun', 'personalAccount', 'ME']);
+  assert.deepEqual([profiles.business.accountName, profiles.business.accountLabel, profiles.business.initials], ['Elektronički računi d.o.o.', 'businessAccount', 'ER']);
+  assert.match(app, /const personalDefaults = initialDemoProfiles\.personal/);
+  assert.match(app, /const businessDefaults = initialDemoProfiles\.business/);
 });
