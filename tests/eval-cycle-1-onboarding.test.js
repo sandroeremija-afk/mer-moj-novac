@@ -57,7 +57,7 @@ test('evaluation cycle 1: a first login launches once, walks in order and persis
   assert.ok(view.record.launchedAt);
   assert.equal(firstSession.shouldAutoStart(), false, 'opening the tour immediately consumes the one-time auto launch');
 
-  for (const expected of ['transaction', 'budgets', 'savings', 'insights', 'settings', 'help']) {
+  for (const expected of ['transaction', 'budgets', 'savings', 'insights', 'settings', 'settings', 'settings', 'help']) {
     timer.tick();
     view = firstSession.next();
     assert.equal(view.stepId, expected);

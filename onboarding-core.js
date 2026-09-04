@@ -26,16 +26,30 @@
       copy:copy('Ciljevi štednje', 'Pratite napredak svojih fondova za hitne slučajeve i postavite automatska pravila zaokruživanja.', 'Savings goals', 'Track progress toward emergency funds and set automatic round-up rules.')
     },
     {
-      id:'insights', view:'insights', target:'#insightsView .monthly-bars-card', mobileTarget:'#insightsView .monthly-bars-card', contextTarget:'.nav-item[data-view="insights"]', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody',
+      id:'insights', view:'insights', target:'#insightsView', mobileTarget:'#insightsView', contextTarget:'.nav-item[data-view="insights"]', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody',
       copy:copy('Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.', 'Analytics and reports', 'Compare income and expenses by period. Choose a day, a month, a year or your full history.')
     },
     {
-      id:'settings', view:'insights', target:'#openSettings', mobileTarget:'#openSettings', contextTarget:'.nav-item[data-view="insights"]', placement:'right', openSidebar:true, titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody',
-      copy:copy('Korisničke postavke', 'Otvorite izbornik računa za temu, jezik i sigurnost. Ovdje možete i zamijeniti Osobni i Poslovni profil.', 'User settings', 'Open the account menu to change theme, language and security. You can also switch between Personal and Business profiles here.')
+      id:'settings', surface:'settings', target:'#settingsTourPreferences', mobileTarget:'#settingsTourPreferences', settingsTab:'general', placement:'left', titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody',
+      copy:copy('Korisničke postavke', 'Odaberite jezik, svijetlu ili tamnu temu te raspored nadzorne ploče. U sljedećem dijelu pogledajte sigurnost računa.', 'User settings', 'Choose your language, light or dark theme and dashboard layout. Next, explore account security.'),
+      substeps:Object.freeze([
+        Object.freeze({
+          id:'general', target:'#settingsTourPreferences', mobileTarget:'#settingsTourPreferences', settingsTab:'general',
+          copy:copy('Jezik, tema i raspored', 'Ovdje birate jezik, svijetlu ili tamnu temu i raspored nadzorne ploče. Vodič ne mijenja vaše postavke.', 'Language, theme and layout', 'Choose your language, light or dark theme and dashboard layout here. The tour does not change your settings.')
+        }),
+        Object.freeze({
+          id:'password', target:'#changePasswordForm', mobileTarget:'#changePasswordForm', settingsTab:'security',
+          copy:copy('Promjena lozinke', 'Za novu lozinku unesite trenutačnu lozinku, zatim novu lozinku dvaput. Tijekom vodiča ništa ne morate unositi.', 'Change your password', 'To change your password, enter your current password and the new one twice. You do not need to enter anything during this tour.')
+        }),
+        Object.freeze({
+          id:'mfa', target:'#settingsTourMfa', mobileTarget:'#settingsTourMfa', settingsTab:'security',
+          copy:copy('Dodatna zaštita računa', 'Uključite dvostruku autentifikaciju aplikacijom za potvrdu identiteta. Kodove za oporavak spremite na sigurno mjesto.', 'Extra account protection', 'Enable two-factor authentication with an authenticator app. Keep your recovery codes in a safe place.')
+        })
+      ])
     },
     {
-      id:'help', view:'insights', target:'#openHelpAssistant', mobileTarget:'#openHelpAssistant', contextTarget:'.nav-item[data-view="insights"]', placement:'right', openSidebar:true, titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
-      copy:copy('Pomoć i AI Asistent', 'Ovdje pronađite odgovore, ponovno pokrenite vodič ili pitajte AI asistenta za objašnjenje svojih financija.', 'Help and AI Assistant', 'Find answers, restart this tour or ask the AI assistant to explain your finances at any time.')
+      id:'help', surface:'help', target:'#helpTourConversation', mobileTarget:'#helpTourConversation', placement:'left', titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
+      copy:copy('Pomoć i AI Asistent', 'Odaberite ponuđenu financijsku temu ili upišite pitanje u razgovor. Gemini AI može objasniti vaše financije kada je usluga povezana.', 'Help and AI Assistant', 'Choose a suggested financial topic or type a question in the chat. Gemini AI can explain your finances when the service is connected.')
     }
   ].map(step => Object.freeze(step)));
 
@@ -159,12 +173,19 @@
   function createOnboardingController(options = {}) {
     const storage = options.storage || globalThis.localStorage;
     const userId = cleanUserId(options.userId);
-    const steps = Object.freeze((Array.isArray(options.steps) && options.steps.length ? options.steps : DEFAULT_STEPS).map(step => Object.freeze(typeof step === 'string' ? { id:step, titleKey:`${step}Title`, bodyKey:`${step}Body` } : { ...step })));
+    const steps = Object.freeze((Array.isArray(options.steps) && options.steps.length ? options.steps : DEFAULT_STEPS).map(step => {
+      const definition = typeof step === 'string' ? { id:step, titleKey:`${step}Title`, bodyKey:`${step}Body` } : { ...step };
+      if (Array.isArray(definition.substeps)) definition.substeps = Object.freeze(definition.substeps.map(substep => Object.freeze({ ...substep })));
+      return Object.freeze(definition);
+    }));
     const key = `${STORAGE_PREFIX}${userId}`;
     const now = typeof options.now === 'function' ? options.now : Date.now;
     let memoryRecord = null;
     let open = false;
     const timestamp = () => new Date(now()).toISOString();
+    const stepIndex = value => clamp(Math.floor(finite(value)), 0, steps.length - 1);
+    const substepCount = index => Math.max(1, steps[index].substeps?.length || 0);
+    const substepIndex = (value, index) => clamp(Math.floor(finite(value)), 0, substepCount(index) - 1);
 
     function read() {
       try {
@@ -181,9 +202,12 @@
         launchedAt: current.launchedAt || null,
         completedAt: current.completedAt || null,
         dismissedAt: current.dismissedAt || null,
-        currentStep: Math.max(0, Math.min(steps.length - 1, Number(current.currentStep) || 0)),
+        currentStep: stepIndex(current.currentStep),
+        substepIndex: current.substepIndex || 0,
         ...patch
       };
+      next.currentStep = stepIndex(next.currentStep);
+      next.substepIndex = substepIndex(next.substepIndex, next.currentStep);
       memoryRecord = next;
       try { storage?.setItem?.(key, JSON.stringify(next)); } catch { /* The in-memory record remains authoritative for this session. */ }
       return next;
@@ -191,7 +215,8 @@
 
     function snapshot() {
       const record = read();
-      const currentStep = Math.max(0, Math.min(steps.length - 1, Number(record.currentStep) || 0));
+      const currentStep = stepIndex(record.currentStep);
+      const currentSubstep = substepIndex(record.substepIndex, currentStep);
       return Object.freeze({
         key,
         userId,
@@ -201,12 +226,15 @@
         stepIndex: currentStep,
         stepId: steps[currentStep].id,
         step: steps[currentStep],
+        substepIndex: currentSubstep,
+        substepCount: substepCount(currentStep),
+        substep: steps[currentStep].substeps?.[currentSubstep] || null,
         launchedAt: record.launchedAt || null,
         completedAt: record.completedAt || null,
         dismissedAt: record.dismissedAt || null,
         complete: Boolean(record.completedAt),
         dismissed: Boolean(record.dismissedAt),
-        record:Object.freeze({ launchedAt:record.launchedAt || null, completedAt:record.completedAt || null, dismissedAt:record.dismissedAt || null })
+        record:Object.freeze({ launchedAt:record.launchedAt || null, completedAt:record.completedAt || null, dismissedAt:record.dismissedAt || null, currentStep, substepIndex:currentSubstep })
       });
     }
 
@@ -219,6 +247,7 @@
       write({
         launchedAt: current.launchedAt || timestamp(),
         currentStep: force ? 0 : current.currentStep,
+        substepIndex: force ? 0 : current.substepIndex,
         dismissedAt: current.dismissedAt
       });
       return snapshot();
@@ -227,15 +256,31 @@
     function next() {
       const current = snapshot();
       if (!open) return current;
+      if (current.substepIndex < current.substepCount - 1) {
+        write({ substepIndex: current.substepIndex + 1 });
+        return snapshot();
+      }
       if (current.currentStep >= steps.length - 1) return current;
-      write({ currentStep: current.currentStep + 1 });
+      write({ currentStep: current.currentStep + 1, substepIndex:0 });
       return snapshot();
     }
 
     function previous() {
       const current = snapshot();
       if (!open) return current;
-      write({ currentStep: Math.max(0, current.currentStep - 1) });
+      if (current.substepIndex > 0) {
+        write({ substepIndex: current.substepIndex - 1 });
+      } else {
+        const previousStep = Math.max(0, current.currentStep - 1);
+        write({ currentStep:previousStep, substepIndex:current.currentStep > 0 ? substepCount(previousStep) - 1 : 0 });
+      }
+      return snapshot();
+    }
+
+    function selectSubstep(index) {
+      const current = snapshot();
+      if (!open) return current;
+      write({ substepIndex:substepIndex(index, current.currentStep) });
       return snapshot();
     }
 
@@ -249,11 +294,11 @@
     function complete() {
       const completedAt = timestamp();
       open = false;
-      write({ launchedAt: snapshot().launchedAt || completedAt, completedAt, dismissedAt: null, currentStep: steps.length - 1 });
+      write({ launchedAt: snapshot().launchedAt || completedAt, completedAt, dismissedAt: null, currentStep: steps.length - 1, substepIndex:substepCount(steps.length - 1) - 1 });
       return snapshot();
     }
 
-    return Object.freeze({ key, steps, shouldAutoStart, start, next, previous, dismiss, complete, snapshot });
+    return Object.freeze({ key, steps, shouldAutoStart, start, next, previous, selectSubstep, dismiss, complete, snapshot });
   }
 
   return Object.freeze({ STORAGE_PREFIX, DEFAULT_STEPS, cleanUserId, computeSpotlightLayout, createOnboardingController });

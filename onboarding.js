@@ -40,6 +40,52 @@
   let startingView = 'overview';
   let startingSidebarOpen = false;
   let returnFocus = null;
+  const tourHomeParent = tour.parentNode;
+  const tourHomeNextSibling = tour.nextSibling;
+  let ownedDialog = null;
+  let effectiveStep = null;
+
+  function handleOwnedDialogClose(event) {
+    if (event.currentTarget === ownedDialog && !ownedDialog.open && !tour.hidden) dismissTour();
+  }
+
+  function releaseOwnedDialog() {
+    const dialog = ownedDialog;
+    if (!dialog) return;
+    ownedDialog = null;
+    dialog.removeEventListener('close', handleOwnedDialogClose);
+    // Leave the native top layer before closing it: never strand the guide in an inert dialog.
+    tourHomeParent.insertBefore(tour, tourHomeNextSibling?.parentNode === tourHomeParent ? tourHomeNextSibling : null);
+    dialog.classList.remove('tour-modal-host');
+    dialog.style.removeProperty('--tour-panel-top');
+    dialog.style.removeProperty('--tour-panel-height');
+    tour.classList.remove('is-hosted');
+    popover.setAttribute('aria-modal', 'true');
+    if (dialog.open) closeModal(dialog);
+    if (dialog.id === 'bankSettingsModal') window.MerSettings?.selectTab('general');
+  }
+
+  function prepareSurface(step) {
+    const dialog = step.surface === 'settings' ? $('#bankSettingsModal') : step.surface === 'help' ? $('#helpAssistantModal') : null;
+    if (ownedDialog !== dialog) releaseOwnedDialog();
+    if (!dialog) return;
+    if (ownedDialog !== dialog) {
+      dialog.classList.add('tour-modal-host');
+      if (step.surface === 'settings') window.MerSettings?.open(step.settingsTab);
+      else window.MerAssistantUi?.openHelp('assistant');
+      ownedDialog = dialog;
+      dialog.append(tour);
+      dialog.addEventListener('close', handleOwnedDialogClose);
+      tour.classList.add('is-hosted');
+      popover.setAttribute('aria-modal', 'false');
+    } else if (step.surface === 'settings') window.MerSettings?.selectTab(step.settingsTab);
+  }
+
+  function focusTourNext() {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (!tour.hidden) $('#onboardingNext').focus({ preventScroll:true });
+    }));
+  }
 
   function userIdFor(session) { return session?.userId || session?.email || 'anonymous'; }
   function createController(session) { return MerOnboardingCore.createOnboardingController({ storage:localStorage, userId:userIdFor(session) }); }
@@ -103,8 +149,10 @@
 
   function fitPopoverToViewport(viewport) {
     const availableHeight = Math.max(1, viewport.height - 24);
+    popover.classList.toggle('is-keyboard-compact', Boolean(ownedDialog) && viewport.width <= 1024 && viewport.height < 500);
     popover.classList.toggle('is-compact', mobileViewport() || viewport.height < 720);
     popover.classList.remove('is-condensed');
+    if (ownedDialog && viewport.width <= 1024) popover.classList.add('is-condensed');
     if (popover.scrollHeight > availableHeight) popover.classList.add('is-condensed');
     const rect = popover.getBoundingClientRect();
     return {
@@ -118,7 +166,7 @@
       targetRect,
       popoverSize,
       viewport,
-      preferredPlacement:controller?.snapshot().step.placement,
+      preferredPlacement:effectiveStep?.placement,
       allowPartialTarget,
       padding:8,
       gap:14,
@@ -194,10 +242,39 @@
   function positionSpotlight() {
     geometryFrame = 0;
     if (tour.hidden || !currentTarget?.isConnected) return;
-    const targetRect = currentTarget.getBoundingClientRect();
     const viewport = viewportBounds();
     let popoverSize = fitPopoverToViewport(viewport);
+    const splitSurface = ownedDialog && viewport.width <= 1024;
+    if (splitSurface) {
+      const panelTop = viewport.top + popoverSize.height + 26;
+      const topValue = `${panelTop}px`;
+      const changed = ownedDialog.style.getPropertyValue('--tour-panel-top') !== topValue;
+      ownedDialog.style.setProperty('--tour-panel-top', topValue);
+      ownedDialog.style.setProperty('--tour-panel-height', `${Math.max(1, viewport.top + viewport.height - panelTop - 12)}px`);
+      if (changed) scrollTarget().scrollIntoView({ behavior:'auto', block:'start', inline:'nearest' });
+    } else if (ownedDialog) {
+      ownedDialog.style.removeProperty('--tour-panel-top');
+      ownedDialog.style.removeProperty('--tour-panel-height');
+    }
+    let targetRect = currentTarget.getBoundingClientRect();
+    if (effectiveStep?.id === 'general') {
+      const language = $('#settingsLanguage').getBoundingClientRect();
+      const left = Math.min(targetRect.left, language.left), top = Math.min(targetRect.top, language.top - 24);
+      const right = Math.max(targetRect.right, language.right), bottom = Math.max(targetRect.bottom, language.bottom);
+      targetRect = {left, top, right, bottom, width:right-left, height:bottom-top};
+    }
+    if (splitSurface) {
+      const body = ownedDialog.querySelector('.settings-modal-body, .help-assistant-body').getBoundingClientRect();
+      const left = Math.max(targetRect.left, body.left), top = Math.max(targetRect.top, body.top);
+      const right = Math.min(targetRect.right, body.right), bottom = Math.min(targetRect.bottom, body.bottom);
+      targetRect = {left, top, right, bottom, width:Math.max(1,right-left), height:Math.max(1,bottom-top)};
+    }
     let layout = spotlightLayout(targetRect, popoverSize, viewport);
+    if (splitSurface) layout = { ...layout, popover:{ ...layout.popover, left:viewport.left + (viewport.width - popoverSize.width) / 2, top:viewport.top + 12, overlapsTarget:false } };
+    if (effectiveStep?.id === 'insights' && viewport.width > 1024) {
+      // The sidebar lane leaves the whole Insights canvas illuminated, not a cropped chart.
+      layout = { ...layout, popover:{ ...layout.popover, left:viewport.left + 12, top:viewport.top + viewport.height - popoverSize.height - 12, overlapsTarget:false } };
+    }
     if (layout.popover.overlapsTarget && !popover.classList.contains('is-condensed')) {
       popover.classList.add('is-condensed');
       const compactRect = popover.getBoundingClientRect();
@@ -222,9 +299,14 @@
     );
   }
 
+  function scrollTarget() {
+    return effectiveStep?.id === 'general' ? $('#settingsLanguage') : currentTarget;
+  }
+
   function previewStep(step) {
-    releaseTarget({ preserveContext:true });
+    releaseTarget({ preserveContext:Boolean(step.contextTarget) });
     tour.classList.add('is-positioning');
+    prepareSurface(step);
     if (step.view && typeof showView === 'function') showView(step.view);
     if (mobileViewport() && step.openSidebar) openSidebar();
     else if (mobileViewport()) closeSidebar();
@@ -235,7 +317,7 @@
     previousDescription = currentTarget.getAttribute('aria-describedby');
     currentTarget.setAttribute('aria-describedby', 'onboardingBody');
     currentTarget.classList.add('tour-target-active');
-    currentTarget.scrollIntoView({ behavior:reducedMotion()?'auto':'smooth', block:mobileViewport()?'start':'center', inline:'nearest' });
+    scrollTarget().scrollIntoView({ behavior:reducedMotion() || ownedDialog ? 'auto':'smooth', block:mobileViewport()?'start':'center', inline:'nearest' });
     resizeObserver = new ResizeObserver(scheduleGeometry);
     resizeObserver.observe(currentTarget);
     if (currentContextLink && currentContextLink !== currentTarget) resizeObserver.observe(currentContextLink);
@@ -244,18 +326,24 @@
       positionSpotlight();
       requestAnimationFrame(() => tour.classList.remove('is-positioning'));
     }, reducedMotion() ? 40 : (mobileViewport() ? 520 : 120));
+    focusTourNext();
   }
 
   function render(snapshot = controller?.snapshot()) {
     if (!snapshot) return;
-    const step = snapshot.step;
+    const step = { ...snapshot.step, ...snapshot.substep };
+    effectiveStep = step;
     const stepNumber = snapshot.stepIndex + 1;
+    tour.classList.toggle('is-dashboard-scope', snapshot.step.id === 'insights');
     popover.style.removeProperty('max-width');
     popover.classList.remove('is-compact', 'is-condensed');
     const localizedCopy = step.copy?.[currentLang];
     $('#onboardingTitle').textContent = localizedCopy?.title || t(step.titleKey);
     $('#onboardingBody').textContent = localizedCopy?.description || t(step.bodyKey);
-    $('#onboardingTip span').textContent = t(stepKey(step, 'Tip'));
+    $('#onboardingTip span').textContent = t(stepKey(snapshot.step, 'Tip'));
+    const substep = $('#onboardingSubstep');
+    substep.hidden = snapshot.substepCount < 2;
+    substep.textContent = snapshot.substepCount > 1 ? `${currentLang === 'hr' ? 'Postavke' : 'Settings'} · ${snapshot.substepIndex + 1} / ${snapshot.substepCount}` : '';
     $('#onboardingProgress').textContent = currentLang === 'hr' ? `Korak ${stepNumber} od ${controller.steps.length}` : `Step ${stepNumber} of ${controller.steps.length}`;
     $('#onboardingProgressBar').style.width = `${stepNumber / controller.steps.length * 100}%`;
     $('#onboardingPrevious').hidden = snapshot.stepIndex === 0;
@@ -280,7 +368,7 @@
   }
 
   function focusableInPopover() {
-    return [...popover.querySelectorAll('button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')].filter(element => !element.hidden && element.getClientRects().length);
+    return [...(ownedDialog || popover).querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')].filter(element => !element.hidden && element.getClientRects().length);
   }
 
   function handleTourKeydown(event) {
@@ -292,13 +380,14 @@
       return;
     }
     if (event.key !== 'Tab') return;
+    event.stopImmediatePropagation();
     const focusable = focusableInPopover();
     if (!focusable.length) { event.preventDefault();popover.focus({ preventScroll:true });return; }
     const first = focusable[0];
     const last = focusable.at(-1);
     if (event.shiftKey && document.activeElement === first) { event.preventDefault();last.focus({ preventScroll:true }); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault();first.focus({ preventScroll:true }); }
-    else if (!popover.contains(document.activeElement)) { event.preventDefault();first.focus({ preventScroll:true }); }
+    else if (!(ownedDialog || popover).contains(document.activeElement)) { event.preventDefault();first.focus({ preventScroll:true }); }
   }
 
   function closeTourSurface({ restoreView = false, focus = true } = {}) {
@@ -308,6 +397,7 @@
     geometryFrame = 0;
     removeTourEvents();
     tour.hidden = true;
+    releaseOwnedDialog();
     tour.classList.remove('is-positioning');
     appShell.inert = false;
     document.body.classList.remove('tour-active');
@@ -365,6 +455,15 @@
   });
   $('#onboardingSkip').addEventListener('click', dismissTour);
   $('#onboardingClose').addEventListener('click', dismissTour);
+  $$('[data-settings-tab]').forEach(button => button.addEventListener('click', () => {
+    if (tour.hidden || ownedDialog?.id !== 'bankSettingsModal') return;
+    const tab = button.dataset.settingsTab;
+    if (tab === 'automation') { dismissTour();return; }
+    render(controller.selectSubstep(tab === 'general' ? 0 : 1));
+  }));
+  $('#settingsLanguage')?.addEventListener('change', () => {
+    if (!tour.hidden) requestAnimationFrame(() => render(controller.snapshot()));
+  });
   window.MerOnboardingUi = Object.freeze({
     onSessionStarted(session) { pendingSession=session;if (!document.body.classList.contains('mfa-locked')) openTour(); },
     resume() { if (pendingSession && !document.body.classList.contains('mfa-locked')) openTour(); },

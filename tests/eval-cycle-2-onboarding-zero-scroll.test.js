@@ -33,7 +33,8 @@ test('evaluation cycle 2: module transitions retain the backdrop and expose side
   assert.doesNotMatch(preview, /tour\.hidden\s*=|spotlight\.hidden|spotlight\.style\.opacity/);
   assert.match(preview, /if \(step\.view && typeof showView === 'function'\) showView\(step\.view\)/);
   assert.match(preview, /if \(mobileViewport\(\) && step\.openSidebar\) openSidebar\(\)/);
-  MerOnboarding.DEFAULT_STEPS.forEach(step => assert.match(step.contextTarget, /^\.nav-item\[data-view="[a-z]+"\]$/));
+  MerOnboarding.DEFAULT_STEPS.filter(step => step.view).forEach(step => assert.match(step.contextTarget, /^\.nav-item\[data-view="[a-z]+"\]$/));
+  MerOnboarding.DEFAULT_STEPS.filter(step => step.surface).forEach(step => assert.equal(step.contextTarget, undefined));
 });
 
 test('evaluation cycle 2: full-height category cards retain a readable tooltip lane on phones', () => {

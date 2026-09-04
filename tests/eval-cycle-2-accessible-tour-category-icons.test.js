@@ -25,7 +25,7 @@ test('evaluation cycle 2: senior-friendly tour uses legible controls and Croatia
 test('evaluation cycle 2: spotlight and popover glide for 500ms with reduced-motion fallback', () => {
   assert.match(css, /\.onboarding-spotlight \{[\s\S]*?transition:left \.5s ease-in-out,top \.5s ease-in-out,width \.5s ease-in-out,height \.5s ease-in-out;/);
   assert.match(css, /\.onboarding-popover \{[\s\S]*?transition:left \.5s ease-in-out,top \.5s ease-in-out/);
-  assert.match(onboarding, /scrollIntoView\(\{ behavior:reducedMotion\(\)\?'auto':'smooth'/);
+  assert.match(onboarding, /scrollIntoView\(\{ behavior:reducedMotion\(\) \|\| ownedDialog \? 'auto':'smooth'/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.onboarding-spotlight,[\s\S]*?transition:none;/);
 });
 

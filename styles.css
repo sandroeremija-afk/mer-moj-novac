@@ -4084,6 +4084,56 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 .savings-strategy-modal .modal-actions { margin-top:16px; }
 
 /* Compact shared workspace-header rhythm without changing the fixed top bar. */
+/* Native-dialog tour hosting keeps real settings and chat controls interactive. */
+.modal.tour-modal-host[open] { animation:none !important; transform:none !important; overflow:visible !important; }
+.onboarding-tour.is-hosted { pointer-events:none; }
+.onboarding-tour.is-hosted .onboarding-popover { pointer-events:auto; }
+.modal .onboarding-popover { color:var(--ink); }
+.modal .onboarding-popover h2 { margin:0 0 10px; font-size:20px; line-height:1.25; }
+.modal .onboarding-popover #onboardingBody { font-size:16px; line-height:1.45; }
+.modal .onboarding-actions button { min-height:44px; font-size:14px; }
+.onboarding-substep { margin:0 0 8px; font-size:13px; font-weight:600; color:var(--muted); }
+.onboarding-popover.is-keyboard-compact :is(#onboardingBody,#onboardingTip,#onboardingSubstep) { display:none; }
+.onboarding-popover.is-keyboard-compact :is(h2,.onboarding-progress-row,.onboarding-actions) { margin-block:4px; }
+.help-tour-conversation { flex:0 0 auto; min-width:0; display:flex; flex-direction:column; gap:4px; }
+.tour-modal-host .help-tour-conversation .assistant-suggestions { flex-wrap:wrap; overflow:visible; }
+.tour-modal-host .help-tour-conversation .assistant-suggestion { white-space:normal; text-align:left; }
+@media (max-width:1024px) {
+  .modal.tour-modal-host[open] {
+    position:fixed; inset:var(--tour-panel-top,300px) 8px auto; margin:0 auto;
+    width:min(900px,calc(100vw - 16px)); height:var(--tour-panel-height,50dvh);
+    max-height:var(--tour-panel-height,50dvh); padding:14px;
+  }
+  .tour-modal-host > :is(.overline,h2,.modal-intro,.help-assistant-heading),
+  .tour-modal-host .settings-pane-heading,
+  .tour-modal-host .help-tour-restart { display:none; }
+  .tour-modal-host > .modal-close { top:3px; right:3px; }
+  .tour-modal-host .settings-modal-body,
+  .tour-modal-host .help-assistant-body { min-height:0; padding-right:0; }
+  .tour-modal-host #settingsLanguage { scroll-margin-top:88px; }
+  .tour-modal-host .settings-action-row { padding:10px; gap:8px; }
+  .tour-modal-host .settings-action-row small { display:none; }
+  .tour-modal-host .settings-quick-actions { gap:8px; margin-top:10px; }
+  .tour-modal-host .settings-tabs,
+  .tour-modal-host .help-modal-toolbar { margin:0 36px 12px 0; flex-shrink:0; }
+  .tour-modal-host .help-modal-assistant-panel .assistant-messages { min-height:0; }
+  .tour-modal-host .help-modal-assistant-panel .assistant-disclaimer { display:none; }
+  .tour-modal-host .help-assistant-body.assistant-mode { overflow-y:auto; }
+  .tour-modal-host .help-modal-assistant-panel { height:auto; min-height:100%; overflow:visible; }
+  .tour-modal-host .help-tour-conversation .assistant-suggestions { padding-block:4px; gap:4px; }
+  .tour-modal-host .help-tour-conversation .assistant-suggestion { min-height:36px; padding:7px 9px; }
+}
+@media (min-width:1025px) {
+  .modal.tour-modal-host[open] { width:min(900px,calc(100vw - 400px)); margin-inline:auto 20px; }
+  .onboarding-tour.is-dashboard-scope .onboarding-popover { width:228px; max-width:228px; padding:14px; }
+  .onboarding-tour.is-dashboard-scope .onboarding-popover h2 { font-size:20px; line-height:1.25; }
+  .onboarding-tour.is-dashboard-scope .onboarding-popover > p { line-height:1.4; }
+  .onboarding-tour.is-dashboard-scope #onboardingTip { display:none; }
+  .onboarding-tour.is-dashboard-scope .onboarding-actions { align-items:stretch; flex-direction:column; gap:6px; }
+  .onboarding-tour.is-dashboard-scope .onboarding-actions > div { display:grid; grid-template-columns:1fr 1fr; }
+}
+
+/* Compact shared workspace-header rhythm without changing the fixed top bar. */
 @media (min-width:1025px) {
   .page { padding-top:clamp(14px,2dvh,20px); }
   .actions-only-heading { margin-bottom:10px; }

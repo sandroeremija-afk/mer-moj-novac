@@ -18,8 +18,8 @@ test('evaluation cycle 1: every step exposes the requested Croatian copy and an 
     ['Mesečni budžeti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.'],
     ['Ciljevi štednje', 'Pratite napredak svojih fondova za hitne slučajeve i postavite automatska pravila zaokruživanja.'],
     ['Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.'],
-    ['Korisničke postavke', 'Otvorite izbornik računa za temu, jezik i sigurnost. Ovdje možete i zamijeniti Osobni i Poslovni profil.'],
-    ['Pomoć i AI Asistent', 'Ovdje pronađite odgovore, ponovno pokrenite vodič ili pitajte AI asistenta za objašnjenje svojih financija.']
+    ['Korisničke postavke', 'Odaberite jezik, svijetlu ili tamnu temu te raspored nadzorne ploče. U sljedećem dijelu pogledajte sigurnost računa.'],
+    ['Pomoć i AI Asistent', 'Odaberite ponuđenu financijsku temu ili upišite pitanje u razgovor. Gemini AI može objasniti vaše financije kada je usluga povezana.']
   ];
   MerOnboarding.DEFAULT_STEPS.forEach((step, index) => {
     assert.equal(step.copy.hr.title, expected[index][0]);
@@ -30,8 +30,12 @@ test('evaluation cycle 1: every step exposes the requested Croatian copy and an 
 });
 
 test('evaluation cycle 1: module steps carry a real sidebar context selector for simultaneous highlighting', () => {
-  for (const step of MerOnboarding.DEFAULT_STEPS) {
+  for (const step of MerOnboarding.DEFAULT_STEPS.filter(step => step.view)) {
     assert.equal(step.contextTarget, `.nav-item[data-view="${step.view}"]`);
+  }
+  for (const step of MerOnboarding.DEFAULT_STEPS.filter(step => step.surface)) {
+    assert.equal(step.contextTarget, undefined, 'modal walkthroughs must not keep the Uvidi sidebar spotlight');
+    assert.equal(step.view, undefined, 'modal walkthroughs do not navigate the underlying page');
   }
 });
 
@@ -40,13 +44,15 @@ test('evaluation cycle 1: module features point at the requested high-value surf
   assert.equal(byId.overview.target, '#overviewView .summary-grid');
   assert.equal(byId.budgets.target, '#budgetsView .table-panel');
   assert.equal(byId.savings.target, '#savingsView .goal-buckets-panel');
-  assert.equal(byId.insights.target, '#insightsView .monthly-bars-card');
-  assert.equal(byId.insights.mobileTarget, '#insightsView .monthly-bars-card');
+  assert.equal(byId.insights.target, '#insightsView');
+  assert.equal(byId.insights.mobileTarget, '#insightsView');
   for (const id of ['overview', 'budgets', 'savings', 'insights']) {
     assert.equal(byId[id].mobileTarget, byId[id].target, 'mobile retains meaningful containers rather than thin borders');
   }
-  assert.equal(byId.settings.target, '#openSettings');
-  assert.equal(byId.help.target, '#openHelpAssistant');
-  assert.equal(byId.settings.openSidebar, true);
-  assert.equal(byId.help.openSidebar, true);
+  assert.equal(byId.settings.target, '#settingsTourPreferences');
+  assert.equal(byId.help.target, '#helpTourConversation');
+  assert.equal(byId.settings.surface, 'settings');
+  assert.equal(byId.help.surface, 'help');
+  assert.equal(byId.settings.openSidebar, undefined);
+  assert.equal(byId.help.openSidebar, undefined);
 });

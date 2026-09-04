@@ -160,7 +160,11 @@
     disclaimer.className = 'assistant-disclaimer';
     disclaimer.dataset.i18n = 'assistantDisclaimer';
     disclaimer.textContent = t('assistantDisclaimer');
-    aiPanel.append(messages, suggestions, form, status, disclaimer);
+    const conversation = document.createElement('div');
+    conversation.id = 'helpTourConversation';
+    conversation.className = 'help-tour-conversation';
+    conversation.append(suggestions, form);
+    aiPanel.append(messages, conversation, status, disclaimer);
     helpBody.append(aiPanel);
 
     const extraFaqs = [
@@ -374,12 +378,13 @@
     selectHelpMode('faq');
   }
 
-  $('#openHelpAssistant').addEventListener('click', () => {
+  function openHelp(mode = 'faq') {
     if (!assistantWidget.hidden) closeAssistant({ focus:false });
-    selectHelpMode('faq');
-    selectFaqModule('overview');
+    selectHelpMode(mode);
+    if (mode === 'faq') selectFaqModule('overview');
     openModal(modal);
-  });
+  }
+  $('#openHelpAssistant').addEventListener('click', () => openHelp());
   $$('[data-faq-filter]').forEach(button => button.addEventListener('click', () => selectFaqModule(button.dataset.faqFilter)));
   $$('[data-help-mode]').forEach(button => button.addEventListener('click', () => selectHelpMode(button.dataset.helpMode, { focus:true })));
   bindRovingTabs('[data-faq-filter]', button => selectFaqModule(button.dataset.faqFilter));
@@ -418,5 +423,5 @@
     if (!assistantWidget.hidden || (modal.open && !helpUi.aiPanel.hidden)) renderMessages();
   });
 
-  window.MerAssistantUi = Object.freeze({ open:openAssistant, close:() => closeAssistant({ focus:false }), render:renderMessages, resetSession:resetAssistantSession });
+  window.MerAssistantUi = Object.freeze({ open:openAssistant, openHelp, close:() => closeAssistant({ focus:false }), render:renderMessages, resetSession:resetAssistantSession });
 })();

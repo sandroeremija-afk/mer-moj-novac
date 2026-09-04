@@ -25,7 +25,7 @@ test('evaluation cycle 2: context highlight disappears cleanly when unavailable 
   assert.match(ui, /if \(!currentContextLink\) \{[\s\S]*?contextSpotlight\.classList\.remove\('is-visible', 'is-docked'\);[\s\S]*?contextSpotlight\.replaceChildren\(\);/);
   assert.match(ui, /function clearContextSpotlight\(\) \{[\s\S]*?contextSpotlight\.removeAttribute\('style'\);/);
   assert.match(ui, /function releaseTarget\(\{ preserveContext = false \} = \{\}\)/);
-  assert.match(ui, /releaseTarget\(\{ preserveContext:true \}\)/);
+  assert.match(ui, /releaseTarget\(\{ preserveContext:Boolean\(step\.contextTarget\) \}\)/);
 });
 
 test('evaluation cycle 2: geometry updates preserve the context clone and avoid popover overlap', () => {
