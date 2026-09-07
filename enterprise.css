@@ -29,7 +29,35 @@
 .safe-panel:has(.forecast-inline) .safe-footer { padding-top:10px; margin-top:10px; }
 .forecast-chart { margin:12px 0; color:#789087; }
 .forecast-chart svg { display:block; width:100%; height:150px; }
+.forecast-chart svg { stroke:none; }
+#intelligenceModal[open] { gap:10px; }
+#intelligenceProfile { margin:0; }
 .forecast-chart>div { display:flex; justify-content:space-between; font-size:11px; }
+.forecast-chart .forecast-gridline { stroke:var(--enterprise-line); stroke-width:1; }
+.forecast-chart .forecast-axis { fill:var(--enterprise-muted); font:11px system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+.forecast-chart .forecast-event-node { stroke:var(--enterprise-bg); stroke-width:2; }
+.forecast-chart [data-forecast-point] { cursor:crosshair; outline:none; }
+.forecast-chart [data-forecast-point]:focus-visible .forecast-event-node { stroke:#102d25; stroke-width:4; }
+.forecast-chart .forecast-legend { justify-content:flex-start; flex-wrap:wrap; gap:16px; margin:6px 0 10px; color:var(--enterprise-muted); font-size:12px; }
+.forecast-legend span { display:flex; align-items:center; gap:6px; }
+.forecast-legend i { height:8px; width:8px; border-radius:50%; background:#c46b2c; }
+.forecast-legend i.income { background:#279465; }
+.forecast-chart .forecast-inspector { display:flex; flex-direction:column; justify-content:center; gap:4px; padding:12px; min-height:76px; border:1px solid var(--enterprise-line); background:var(--enterprise-bg); border-radius:10px; font-size:12px; line-height:1.5; color:var(--enterprise-muted); overflow-wrap:anywhere; }
+.forecast-inspector strong { font-size:14px; color:var(--enterprise-ink); }
+.enterprise-tools { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:0 0 16px; }
+.enterprise-tools button { min-width:0; min-height:44px; padding:8px; font-size:12px; white-space:normal; }
+.transaction-receipt-action { grid-column:1/-1; margin-bottom:12px; min-height:44px; }
+.safe-panel:has(.forecast-inline) .safe-content { align-items:center; }
+.safe-panel:has(.forecast-inline) .safe-copy { min-width:0; flex:1; }
+.safe-panel:has(.forecast-inline) #safeRemaining { font-size:clamp(24px,2.4vw,34px); line-height:1.15; font-variant-numeric:tabular-nums; }
+.safe-panel:has(.forecast-inline) #safeDaily { font-size:clamp(17px,1.6vw,22px); line-height:1.2; font-variant-numeric:tabular-nums; }
+.forecast-inline { display:grid; grid-template-columns:minmax(0,1fr) auto 12px; }
+.forecast-inline strong { font-size:clamp(16px,1.6vw,20px); font-variant-numeric:tabular-nums; }
+.command-group { padding:14px 12px 5px; font-size:11px; font-weight:600; color:var(--enterprise-muted); overflow-wrap:anywhere; }
+.renewal-safeguard-alert { width:100%; text-align:left; min-height:44px; border:1px solid #d8b074; background:#fff2db; color:#734913; border-radius:8px; padding:8px 12px; margin-top:8px; font:inherit; font-size:12px; cursor:pointer; }
+#commandResults button>span:first-child { min-width:0; overflow-wrap:anywhere; }
+#commandResults button small { display:block; margin-top:5px; font-size:12px; opacity:.8; }
+@media(max-width:600px) { .enterprise-tools { grid-template-columns:repeat(2,minmax(0,1fr)); } .enterprise-metrics>div { padding:12px; } .enterprise-metrics strong { font-size:18px; } }
 .enterprise-details { border-bottom:1px solid var(--enterprise-line); padding:14px 0; }
 .enterprise-details summary { cursor:pointer; min-height:44px; display:flex; align-items:center; font-weight:600; }
 .enterprise-details summary::before { content:"+"; margin-right:10px; }
@@ -66,6 +94,7 @@
 [data-theme="dark"] .enterprise-metrics>div,[data-theme="dark"] .forecast-inline { background:#1c3528; color:#e5f1e9; border-color:#3e604b; }
 [data-theme="dark"] .forecast-inline small { color:#b4c6ba; }
 [data-theme="dark"] .enterprise-muted { color:#b4c6ba; }
+[data-theme="dark"] .enterprise-tabs button[aria-selected="true"] { color:#70d4f0; }
 [data-theme="dark"] .enterprise-action-grid .danger { color:#ffadb1; }
 [data-theme="dark"] #commandResults button[aria-selected="true"] { background:#294a38; color:#e5f1e9; }
 [data-theme="dark"] .enterprise-skeleton i { background-image:linear-gradient(90deg,#294234 25%,#3b5948 50%,#294234 75%); }

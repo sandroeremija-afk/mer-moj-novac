@@ -403,7 +403,6 @@ function renderOverview() {
   const plan = getPlan();
   const percent = Math.round(plan.spentPercent);
   const goalPercent = Math.round(MerCore.ratioPercent(state.savingsBalance,state.savingsGoal,100));
-  const monthName = new Intl.DateTimeFormat(locale(), { month:'long' }).format(new Date(`${appReferenceDate.slice(0,4)}-${String(activeMonth+1).padStart(2,'0')}-01T12:00:00`));
   $('#availableBalance').textContent = currency(state.availableBalance);
   $('#availableBalance').classList.toggle('negative-value',state.availableBalance<0);
   $('#availableBalance').classList.toggle('positive-value',state.availableBalance>0);
@@ -424,7 +423,7 @@ function renderOverview() {
   $('#safeRemaining').textContent = currency(plan.safeRemaining);
   $('#safeDaily').classList.toggle('negative-value',plan.safeDaily<0);
   $('#safeRemaining').classList.toggle('negative-value',plan.safeRemaining<0);
-  $('#safePeriod').textContent = t('untilEndMonth', { month:monthName });
+  $('#safePeriod').textContent = t('untilEndMonth', { month:MerDiscovery.monthGenitive(`${appReferenceDate.slice(0,4)}-${String(activeMonth+1).padStart(2,'0')}-01`,currentLang) });
   $('#daysRemaining').textContent = t('daysRemaining', { days:plan.days });
   $('#safeRing').style.setProperty('--ring-value', plan.safePercent);
   $('#safeRing').classList.toggle('danger',plan.safeRemaining<0);

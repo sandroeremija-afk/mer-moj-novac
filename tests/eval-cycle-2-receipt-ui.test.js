@@ -1,0 +1,30 @@
+'use strict';
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const R=require('../receipt-core.js');
+
+test('stored receipt viewer is readonly, escapes line items, excludes other profiles and clears on profile switch',()=>{
+  const handlers={},controls={};
+  const dialog={open:false,innerHTML:'',setAttribute(){},addEventListener(name,handler){handlers[name]=handler;},querySelector(selector){return controls[selector]||=( {addEventListener(name,handler){this[name]=handler;}});},querySelectorAll(){return[];},replaceChildren(){this.innerHTML='';},showModal(){this.open=true;},close(){this.open=false;handlers.close?.();}};
+  const receipt={id:'r1',merchant:'Shop <script>',date:'2026-09-07',totalCents:1250,currency:'EUR',reviewed:true,profileId:'personal',lines:[{description:'<img src=x onerror=alert(1)>',quantity:2,totalCents:1250}]};
+  const state={activeProfile:'personal',language:'hr',profiles:{personal:{transactions:[{id:'same',name:'Personal shop',date:'2026-09-07',receipts:[receipt,{...receipt,id:'wrong',profileId:'business',merchant:'SECRET OTHER PROFILE'}]}]},business:{transactions:[{id:'same',name:'Business shop',date:'2026-09-07',receipts:[{...receipt,profileId:'business',merchant:'Business receipt'}]}]}}};
+  const original=JSON.stringify(state.profiles);
+  const document={documentElement:{lang:'hr'},activeElement:null,createElement(){return dialog;},body:{append(){},classList:{remove(){}}},querySelector(){return null;},addEventListener(){}};
+  const window={document,MerReceipts:R,crypto:require('node:crypto').webcrypto,MerEnterpriseBridge:{getState:()=>state,openModal:node=>node.showModal(),closeModal:node=>node.close()}};
+  vm.runInNewContext(fs.readFileSync(require.resolve('../receipt-ui.js'),'utf8'),{window,document,Intl,URL,AbortController,setTimeout,clearTimeout});
+  assert.equal(window.MerReceiptUI.view('same'),true);
+  assert.equal(dialog.open,true);
+  assert.match(dialog.innerHTML,/Shop &lt;script&gt;/);
+  assert.match(dialog.innerHTML,/&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.doesNotMatch(dialog.innerHTML,/SECRET OTHER PROFILE|Business receipt/);
+  assert.match(dialog.innerHTML,/Dodaj račun/);
+  assert.equal(JSON.stringify(state.profiles),original);
+  state.activeProfile='business';window.MerReceiptUI.refresh();
+  assert.equal(dialog.open,false);assert.equal(dialog.innerHTML,'');
+  assert.equal(window.MerReceiptUI.view('same'),true);
+  assert.match(dialog.innerHTML,/Business receipt/);assert.doesNotMatch(dialog.innerHTML,/Shop &lt;script&gt;/);
+  state.profiles.business.transactions=[];window.MerReceiptUI.refresh();
+  assert.equal(dialog.open,false);assert.equal(dialog.innerHTML,'');
+});

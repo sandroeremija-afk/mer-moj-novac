@@ -8,6 +8,7 @@ const root = path.resolve(__dirname, '..');
 const jsFiles = ['runtime.js','logo.js','core.js','demo-data.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','layout-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','layout-ui.js','responsive-ui.js','auth-ui.js','api/gemini-config.js','api/open-webui-config.js','api/private-pki-transport.js','api/assistant.js'];
 const errors = [];
 jsFiles.push('enterprise-core.js','enterprise-ui.js','vault-core.js','security-enterprise.js','invoice-core.js','invoice-ui.js','api/cashflow.js','service-worker.js');
+jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-core.js','planning-ui.js','household-core.js','household-ui.js','api/receipt.js');
 
 for (const file of jsFiles) {
   const fullPath = path.join(root, file);

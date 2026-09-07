@@ -4,6 +4,9 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "functions": {
+    "api/receipt.js": {
+      "maxDuration": 30
+    },
     "api/cashflow.js": {
       "maxDuration": 30
     },

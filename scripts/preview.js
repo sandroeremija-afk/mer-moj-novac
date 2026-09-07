@@ -3,12 +3,12 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'../dist');
 const types={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png'};
-const handlers={'/api/cashflow':require('../api/cashflow.js'),'/api/assistant':require('../api/assistant.js')};
+const handlers={'/api/cashflow':require('../api/cashflow.js'),'/api/assistant':require('../api/assistant.js'),'/api/receipt':require('../api/receipt.js')};
 http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(handlers[url.pathname]){
     const parts=[];let size=0;
-    for await(const part of req){size+=part.length;if(size>64000){res.writeHead(413).end();return;}parts.push(part);}
+    for await(const part of req){size+=part.length;if(size>(url.pathname==='/api/receipt'?2900000:64000)){res.writeHead(413).end();return;}parts.push(part);}
     try{req.body=JSON.parse(Buffer.concat(parts).toString()||'{}');res.status=code=>{res.statusCode=code;return res;};res.json=value=>{res.setHeader('Content-Type','application/json');res.end(JSON.stringify(value));};await handlers[url.pathname](req,res);}catch{if(!res.headersSent)res.writeHead(500);res.end('{"error":"preview-request-failed"}');}return;
   }
   let decoded;try{decoded=decodeURIComponent(url.pathname);}catch{res.writeHead(400).end();return;}

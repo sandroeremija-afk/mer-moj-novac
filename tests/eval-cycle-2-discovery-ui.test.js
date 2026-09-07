@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const ui=fs.readFileSync('enterprise-ui.js','utf8'),css=fs.readFileSync('enterprise.css','utf8');
+assert.match(ui,/toolbar\.innerHTML=`\$\{icon\('spark'\)\}/);
+for(const target of ['currentPasswordInput','settingsLanguage','startMfa'])assert.ok(ui.includes(target));
+assert.match(ui,/openTransaction\(result\.id\)/);assert.match(ui,/openBudgetEditor\(result\.id\)/);assert.match(ui,/openGoalEditor\(result\.id\)/);
+assert.match(ui,/result\.profileId!==appState\.activeAccount/);
+assert.match(ui,/forecastAreaFill/);assert.match(ui,/forecast-gridline/);assert.match(ui,/data-forecast-point/);
+assert.match(ui,/container\.onpointerover=inspect/);assert.match(ui,/container\.onfocusin=inspect/);assert.match(ui,/container\.onclick=inspect/);
+assert.match(ui,/new ResizeObserver/);assert.match(css,/forecast-inspector/);assert.match(css,/forecast-axis/);
+assert.match(ui,/appState\.settings\.hideBalances\?'••••'/);
+process.stdout.write('Discovery UI contracts: links, distinct icon, responsive SVG, pointer/focus/touch inspection and privacy passed.\n');

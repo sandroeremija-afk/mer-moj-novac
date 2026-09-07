@@ -8,6 +8,8 @@ const root = path.resolve(__dirname, '..');
 const output = path.join(root, 'dist');
 const jsFiles = ['runtime.js','logo.js','core.js','demo-data.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','layout-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','layout-ui.js','responsive-ui.js','auth-ui.js'];
 jsFiles.push('enterprise-core.js','enterprise-ui.js','vault-core.js','security-enterprise.js','invoice-core.js','invoice-ui.js');
+jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-core.js','planning-ui.js','household-core.js','household-ui.js');
+const suiteCss=['enterprise.css','invoice.css','security-enterprise.css','receipt.css','planning.css','household.css'];
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source
@@ -65,12 +67,12 @@ async function main() {
   }
 
   report.sourceBytes=report.files.reduce((sum,file)=>sum+file.sourceBytes,0);
-  for(const file of ['enterprise.css','invoice.css','security-enterprise.css']) {
+  for(const file of suiteCss) {
     const source=await fs.readFile(path.join(root,file),'utf8');
     await fs.writeFile(path.join(output,file),compactCss(source),'utf8');
   }
   await fs.copyFile(path.join(root,'manifest.webmanifest'),path.join(output,'manifest.webmanifest'));
-  const shellFiles=['/index.html','/styles.min.css','/enterprise.css','/invoice.css','/security-enterprise.css','/manifest.webmanifest',...jsFiles.map(file=>'/'+file.replace(/\.js$/,'.min.js')),...(await fs.readdir(path.join(output,'assets'))).filter(file=>/\.(svg|png|js|woff2?)$/.test(file)).map(file=>'/assets/'+file)];
+  const shellFiles=['/index.html','/styles.min.css',...suiteCss.map(file=>'/'+file),'/manifest.webmanifest',...jsFiles.map(file=>'/'+file.replace(/\.js$/,'.min.js')),...(await fs.readdir(path.join(output,'assets'))).filter(file=>/\.(svg|png|js|woff2?)$/.test(file)).map(file=>'/assets/'+file)];
   const shellHash=require('node:crypto').createHash('sha256');
   for(const file of shellFiles.slice().sort())shellHash.update(file).update(await fs.readFile(path.join(output,file.slice(1))));
   const buildId=shellHash.digest('hex').slice(0,16);

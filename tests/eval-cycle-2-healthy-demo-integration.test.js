@@ -147,7 +147,7 @@ test('Overview shows actual monthly deposits while live income still updates net
     return elements.get(selector);
   };
   const render = vm.runInNewContext(`${overviewSource}\nrenderOverview;`, {
-    state, MerCore, getPlan:() => state.derived.financials,
+    state, MerCore, MerDiscovery:require('../discovery-core.js'), currentLang:'hr', getPlan:() => state.derived.financials,
     locale:() => 'hr-HR', appReferenceDate:'2026-09-04', activeMonth:8,
     $:select, currency:value => String(value), t:key => key,
     savingsFinishDate:() => '2027-09-04', renderSpendingPaceChart:() => {}
