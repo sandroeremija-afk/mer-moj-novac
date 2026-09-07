@@ -77,7 +77,7 @@
   };
 
   const sessionLabel=(()=>{const ua=navigator.userAgent||'',browser=/Edg\//.test(ua)?'Edge':/Firefox\//.test(ua)?'Firefox':/Chrome\//.test(ua)?'Chrome':/Safari\//.test(ua)?'Safari':'Web preglednik',device=/Mobi|Android|iPhone|iPad/i.test(ua)?'Mobilni uređaj':'Računalo';return `${browser} · ${device}`;})();
-  const provider = MerAuth.createLocalProvider({sessionLabel});
+  const provider = MerAuth.createLocalProvider({sessionLabel,onPasswordChanged:details=>window.MerEnterpriseSecurity?.changeLoginPassword?.(details)});
   window.MerAuthProvider = provider;
   const authShell = document.getElementById('authShell');
   const appShell = document.getElementById('appShell');
@@ -143,7 +143,8 @@
     mfaReturnFocus = null;
     if (resume) window.MerOnboardingUi?.resume();
   }
-  function enterApp(session) {
+  async function enterApp(session, password) {
+    if(window.MerEnterpriseSecurity&&!await window.MerEnterpriseSecurity.beforeEnter(session,password))return;
     const activation=window.MerMfaState?.activate?.(session)||{changed:false};
     const profileSaved=applyUser(session);
     if(activation.changed&&!profileSaved)save('mfa-session-activate');
@@ -157,6 +158,7 @@
     window.MerOnboardingUi?.onSessionStarted(session);
   }
   function showAuth() {
+    window.MerEnterpriseSecurity?.onLogout?.()?.catch(error=>window.MerRuntime?.report?.(error,{silent:true}));
     window.MerOnboardingUi?.close();
     window.MerAssistantUi?.resetSession?.();
     window.MerLayoutUi?.disable?.({ notify:false });
@@ -244,20 +246,20 @@
       document.getElementById('passwordResetDone').focus();
     }
   });
-  document.getElementById('demoLogin').addEventListener('click', () => {try{enterApp(provider.startDemo(appState.accounts.personal.accountName));}catch(error){window.MerRuntime?.report?.(error);}});
+  document.getElementById('demoLogin').addEventListener('click', async () => {try{await enterApp(provider.startDemo(appState.accounts.personal.accountName));}catch(error){window.MerRuntime?.report?.(error);}});
   document.getElementById('loginForm').addEventListener('submit', async event => {
     event.preventDefault();
     const form=event.currentTarget,result = await runAuthAction(form,'loginError',()=>provider.signIn({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value }));
     if(!result)return;
     document.getElementById('loginError').textContent = result.ok ? '' : messageFor(result.code);
-    if (result.ok) enterApp(result.session);
+    if (result.ok) await runAuthAction(form,'loginError',async()=>{await enterApp(result.session,document.getElementById('loginPassword').value);document.getElementById('loginPassword').value='';});
   });
   document.getElementById('registerForm').addEventListener('submit', async event => {
     event.preventDefault();
     const form=event.currentTarget,result = await runAuthAction(form,'registerError',()=>provider.register({ name: document.getElementById('registerName').value, email: document.getElementById('registerEmail').value, password: document.getElementById('registerPassword').value }));
     if(!result)return;
     document.getElementById('registerError').textContent = result.ok ? '' : messageFor(result.code);
-    if (result.ok) enterApp(result.session);
+    if (result.ok) await runAuthAction(form,'registerError',async()=>{await enterApp(result.session,document.getElementById('registerPassword').value);document.getElementById('registerPassword').value='';});
   });
   document.getElementById('logoutButton').addEventListener('click', () => {
     provider.signOut();
@@ -272,5 +274,5 @@
   window.setInterval(()=>enforceActiveSession({touch:true}),30000);
 
   const session = provider.currentSession();
-  if (session) enterApp(session); else showAuth();
+  if (session) enterApp(session).catch(error=>window.MerRuntime?.report?.(error)); else showAuth();
 })();

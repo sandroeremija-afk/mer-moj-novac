@@ -4,6 +4,9 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "functions": {
+    "api/cashflow.js": {
+      "maxDuration": 30
+    },
     "api/assistant.js": {
       "maxDuration": 30
     }

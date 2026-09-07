@@ -1,8 +1,9 @@
 (function exposeMerStateStore(root, factory) {
-  const api = factory(typeof module === 'object' && module.exports ? require('./core.js') : root.MerCore);
+  const common = typeof module === 'object' && module.exports;
+  const api = factory(common ? require('./core.js') : root.MerCore, common ? require('./enterprise-core.js') : root.MerEnterpriseCore);
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.MerStateStore = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerStateStore(MerCore) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerStateStore(MerCore, Enterprise) {
   if (!MerCore) throw new Error('MerCore is required before MerStateStore');
 
   const finiteAmount = value => Math.max(0, MerCore.financialAmount(value));
@@ -34,7 +35,7 @@
     return Math.max(0, MerCore.roundMoney(total));
   }
 
-  function recalculateProfile(profile, referenceDate = new Date().toISOString().slice(0,10)) {
+  function recalculateProfile(profile, referenceDate = new Date().toISOString().slice(0,10), profileId, options={}) {
     if (!profile) return null;
     profile.transactions = Array.isArray(profile.transactions) ? profile.transactions : [];
     profile.transactions.forEach(transaction => MerCore.updateTransactionSchedule(transaction, referenceDate));
@@ -44,6 +45,12 @@
     profile.savingsEntries = Array.isArray(profile.savingsEntries) ? profile.savingsEntries : [];
     profile.savingsBalance = savingsTotal(profile);
     const balanceAnchor = initializeBalanceAnchor(profile, referenceDate, profile.savingsBalance);
+    if(profileId==='business'){
+      profile.enterprise||={};
+      profile.enterprise.taxVault??={enabled:true,rate:25,startDate:referenceDate,currency:options.currency||'EUR'};
+    }
+    Enterprise?.reconcileAutomations(profile, referenceDate, {...options,profileId});
+    profile.savingsBalance = savingsTotal(profile);
     const financials = MerCore.FinancialEngine.calculate(profile, referenceDate, { openingBalance:balanceAnchor, savingsBalance:profile.savingsBalance });
     const totalsByTimeframe = Object.fromEntries(['daily','monthly','ytd','all'].map(timeframe => [timeframe, timeframe === 'monthly' ? financials.monthly : timeframe === 'all' ? financials.allTime : MerCore.transactionTotals(profile.transactions, timeframe, referenceDate)]));
     const monthly = financials.monthly;
@@ -82,6 +89,7 @@
       availableBalance: financials.availableBalance,
       updatedAt: new Date().toISOString()
     };
+    if (Enterprise) profile.derived.forecast = Enterprise.forecastCashFlow(profile, referenceDate, {...options,profileId});
     return profile.derived;
   }
 
@@ -92,7 +100,7 @@
     const listeners = new Set();
     let referenceDate = safeReferenceDate(options.referenceDate) || new Date().toISOString().slice(0,10);
 
-    const recalculateAll = () => Object.values(state.accounts).forEach(profile => recalculateProfile(profile, referenceDate));
+    const recalculateAll = () => Object.entries(state.accounts).forEach(([id,profile]) => recalculateProfile(profile, referenceDate, id,{currency:state.settings?.currency||'EUR'}));
     recalculateAll();
 
     function notify(reason) {

@@ -56,6 +56,7 @@
     const sessionDurationMs = options.sessionDurationMs || 12 * 60 * 60 * 1000;
     const sessionLabel = cleanSessionLabel(options.sessionLabel);
     const passwordResetHandler = options.passwordResetHandler || (async () => ({ delivery: 'local-demo' }));
+    const onPasswordChanged = options.onPasswordChanged || (async () => {});
 
     const users = () => {
       const records = readJson(usersStorage, USERS_KEY, []);
@@ -277,6 +278,8 @@
       const currentCandidate = await derivePassword(currentPassword, base64ToBytes(user.salt), user.iterations || ITERATIONS);
       if (!safeEqual(currentCandidate, base64ToBytes(user.passwordHash))) return { ok:false, code:'INVALID_CURRENT_PASSWORD' };
       if (String(currentPassword || '') === String(newPassword || '')) return { ok:false, code:'PASSWORD_REUSED' };
+      try { await onPasswordChanged({userId:session.userId, currentPassword, newPassword}); }
+      catch { return {ok:false,code:'VAULT_UPDATE_FAILED'}; }
 
       const salt = cryptoApi.getRandomValues(new Uint8Array(16));
       const passwordHash = await derivePassword(newPassword, salt);
@@ -304,6 +307,25 @@
       sessionStorage?.removeItem(SESSION_KEY);
     }
 
+    async function verifyCurrentPassword(password) {
+      const session = currentSession();
+      if (!session || session.demo) return {ok:false,code:'AUTH_REQUIRED'};
+      const user = users().find(record => record.id === session.userId);
+      if (!user) return {ok:false,code:'AUTH_REQUIRED'};
+      const candidate = await derivePassword(password, base64ToBytes(user.salt), user.iterations || ITERATIONS);
+      return {ok:safeEqual(candidate,base64ToBytes(user.passwordHash)),code:'INVALID_CREDENTIALS'};
+    }
+
+    async function deleteCurrentUser(password) {
+      const session = currentSession();
+      if (!session) return {ok:false,code:'AUTH_REQUIRED'};
+      if (!session.demo && !(await verifyCurrentPassword(password)).ok) return {ok:false,code:'INVALID_CREDENTIALS'};
+      saveUsers(users().filter(user => user.id !== session.userId));
+      saveSessionRecords(activeSessionRecords().filter(record => record.userId !== session.userId));
+      sessionStorage.removeItem(SESSION_KEY);
+      return {ok:true,userId:session.userId,scope:'local-device'};
+    }
+
     return {
       register,
       signIn,
@@ -316,6 +338,8 @@
       touchCurrentSession,
       revokeSession,
       revokeOtherSessions,
+      verifyCurrentPassword,
+      deleteCurrentUser,
       normalizeEmail
     };
   }

@@ -7,6 +7,7 @@ const { minify } = require('terser');
 const root = path.resolve(__dirname, '..');
 const output = path.join(root, 'dist');
 const jsFiles = ['runtime.js','logo.js','core.js','demo-data.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','layout-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','layout-ui.js','responsive-ui.js','auth-ui.js'];
+jsFiles.push('enterprise-core.js','enterprise-ui.js','vault-core.js','security-enterprise.js','invoice-core.js','invoice-ui.js');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source
@@ -64,6 +65,18 @@ async function main() {
   }
 
   report.sourceBytes=report.files.reduce((sum,file)=>sum+file.sourceBytes,0);
+  for(const file of ['enterprise.css','invoice.css','security-enterprise.css']) {
+    const source=await fs.readFile(path.join(root,file),'utf8');
+    await fs.writeFile(path.join(output,file),compactCss(source),'utf8');
+  }
+  await fs.copyFile(path.join(root,'manifest.webmanifest'),path.join(output,'manifest.webmanifest'));
+  const shellFiles=['/index.html','/styles.min.css','/enterprise.css','/invoice.css','/security-enterprise.css','/manifest.webmanifest',...jsFiles.map(file=>'/'+file.replace(/\.js$/,'.min.js')),...(await fs.readdir(path.join(output,'assets'))).filter(file=>/\.(svg|png|js|woff2?)$/.test(file)).map(file=>'/assets/'+file)];
+  const shellHash=require('node:crypto').createHash('sha256');
+  for(const file of shellFiles.slice().sort())shellHash.update(file).update(await fs.readFile(path.join(output,file.slice(1))));
+  const buildId=shellHash.digest('hex').slice(0,16);
+  const worker=(await fs.readFile(path.join(root,'service-worker.js'),'utf8')).replaceAll('__MER_BUILD_ID__',buildId);
+  await fs.writeFile(path.join(output,'service-worker.js'),worker,'utf8');
+  await fs.writeFile(path.join(output,'sw-assets.json'),JSON.stringify(shellFiles),'utf8');
   report.outputBytes=report.files.reduce((sum,file)=>sum+file.outputBytes,0);
   report.reductionPercent=Math.round((1-report.outputBytes/report.sourceBytes)*1000)/10;
   await fs.writeFile(path.join(output,'build-report.json'),JSON.stringify(report,null,2),'utf8');

@@ -1,0 +1,35 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {createCashflowHandler,sanitizeAnalysis}=require('../api/cashflow.js');
+const context={currency:'EUR',availableCents:100000,safeToSpendCents:70000,predictedBillsCents:30000,reservedCents:20000,patterns:[{amountCents:1000,previousCents:900,observations:3,daysUntil:5,merchantName:'private merchant',iban:'private',confidence:'high'}],scheduled:[]};
+const response=()=>({headers:{},setHeader(key,value){this.headers[key]=value;},end(value){this.body=JSON.parse(value);}});
+const request=(body={analysis:context})=>({method:'POST',headers:{host:'mer.test',origin:'https://mer.test','content-type':'application/json'},body});
+async function call(handler,req=request()){const res=response();await handler(req,res);return res;}
+(async()=>{
+  const sanitized=sanitizeAnalysis({...context,apiKey:'secret',transactions:[{iban:'private'}]});
+  assert.ok(!JSON.stringify(sanitized).includes('private')); assert.ok(!JSON.stringify(sanitized).includes('secret'));
+  assert.equal(sanitizeAnalysis({...context,availableCents:Infinity}),null);
+  assert.equal(sanitizeAnalysis({...context,availableCents:10.5}),null);
+  assert.equal((await call(createCashflowHandler({env:{}}))).statusCode,503);
+  let outbound;
+  const handler=createCashflowHandler({env:{GEMINI_API_KEY:'test-key'},fetchImpl:async(url,options)=>{outbound={url,options};return new Response(JSON.stringify({steps:[{type:'model_output',content:[{type:'text',text:'Očekujete tri redovita računa.'}]}]}),{status:200});}});
+  const success=await call(handler);
+  assert.equal(success.statusCode,200); assert.equal(success.body.source,'gemini');
+  assert.equal(outbound.options.headers['x-goog-api-key'],'test-key');
+  assert.equal(JSON.parse(outbound.options.body).store,false);
+  assert.ok(!outbound.options.body.includes('private merchant'));
+  assert.ok(!JSON.stringify(success.body).includes('test-key'));
+  assert.equal(outbound.options.redirect,'error');
+  const cross=request();cross.headers.origin='https://evil.test'; assert.equal((await call(handler,cross)).statusCode,403);
+  assert.equal((await call(handler,{...request(),method:'GET'})).statusCode,405);
+  assert.equal((await call(handler,request({analysis:context,padding:'x'.repeat(17000)}))).statusCode,413);
+  const limited=createCashflowHandler({env:{GEMINI_API_KEY:'test-key'},fetchImpl:async()=>new Response('{}',{status:429})});
+  assert.equal((await call(limited)).body.source,'deterministic');
+  const large=createCashflowHandler({env:{GEMINI_API_KEY:'test-key'},fetchImpl:async()=>new Response('x'.repeat(70000),{status:200})});
+  assert.equal((await call(large)).statusCode,502);
+  const timeout=createCashflowHandler({env:{GEMINI_API_KEY:'test-key'},timeoutMs:50,fetchImpl:async(url,options)=>new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(Object.assign(new Error('Aborted'),{name:'AbortError'}))))});
+  assert.equal((await call(timeout)).statusCode,504);
+  const limiter=createCashflowHandler({env:{}});for(let i=0;i<6;i++)await call(limiter);
+  assert.equal((await call(limiter)).statusCode,429);
+  process.stdout.write('Cycle 2 cashflow API: sanitization, Gemini transport, fallback, bounds, timeout and rate limit passed.\n');
+})().catch(error=>{process.stderr.write(`${error.stack}\n`);process.exitCode=1;});

@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "Mer · Moj Novac",
+  "short_name": "Mer",
+  "description": "Osobni i poslovni financijski prostor. Pregled i skice transakcija dostupni su izvan mreže.",
+  "lang": "hr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f8f7",
+  "theme_color": "#159fda",
+  "icons": [
+    { "src": "/assets/mer-pwa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/mer-pwa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/mer-mark-full-color.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

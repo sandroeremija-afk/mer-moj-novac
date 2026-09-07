@@ -118,6 +118,7 @@
   function transactionStatusAt(transaction, referenceValue = new Date()) {
     const date = transactionDate(transaction);
     if (!transaction || typeof transaction !== 'object' || !date) return 'invalid';
+    if (transaction.offlineDraft === true || transaction.status === 'draft') return 'draft';
     try { return date > isoDate(dateOnly(referenceValue)) ? 'scheduled' : 'posted'; } catch { return 'invalid'; }
   }
 

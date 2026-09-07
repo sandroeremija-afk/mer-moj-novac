@@ -322,7 +322,7 @@ reactiveStore.subscribe(event => {
   appState=event.state;
   state=event.activeProfile;
   window.MerMfaState?.syncActive?.();
-  try{localStorage.setItem('mer-money-v6',JSON.stringify(appState));}catch(error){window.MerRuntime?.report?.(error,{silent:true});}
+  window.MerEnterpriseSecurity?.persist(appState).catch(error=>{window.MerRuntime?.report(error,{silent:true});showToast(currentLang==='hr'?'Podaci nisu spremljeni. Provjerite privatni trezor.':'Data was not saved. Check your private vault.');});
   if(reactiveUiReady&&event.reason!=='layout-reorder')renderAll();
 });
 const save = (reason='state-change') => {
@@ -623,7 +623,7 @@ function renderSavingsView() {
 
 function renderSavingsEntries() {
   state.savingsEntries=state.savingsEntries||[];
-  $('#savingsEntryList').innerHTML=state.savingsEntries.length?state.savingsEntries.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(entry=>{const goal=state.goalBuckets?.find(item=>item.id===entry.goalId);return `<article class="savings-entry-item"><span class="savings-entry-icon"><svg aria-hidden="true"><use href="#icon-leaf"></use></svg></span><div class="savings-entry-copy"><strong>${escapeHtml(entry.note)}</strong><small><time datetime="${escapeHtml(String(entry.date).slice(0,10))}">${new Intl.DateTimeFormat(locale(),{day:'numeric',month:'long',year:'numeric'}).format(new Date(entry.date))}</time> · ${escapeHtml(goal?.name||t('unknownSavingsGoal'))}</small><span class="savings-entry-profile">${escapeHtml(t(state.accountLabel))}</span></div><span class="savings-entry-amount">+${currency(entry.amount)}</span><button type="button" class="icon-button small" data-edit-savings="${entry.id}" aria-label="${t('editSavingsEntry')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></article>`;}).join(''):`<div class="notification-empty">${t('emptyActivity')}</div>`;
+  $('#savingsEntryList').innerHTML=state.savingsEntries.length?state.savingsEntries.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(entry=>{const goal=state.goalBuckets?.find(item=>item.id===entry.goalId);return `<article class="savings-entry-item"><span class="savings-entry-icon"><svg aria-hidden="true"><use href="#icon-leaf"></use></svg></span><div class="savings-entry-copy"><strong>${escapeHtml(entry.note)}</strong><small><time datetime="${escapeHtml(String(entry.date).slice(0,10))}">${new Intl.DateTimeFormat(locale(),{day:'numeric',month:'long',year:'numeric'}).format(new Date(entry.date))}</time> · ${escapeHtml(goal?.name||t('unknownSavingsGoal'))}</small><span class="savings-entry-profile">${escapeHtml(t(state.accountLabel))}</span></div><span class="savings-entry-amount">+${currency(entry.amount)}</span><button type="button" class="icon-button small" data-edit-savings="${entry.id}" ${entry.locked||entry.sourceType==='enterprise-automation'?`disabled title="${currentLang==='hr'?'Uredite izvorni prihod ili pravilo':'Edit source income or rule'}"`:''} aria-label="${entry.locked||entry.sourceType==='enterprise-automation'?(currentLang==='hr'?'Uredite izvorni prihod ili pravilo':'Edit source income or rule'):t('editSavingsEntry')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></article>`;}).join(''):`<div class="notification-empty">${t('emptyActivity')}</div>`;
   $$('[data-edit-savings]').forEach(button=>button.addEventListener('click',()=>openSavingsDeposit(button.dataset.editSavings)));
 }
 
@@ -1207,6 +1207,7 @@ function openInsightDetail(kind) {
 
 function renderAll() {
   renderMonth();renderModuleTitle();renderAccountContext();renderOverview();renderBudgetLists();renderBudgetView();renderSavingsView();renderSavingsEntries();renderUpcoming();renderRecurring();renderCategorySelects();renderActivity();renderInsights();renderSubscriptions();renderNotifications();renderBankSyncStatus();if($('#connectedBanksModal').open)renderBankSettings();applyTheme();
+  window.MerEnterpriseUI?.render();
 }
 
 function setLanguage(lang) {
@@ -1358,6 +1359,7 @@ function setTransactionType(type) {
   $('#transactionTitle').textContent=t(existing?(transactionType==='income'?'editIncome':'editExpense'):(transactionType==='income'?'addIncome':'addExpense'));
   $('#transactionSubmit').textContent=t(existing?(transactionType==='income'?'updateIncome':'updateExpense'):(transactionType==='income'?'addIncomeSubmit':'addExpenseSubmit'));
   renderCategorySelects();resetTransactionCheck();evaluateTransaction();
+  if($('#transactionB2BRow'))$('#transactionB2BRow').hidden=appState.activeAccount!=='business'||transactionType!=='income';
 }
 
 function evaluateTransaction() {
@@ -1408,6 +1410,7 @@ function openTransaction(id=null) {
   $('#transactionDate').value=String(existing?.date||appReferenceDate).slice(0,10);
   transactionType=MerCore.transactionType(existing);setTransactionType(transactionType);$('#deleteTransaction').hidden=!existing;
   if(existing){$('#transactionName').value=existing.name;$('#transactionAmount').value=existing.amount;renderCategorySelects();$('#transactionCategory').value=existing.category;evaluateTransaction();}
+  if($('#transactionB2B'))$('#transactionB2B').checked=Boolean(existing?.isB2B);
   openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50);
 }
 
@@ -1515,13 +1518,13 @@ function fallbackCategory(excludingId) {
 }
 
 function updateSavingsCheck() {
-  const amount=Number($('#savingsAmountInput').value)||0,existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null; const available=Math.max(0,state.availableBalance-state.bills+(existing?.amount||0)); const blocked=amount>available; const remaining=Math.max(0,state.availableBalance+(existing?.amount||0)-amount);
+  const amount=Number($('#savingsAmountInput').value)||0,existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null; const available=Math.max(0,state.availableBalance-state.bills+(existing?.amount||0)); const blocked=amount>available||Boolean(existing?.locked||existing?.sourceType==='enterprise-automation'); const remaining=Math.max(0,state.availableBalance+(existing?.amount||0)-amount);
   $('#savingsCheck').className=`spend-check ${blocked?'danger':'success'}`;
   $('#savingsCheck').innerHTML=`<svg aria-hidden="true"><use href="#icon-${blocked?'shield':'check'}"></use></svg><div><strong>${blocked?t('depositBlocked'):t('depositSafe',{amount:currency(remaining)})}</strong><span>${blocked?t('depositMax',{amount:currency(available)}):t('billsRemain')}</span></div>`;
   $('#savingsSubmit').disabled=blocked||amount<=0; return !blocked&&amount>0;
 }
 
-function openSavingsDeposit(id=null) { editingSavingsId=id===null?null:id;const existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null;const goals=state.goalBuckets||[];$('#savingsGoalInput').innerHTML=goals.map(goal=>`<option value="${goal.id}">${escapeHtml(goal.name)}</option>`).join('');$('#savingsGoalInput').value=existing?.goalId||goals.find(goal=>goal.primary)?.id||goals[0]?.id||'';$('#savingsNoteInput').value=existing?.note||(currentLang==='hr'?'Uplata u štednju':'Savings deposit');$('#savingsAmountInput').value=existing?.amount||Math.min(state.savingsTarget,Math.max(1,state.availableBalance-state.bills));$('#savingsModalTitle').textContent=t(existing?'editSavingsEntry':'addToSavingsGoal');$('#savingsSubmit').textContent=t(existing?'updateSavings':'confirmDeposit');$('#deleteSavingsEntry').hidden=!existing;updateSavingsCheck();openModal($('#savingsModal'));setTimeout(()=>$('#savingsNoteInput').focus(),50); }
+function openSavingsDeposit(id=null) { editingSavingsId=id===null?null:id;const existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null;if(existing?.locked||existing?.sourceType==='enterprise-automation'){editingSavingsId=null;showToast(currentLang==='hr'?'Automatsku uplatu mijenjate uređivanjem izvornog prihoda ili pravila.':'Edit the source income or rule to change this automatic deposit.');return;}const goals=state.goalBuckets||[];$('#savingsGoalInput').innerHTML=goals.map(goal=>`<option value="${goal.id}">${escapeHtml(goal.name)}</option>`).join('');$('#savingsGoalInput').value=existing?.goalId||goals.find(goal=>goal.primary)?.id||goals[0]?.id||'';$('#savingsNoteInput').value=existing?.note||(currentLang==='hr'?'Uplata u štednju':'Savings deposit');$('#savingsAmountInput').value=existing?.amount||Math.min(state.savingsTarget,Math.max(1,state.availableBalance-state.bills));$('#savingsModalTitle').textContent=t(existing?'editSavingsEntry':'addToSavingsGoal');$('#savingsSubmit').textContent=t(existing?'updateSavings':'confirmDeposit');$('#deleteSavingsEntry').hidden=!existing;updateSavingsCheck();openModal($('#savingsModal'));setTimeout(()=>$('#savingsNoteInput').focus(),50); }
 function savingsHistoryIndexFor(dateValue){if(!validStoredDate(dateValue))return state.savingsHistory.length-1;const currentYear=Number(appReferenceDate.slice(0,4)),currentMonth=Number(appReferenceDate.slice(5,7)),entryYear=Number(String(dateValue).slice(0,4)),entryMonth=Number(String(dateValue).slice(5,7)),monthsAgo=(currentYear-entryYear)*12+currentMonth-entryMonth,index=state.savingsHistory.length-1-monthsAgo;return index>=0&&index<state.savingsHistory.length?index:null;}
 
 function updateRecurringPreview() { const day=Number($('#recurringDayInput').value)||1,start=$('#recurringStartInput').value||appReferenceDate;if(day<1||day>31||!validStoredDate(start)){$('#recurringPreview').textContent=t('recurringInvalidDay');return false;}const next=MerCore.nextOccurrence({day,startDate:start,enabled:true},appReferenceDate,true);if(!next){$('#recurringPreview').textContent=t('recurringInvalidDay');return false;}$('#recurringPreview').textContent=`${t('nextCharge',{date:formatIsoDate(next)})} ${t('recurringPreview')}`;return true; }
@@ -1616,8 +1619,10 @@ $('#transactionForm').addEventListener('submit',event=>{
   const amount=Number($('#transactionAmount').value),name=$('#transactionName').value.trim(),dateValue=String($('#transactionDate').value||'').slice(0,10);
   if(!name||!Number.isFinite(amount)||amount<=0||!validStoredDate(dateValue)||!evaluateTransaction()){showToast(t(validStoredDate(dateValue)?'positiveAmountRequired':'transactionDateRequired'));return;}
   const warning=$('#spendCheck').dataset.budgetWarning||'',monthlyOver=Number($('#spendCheck').dataset.monthlyOver)||0,categoryOver=Number($('#spendCheck').dataset.categoryOver)||0,overage=warning==='monthly-over'?monthlyOver:categoryOver,category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
+  if(!navigator.onLine&&existing&&!existing.offlineDraft){showToast(currentLang==='hr'?'Uređivanje potvrđenih transakcija zahtijeva vezu. Novi unos možete spremiti kao nacrt.':'Connect before editing posted transactions. New entries can be saved as drafts.');return;}
   if(existing)MerAccounting.undoRoundUp(state,existing);
-  const payload={type:transactionType,name,amount,category,date:`${dateValue}T12:00:00`,timestamp:`${dateValue}T12:00:00`};
+  const payload={type:transactionType,name,amount,category,date:`${dateValue}T12:00:00`,timestamp:`${dateValue}T12:00:00`,isB2B:appState.activeAccount==='business'&&transactionType==='income'&&Boolean($('#transactionB2B')?.checked)};
+  if(!navigator.onLine){payload.offlineDraft=true;payload.status='draft';}
   let savedTransaction;
   if(existing){
     Object.assign(existing,payload);
@@ -1631,7 +1636,7 @@ $('#transactionForm').addEventListener('submit',event=>{
   }
   save(existing?'transaction-edit':'transaction-add');closeModal($('#transactionModal'));
   const successMessage=savedTransaction.status==='scheduled'?t('scheduledTransactionSaved',{date:formatIsoDate(dateValue)}):transactionType==='expense'&&(warning==='monthly-over'||warning==='category-over')?t('transactionAddedOverBudget',{amount:currency(overage)}):existing?.sourceType==='auto'?t('categoryApproved'):t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded'));
-  showToast(successMessage);editingTransactionId=null;
+  showToast(savedTransaction.offlineDraft?(currentLang==='hr'?'Izvanmrežni nacrt je spremljen. Potvrdite ga nakon spajanja.':'Offline draft saved. Confirm it after reconnecting.'):successMessage);editingTransactionId=null;
 });
 $('#deleteTransaction').addEventListener('click',()=>{const existing=state.transactions.find(tx=>String(tx.id)===String(editingTransactionId));if(!existing)return;const type=MerCore.transactionType(existing);MerAccounting.undoRoundUp(state,existing);state.transactions=state.transactions.filter(tx=>String(tx.id)!==String(editingTransactionId));save('transaction-delete');closeModal($('#transactionModal'));showToast(t(type==='income'?'incomeDeleted':'expenseDeleted'));editingTransactionId=null;});
 
@@ -1645,7 +1650,7 @@ $('#deleteCategory').addEventListener('click',()=>{const cat=state.categories.fi
 
 $('#savingsAmountInput').addEventListener('input',updateSavingsCheck);
 $('#savingsForm').addEventListener('submit',event=>{event.preventDefault();if(!updateSavingsCheck())return;const amount=Number($('#savingsAmountInput').value),note=$('#savingsNoteInput').value.trim(),goalId=$('#savingsGoalInput').value,existing=editingSavingsId!==null?(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId)):null;if(existing){MerCore.applySavingsContribution(state,existing.goalId,existing.amount,-1);MerCore.applySavingsContribution(state,goalId,amount,1);const historyIndex=savingsHistoryIndexFor(existing.date);if(historyIndex!==null)state.savingsHistory[historyIndex]=Math.max(0,state.savingsHistory[historyIndex]-existing.amount+amount);existing.amount=amount;existing.note=note;existing.goalId=goalId;}else{const applied=MerCore.applySavingsContribution(state,goalId,amount,1);if(!applied.valid){showToast(t('goalInvalid'));return;}state.savingsEntries=state.savingsEntries||[];state.savingsEntries.push({id:uniqueId('saving'),amount,note,goalId,date:`${appReferenceDate}T12:00:00`});state.savingsHistory[state.savingsHistory.length-1]+=amount;}save(existing?'savings-edit':'savings-add');closeModal($('#savingsModal'));showToast(t(existing?'savingsUpdated':'depositAdded',{amount:currency(amount,true)}));editingSavingsId=null;});
-$('#deleteSavingsEntry').addEventListener('click',()=>{const existing=(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId));if(!existing)return;MerCore.applySavingsContribution(state,existing.goalId,existing.amount,-1);const historyIndex=savingsHistoryIndexFor(existing.date);if(historyIndex!==null)state.savingsHistory[historyIndex]=Math.max(0,state.savingsHistory[historyIndex]-existing.amount);state.savingsEntries=state.savingsEntries.filter(entry=>String(entry.id)!==String(editingSavingsId));save('savings-delete');closeModal($('#savingsModal'));showToast(t('savingsDeleted'));editingSavingsId=null;});
+$('#deleteSavingsEntry').addEventListener('click',()=>{const existing=(state.savingsEntries||[]).find(entry=>String(entry.id)===String(editingSavingsId));if(!existing)return;if(existing.locked||existing.sourceType==='enterprise-automation'){showToast(currentLang==='hr'?'Uredite izvorni prihod ili pravilo.':'Edit source income or rule.');return;}MerCore.applySavingsContribution(state,existing.goalId,existing.amount,-1);const historyIndex=savingsHistoryIndexFor(existing.date);if(historyIndex!==null)state.savingsHistory[historyIndex]=Math.max(0,state.savingsHistory[historyIndex]-existing.amount);state.savingsEntries=state.savingsEntries.filter(entry=>String(entry.id)!==String(editingSavingsId));save('savings-delete');closeModal($('#savingsModal'));showToast(t('savingsDeleted'));editingSavingsId=null;});
 
 $('#recurringDayInput').addEventListener('input',updateRecurringPreview);$('#recurringStartInput').addEventListener('input',updateRecurringPreview);
 $('#recurringForm').addEventListener('submit',event=>{event.preventDefault();if(!updateRecurringPreview())return;const payload={name:$('#recurringNameInput').value.trim(),amount:Number($('#recurringAmountInput').value),category:$('#recurringCategoryInput').value,day:Number($('#recurringDayInput').value),startDate:$('#recurringStartInput').value,enabled:true};if(!payload.name||!Number.isFinite(payload.amount)||payload.amount<=0||payload.day<1||payload.day>31){showToast(t('recurringInvalidDay'));return;}const existing=editingRecurringId!==null?(state.recurring||[]).find(rule=>String(rule.id)===String(editingRecurringId)):null;if(existing)Object.assign(existing,payload);else{state.recurring=state.recurring||[];state.recurring.push({id:uniqueId('recurring'),...payload,lastProcessed:null});}save(existing?'recurring-edit':'recurring-add');closeModal($('#recurringModal'));showToast(t('recurringSaved'));editingRecurringId=null;});
