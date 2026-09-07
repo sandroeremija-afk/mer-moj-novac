@@ -83,10 +83,16 @@ test('evaluation cycle 2: Gemini secret is documented but absent from every brow
   for (const file of browserFiles) {
     const source = fs.readFileSync(path.join(root, file), 'utf8');
     assert.doesNotMatch(source, /GEMINI_API_KEY|x-goog-api-key/, `${file} must not reference the Gemini credential`);
+    assert.doesNotMatch(source, /OPEN_WEBUI_(?:API_KEY|CA_CERT|CERT_SHA256)/, `${file} must not reference Open WebUI server credentials or trust pins`);
+    assert.doesNotMatch(source, /NODE_TLS_REJECT_UNAUTHORIZED/, `${file} must not alter process-wide TLS verification`);
   }
   const example = fs.readFileSync(path.join(root, '.env.example'), 'utf8');
   assert.match(example, /^GEMINI_API_KEY=$/m);
   assert.doesNotMatch(example, /^GEMINI_API_KEY=.+$/m);
+  assert.match(example, /^OPEN_WEBUI_API_KEY=$/m);
+  assert.match(example, /^OPEN_WEBUI_CA_CERT=$/m);
+  assert.match(example, /^OPEN_WEBUI_CERT_SHA256=$/m);
+  assert.doesNotMatch(example, /^NODE_TLS_REJECT_UNAUTHORIZED=/m);
   const ignore = fs.readFileSync(path.join(root, '.gitignore'), 'utf8');
   assert.match(ignore, /\.env\.local/);
   assert.match(ignore, /\.env\.\*\.local/);

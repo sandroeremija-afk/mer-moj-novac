@@ -6,6 +6,11 @@ const {
   DEFAULT_OPEN_WEBUI_MODEL,
   resolveOpenWebUiConfig
 } = require('./open-webui-config.js');
+const {
+  resolvePinnedTlsConfig,
+  createPinnedHttpsTransport,
+  isPinnedTlsError
+} = require('./private-pki-transport.js');
 
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
 const OPEN_WEBUI_CHAT_PATH = '/api/chat/completions';
@@ -319,7 +324,9 @@ async function readJsonBody(request) {
 }
 
 function createAssistantHandler(options = {}) {
+  const hasInjectedFetch = Object.prototype.hasOwnProperty.call(options, 'fetchImpl');
   const fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
+  const pinnedHttpsTransport = options.pinnedHttpsTransport || createPinnedHttpsTransport();
   const environment = options.env || process.env;
   const timeoutMs = Math.max(500, Number(options.timeoutMs) || 25_000);
   const takeRateLimit = createRateLimiter({
@@ -374,15 +381,28 @@ function createAssistantHandler(options = {}) {
     }
 
     const upstreamRequest = providerRequest(provider, messages, financialContext, locale);
+    let pinnedTlsConfig = null;
+    if (provider.name === 'openwebui') {
+      try {
+        pinnedTlsConfig = resolvePinnedTlsConfig(environment, { targetUrl:upstreamRequest.url });
+      } catch {
+        writeJson(response, 503, { error:'AI_TLS_CONFIGURATION_INVALID', retryable:false }, rateHeaders);
+        return;
+      }
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const upstream = await fetchImpl(upstreamRequest.url, {
+      const requestOptions = {
         method:'POST',
         headers:upstreamRequest.headers,
         body:JSON.stringify(upstreamRequest.body),
         signal:controller.signal
-      });
+      };
+      const usePinnedTransport = pinnedTlsConfig && (options.pinnedHttpsTransport || !hasInjectedFetch);
+      const upstream = usePinnedTransport
+        ? await pinnedHttpsTransport(upstreamRequest.url, { ...requestOptions, timeoutMs, tlsConfig:pinnedTlsConfig })
+        : await fetchImpl(upstreamRequest.url, requestOptions);
 
       if (!upstream?.ok) {
         const failure = upstreamError(upstream);
@@ -405,6 +425,10 @@ function createAssistantHandler(options = {}) {
       }
       writeJson(response, 200, { id:cleanText(payload?.id, 100) || `${provider.name}-${Date.now()}`, message }, rateHeaders);
     } catch (error) {
+      if (isPinnedTlsError(error)) {
+        writeJson(response, 502, { error:'AI_TLS_VERIFICATION_FAILED', retryable:false }, rateHeaders);
+        return;
+      }
       writeJson(response, error?.name === 'AbortError' ? 504 : 502, { error:error?.name === 'AbortError' ? 'AI_TIMEOUT' : 'AI_UPSTREAM_UNAVAILABLE', retryable:true }, rateHeaders);
     } finally {
       clearTimeout(timer);

@@ -22,7 +22,7 @@ OPEN_WEBUI_API_KEY=PASTE_THE_SECRET_HERE
 OPEN_WEBUI_MODEL=gemma4:26b
 ```
 
-The base URL must identify an Open WebUI instance reachable by the server over publicly trusted HTTPS, while the model value must be an exact id available to the API-key owner. This CommonJS project intentionally does not use browser-visible `VITE_` or `NEXT_PUBLIC_` secrets. A missing key or unavailable provider never exposes an error to the conversation: both assistant surfaces fall back to deterministic local guidance.
+The base URL must identify an Open WebUI instance reachable by the server, while the model value must be an exact id available to the API-key owner. This CommonJS project intentionally does not use browser-visible `VITE_` or `NEXT_PUBLIC_` secrets. A missing key or unavailable provider never exposes an error to the conversation: both assistant surfaces fall back to deterministic local guidance.
 
 ## Included
 
@@ -78,7 +78,28 @@ The demo never asks for or stores real banking credentials. A production Open Ba
 
 `assistant-core.js` is the shared client for the Help panel and floating chat widget. It limits history, sends only an allowlisted aggregate summary for the active profile, aborts stale requests during profile switches, and provides deterministic Croatian/English guidance when the remote service is unavailable. `api/assistant.js` independently validates and sanitizes the request before selecting a server-side provider adapter. The Gemini adapter uses the Interactions API with `store: false`; the Open WebUI adapter uses its OpenAI-compatible `/api/chat/completions` endpoint with a server-selected model. `api/gemini-config.js` and `api/open-webui-config.js` validate their respective server-only configuration. Provider keys are never written into the browser bundle, URL, logs, or response.
 
-Set secrets through Vercel project environment variables for Production, Preview, and Development as required. For Open WebUI, create a dedicated non-admin service account, restrict its API access to the model and chat-completion endpoints it needs, and use a publicly reachable URL with a publicly trusted TLS certificate in production; `localhost` and self-signed certificates are not accepted by Vercel's server-side connection. Never add a populated `.env.local` file to Git; local environment variants are ignored and `.env.example` documents only the required names. Changing provider variables requires a new deployment.
+Set secrets through Vercel project environment variables for Production, Preview, and Development as required. For Open WebUI, create a dedicated non-admin service account and restrict its API access to the model and chat-completion endpoints it needs. `localhost` is not reachable from Vercel, so the configured host must be reachable from the deployed Function. Never add a populated `.env.local` file to Git; local environment variants are ignored and `.env.example` documents only the required names. Changing provider variables requires a new deployment.
+
+### Open WebUI TLS trust
+
+The preferred production path is a publicly trusted TLS certificate. In that case, leave `OPEN_WEBUI_CA_CERT` and `OPEN_WEBUI_CERT_SHA256` unset and Node's normal public-CA and hostname verification applies.
+
+The current `webui.moj.eracun` deployment instead uses a private, self-signed leaf certificate with wildcard SAN `*.moj.eracun`. `api/private-pki-transport.js` bundles that exact public leaf PEM and pins this verified fingerprint only for the exact configured host `webui.moj.eracun`:
+
+```text
+CE:A9:BC:1B:6F:4F:72:83:5F:5D:7F:4D:E1:23:63:31:22:66:7F:58:BA:9C:01:9B:FD:41:80:B2:69:7E:39:A6
+```
+
+The certificate and fingerprint are public verification material, not credentials; only `OPEN_WEBUI_API_KEY` is secret. No additional TLS environment value is needed for the currently bundled certificate. For a certificate rotation or an alternate self-signed private-PKI host, deploy the renewed exact pair together as server-only overrides:
+
+```ini
+OPEN_WEBUI_CA_CERT="-----BEGIN CERTIFICATE-----\n...renewed exact certificate...\n-----END CERTIFICATE-----"
+OPEN_WEBUI_CERT_SHA256=PASTE_64_HEX_SHA256_FINGERPRINT_HERE
+```
+
+Both variables are required together when overriding the bundled pin; a partial or malformed pin fails closed. The transport parses the X.509 certificate, verifies its configured SHA-256 fingerprint, validity window, self-signature, and hostname before creating the request. The bundled leaf expires on **2027-06-30 at 10:50:38Z**. Obtain and independently verify the renewed leaf, update both override variables in a Preview deployment, run the TLS and assistant checks, then promote and redeploy before that date. Once the renewed pin is bundled in a later code release, remove the temporary overrides together. The runtime checks certificate validity on every cold start, so an expired certificate cannot silently remain trusted.
+
+Never set `NODE_TLS_REJECT_UNAUTHORIZED=0`, use `rejectUnauthorized:false`, or install a process-wide insecure TLS agent. Those global bypasses would disable certificate validation for unrelated outbound requests—including API credentials—and turn a scoped compatibility requirement into an application-wide interception risk. The private-PKI transport keeps `rejectUnauthorized:true`, preserves normal hostname verification, and adds an exact leaf fingerprint check only for the configured Open WebUI request.
 
 ## Reactive one-page architecture
 
