@@ -1,8 +1,14 @@
 'use strict';
 
 const { DEFAULT_GEMINI_MODEL, resolveGeminiConfig } = require('./gemini-config.js');
+const {
+  DEFAULT_OPEN_WEBUI_BASE_URL,
+  DEFAULT_OPEN_WEBUI_MODEL,
+  resolveOpenWebUiConfig
+} = require('./open-webui-config.js');
 
 const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
+const OPEN_WEBUI_CHAT_PATH = '/api/chat/completions';
 const DEFAULT_MODEL = DEFAULT_GEMINI_MODEL;
 const MAX_BODY_BYTES = 32 * 1024;
 const MAX_MESSAGE_LENGTH = 1000;
@@ -84,6 +90,21 @@ function buildGeminiInput(messages, financialContext) {
   ].join('\n');
 }
 
+function buildOpenWebUiMessages(messages, financialContext, locale) {
+  return [
+    {
+      role:'system',
+      content:[
+        assistantSystemInstruction(locale),
+        '',
+        'Aggregate financial summary:',
+        JSON.stringify(financialContext)
+      ].join('\n')
+    },
+    ...messages
+  ];
+}
+
 function extractGeminiMessage(payload) {
   const steps = Array.isArray(payload?.steps) ? payload.steps : [];
   const modelStep = [...steps].reverse().find(step => step?.type === 'model_output' && Array.isArray(step.content));
@@ -94,6 +115,101 @@ function extractGeminiMessage(payload) {
       .join('') || '',
     MAX_RESPONSE_LENGTH
   );
+}
+
+function extractOpenWebUiMessage(payload) {
+  const content = payload?.choices?.[0]?.message?.content;
+  const text = Array.isArray(content)
+    ? content.map(part => {
+      if (typeof part === 'string') return part;
+      if (part?.type === 'text') return part.text || part.content || '';
+      return '';
+    }).join('')
+    : content;
+  return cleanText(text, MAX_RESPONSE_LENGTH);
+}
+
+function normalizeProviderName(value) {
+  const provider = cleanText(value, 32).toLowerCase().replace(/[-_]/g, '');
+  if (provider === 'openwebui') return 'openwebui';
+  if (provider === 'gemini') return 'gemini';
+  return '';
+}
+
+function resolveAssistantProvider(environment) {
+  const source = environment && typeof environment === 'object' ? environment : {};
+  const requested = normalizeProviderName(source.AI_PROVIDER);
+  const hasExplicitProvider = Boolean(cleanText(source.AI_PROVIDER, 32));
+  const openWebUi = resolveOpenWebUiConfig(source);
+  const gemini = resolveGeminiConfig(source);
+
+  if (hasExplicitProvider) {
+    if (requested === 'openwebui' && openWebUi.isConfigured) return Object.freeze({ name:'openwebui', config:openWebUi });
+    if (requested === 'gemini' && gemini.isConfigured) return Object.freeze({ name:'gemini', config:gemini });
+    return null;
+  }
+
+  if (gemini.isConfigured) return Object.freeze({ name:'gemini', config:gemini });
+  if (openWebUi.isConfigured) return Object.freeze({ name:'openwebui', config:openWebUi });
+  return null;
+}
+
+function providerRequest(provider, messages, financialContext, locale) {
+  if (provider.name === 'openwebui') {
+    return Object.freeze({
+      url:`${provider.config.baseUrl}${OPEN_WEBUI_CHAT_PATH}`,
+      headers:{
+        Accept:'application/json',
+        Authorization:`Bearer ${provider.config.apiKey}`,
+        'Content-Type':'application/json'
+      },
+      body:{
+        model:provider.config.model,
+        stream:false,
+        max_tokens:500,
+        messages:buildOpenWebUiMessages(messages, financialContext, locale)
+      },
+      extract:extractOpenWebUiMessage
+    });
+  }
+
+  return Object.freeze({
+    url:GEMINI_ENDPOINT,
+    headers:{
+      Accept:'application/json',
+      'Content-Type':'application/json',
+      'x-goog-api-key':provider.config.apiKey
+    },
+    body:{
+      model:provider.config.model,
+      store:false,
+      system_instruction:assistantSystemInstruction(locale),
+      input:buildGeminiInput(messages, financialContext),
+      generation_config:{ max_output_tokens:500 }
+    },
+    extract:extractGeminiMessage
+  });
+}
+
+function upstreamError(upstream) {
+  const status = Number(upstream?.status) || 502;
+  if (status === 429) {
+    return {
+      status:429,
+      payload:{ error:'AI_RATE_LIMITED', retryable:true },
+      retryAfter:cleanText(upstream?.headers?.get?.('retry-after'), 20) || '30'
+    };
+  }
+  if (status === 401 || status === 403) {
+    return { status:503, payload:{ error:'AI_AUTH_FAILED', retryable:false } };
+  }
+  if (status === 404) {
+    return { status:502, payload:{ error:'AI_MODEL_NOT_FOUND', retryable:false } };
+  }
+  if (status >= 500) {
+    return { status:502, payload:{ error:'AI_UPSTREAM_UNAVAILABLE', retryable:true } };
+  }
+  return { status:502, payload:{ error:'AI_UPSTREAM_REJECTED', retryable:false } };
 }
 
 function headerValue(request, name) {
@@ -205,7 +321,7 @@ async function readJsonBody(request) {
 function createAssistantHandler(options = {}) {
   const fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
   const environment = options.env || process.env;
-  const timeoutMs = Math.max(500, Number(options.timeoutMs) || 7000);
+  const timeoutMs = Math.max(500, Number(options.timeoutMs) || 25_000);
   const takeRateLimit = createRateLimiter({
     limit:Math.max(1, Number(options.rateLimit) || 10),
     windowMs:Math.max(1000, Number(options.rateWindowMs) || 60_000),
@@ -251,40 +367,27 @@ function createAssistantHandler(options = {}) {
     }
     const locale = body?.locale === 'en' ? 'en' : 'hr';
     const financialContext = sanitizeFinancialContext(body?.financialContext);
-    const geminiConfig = resolveGeminiConfig(environment);
-    if (!geminiConfig.isConfigured || typeof fetchImpl !== 'function') {
+    const provider = resolveAssistantProvider(environment);
+    if (!provider || typeof fetchImpl !== 'function') {
       writeJson(response, 503, { error:'AI_UNAVAILABLE', retryable:true }, rateHeaders);
       return;
     }
 
-    const { apiKey, model } = geminiConfig;
+    const upstreamRequest = providerRequest(provider, messages, financialContext, locale);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const upstream = await fetchImpl(GEMINI_ENDPOINT, {
+      const upstream = await fetchImpl(upstreamRequest.url, {
         method:'POST',
-        headers:{
-          Accept:'application/json',
-          'Content-Type':'application/json',
-          'x-goog-api-key':apiKey
-        },
-        body:JSON.stringify({
-          model,
-          store:false,
-          system_instruction:assistantSystemInstruction(locale),
-          input:buildGeminiInput(messages, financialContext),
-          generation_config:{ max_output_tokens:500 }
-        }),
+        headers:upstreamRequest.headers,
+        body:JSON.stringify(upstreamRequest.body),
         signal:controller.signal
       });
 
       if (!upstream?.ok) {
-        if (upstream?.status === 429) {
-          const retryAfter = cleanText(upstream.headers?.get?.('retry-after'), 20) || '30';
-          writeJson(response, 429, { error:'AI_RATE_LIMITED', retryable:true }, { ...rateHeaders, 'Retry-After':retryAfter });
-          return;
-        }
-        writeJson(response, upstream?.status === 401 || upstream?.status === 403 ? 503 : 502, { error:'AI_UPSTREAM_UNAVAILABLE', retryable:true }, rateHeaders);
+        const failure = upstreamError(upstream);
+        const failureHeaders = failure.retryAfter ? { ...rateHeaders, 'Retry-After':failure.retryAfter } : rateHeaders;
+        writeJson(response, failure.status, failure.payload, failureHeaders);
         return;
       }
 
@@ -295,12 +398,12 @@ function createAssistantHandler(options = {}) {
         writeJson(response, 502, { error:'AI_INVALID_RESPONSE', retryable:true }, rateHeaders);
         return;
       }
-      const message = extractGeminiMessage(payload);
+      const message = upstreamRequest.extract(payload);
       if (!message) {
         writeJson(response, 502, { error:'AI_EMPTY_RESPONSE', retryable:true }, rateHeaders);
         return;
       }
-      writeJson(response, 200, { id:cleanText(payload?.id, 100) || `gemini-${Date.now()}`, message }, rateHeaders);
+      writeJson(response, 200, { id:cleanText(payload?.id, 100) || `${provider.name}-${Date.now()}`, message }, rateHeaders);
     } catch (error) {
       writeJson(response, error?.name === 'AbortError' ? 504 : 502, { error:error?.name === 'AbortError' ? 'AI_TIMEOUT' : 'AI_UPSTREAM_UNAVAILABLE', retryable:true }, rateHeaders);
     } finally {
@@ -316,5 +419,10 @@ module.exports.createAssistantHandler = createAssistantHandler;
 module.exports.sanitizeMessages = sanitizeMessages;
 module.exports.sanitizeFinancialContext = sanitizeFinancialContext;
 module.exports.extractGeminiMessage = extractGeminiMessage;
+module.exports.extractOpenWebUiMessage = extractOpenWebUiMessage;
+module.exports.resolveAssistantProvider = resolveAssistantProvider;
 module.exports.DEFAULT_MODEL = DEFAULT_MODEL;
 module.exports.GEMINI_ENDPOINT = GEMINI_ENDPOINT;
+module.exports.OPEN_WEBUI_CHAT_PATH = OPEN_WEBUI_CHAT_PATH;
+module.exports.DEFAULT_OPEN_WEBUI_BASE_URL = DEFAULT_OPEN_WEBUI_BASE_URL;
+module.exports.DEFAULT_OPEN_WEBUI_MODEL = DEFAULT_OPEN_WEBUI_MODEL;

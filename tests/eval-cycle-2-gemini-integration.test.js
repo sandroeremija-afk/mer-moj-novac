@@ -91,6 +91,5 @@ test('evaluation cycle 2: Gemini secret is documented but absent from every brow
   assert.match(ignore, /\.env\.local/);
   assert.match(ignore, /\.env\.\*\.local/);
   const vercel = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
-  assert.equal(vercel.functions['api/assistant.js'].maxDuration, 10);
+  assert.equal(vercel.functions['api/assistant.js'].maxDuration, 30);
 });
-

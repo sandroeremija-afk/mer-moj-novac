@@ -49,7 +49,7 @@
     },
     {
       id:'help', surface:'help', target:'#helpTourConversation', mobileTarget:'#helpTourConversation', placement:'left', titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
-      copy:copy('Pomoć i AI Asistent', 'Odaberite ponuđenu financijsku temu ili upišite pitanje u razgovor. Gemini AI može objasniti vaše financije kada je usluga povezana.', 'Help and AI Assistant', 'Choose a suggested financial topic or type a question in the chat. Gemini AI can explain your finances when the service is connected.')
+      copy:copy('Pomoć i AI Asistent', 'Odaberite ponuđenu financijsku temu ili upišite pitanje u razgovor. AI asistent može objasniti vaše financije kada je usluga povezana.', 'Help and AI Assistant', 'Choose a suggested financial topic or type a question in the chat. The AI assistant can explain your finances when the service is connected.')
     }
   ].map(step => Object.freeze(step)));
 

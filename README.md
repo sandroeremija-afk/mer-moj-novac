@@ -13,7 +13,16 @@ npm run check
 
 `npm run check` performs the source/security preflight, runs every logic and UI contract evaluation, and creates the minified `dist/` output. For local UI work, serve the repository root with any static server and open `index.html`. App data is saved locally in the browser and Personal/Business profiles are isolated.
 
-The optional Gemini-backed assistant runs through the server-only Vercel Function at `/api/assistant`. Replace the placeholder value in the project-root `.env.local` with a real `GEMINI_API_KEY` for local use, or pull the linked Vercel development environment, then run `vercel dev`. This CommonJS project intentionally does not use a browser-visible `VITE_` or `NEXT_PUBLIC_` secret. A missing key, the documented placeholder, or an unavailable provider never exposes an error to the conversation: both assistant surfaces fall back to deterministic local guidance.
+The optional AI assistant runs through the server-only Vercel Function at `/api/assistant` and supports Google Gemini or an Open WebUI instance. To use the configured Open WebUI service locally, add the following values to the project-root `.env.local`, then run `vercel dev`:
+
+```ini
+AI_PROVIDER=openwebui
+OPEN_WEBUI_BASE_URL=https://webui.moj.eracun
+OPEN_WEBUI_API_KEY=PASTE_THE_SECRET_HERE
+OPEN_WEBUI_MODEL=gemma4:26b
+```
+
+The base URL must identify an Open WebUI instance reachable by the server over publicly trusted HTTPS, while the model value must be an exact id available to the API-key owner. This CommonJS project intentionally does not use browser-visible `VITE_` or `NEXT_PUBLIC_` secrets. A missing key or unavailable provider never exposes an error to the conversation: both assistant surfaces fall back to deterministic local guidance.
 
 ## Included
 
@@ -53,7 +62,7 @@ The optional Gemini-backed assistant runs through the server-only Vercel Functio
 
 `auth-core.js` provides a browser-safe identity-provider boundary. The local adapter validates emails and password strength, derives a 256-bit password hash with PBKDF2-SHA256 (210,000 iterations and a unique random salt), never stores raw passwords, persists only an expiring tab session, and leaves financial data intact on logout. `security-core.js` implements standards-compatible TOTP using Web Crypto (HMAC-SHA1, 30-second period, six digits), accepts a one-step clock drift, and stores only SHA-256 hashes of recovery codes.
 
-This deployment intentionally includes a local/demo auth provider. The Gemini assistant has a narrowly scoped server route, but it is not an identity backend and does not change the local authentication trust model. Before real customer onboarding, replace the auth adapter with Clerk/Auth0/Descope or another server-backed identity provider, move TOTP validation and Open Banking tokens server-side, use secure HttpOnly cookies, encrypt secrets at rest, and rate-limit authentication attempts. The UI and provider boundary are already separated for that migration.
+This deployment intentionally includes a local/demo auth provider. The assistant has a narrowly scoped server route, but it is not an identity backend and does not change the local authentication trust model. Do not place a personal Open WebUI key behind this public demo route without server-backed user authentication and durable rate limiting. Before real customer onboarding, replace the auth adapter with Clerk/Auth0/Descope or another server-backed identity provider, move TOTP validation and Open Banking tokens server-side, use secure HttpOnly cookies, encrypt secrets at rest, and rate-limit authentication attempts. The UI and provider boundary are already separated for that migration.
 
 ## Import architecture
 
@@ -67,9 +76,9 @@ The demo never asks for or stores real banking credentials. A production Open Ba
 
 ## AI assistant architecture
 
-`assistant-core.js` is the shared client for the Help panel and floating chat widget. It limits history, sends only an allowlisted aggregate summary for the active profile, aborts stale requests during profile switches, and provides deterministic Croatian/English guidance when the remote service is unavailable. `api/assistant.js` independently validates and sanitizes the request before calling Google Gemini's Interactions API with `store: false`. `api/gemini-config.js` resolves the server-only `GEMINI_API_KEY`, accepts `GOOGLE_GENERATIVE_AI_API_KEY` only as a compatibility fallback, validates the optional model name, and treats the sample placeholder as unconfigured. The key is never written into the browser bundle, URL, logs, or response.
+`assistant-core.js` is the shared client for the Help panel and floating chat widget. It limits history, sends only an allowlisted aggregate summary for the active profile, aborts stale requests during profile switches, and provides deterministic Croatian/English guidance when the remote service is unavailable. `api/assistant.js` independently validates and sanitizes the request before selecting a server-side provider adapter. The Gemini adapter uses the Interactions API with `store: false`; the Open WebUI adapter uses its OpenAI-compatible `/api/chat/completions` endpoint with a server-selected model. `api/gemini-config.js` and `api/open-webui-config.js` validate their respective server-only configuration. Provider keys are never written into the browser bundle, URL, logs, or response.
 
-Set secrets through Vercel project environment variables for Production, Preview, and Development as required. Never add a populated `.env.local` file to Git; local environment variants are ignored and `.env.example` documents only the required names.
+Set secrets through Vercel project environment variables for Production, Preview, and Development as required. For Open WebUI, create a dedicated non-admin service account, restrict its API access to the model and chat-completion endpoints it needs, and use a publicly reachable URL with a publicly trusted TLS certificate in production; `localhost` and self-signed certificates are not accepted by Vercel's server-side connection. Never add a populated `.env.local` file to Git; local environment variants are ignored and `.env.example` documents only the required names. Changing provider variables requires a new deployment.
 
 ## Reactive one-page architecture
 

@@ -19,7 +19,7 @@ test('evaluation cycle 1: every step exposes the requested Croatian copy and an 
     ['Ciljevi štednje', 'Pratite napredak svojih fondova za hitne slučajeve i postavite automatska pravila zaokruživanja.'],
     ['Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.'],
     ['Korisničke postavke', 'Odaberite jezik, svijetlu ili tamnu temu te raspored nadzorne ploče. U sljedećem dijelu pogledajte sigurnost računa.'],
-    ['Pomoć i AI Asistent', 'Odaberite ponuđenu financijsku temu ili upišite pitanje u razgovor. Gemini AI može objasniti vaše financije kada je usluga povezana.']
+    ['Pomoć i AI Asistent', 'Odaberite ponuđenu financijsku temu ili upišite pitanje u razgovor. AI asistent može objasniti vaše financije kada je usluga povezana.']
   ];
   MerOnboarding.DEFAULT_STEPS.forEach((step, index) => {
     assert.equal(step.copy.hr.title, expected[index][0]);

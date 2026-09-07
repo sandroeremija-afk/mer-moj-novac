@@ -73,7 +73,7 @@
   function createAssistantClient(options = {}) {
     const endpoint = options.endpoint || '/api/assistant';
     const fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
-    const timeoutMs = Math.max(100, Number(options.timeoutMs) || 8000);
+    const timeoutMs = Math.max(100, Number(options.timeoutMs) || 30000);
 
     async function ask({messages,locale,profileId,financialContext,signal} = {}) {
       const safeMessages = sanitizeMessages(messages);
