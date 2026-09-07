@@ -3,13 +3,14 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { minify } = require('terser');
+const { createHash } = require('node:crypto');
 
 const root = path.resolve(__dirname, '..');
 const output = path.join(root, 'dist');
 const jsFiles = ['runtime.js','logo.js','core.js','demo-data.js','auth-core.js','accounting-core.js','security-core.js','import-core.js','bank-provider.js','state-store.js','onboarding-core.js','assistant-core.js','layout-core.js','app.js','premium.js','onboarding.js','assistant-ui.js','layout-ui.js','responsive-ui.js','auth-ui.js'];
 jsFiles.push('enterprise-core.js','enterprise-ui.js','vault-core.js','security-enterprise.js','invoice-core.js','invoice-ui.js');
-jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-core.js','planning-ui.js','household-core.js','household-ui.js');
-const suiteCss=['enterprise.css','invoice.css','security-enterprise.css','receipt.css','planning.css','household.css'];
+jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-core.js','planning-ui.js','household-core.js','household-ui.js','app-update.js');
+const suiteCss=['enterprise.css','invoice.css','security-enterprise.css','receipt.css','planning.css','household.css','app-update.css'];
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source
@@ -55,9 +56,6 @@ async function main() {
   let html = await fs.readFile(path.join(root, 'index.html'), 'utf8');
   for (const file of jsFiles) html = html.replace(new RegExp(`${file.replace('.', '\\.')}[^"']*`, 'g'), file.replace(/\.js$/, '.min.js'));
   html = html.replace(/styles\.css[^"']*/g, 'styles.min.css');
-  html = compactHtml(html);
-  await fs.writeFile(path.join(output, 'index.html'), html, 'utf8');
-  report.files.push({ source:'index.html', output:'index.html', sourceBytes:(await fs.stat(path.join(root,'index.html'))).size, outputBytes:Buffer.byteLength(html) });
 
   for (const entry of await fs.readdir(path.join(root, 'assets'), { withFileTypes:true })) {
     if (!entry.isFile()) continue;
@@ -66,17 +64,46 @@ async function main() {
     else await fs.copyFile(sourcePath,targetPath);
   }
 
-  report.sourceBytes=report.files.reduce((sum,file)=>sum+file.sourceBytes,0);
   for(const file of suiteCss) {
     const source=await fs.readFile(path.join(root,file),'utf8');
     await fs.writeFile(path.join(output,file),compactCss(source),'utf8');
   }
-  await fs.copyFile(path.join(root,'manifest.webmanifest'),path.join(output,'manifest.webmanifest'));
-  const shellFiles=['/index.html','/styles.min.css',...suiteCss.map(file=>'/'+file),'/manifest.webmanifest',...jsFiles.map(file=>'/'+file.replace(/\.js$/,'.min.js')),...(await fs.readdir(path.join(output,'assets'))).filter(file=>/\.(svg|png|js|woff2?)$/.test(file)).map(file=>'/assets/'+file)];
-  const shellHash=require('node:crypto').createHash('sha256');
-  for(const file of shellFiles.slice().sort())shellHash.update(file).update(await fs.readFile(path.join(output,file.slice(1))));
+  const manifest=JSON.parse(await fs.readFile(path.join(root,'manifest.webmanifest'),'utf8'));
+  for(const icon of manifest.icons||[]){
+    const url=new URL(icon.src,'https://mer.invalid/');
+    if(url.origin!=='https://mer.invalid')continue;
+    const bytes=await fs.readFile(path.join(output,url.pathname.slice(1)));
+    icon.src=`${url.pathname}?v=${createHash('sha256').update(bytes).digest('hex').slice(0,16)}`;
+  }
+  await fs.writeFile(path.join(output,'manifest.webmanifest'),JSON.stringify(manifest),'utf8');
+  const staticFiles=['/styles.min.css',...suiteCss.map(file=>'/'+file),'/manifest.webmanifest',...jsFiles.map(file=>'/'+file.replace(/\.js$/,'.min.js')),...(await fs.readdir(path.join(output,'assets'))).filter(file=>/\.(svg|png|js|woff2?)$/.test(file)).map(file=>'/assets/'+file)];
+  // A fresh HTML response must never share script/style cache keys with an older shell.
+  // Exact query matching also bypasses already-installed legacy cache-first workers.
+  const assetUrls=new Map();
+  for(const file of staticFiles){
+    const digest=createHash('sha256').update(await fs.readFile(path.join(output,file.slice(1)))).digest('hex').slice(0,16);
+    assetUrls.set(file,`${file}?v=${digest}`);
+  }
+  html=html.replace(/\b(src|href)=(["'])([^"']+)\2/g,(match,attribute,quote,value)=>{
+    if(/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(value))return match;
+    const url=new URL(value,'https://mer.invalid/'),versioned=assetUrls.get(url.pathname);
+    if(!versioned){
+      if(/\.(?:js|css|svg|png|woff2?|webmanifest)$/.test(url.pathname))throw new Error(`Unversioned or missing shell asset: ${value}`);
+      return match;
+    }
+    return `${attribute}=${quote}${value.startsWith('/')?'':'./'}${value.startsWith('/')?versioned:versioned.slice(1)}${url.hash}${quote}`;
+  });
+  const workerSource=await fs.readFile(path.join(root,'service-worker.js'),'utf8');
+  const shellHash=createHash('sha256').update(html).update(workerSource);
+  for(const file of staticFiles.slice().sort())shellHash.update(file).update(await fs.readFile(path.join(output,file.slice(1))));
   const buildId=shellHash.digest('hex').slice(0,16);
-  const worker=(await fs.readFile(path.join(root,'service-worker.js'),'utf8')).replaceAll('__MER_BUILD_ID__',buildId);
+  html=compactHtml(html.replace('</head>',`<meta name="mer-build-id" content="${buildId}"></head>`));
+  await fs.writeFile(path.join(output,'index.html'),html,'utf8');
+  report.files.push({source:'index.html',output:'index.html',sourceBytes:(await fs.stat(path.join(root,'index.html'))).size,outputBytes:Buffer.byteLength(html)});
+  report.sourceBytes=report.files.reduce((sum,file)=>sum+file.sourceBytes,0);
+  report.buildId=buildId;
+  const shellFiles=['/index.html',...assetUrls.values()];
+  const worker=workerSource.replaceAll('__MER_BUILD_ID__',buildId).replace('/*__MER_SHELL_ASSETS__*/ null',JSON.stringify(shellFiles));
   await fs.writeFile(path.join(output,'service-worker.js'),worker,'utf8');
   await fs.writeFile(path.join(output,'sw-assets.json'),JSON.stringify(shellFiles),'utf8');
   report.outputBytes=report.files.reduce((sum,file)=>sum+file.outputBytes,0);
@@ -85,4 +112,5 @@ async function main() {
   process.stdout.write(`Production build complete: ${report.outputBytes} bytes (${report.reductionPercent}% smaller).\n`);
 }
 
-main().catch(error => { process.stderr.write(`${error.stack || error}\n`); process.exit(1); });
+if(require.main===module)main().catch(error => { process.stderr.write(`${error.stack || error}\n`); process.exit(1); });
+module.exports={main,compactCss,compactHtml};

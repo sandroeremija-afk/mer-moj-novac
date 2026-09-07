@@ -1,0 +1,28 @@
+.mer-app-update {
+  position: fixed;
+  inset-inline-end: max(16px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 1300;
+  box-sizing: border-box;
+  width: min(380px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid #b6cec5;
+  border-radius: 16px;
+  background: #f9fcfa;
+  color: #193f35;
+  box-shadow: 0 8px 30px #142c2426;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mer-app-update[hidden] { display: none; }
+.mer-app-update h2 { margin: 0 0 6px; color: inherit; font-size: 15px; line-height: 1.4; }
+.mer-app-update p { margin: 0; font-size: 13px; line-height: 1.6; }
+.mer-app-update-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.mer-app-update button { min-height: 44px; padding: 9px 14px; border: 1px solid #16574b; border-radius: 9px; background: #16574b; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.mer-app-update button.mer-app-update-later { border-color: transparent; background: transparent; color: inherit; }
+.mer-app-update button:focus-visible { outline: 3px solid #ae7930; outline-offset: 3px; }
+.mer-app-update button:disabled { opacity: .65; cursor: wait; }
+[data-theme="dark"] .mer-app-update { border-color: #4f7266; background: #192d26; color: #edf7f3; }
+[data-theme="dark"] .mer-app-update button:not(.mer-app-update-later) { border-color: #9ad6ba; background: #9ad6ba; color: #13382a; }
+@media (max-width: 600px) { .mer-app-update { bottom: calc(88px + env(safe-area-inset-bottom)); padding: 16px; } }

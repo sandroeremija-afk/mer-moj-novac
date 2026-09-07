@@ -5,6 +5,7 @@
     init(options) { if (!controller) controller = createController(options);return controller; },
     // Startup renders must never recreate a plaintext cache before the owner is known.
     persist(snapshot) { return controller ? controller.persist(snapshot) : Promise.resolve(false); },
+    flush() { return controller ? controller.flush() : Promise.resolve(); },
     beforeEnter(session, password) { return controller ? controller.beforeEnter(session, password) : Promise.resolve(true); },
     onLogout() { return controller?.onLogout(); },
     changeLoginPassword(options) { return controller?.changeLoginPassword(options); },
@@ -142,6 +143,10 @@
       }
       return true;
     }
+    async function flush() {
+      await lockReady;
+      if (!suspended && session && !locked) await persist(options.getState());
+    }
     async function lock() {
       if (!session || locked) return;
       const snapshot = options.getState();
@@ -263,7 +268,6 @@
     document.addEventListener('visibilitychange',check);root.addEventListener('focus',check);root.addEventListener('pageshow',check);root.setInterval(check,1000);
     root.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installEvent=event;notify();});
     async function install(){if(!installEvent)return false;await installEvent.prompt();const result=await installEvent.userChoice;installEvent=null;notify();return result.outcome==='accepted';}
-    if('serviceWorker' in navigator&&root.isSecureContext)root.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).catch(report);},{once:true});
-    return {persist,beforeEnter,onLogout,changeLoginPassword,lock,isLocked:()=>locked,exportAll,requestDelete,openVaultSetup,openPinSetup,status,install};
+    return {persist,flush,beforeEnter,onLogout,changeLoginPassword,lock,isLocked:()=>locked,exportAll,requestDelete,openVaultSetup,openPinSetup,status,install};
   }
 })(window);
