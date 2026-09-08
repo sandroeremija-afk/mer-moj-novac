@@ -77,11 +77,11 @@ async function main(){
     h.get('financialHealthModal').close();await h.click('healthImprove');await h.click('applyHealthPlan');assert.equal(h.context.state.categories.reduce((sum,category)=>sum+category.limit,0),400);assert.equal(h.appState.accounts.business.categories[0].limit,100,'confirmed rebalance cannot cross profiles');
   }
   {
-    const h=harness();await h.click('openFinancialWrapped');assert.equal(h.get('financialWrappedModal').open,true);assert.equal(h.get('wrappedStep').textContent,'1 od 4');assert.equal(h.get('wrappedBack').disabled,true);
+    const h=harness();assert.equal(h.get('openFinancialWrapped'),null,'the Insights toolbar has no extra monthly filter');h.window.MerEngagementUI.openWrapped();assert.equal(h.get('financialWrappedModal').open,true);assert.equal(h.get('wrappedStep').textContent,'1 od 4');assert.equal(h.get('wrappedBack').disabled,true);
     for(let step=2;step<=4;step++){await h.click('wrappedNext');assert.equal(h.get('wrappedStep').textContent,`${step} od 4`);}
     assert.equal(h.get('wrappedNext').textContent,'Završi');await h.click('shareWrapped');assert.equal(h.shares.length,1);assert.ok(!h.shares[0].includes('€'));assert.ok(!h.shares[0].includes('SECRET'));await h.click('wrappedBack');assert.equal(h.get('wrappedStep').textContent,'3 od 4');await h.click('wrappedNext');await h.click('wrappedNext');assert.equal(h.get('financialWrappedModal').open,false);
-    await h.click('openFinancialWrapped');h.get('financialWrappedModal').dismissBackdrop();assert.equal(h.get('financialWrappedModal').open,false);
-    await h.click('openFinancialWrapped');assert.equal(h.get('financialWrappedModal').dispatch('cancel').event.defaultPrevented,true);assert.equal(h.get('financialWrappedModal').open,false);
+    h.window.MerEngagementUI.openWrapped();h.get('financialWrappedModal').dismissBackdrop();assert.equal(h.get('financialWrappedModal').open,false);
+    h.window.MerEngagementUI.openWrapped();assert.equal(h.get('financialWrappedModal').dispatch('cancel').event.defaultPrevented,true);assert.equal(h.get('financialWrappedModal').open,false);
     assert.ok(h.updates.every(reason=>reason==='wrapped-seen'));assert.equal(h.appState.accounts.business.engagement,undefined,'seen status is profile-scoped');
   }
   {

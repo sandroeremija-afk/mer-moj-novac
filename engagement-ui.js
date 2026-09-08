@@ -74,7 +74,6 @@
   healthDialog.addEventListener('close',()=>aiRequest?.abort());
   const storyDialog=dialog('financialWrappedModal','Vaš mjesečni pregled','<div class="wrapped-progress" id="wrappedProgress" aria-hidden="true"></div><div class="wrapped-controls"><label for="wrappedMonth" id="wrappedMonthLabel"></label><input type="month" id="wrappedMonth"></div><div class="engagement-body wrapped-story" id="wrappedStory" aria-live="polite"></div><footer class="engagement-footer"><button type="button" class="secondary-button" id="wrappedBack"></button><span id="wrappedStep"></span><button type="button" class="primary-button" id="wrappedNext"></button></footer>');
   storyDialog.classList.add('wrapped-dialog');
-  const wrappedButton=document.createElement('button');wrappedButton.type='button';wrappedButton.className='secondary-button';wrappedButton.id='openFinancialWrapped';document.querySelector('#insightsView .heading-actions').append(wrappedButton);
   const badges={start:['Novi početak','A fresh start'],saver:['Majstor štednje','Savings master'],disciplined:['Disciplinirani budžet','Budget discipline'],aware:['Svjestan potrošač','Mindful spending']};
   function renderStory() {
     const result=E.monthlySummary(state,{...options(),month:storyMonth});
@@ -98,7 +97,6 @@
     const context=snapshot(), key=E.wrappedKey(context.userId,context.profileId,context.referenceDate);
     if(context.userId&&!state.engagement?.wrappedSeen?.[key])window.MerEngagementBridge.mutate('wrapped-seen',profile=>{profile.engagement||={};profile.engagement.wrappedSeen||={};profile.engagement.wrappedSeen[key]=true;});
   }
-  wrappedButton.addEventListener('click',openWrapped);
   el('wrappedBack').addEventListener('click',()=>{storyIndex=Math.max(0,storyIndex-1);renderStory();});el('wrappedNext').addEventListener('click',()=>{if(storyIndex===3)closeModal(storyDialog);else {storyIndex++;renderStory();}});
   el('wrappedMonth').addEventListener('change',()=>{if(!el('wrappedMonth').reportValidity()||!/^\d{4}-(0[1-9]|1[0-2])$/.test(el('wrappedMonth').value))return;storyMonth=el('wrappedMonth').value;storyIndex=0;renderStory();});
   const payment=document.createElement('label');payment.className='transaction-payment-method';payment.innerHTML='<span id="transactionPaymentLabel"></span><select id="transactionPaymentMethod"><option value="transfer"></option><option value="card"></option><option value="cash"></option></select>';el('spendCheck').before(payment);
@@ -122,7 +120,6 @@
     const result=E.health(state,options());
     el('healthScore').textContent=result.score===null?'—':`${result.score}/100`;el('healthLabel').textContent=say('Financijsko zdravlje','Financial health');
     el('healthRecommendations').innerHTML=result.recommendations.map(key=>`<li>${esc(say(...recommendationCopy[key]))}</li>`).join('');el('healthImprove').textContent=say('Popravi sve','Improve all');
-    wrappedButton.textContent=say('Moj mjesec','Monthly wrapped');
     splitLedger.textContent=say('Podjela računa','Split bills');splitSubmit.textContent=say('Spremi i podijeli','Save and split');splitSubmit.hidden=transactionType==='income';enhanceActivity();
     el('transactionPaymentLabel').textContent=say('Način plaćanja','Payment method');
     const labels=[say('Prijenos / nije navedeno','Transfer / unspecified'),say('Kartica · zaokruživanje ako je uključeno','Card · roundup if enabled'),say('Gotovina','Cash')];[...el('transactionPaymentMethod').options].forEach((option,index)=>option.textContent=labels[index]);

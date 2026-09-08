@@ -71,6 +71,7 @@
       ...[['overview','Pregled','Overview'],['budgets','Budžete','Budgets'],['savings','Štednju','Savings'],['activity','Aktivnost','Activity'],['insights','Uvide','Insights']].map(([id,hr,en])=>({label:copy(`Idi na ${hr}`,`Go to ${en}`),run:()=>showView(id)})),
       {label:copy('Novi trošak','New expense'),run:()=>openTransaction()},
       {label:copy('Novi prihod','New income'),run:()=>openIncomeTransaction()},
+      {label:copy('Mjesečni osvrt — Financial Wrapped','Monthly review — Financial Wrapped'),run:()=>window.MerEngagementUI?.openWrapped()},
       {label:copy('Izvoz — sve transakcije','Export — all transactions'),run:()=>window.MerExportUI?.open('activity',{timeframe:'all'})},
       {label:copy('Izvoz — budžeti','Export — budgets'),run:()=>document.querySelector('[data-export-budget]').click()},
       {label:copy('Izvoz — izvještaj uvida','Export — insights report'),run:()=>document.querySelector('[data-export-insights]').click()},
@@ -90,7 +91,7 @@
       ...(appState.activeAccount==='business'?[{label:copy('Novi e-račun (nacrt)','New e-invoice (draft)'),run:()=>window.MerInvoiceUI?.open()}]:[])
     ];
   }
-  function openSetting(tab,id){window.MerPremiumNavigation.openSettings(tab);requestAnimationFrame(()=>{const target=el(id);target?.scrollIntoView({block:'center'});target?.focus({preventScroll:true});});}
+  function openSetting(tab,id){window.MerPremiumNavigation.openSettings(tab);window.MerPopupLayout?.revealTarget(id);requestAnimationFrame(()=>{const target=el(id);target?.scrollIntoView({block:'center'});target?.focus({preventScroll:true});});}
   function runSearchResult(result){
     if(result.profileId!==appState.activeAccount)return;
     if(result.kind==='transaction'){showView('activity');openTransaction(result.id);}

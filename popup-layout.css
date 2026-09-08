@@ -1,0 +1,95 @@
+/* Static dialogs need no scroll rail when their measured content fits.
+   The fallback protects keyboard/zoom access instead of hiding form controls. */
+html body dialog[data-content-fits="true"]:not(.tour-modal-host)[open],
+html body dialog:not(.tour-modal-host) [data-content-fits="true"] {
+  overflow-y:hidden;
+  scrollbar-gutter:auto;
+}
+html body dialog { overflow-x:hidden; }
+html body dialog.tour-modal-host { overflow:visible; }
+/* A software keyboard or increased text zoom must never hide reachable controls. */
+html body #transactionModal[data-content-fits="false"] { overflow-y:auto; }
+#bankSettingsModal [data-topic-hidden] { display:none !important; }
+#bankSettingsModal .settings-topic-picker { display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,1.2fr);align-items:center;gap:12px;margin:0 0 14px;font-size:14px;line-height:1.5;font-weight:400; }
+#bankSettingsModal .settings-topic-picker select { width:100%;min-width:0;min-height:44px;font:inherit;padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);color:var(--ink); }
+#bankSettingsModal .settings-pane-heading { margin-block:0 12px; }
+#bankSettingsModal .settings-pane-heading .overline,
+#bankSettingsModal > .overline { display:none; }
+#bankSettingsModal .settings-modal-body { padding-right:0;scrollbar-gutter:auto; }
+#bankSettingsModal .settings-tabs { flex-shrink:0;margin:14px 0; }
+#bankSettingsModal .security-management-card { margin:0; }
+#bankSettingsModal .auto-lock-setting { margin:0 0 14px;padding:12px; }
+#bankSettingsModal .enterprise-security-actions { margin-top:12px;padding-top:12px; }
+#bankSettingsModal .enterprise-security-actions h3 { margin:0 0 8px;font-size:18px;line-height:1.4; }
+#bankSettingsModal .enterprise-security-actions > p { margin:0 0 12px;font-size:12px;line-height:1.5; }
+#bankSettingsModal .settings-data-actions h3 { font-size:18px;line-height:1.4;margin:0 0 12px; }
+#bankSettingsModal .settings-data-actions p { font-size:14px;line-height:1.5;margin:0 0 16px; }
+#bankSettingsModal .settings-pane-heading h3 { margin:0; }
+#bankSettingsModal .settings-pane-heading { min-height:0; }
+#bankSettingsModal .enterprise-action-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+#bankSettingsModal .enterprise-action-grid button { min-width:0;min-height:44px;line-height:1.45;padding:10px;white-space:normal; }
+#bankSettingsModal .active-session-list { max-height:220px;overflow-y:auto; }
+#bankSettingsModal .security-form-grid { gap:12px; }
+#bankSettingsModal #settingsTourMfa:has(#mfaSetup:not([hidden]),#recoveryPanel:not([hidden]),#mfaSmsVerify:not([hidden])) .security-card { display:none; }
+#bankSettingsModal .security-subheading { gap:10px;margin:0 0 12px; }
+#bankSettingsModal .security-subheading small { display:none; }
+#bankSettingsModal .mfa-setup { padding:12px;margin:10px 0; }
+#bankSettingsModal .info-note { margin:12px 0 0; }
+.settings-demo-disclosure { margin-top:12px;border-top:1px solid var(--line);padding-top:8px; }
+.settings-demo-disclosure summary { cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted); }
+.settings-demo-disclosure summary::before { content:'+';font-size:20px; }
+.settings-demo-disclosure[open] summary::before { content:'−'; }
+.settings-demo-disclosure .demo-reset-card { margin-top:0; }
+/* Export remains a short configuration view, not a scrolled document preview. */
+#izvozModal .export-body,#activityTransferModal .export-body { padding:16px 20px; }
+#izvozModal .export-intro { margin-bottom:12px; }
+#izvozModal .export-preview { padding:12px;margin-top:12px; }
+#izvozModal .export-preview dl { gap:5px;margin-top:8px; }
+#izvozModal .export-notes { margin-top:8px; }
+#izvozModal .export-header,#activityTransferModal .export-header { padding:14px 20px; }
+#izvozModal .export-footer,#activityTransferModal .export-footer { padding:12px 20px; }
+@media(max-width:640px){
+  #bankSettingsModal:not(.tour-modal-host)[open] { padding:18px 16px 16px; }
+  #bankSettingsModal:not(.tour-modal-host)::before { display:none; }
+  #bankSettingsModal:not(.tour-modal-host)>h2 { padding-right:46px;margin:0;font-size:24px;line-height:1.25; }
+  #bankSettingsModal:not(.tour-modal-host)>.modal-close { top:10px;right:8px; }
+  #bankSettingsModal>.modal-intro { margin:8px 0 0;font-size:12px;line-height:1.5; }
+  #bankSettingsModal .settings-tabs { margin:12px 0; }
+  #bankSettingsModal .settings-tabs button { min-inline-size:0;min-width:0;min-height:44px;padding:7px;font-size:14px; }
+  #bankSettingsModal .settings-topic-picker { grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr);gap:10px;margin-bottom:12px; }
+  #bankSettingsModal .settings-form-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+  #bankSettingsModal .settings-form-grid label { gap:5px; }
+  #bankSettingsModal .settings-form-grid select { padding-inline:8px; }
+  #bankSettingsModal .settings-quick-actions { margin-top:12px;gap:10px; }
+  #bankSettingsModal .settings-action-row { padding:10px; }
+  #bankSettingsModal .settings-action-row { display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.2fr);align-items:center;gap:8px; }
+  #bankSettingsModal .settings-action-row .theme-segmented { width:100%;min-width:0; }
+  #bankSettingsModal .settings-action-row .theme-segmented button { min-width:0;padding-inline:5px;font-size:12px; }
+  #bankSettingsModal .settings-action-row .layout-settings-control { min-width:0; }
+  #bankSettingsModal .settings-demo-disclosure { margin-top:8px;padding-top:0; }
+  #bankSettingsModal [data-settings-panel="general"]>.toggle-setting { margin-block:10px; }
+  #bankSettingsModal .settings-action-row small { display:none; }
+  #bankSettingsModal .security-form-grid { grid-template-columns:1fr;gap:8px; }
+  #bankSettingsModal .security-management-card { padding:12px; }
+  #bankSettingsModal .security-section-heading { margin-bottom:10px; }
+  #bankSettingsModal .security-subheading { flex-direction:column;align-items:stretch; }
+  #bankSettingsModal .security-card { gap:10px;padding:12px;grid-template-columns:1fr; }
+  #bankSettingsModal .security-card>.security-icon { display:none; }
+  #bankSettingsModal .security-card p { margin:5px 0 10px; }
+  #bankSettingsModal .info-note { padding:10px;font-size:12px;line-height:1.5; }
+  #izvozModal .export-fields { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+  #izvozModal .export-fields label:has([type="month"]) { grid-column:1/-1; }
+  #izvozModal .export-fields :is(select,input) { padding:8px; }
+  #izvozModal .export-intro { font-size:14px;line-height:1.45; }
+  #izvozModal .export-header h2,#activityTransferModal .export-header h2 { font-size:20px; }
+  #izvozModal .export-notes { font-size:12px;line-height:1.45; }
+  #activityTransferModal .export-transfer-choices>button { min-height:90px; }
+}
+@media(min-width:1025px) and (max-height:820px){
+  #bankSettingsModal:not(.tour-modal-host) { padding:22px; }
+  #bankSettingsModal .security-form-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #bankSettingsModal .settings-form-grid { grid-template-columns:repeat(4,minmax(0,1fr));gap:12px; }
+  #bankSettingsModal .settings-quick-actions { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+  #bankSettingsModal .settings-action-row { padding:12px; }
+  #bankSettingsModal .settings-action-row small { display:none; }
+}

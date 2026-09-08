@@ -16,6 +16,8 @@ suiteCss.push('export-ui.css','header-actions.css');
 jsFiles.push('vaults-core.js','vaults-ui.js','bill-split-core.js','bill-split-ui.js','natural-input-core.js','natural-input-ui.js','engagement-core.js','engagement-ui.js');
 suiteCss.push('vaults-ui.css','bill-split.css','natural-input-ui.css','engagement.css');
 jsFiles.push('engagement-init.js');
+jsFiles.push('popup-layout.js');
+suiteCss.push('ui-consistency.css','recommendation-refresh.css','popup-layout.css');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source

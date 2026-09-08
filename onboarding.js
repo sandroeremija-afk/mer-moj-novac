@@ -79,6 +79,7 @@
       tour.classList.add('is-hosted');
       popover.setAttribute('aria-modal', 'false');
     } else if (step.surface === 'settings') window.MerSettings?.selectTab(step.settingsTab);
+    if(step.surface==='settings')window.MerPopupLayout?.revealTarget(step.target);
   }
 
   function focusTourNext() {

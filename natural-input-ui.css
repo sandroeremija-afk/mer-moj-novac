@@ -1,1 +1,66 @@
-.natural-input-card{margin:12px 0 18px;padding:14px;border:1px solid var(--line-strong);border-radius:12px;background:var(--canvas);min-width:0}.natural-input-heading,.natural-input-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.natural-input-heading{justify-content:space-between}.natural-input-card .secondary-button,.natural-input-card .primary-button{min-height:44px;padding:9px 12px;white-space:normal;font-size:13px}.natural-input-card p{line-height:1.5;overflow-wrap:anywhere}.natural-input-hint{margin:10px 0 4px;font-size:13px;color:var(--ink)}.natural-privacy{margin:4px 0 0;font-size:11px;color:var(--muted)}#naturalInputBody{margin-top:12px}#naturalInputLabel{font-size:14px;line-height:1.5;font-weight:600}#naturalInputText{display:block;width:100%;min-width:0;min-height:80px;max-height:160px;resize:vertical;margin-top:7px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font:inherit;font-size:16px;line-height:1.5;color:var(--ink);background:var(--panel)}.natural-consent{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:10px;margin:12px 0!important;font-size:12px!important;line-height:1.5;color:var(--muted)}.natural-consent input{appearance:auto!important;flex:0 0 20px;width:20px!important;height:20px!important;min-height:20px!important;min-width:20px!important;margin:2px 0 0!important;accent-color:var(--blue-dark)}.natural-input-actions{justify-content:flex-end}.natural-status{margin:12px 0 0;padding:10px;border-radius:8px;background:var(--blue-soft);color:var(--blue-dark);font-size:13px}.natural-status.is-error{background:var(--red-soft);color:#a52632}.natural-mic[aria-pressed=true]{border-color:var(--red);background:var(--red-soft)}[data-theme=dark] .natural-status{background:#17394a;color:#b5e7fb}[data-theme=dark] .natural-status.is-error{background:#42252a;color:#ffc7cc}@media(max-width:414px){.natural-input-card{padding:12px}.natural-input-heading{gap:8px}.natural-input-heading>button{flex:1}.natural-input-actions>button{flex:1}.natural-input-card .secondary-button,.natural-input-card .primary-button{font-size:12px;padding:9px}}
+/* A compact, optional sentence editor never stacks over the full manual form. */
+.natural-input-card{min-width:0;margin:0;padding:0;border:0}
+.natural-input-toggle{position:absolute;right:68px;top:16px;width:44px;height:44px;padding:10px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;color:var(--blue-dark);background:var(--blue-soft);cursor:pointer}
+.natural-input-toggle svg{width:21px;height:21px}
+.natural-input-toggle[aria-expanded=true]{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-soft)}
+#naturalInputBody{padding:4px 0 8px}
+.natural-input-back{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 0;border:0;background:none;color:var(--blue-dark);font-size:14px;font-weight:600;cursor:pointer}
+.natural-input-back::before{content:'←';font-size:18px}
+.natural-input-hint{font-size:14px;line-height:1.5;color:var(--muted);margin:8px 0 16px;overflow-wrap:anywhere}
+#naturalInputLabel{margin:0 0 6px;font-size:14px;line-height:1.5;font-weight:500}
+.natural-sentence-row{display:flex;min-width:0;gap:8px;align-items:center}
+#naturalInputText{display:block;flex:1;width:100%;min-width:0;min-height:44px;height:44px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:8px;font:inherit;font-size:16px;line-height:1.5;color:var(--ink);background:var(--panel)}
+.natural-input-card .natural-mic{flex:0 0 44px;width:44px;min-height:44px;padding:10px;display:grid;place-items:center}
+.natural-mic[aria-pressed=true]{border-color:var(--red);background:var(--red-soft)}
+.natural-privacy{font-size:12px;line-height:1.5;color:var(--muted);margin:8px 0;overflow-wrap:anywhere}
+#transactionModal .natural-consent{display:flex;flex-direction:row;align-items:flex-start;gap:10px;margin:16px 0 4px;font-size:14px;line-height:1.5;font-weight:400;color:var(--ink)}
+.natural-consent input{flex:0 0 20px;width:20px;min-width:20px;height:20px;min-height:20px;margin:1px 0 0;padding:0}
+.natural-input-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.natural-input-card .secondary-button,.natural-input-card .primary-button{min-height:44px;font-size:14px;line-height:1.4}
+.natural-status{margin:8px 0;padding:8px 10px;border-radius:8px;background:var(--blue-soft);color:var(--blue-dark);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.natural-status.is-error{background:var(--red-soft);color:#a52632}
+[data-theme=dark] .natural-status{background:#17394a;color:#b5e7fb}
+[data-theme=dark] .natural-status.is-error{background:#42252a;color:#ffc7cc}
+
+/* Scoped form density: accessible controls, no duplicated marketing paragraphs. */
+#transactionModal{width:min(650px,calc(100vw - 24px));height:auto;max-height:90dvh;padding:20px;overflow:hidden}
+#transactionModal #transactionOverline,#transactionModal #transactionIntro{display:none}
+#transactionModal #transactionTitle{padding-right:102px;margin:0 0 14px;font-size:24px;line-height:1.3;min-height:44px;display:flex;align-items:center}
+#transactionModal .modal-close{top:16px;right:16px;width:44px;height:44px}
+#transactionModal .bulk-entry-card{flex-direction:row;align-items:center;gap:10px;padding:6px 10px;margin:0 0 10px;min-height:54px}
+#transactionModal .bulk-entry-card strong{font-size:14px;line-height:1.4;font-weight:500}
+#transactionModal .bulk-entry-card small{display:none}
+#transactionModal .bulk-entry-card>.secondary-button{width:auto;min-height:44px;flex-shrink:0}
+#transactionModal .transaction-type-switch{margin:0 0 10px;padding:3px;gap:4px}
+#transactionModal .transaction-type-switch button{min-height:44px;font-size:14px}
+#transactionForm{min-width:0;overflow:visible}
+#transactionForm label{min-width:0;margin:0 0 10px;gap:4px;font-size:14px;line-height:1.4;font-weight:400}
+#transactionForm input,#transactionForm select{height:44px;min-width:0;font-size:16px}
+#transactionForm .transaction-details-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}
+#transactionForm .transaction-payment-method{margin-top:0}
+#transactionForm .spend-check{margin:0 0 8px;padding:8px;gap:8px}
+#transactionForm .spend-check strong{font-size:13px;line-height:1.4}
+#transactionForm .spend-check span{font-size:12px;line-height:1.4;margin-top:2px}
+#transactionForm .modal-actions{margin-top:8px;gap:8px}
+#transactionForm .modal-primary-actions{gap:8px;min-width:0}
+#transactionForm .modal-primary-actions button{min-height:44px;height:auto;font-size:14px;padding:8px 10px;line-height:1.35;white-space:normal}
+#transactionModal.is-natural-input-open #transactionForm,#transactionModal.is-natural-input-open .bulk-entry-card{display:none}
+@media(max-width:600px){
+  #transactionModal{inset:auto 8px 0;width:calc(100vw - 16px);padding:16px 14px calc(16px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;max-height:90dvh}
+  #transactionModal #transactionTitle{font-size:22px;padding-right:98px;margin-bottom:10px}
+  #transactionModal .modal-close{top:16px;right:12px}
+  .natural-input-toggle{right:60px}
+  #transactionModal .bulk-entry-card{padding:4px 8px;min-height:52px;margin-bottom:8px}
+  #transactionForm .transaction-details-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 8px}
+  #transactionForm label{margin-bottom:8px}
+  #transactionForm .modal-primary-actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #transactionSplitSubmit{grid-column:1/-1;order:2}
+  #transactionForm .modal-actions{margin-top:4px}
+  .natural-input-actions>button{flex:1;padding:8px}
+}
+@media(max-height:640px) and (min-width:601px){
+  #transactionModal{padding:14px 20px;max-height:96dvh}
+  #transactionModal #transactionTitle{margin-bottom:8px}
+  #transactionModal .bulk-entry-card{margin-bottom:4px}
+  #transactionForm label{margin-bottom:6px}
+}

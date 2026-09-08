@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const {topicForTarget,hasOverflow}=require('../popup-layout.js');
+for(const target of ['currentPasswordInput','#changePasswordForm','confirmNewPasswordInput'])assert.equal(topicForTarget(target),'password');
+for(const target of ['startMfa','#settingsTourMfa','recoveryPanel'])assert.equal(topicForTarget(target),'mfa');
+assert.equal(topicForTarget('logoutOtherSessions'),'sessions');assert.equal(topicForTarget('autoLockEnabled'),'device');
+assert.equal(topicForTarget('exportSovereignty'),'data');assert.equal(topicForTarget('deleteSovereignty'),'data');
+assert.equal(hasOverflow(600,600),false);assert.equal(hasOverflow(602,600),false);assert.equal(hasOverflow(603,600),true);assert.equal(hasOverflow(NaN,600),false);
+const source=fs.readFileSync(require.resolve('../popup-layout.js'),'utf8');
+assert.match(source,/data-topic-hidden/);assert.doesNotMatch(source,/localStorage|reactiveStore\.update|\.value\s*=\s*''/);
+assert.match(fs.readFileSync(require.resolve('../enterprise-ui.js'),'utf8'),/MerPopupLayout\?\.revealTarget\(id\)/);
+assert.match(fs.readFileSync(require.resolve('../onboarding.js'),'utf8'),/MerPopupLayout\?\.revealTarget\(step\.target\)/);
+process.stdout.write('Popup cycle 1: topic routing, fit boundaries, state preservation and tour/deep-link guards passed.\n');
