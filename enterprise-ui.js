@@ -54,7 +54,7 @@
   });
 
   const controls=document.createElement('div');controls.className='enterprise-header-controls';
-  controls.innerHTML=`<button type="button" class="icon-button" id="commandTrigger" aria-label="Naredbe (Ctrl K)" title="Naredbe · Ctrl / ⌘ K">${icon('search')}</button><button type="button" class="icon-button" id="stealthToggle" aria-label="Sakrij iznose" aria-pressed="false" title="Privatnost · Ctrl / ⌘ Shift H">${icon('shield')}</button>`;
+  controls.innerHTML=`<button type="button" class="icon-button" id="commandTrigger" aria-label="Naredbe (Ctrl K)" title="Naredbe · Ctrl / ⌘ K">${icon('search')}</button>`;
   document.querySelector('.header-action-cluster').prepend(controls);
   const toolbar=document.createElement('button');toolbar.type='button';toolbar.id='openIntelligence';toolbar.className='secondary-button';
   toolbar.innerHTML=`${icon('spark')}<span>${copy('Planiraj unaprijed','Plan ahead')}</span>`;
@@ -125,7 +125,6 @@
     if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();commandIndex=(commandIndex+(event.key==='ArrowDown'?1:-1)+visibleCommands.length)%Math.max(1,visibleCommands.length);renderCommands();el(`commandOption${commandIndex}`)?.scrollIntoView({block:'nearest'});}
   });
   function toggleStealth(){appState.settings.hideBalances=!appState.settings.hideBalances;save('stealth-toggle');}
-  el('stealthToggle').addEventListener('click',toggleStealth);
   document.addEventListener('keydown',event=>{
     if(el('appShell').hidden||window.MerEnterpriseSecurity?.isLocked())return;
     if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();commandDialog.open?closeModal(commandDialog):openCommands();}
@@ -136,8 +135,6 @@
     privacyFrame=0;
     const on=Boolean(appState.settings?.hideBalances);
     document.body.classList.toggle('enterprise-stealth',on);
-    el('stealthToggle').setAttribute('aria-pressed',String(on));
-    el('stealthToggle').setAttribute('aria-label',copy(on?'Prikaži iznose':'Sakrij iznose',on?'Show amounts':'Hide amounts'));
     // Mark leaf text, never rewrite markup used by charts, translations or event listeners.
     document.querySelectorAll('#appShell strong, #appShell span, #appShell p, #appShell text, .modal strong, .modal span, .modal td, .modal text, .modal p, .modal small, .modal b, .summary-value, [data-money], [data-monetary], .modal output').forEach(node=>{
       if(node.children.length||node.closest('#commandPalette, #authShell'))return;
@@ -225,7 +222,16 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
   const b2b=document.createElement('label');b2b.id='transactionB2BRow';b2b.className='enterprise-b2b';b2b.hidden=true;b2b.innerHTML=`<input type="checkbox" id="transactionB2B"> ${copy('Oporeziva B2B uplata (iznos uključuje 25% PDV-a)','Taxable B2B payment (amount includes 25% VAT)')}`;
   el('transactionForm').querySelector('.modal-actions').before(b2b);
   const security=document.createElement('section');security.className='enterprise-security-actions';
-  security.innerHTML=`<h3>${copy('Uređaj, privatnost i podaci','Device, privacy and data')}</h3><p class="enterprise-muted">${copy('Automatsko zaključavanje nakon 10 minuta. Lokalni račun i podaci ovog preglednika; nije upravljanje udaljenim bankovnim računom.','Auto-lock after 10 minutes. Manages this browser’s local account and data, not remote bank accounts.')}</p><div class="enterprise-action-grid"><button type="button" class="secondary-button" id="configureVault">${copy('Šifriranje i PIN','Encryption and PIN')}</button><button type="button" class="secondary-button" id="lockNow">${copy('Zaključaj sada','Lock now')}</button><button type="button" class="secondary-button" id="exportSovereignty">${copy('Preuzmi sve podatke (JSON)','Download all data (JSON)')}</button><button type="button" class="secondary-button danger" id="deleteSovereignty">${copy('Trajno izbriši lokalni račun','Permanently delete local account')}</button></div>`;
+  const autoLockSetting=document.createElement('label');autoLockSetting.className='toggle-setting auto-lock-setting';
+  autoLockSetting.innerHTML='<input type="checkbox" role="switch" id="autoLockEnabled" aria-describedby="autoLockHint"><span><strong id="autoLockLabel"></strong><small id="autoLockHint"></small></span>';
+  document.querySelector('[data-settings-panel="security"]').prepend(autoLockSetting);
+  el('autoLockEnabled').addEventListener('change',event=>{
+    const enabled=event.target.checked;
+    reactiveStore.update('auto-lock-preference',draft=>{draft.settings.autoLockEnabled=enabled;});
+    window.MerEnterpriseSecurity?.syncAutoLock();
+    showToast(copy(enabled?'Automatsko zaključavanje je uključeno.':'Automatsko zaključavanje je isključeno.',enabled?'Automatic locking is on.':'Automatic locking is off.'));
+  });
+  security.innerHTML=`<h3>${copy('Uređaj, privatnost i podaci','Device, privacy and data')}</h3><p class="enterprise-muted">${copy('Automatsko zaključavanje možete uključiti iznad. Lokalni račun i podaci ovog preglednika; nije upravljanje udaljenim bankovnim računom.','Enable automatic locking above if needed. Manages this browser’s local account and data, not remote bank accounts.')}</p><div class="enterprise-action-grid"><button type="button" class="secondary-button" id="configureVault">${copy('Šifriranje i PIN','Encryption and PIN')}</button><button type="button" class="secondary-button" id="lockNow">${copy('Zaključaj sada','Lock now')}</button><button type="button" class="secondary-button" id="exportSovereignty">${copy('Preuzmi sve podatke (JSON)','Download all data (JSON)')}</button><button type="button" class="secondary-button danger" id="deleteSovereignty">${copy('Trajno izbriši lokalni račun','Permanently delete local account')}</button></div>`;
   document.querySelector('[data-settings-panel="security"]').append(security);
   el('configureVault').addEventListener('click',()=>act(()=>window.MerEnterpriseSecurity?.openVaultSetup()));
   el('lockNow').addEventListener('click',()=>act(()=>window.MerEnterpriseSecurity?.lock()));
@@ -234,7 +240,11 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
   const installButton=document.createElement('button');installButton.type='button';installButton.className='secondary-button';installButton.id='enterpriseInstall';installButton.textContent=copy('Instaliraj Mer','Install Mer');security.querySelector('.enterprise-action-grid').append(installButton);
   installButton.addEventListener('click',()=>act(()=>window.MerEnterpriseSecurity?.install()));
   const securityStatus=document.createElement('p');securityStatus.id='enterpriseSecurityStatus';securityStatus.className='enterprise-muted';security.append(securityStatus);
-  function renderSecurity(){const status=window.MerEnterpriseSecurity?.status();pinButton.hidden=!status?.demo;installButton.hidden=!status?.canInstall;securityStatus.textContent=copy(status?.encrypted?'AES-256 šifriranje je uključeno.':'Demo predmemorija nije šifrirana. Uključite privatni trezor prije unosa osjetljivih podataka.',status?.encrypted?'AES-256 encryption is enabled.':'Demo cache is not encrypted. Enable the private vault before entering sensitive data.');}
+  function renderSecurity(){const status=window.MerEnterpriseSecurity?.status();pinButton.hidden=!status?.demo;installButton.hidden=!status?.canInstall;securityStatus.textContent=copy(status?.encrypted?'AES-256 šifriranje je uključeno.':'Demo predmemorija nije šifrirana. Uključite privatni trezor prije unosa osjetljivih podataka.',status?.encrypted?'AES-256 encryption is enabled.':'Demo cache is not encrypted. Enable the private vault before entering sensitive data.');
+    el('autoLockEnabled').checked=appState.settings.autoLockEnabled===true;
+    el('autoLockLabel').textContent=copy('Automatsko zaključavanje (10 min neaktivnosti)','Automatic locking (10 min of inactivity)');
+    el('autoLockHint').textContent=copy('Isključeno prema zadanim postavkama. Uključite ako želite zaključavanje nakon pauze. Ručno zaključavanje ostaje dostupno.','Off by default. Enable to lock after a break. Manual locking remains available.');
+  }
   window.addEventListener('mer-security-status',renderSecurity);renderSecurity();
   el('exportSovereignty').addEventListener('click',()=>act(()=>window.MerEnterpriseSecurity?.exportAll()));
   el('deleteSovereignty').addEventListener('click',()=>act(()=>window.MerEnterpriseSecurity?.requestDelete()));
@@ -244,6 +254,8 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
   offline.addEventListener('click',()=>{renderDrafts();openModal(draftDialog);});
   draftDialog.addEventListener('click',event=>{const post=event.target.closest('[data-post-draft]'),remove=event.target.closest('[data-delete-draft]');if(post&&navigator.onLine){const tx=state.transactions.find(tx=>tx.id===post.dataset.postDraft&&tx.offlineDraft);if(tx){delete tx.offlineDraft;tx.status='posted';MerCore.updateTransactionSchedule(tx,appReferenceDate);MerAccounting.applyRoundUp(state,tx,appReferenceDate);save('offline-draft-post');renderDrafts();}}if(remove){state.transactions=state.transactions.filter(tx=>!(tx.id===remove.dataset.deleteDraft&&tx.offlineDraft));save('offline-draft-delete');renderDrafts();}});
   function render(){
+    window.MerEnterpriseSecurity?.syncAutoLock();
+    renderSecurity();
     suiteTools.innerHTML=[['receipt','Skeniraj račun','Scan receipt'],['fire','FIRE simulator','FIRE simulator'],['renewals','Obnove pretplata','Renewals'],['household','Kućanstvo','Household']].map(([id,hr,en])=>`<button type="button" class="secondary-button" data-suite-action="${id}">${copy(hr,en)}</button>`).join('');
     if(appState.activeAccount==='business')suiteTools.insertAdjacentHTML('beforeend',`<button type="button" class="secondary-button" data-suite-action="tax">${copy('Porezni trezor','Tax vault')}</button>`);
     if(taxDialog.open){const restore=window.MerPlanNavigation?.preserveFocus(taxDialog);renderTaxVault();restore?.();}

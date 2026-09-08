@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="planning.css">
   <link rel="stylesheet" href="household.css">
   <link rel="stylesheet" href="app-update.css">
+  <link rel="stylesheet" href="module-toolbar.css">
   <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body class="auth-pending">
@@ -201,7 +202,7 @@
         <div class="settings-action-row"><span><strong data-i18n="appTheme">Tema aplikacije</strong><small data-i18n="themeSettingHint">Prilagodite izgled aplikacije uvjetima rada.</small></span><div class="theme-segmented" id="themeToggle" role="group" aria-label="Tema aplikacije" data-i18n-aria="appTheme"><button type="button" data-theme-choice="light" aria-pressed="true"><svg aria-hidden="true"><use href="#icon-sun"></use></svg><span data-i18n="lightTheme">Svijetla</span></button><button type="button" data-theme-choice="dark" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-moon"></use></svg><span data-i18n="darkTheme">Tamna</span></button></div></div>
         <div class="settings-action-row"><span><strong data-i18n="dashboardLayout">Raspored nadzorne ploče</strong><small data-i18n="layoutSettingHint">Promijenite redoslijed kartica povlačenjem.</small></span><button type="button" class="secondary-button layout-edit-toggle" id="layoutEditToggle" data-layout-edit-toggle aria-pressed="false" aria-label="Uredi"><svg aria-hidden="true"><use href="#icon-grid"></use></svg><span data-i18n="editLayout">Uredi</span></button></div>
       </div>
-      <label class="toggle-setting"><input type="checkbox" id="hideBalances"><span><strong data-i18n="hideBalances">Sakrij iznose na nadzornoj ploči</strong><small data-i18n="hideBalancesHint">Osjetljivi iznosi zamagljeni su dok je opcija uključena.</small></span></label>
+      <label class="toggle-setting"><input type="checkbox" role="switch" id="hideBalances" aria-describedby="hideBalancesHint"><span><strong data-i18n="hideBalances">Sakrij iznose / Privatni način</strong><small id="hideBalancesHint" data-i18n="hideBalancesHint">Zamaglite iznose u aplikaciji. Prečac: Ctrl / ⌘ + Shift + H.</small></span></label>
       <div class="demo-reset-card" id="demoResetCard" hidden><span class="demo-reset-icon"><svg aria-hidden="true"><use href="#icon-refresh"></use></svg></span><div><strong data-i18n="demoResetTitle">Vrati čisti demo prostor</strong><small data-i18n="demoResetHint">Uklanja probne promjene iz oba profila i vraća početne MER podatke. Postavke prikaza ostaju sačuvane.</small></div><button type="button" class="destructive-button" id="resetDemoData" data-i18n="resetDemoData">Vrati demo podatke</button></div>
     </section>
 
@@ -378,5 +379,6 @@
   <script src="household-ui.js"></script>
   <script src="auth-ui.js?v=20260901-session-security-r1"></script>
   <script src="app-update.js"></script>
+  <script src="module-toolbar.js"></script>
 </body>
 </html>

@@ -146,7 +146,7 @@ function normalizeLayoutOrders(value={}) {
   });
   return result;
 }
-function normalizeAppSettings(settings={}){const currency=String(settings.currency||'EUR').toUpperCase(),dateFormat=['locale','iso','us'].includes(settings.dateFormat)?settings.dateFormat:'locale';let timezone=String(settings.timezone||'Europe/Zagreb');try{new Intl.DateTimeFormat('en',{timeZone:timezone}).format();}catch{timezone='Europe/Zagreb';}return {currency:supportedCurrencies.has(currency)?currency:'EUR',dateFormat,timezone,hideBalances:Boolean(settings.hideBalances),layoutOrders:normalizeLayoutOrders(settings.layoutOrders)};}
+function normalizeAppSettings(settings={}){const currency=String(settings.currency||'EUR').toUpperCase(),dateFormat=['locale','iso','us'].includes(settings.dateFormat)?settings.dateFormat:'locale';let timezone=String(settings.timezone||'Europe/Zagreb');try{new Intl.DateTimeFormat('en',{timeZone:timezone}).format();}catch{timezone='Europe/Zagreb';}return {currency:supportedCurrencies.has(currency)?currency:'EUR',dateFormat,timezone,hideBalances:Boolean(settings.hideBalances),autoLockEnabled:settings.autoLockEnabled===true,layoutOrders:normalizeLayoutOrders(settings.layoutOrders)};}
 appState.settings=normalizeAppSettings(storedSettings);
 appState.mfa=MerSecurity.createMfaMethodState({method:appState.mfa?.method||(appState.mfa?.secret?'authenticator':null),enabled:false,secret:null,recoveryCodeHashes:[],...(appState.mfa&&typeof appState.mfa==='object'?appState.mfa:{})});
 appState.mfaByUser=Object.fromEntries(Object.entries(appState.mfaByUser&&typeof appState.mfaByUser==='object'?appState.mfaByUser:{}).filter(([userId,value])=>typeof userId==='string'&&userId.length<=120&&value&&typeof value==='object').slice(-24).map(([userId,value])=>[userId,MerSecurity.createMfaMethodState(value)]));
@@ -1237,6 +1237,7 @@ function syncModalLayer() {
 }
 
 function closeAllOverlays() {
+  window.MerModuleToolbar?.closeAll({restoreFocus:false});
   $$('.modal[open]').forEach(modal=>modal.close());
   closeCardMenus();
   closeNotifications();
@@ -1250,7 +1251,9 @@ const modalReturnFocus=new WeakMap();
 function focusableElements(modal){return $$('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',modal).filter(element=>!element.hidden&&element.getClientRects().length>0);}
 function openModal(modal) {
   if(!modal||modal.open)return;
-  const activeElement=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  const focusedElement=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  const activeElement=window.MerModuleToolbar?.returnFocusTarget(focusedElement)||focusedElement;
+  window.MerModuleToolbar?.closeAll({restoreFocus:false});
   const mobileSidebarTrigger=window.innerWidth<768&&activeElement?.closest('#sidebar')?$('#menuToggle'):null;
   $$('.modal[open]').forEach(openDialog=>{if(openDialog!==modal)openDialog.close();});
   closeCardMenus();
@@ -1272,7 +1275,8 @@ function closeModal(modal) {
   const returnTarget=modal&&modalReturnFocus.get(modal);
   requestAnimationFrame(()=>{
     const openDialog=$('.modal[open]');
-    const target=returnTarget?.closest('#intelligenceModal:not([open])')?$('#openIntelligence'):returnTarget;
+    const origin=returnTarget?.closest('#intelligenceModal:not([open])')?$('#openIntelligence'):returnTarget;
+    const target=window.MerModuleToolbar?.returnFocusTarget(origin)||origin;
     if(target?.isConnected&&target.getClientRects().length&&(!openDialog||openDialog.contains(target)))target.focus({preventScroll:true});
   });
 }

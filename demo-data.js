@@ -129,7 +129,7 @@
   function createDemoAppState(referenceValue = new Date(), options = {}) {
     const profiles = createDemoProfiles(referenceValue, options);
     const state = MerCore.createAccountStore(profiles.personal, profiles.business, options);
-    return { ...state, version:6, bankConnections:[] };
+    return { ...state, version:6, bankConnections:[], settings:{hideBalances:false,autoLockEnabled:false} };
   }
 
   return { createProfiles:createDemoProfiles, createDemoProfiles, createDemoAppState, referenceDay };

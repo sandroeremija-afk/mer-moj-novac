@@ -2856,7 +2856,7 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 [data-ui="dialog"] > .modal-close { width:44px; min-width:44px; height:44px; min-height:44px; border-radius:var(--radius-md); }
 [data-ui="dialog"] :is(input,select,textarea) { max-inline-size:100%; }
 [data-ui="dialog"] [data-ui="dialog-footer"] { isolation:isolate; }
-[data-ui="dialog"]:not(.detail-modal):not(.premium-settings):not(.import-data-modal):not(.budget-categories-modal):not(.help-assistant-modal):not(.subscriptions-modal)[open] { overflow-x:hidden; overflow-y:auto; }
+[data-ui="dialog"]:not(.detail-modal):not(.premium-settings):not(.import-data-modal):not(.budget-categories-modal):not(.help-assistant-modal):not(.subscriptions-modal):not(.enterprise-dialog):not(.planning-dialog):not(.receipt-dialog):not(.household-dialog):not(.savings-entries-modal):not(.assessment-modal)[open] { overflow-x:hidden; overflow-y:auto; }
 [data-ui="scroll-area"],
 [data-ui="table-viewport"] {
   min-inline-size:0;
@@ -3507,6 +3507,26 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 .active-session-copy small { color:var(--muted); font-size:.625rem; line-height:1.4; }
 .active-session-current { color:var(--green-dark); font-size:.625rem; font-weight:700; }
 .active-sessions-card > .destructive-button:disabled { cursor:not-allowed; opacity:.48; }
+
+/* One readable security pane; its body remains the only scrolling surface. */
+#bankSettingsModal .security-section-heading strong,
+#bankSettingsModal .security-subheading strong,
+#bankSettingsModal .active-session-copy strong { font-size:.9375rem; line-height:1.5; }
+#bankSettingsModal .security-section-heading small,
+#bankSettingsModal .security-subheading small,
+#bankSettingsModal .security-form-feedback,
+#bankSettingsModal .active-session-copy small,
+#bankSettingsModal .active-session-current,
+#bankSettingsModal .mfa-sms-verify small { font-size:.8125rem; line-height:1.5; }
+#bankSettingsModal .security-form-grid label,
+#bankSettingsModal .mfa-sms-setup label,
+#bankSettingsModal .mfa-method-selector button { font-size:.875rem; line-height:1.5; }
+#bankSettingsModal .security-form-grid input,
+#bankSettingsModal .mfa-sms-setup input { min-height:44px; font-size:1rem; }
+#bankSettingsModal .auto-lock-setting { margin:0 0 16px; padding:14px; border:1px solid var(--line); border-radius:10px; background:var(--canvas); }
+#bankSettingsModal .auto-lock-setting span { min-width:0; }
+#bankSettingsModal .auto-lock-setting strong { font-size:.9375rem; line-height:1.5; }
+#bankSettingsModal .auto-lock-setting small { font-size:.8125rem; line-height:1.5; }
 
 @media (min-width:1025px) {
   #savingsView {

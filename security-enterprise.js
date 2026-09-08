@@ -15,7 +15,8 @@
     requestDelete() { return controller?.requestDelete(); },
     openVaultSetup() { return controller?.openVaultSetup(); },
     openPinSetup() { return controller?.openPinSetup(); },
-    status() { return controller?.status() || {encrypted:false,locked:false}; },
+    syncAutoLock() { return controller?.syncAutoLock(); },
+    status() { return controller?.status() || {encrypted:false,locked:false,autoLockEnabled:false}; },
     install() { return controller?.install(); }
   };
   root.MerEnterpriseSecurity = api;
@@ -27,7 +28,7 @@
     const pinKey = userId => `mer-device-pin-v1:${encodeURIComponent(userId)}`;
     const idleKey = userId => `mer-idle-v1:${encodeURIComponent(userId)}`;
     const read = key => { try { return JSON.parse(storage.getItem(key)||'null'); } catch { return null; } };
-    let session = null, vault = null, clock = null, suspended = true, locked = false, lockReady = Promise.resolve(), pendingEntry = null, installEvent = null, lastIdleWrite = 0, initializeVault = false;
+    let session = null, vault = null, clock = null, idleTimer = null, autoLockEnabled = false, suspended = true, locked = false, lockReady = Promise.resolve(), pendingEntry = null, installEvent = null, lastIdleWrite = 0, initializeVault = false;
     const en = () => options.getLanguage?.() === 'en';
     const text = (hr, english) => en() ? english : hr;
     const report = error => { options.onError?.(error);root.MerRuntime?.report?.(error, {silent:true}); };
@@ -53,7 +54,7 @@
       }
       return source;
     }
-    function status() { return {encrypted:Boolean(vault?.exists()),locked,demo:Boolean(session?.demo),configuredPin:Boolean(session && read(pinKey(session.userId))),autoLockMinutes:10,canInstall:Boolean(installEvent)}; }
+    function status() { return {encrypted:Boolean(vault?.exists()),locked,demo:Boolean(session?.demo),configuredPin:Boolean(session && read(pinKey(session.userId))),autoLockEnabled,autoLockMinutes:10,canInstall:Boolean(installEvent)}; }
     function safeClose(dialog) { if(dialog.open)dialog.close(); }
     function modal(markup, label, isLock = false) {
       const dialog = document.createElement('dialog');
@@ -71,7 +72,7 @@
       initializeVault = mode === 'initialize';
       const encrypted = vault?.exists(), hasPin = session && read(pinKey(session.userId));
       gate.querySelector('#enterpriseLockTitle').textContent = text(mode==='vault'?'Otključajte privatni trezor':'Vaš je prostor zaključan',mode==='vault'?'Unlock your private vault':'Your workspace is locked');
-      gate.querySelector('#enterpriseLockHint').textContent = initializeVault ? text('Potvrdite lozinku računa kako bismo šifrirali spremljene podatke prije nastavka.','Confirm your account password to encrypt your saved data before continuing.') : encrypted ? text('Unesite lozinku trezora kako biste sigurno nastavili.','Enter your vault password to continue securely.') : session?.demo && !hasPin ? text('Demo prostor zaključan je nakon 10 minuta. Ponovno se prijavite ili nakon prijave postavite osobni PIN u Sigurnosti.','Demo workspace locked after 10 minutes. Sign in again, then set a personal PIN in Security.') : text('Prošlo je 10 minuta bez aktivnosti. Potvrdite identitet za nastavak.','There has been no activity for 10 minutes. Verify your identity to continue.');
+      gate.querySelector('#enterpriseLockHint').textContent = initializeVault ? text('Potvrdite lozinku računa kako bismo šifrirali spremljene podatke prije nastavka.','Confirm your account password to encrypt your saved data before continuing.') : encrypted ? text('Unesite lozinku trezora kako biste sigurno nastavili.','Enter your vault password to continue securely.') : session?.demo && !hasPin ? text('Demo prostor je zaključan. Ponovno se prijavite ili nakon prijave postavite osobni PIN u Sigurnosti.','The demo workspace is locked. Sign in again, then set a personal PIN in Security.') : text('Prostor je zaključan. Potvrdite identitet za nastavak.','Your workspace is locked. Verify your identity to continue.');
       const needsCredential = encrypted || !session?.demo || hasPin;
       input.hidden = !needsCredential;input.required = Boolean(needsCredential);
       input.inputMode = session?.demo && !encrypted ? 'numeric' : 'text';
@@ -92,21 +93,46 @@
       else if (!document.body.classList.contains('mfa-locked')) { shell.inert = false;shell.removeAttribute('aria-hidden'); }
       notify();
     }
-    function beginClock() {
-      const stored = Math.max(Number(session.issuedAt||0),Number(transient.getItem(idleKey(session.userId)) || Date.now()));
-      clock = root.MerVault.createIdleClock({lastActivity:stored,onLock:() => { lock().catch(report); }});
-      if (clock.check()) return;
-      transient.setItem(idleKey(session.userId),String(clock.lastActivity()));
+    const optedIntoAutoLock = () => Boolean(session && options.getState()?.settings?.autoLockEnabled === true);
+    function stopClock(clearStored = false) {
+      if (idleTimer !== null) root.clearInterval?.(idleTimer);
+      idleTimer = null;clock = null;lastIdleWrite = 0;
+      if (clearStored && session) transient.removeItem(idleKey(session.userId));
     }
+    function syncAutoLock({restore = false} = {}) {
+      const enabled = optedIntoAutoLock(), changed = enabled !== autoLockEnabled;
+      autoLockEnabled = enabled;
+      if (!enabled) stopClock(true);
+      else if (!suspended && !locked && !clock) {
+        // A fresh opt-in/unlock starts a full window; only an opted-in reload
+        // may resume the timestamp belonging to this authenticated user.
+        const now = Date.now(), saved = Number(transient.getItem(idleKey(session.userId)));
+        const issuedAt = Number(session.issuedAt);
+        const lastActivity = restore && Number.isFinite(saved) && saved > 0
+          ? Math.max(Number.isFinite(issuedAt) ? issuedAt : 0, saved) : now;
+        const owner = session;
+        const nextClock = root.MerVault.createIdleClock({lastActivity,onLock:() => {
+          if (clock === nextClock && session === owner && optedIntoAutoLock()) lock().catch(report);
+        }});
+        clock = nextClock;
+        if (!clock.check()) {
+          lastIdleWrite = clock.lastActivity();
+          transient.setItem(idleKey(session.userId),String(lastIdleWrite));
+          idleTimer = root.setInterval(check,1000);
+        }
+      }
+      if (changed) notify();
+      return autoLockEnabled;
+    }
+    function beginClock() { syncAutoLock({restore:true}); }
     function resume() {
       suspended = false;safeClose(gate);setLocked(false);
-      clock = root.MerVault.createIdleClock({onLock:() => { lock().catch(report); }});
-      transient.setItem(idleKey(session.userId),String(clock.lastActivity()));
+      stopClock();syncAutoLock();
     }
     async function beforeEnter(nextSession, password) {
       if (!nextSession?.userId) return false;
       if (session && session.userId !== nextSession.userId) await onLogout();
-      suspended = true;session = nextSession;
+      stopClock();autoLockEnabled = false;suspended = true;session = nextSession;
       vault = root.MerVault.createVault({storage,userId:session.userId});
       if (!legacyOwner()) storage.setItem(OWNER_KEY,session.userId);
       if (vault.exists()) {
@@ -151,7 +177,7 @@
       if (!session || locked) return;
       const snapshot = options.getState();
       const pendingWrite = persist(snapshot);
-      suspended = true;setLocked(true);
+      suspended = true;stopClock();setLocked(true);
       root.MerOnboardingUi?.close?.();root.MerAssistantUi?.close?.();
       document.querySelectorAll('dialog[open]').forEach(dialog => { if(dialog!==gate)dialog.close(); });
       document.body.classList.remove('modal-active');
@@ -201,7 +227,7 @@
       await onLogout();provider()?.signOut();root.location.reload();
     });
     async function onLogout() {
-      suspended=true;clock=null;
+      suspended=true;stopClock();autoLockEnabled=false;
       if(session)transient.removeItem(idleKey(session.userId));
       await vault?.lock();vault=null;session=null;
       const resolve=pendingEntry;pendingEntry=null;resolve?.(false);
@@ -262,12 +288,12 @@
         }catch(error){report(error);form.querySelector('[role="alert"]').textContent=text('Brisanje nije dovršeno. Provjerite lozinku i pokušajte ponovno.','Deletion did not complete. Check your password and try again.');button.disabled=false;}
       });
     }
-    const activity=()=>{if(!session||locked||suspended||!clock)return;if(clock.activity()&&clock.lastActivity()-lastIdleWrite>500){lastIdleWrite=clock.lastActivity();transient.setItem(idleKey(session.userId),String(lastIdleWrite));}};
+    const activity=()=>{if(!optedIntoAutoLock()){if(clock||autoLockEnabled)syncAutoLock();return;}if(!session||locked||suspended||!clock)return;if(clock.activity()&&clock.lastActivity()-lastIdleWrite>500){lastIdleWrite=clock.lastActivity();transient.setItem(idleKey(session.userId),String(lastIdleWrite));}};
     ['mousemove','pointerdown','keydown','touchstart','scroll'].forEach(name=>document.addEventListener(name,activity,{passive:true,capture:true}));
-    const check=()=>{if(session&&!suspended&&!locked)clock?.check();};
-    document.addEventListener('visibilitychange',check);root.addEventListener('focus',check);root.addEventListener('pageshow',check);root.setInterval(check,1000);
+    const check=()=>{if(!optedIntoAutoLock()){if(clock||autoLockEnabled)syncAutoLock();return;}if(session&&!suspended&&!locked)clock?.check();};
+    document.addEventListener('visibilitychange',check);root.addEventListener('focus',check);root.addEventListener('pageshow',check);
     root.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installEvent=event;notify();});
     async function install(){if(!installEvent)return false;await installEvent.prompt();const result=await installEvent.userChoice;installEvent=null;notify();return result.outcome==='accepted';}
-    return {persist,flush,beforeEnter,onLogout,changeLoginPassword,lock,isLocked:()=>locked,exportAll,requestDelete,openVaultSetup,openPinSetup,status,install};
+    return {persist,flush,beforeEnter,onLogout,changeLoginPassword,lock,isLocked:()=>locked,exportAll,requestDelete,openVaultSetup,openPinSetup,syncAutoLock,status,install};
   }
 })(window);

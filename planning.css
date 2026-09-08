@@ -1,4 +1,4 @@
-.planning-dialog{--planning-bg:#fff;--planning-ink:#19352a;--planning-muted:#50675d;--planning-line:#dce8e1;--planning-soft:#f2f7f4;width:min(1020px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:90dvh;max-height:90vh;padding:22px;border:1px solid var(--planning-line);border-radius:20px;background:var(--planning-bg);color:var(--planning-ink);overflow:hidden;box-sizing:border-box}
+.planning-dialog{--planning-bg:#fff;--planning-ink:#19352a;--planning-muted:#50675d;--planning-line:#dce8e1;--planning-soft:#f2f7f4;width:min(1020px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:90vh;max-height:90dvh;padding:22px;border:1px solid var(--planning-line);border-radius:20px;background:var(--planning-bg);color:var(--planning-ink);overflow:hidden;box-sizing:border-box}
 @supports(height:1dvh){.planning-dialog{max-height:90dvh}}
 .planning-dialog[open]{display:flex;flex-direction:column;gap:14px}
 .planning-dialog::backdrop{background:rgba(8,24,18,.5);backdrop-filter:blur(3px)}
