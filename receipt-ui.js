@@ -9,7 +9,7 @@
   const copy = (hr,en) => (snapshot().language || document.documentElement.lang) === 'en' ? en : hr;
   const x = R.escapeHtml;
   const decimal = cents => cents === null || cents === undefined ? '' : (cents / 100).toFixed(2);
-  const money = (cents,currency = 'EUR') => new Intl.NumberFormat(snapshot().language==='en'?'en-IE':'hr-HR',{style:'currency',currency}).format((cents || 0)/100);
+  const money = (cents,currency = 'EUR') => root.MerCore.formatCurrency((cents || 0)/100,{locale:snapshot().language==='en'?'en-IE':'hr-HR',currency});
   let dialog, receipt, preparedImage, previewUrl, guard, owner, controller, selectedId = '', preferredId = '', viewedTransactionId = '', returnFocus;
   const current = () => dialog?.open && profileId() === owner;
   const uid = () => `receipt-${root.crypto.randomUUID()}`;
@@ -20,7 +20,7 @@
   function heading(title) {
     return `<header class="receipt-head"><div><span>${copy('Računi i potvrde','Receipts and invoices')} · ${owner==='business'?copy('Poslovni profil','Business profile'):copy('Osobni profil','Personal profile')}</span><h2 id="receiptDialogTitle">${x(title)}</h2></div><button type="button" class="icon-button" data-receipt-close aria-label="${copy('Zatvori','Close')}">×</button></header>`;
   }
-  function bindClose() { dialog.querySelectorAll('[data-receipt-close]').forEach(button=>button.addEventListener('click',close)); }
+  function bindClose() { dialog.querySelectorAll('[data-receipt-close]').forEach(button=>button.addEventListener('click',close));root.MerPlanNavigation?.enhance(dialog); }
   function renderUpload(message = '') {
     dialog.innerHTML = `${heading(copy('Skenirajte i povežite račun','Scan and match a receipt'))}<div class="receipt-body"><p class="receipt-intro">${copy('Dodajte fotografiju računa. Pregledat ćete očitane stavke i potvrditi povezivanje s postojećom transakcijom.','Add a receipt photo. Review extracted items and confirm the link to an existing transaction.')}</p><div class="receipt-drop" id="receiptDrop" tabindex="0" role="button" aria-label="${copy('Odaberite fotografiju računa','Choose a receipt photo')}">${previewUrl?`<img src="${x(previewUrl)}" alt="${copy('Odabrani račun','Selected receipt')}"><span>${x(receipt.fileName)}</span>`:`<strong>${copy('Povucite račun ovdje','Drop a receipt here')}</strong><span>${copy('ili odaberite fotografiju · JPEG, PNG, WebP','or choose a photo · JPEG, PNG, WebP')}</span>`}</div><div class="receipt-upload-actions"><button class="secondary-button" type="button" id="receiptChoose">${copy('Odaberi datoteku','Choose file')}</button><button class="secondary-button" type="button" id="receiptCamera">${copy('Fotografiraj račun','Take photo')}</button></div><input id="receiptFile" type="file" accept="image/jpeg,image/png,image/webp" hidden><input id="receiptCameraFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden><label class="receipt-check"><input type="checkbox" id="receiptConsent"><span>${copy('Dopuštam slanje ove fotografije Google Gemini servisu radi očitavanja. Fotografija može sadržavati osobne podatke. Podaci o mojim bankovnim transakcijama ne šalju se.','I consent to sending this photo to Google Gemini for extraction. It may contain personal information. My bank transaction data will not be sent.')}</span></label><p class="receipt-note">${copy('Fotografija se ne sprema uz transakciju; spremit će se samo potvrđeni podaci računa.','The photo is not stored with the transaction; only reviewed receipt details are saved.')}</p><p role="alert" data-receipt-error ${message?'':'hidden'}>${x(message)}</p><div id="receiptLoading" class="receipt-loading" hidden role="status"><span>${copy('Očitavam račun…','Reading receipt…')}</span><i></i><i></i><i></i></div></div><footer class="receipt-footer"><button class="secondary-button" type="button" data-receipt-close>${copy('Otkaži','Cancel')}</button><button class="secondary-button" type="button" id="receiptManual">${copy('Unesi ručno','Enter manually')}</button><button class="primary-button" type="button" id="receiptAnalyze" ${preparedImage?'':'disabled'}>${copy('Očitaj račun','Read receipt')}</button></footer>`;
     bindClose();
@@ -129,7 +129,7 @@
   }
   function open(options={}) {
     if(!['personal','business'].includes(profileId()))return false;ensureDialog();stop();clearImage();owner=profileId();guard=R.createRequestGuard(owner);returnFocus=document.activeElement;preferredId=options.transactionId?String(options.transactionId):'';selectedId='';viewedTransactionId='';receipt=R.normalizeReceipt({id:uid()});
-    renderUpload();if(bridge()?.openModal)bridge().openModal(dialog);else dialog.showModal();return true;
+    const wasOpen=dialog.open;renderUpload();if(bridge()?.openModal)bridge().openModal(dialog);else if(!dialog.open)dialog.showModal();if(wasOpen)dialog.querySelector('[data-plan-back], input, button')?.focus({preventScroll:true});return true;
   }
   function storedTransaction(id) {
     return (profile().transactions||[]).find(transaction=>String(transaction.id)===String(id)&&(!transaction.profileId||transaction.profileId===owner)&&(!['personal','business'].includes(transaction.accountId)||transaction.accountId===owner));

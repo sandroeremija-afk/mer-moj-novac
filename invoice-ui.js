@@ -9,7 +9,7 @@
   const en = () => (snapshot().language || document.documentElement.lang) === 'en';
   const say = (hr, english) => en() ? english : hr;
   const x = core.escapeXml;
-  const amount = cents => new Intl.NumberFormat(en() ? 'en-IE' : 'hr-HR', { style:'currency', currency:'EUR', minimumFractionDigits:2, maximumFractionDigits:2 }).format(cents / 100);
+  const amount = cents => root.MerCore.formatCurrency(cents / 100, { locale:en() ? 'en-IE' : 'hr-HR', currency:'EUR' });
   let dialog, draft = null, preview = null, originFocus;
 
   function close() {

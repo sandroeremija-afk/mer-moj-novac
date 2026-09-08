@@ -1269,8 +1269,12 @@ function closeModal(modal) {
   if(modal?.open)modal.close();
   hideBankActionTooltip();
   syncModalLayer();
-  const returnTarget=modal&&modalReturnFocus.get(modal),openDialog=$('.modal[open]');
-  if(returnTarget?.isConnected&&(!openDialog||openDialog.contains(returnTarget)))requestAnimationFrame(()=>returnTarget.focus({preventScroll:true}));
+  const returnTarget=modal&&modalReturnFocus.get(modal);
+  requestAnimationFrame(()=>{
+    const openDialog=$('.modal[open]');
+    const target=returnTarget?.closest('#intelligenceModal:not([open])')?$('#openIntelligence'):returnTarget;
+    if(target?.isConnected&&target.getClientRects().length&&(!openDialog||openDialog.contains(target)))target.focus({preventScroll:true});
+  });
 }
 
 const moduleTitleKeys = {overview:'navOverview',budgets:'navBudgets',savings:'navSavings',activity:'navActivity',insights:'navInsights'};
@@ -1421,6 +1425,10 @@ function setAssessmentStep(step) {
   $$('.step-dots span').forEach((dot,index)=>dot.classList.toggle('active',index<step));
   $('#assessmentBack').hidden=step===1; $('#assessmentNext').hidden=step===3; $('#assessmentSave').hidden=step!==3;
   if(step===3)updateRecommendation();
+  if($('#assessmentModal').open && document.activeElement?.hidden){
+    const target=$('.assessment-step.active input:not([disabled]), .assessment-step.active button:not([disabled])')||$('#assessmentSave');
+    target?.focus({preventScroll:true});
+  }
 }
 
 function openAssessment() {
@@ -1602,6 +1610,16 @@ document.addEventListener('click',event=>{
   if(target==='activity')renderActivity();
 });
 document.addEventListener('click',event=>{if(!event.target.closest('.sidebar-bottom'))toggleAccountMenu(false);if(!event.target.closest('.notification-wrap'))closeNotifications();if(!event.target.closest('.card-action-wrap'))closeCardMenus();if(!event.target.closest('.activity-toolbar'))setActivityFiltersOpen(false);});
+function trapOpenModalFocus(event){
+  if(event.key!=='Tab'||event.defaultPrevented)return;
+  const modal=$$('.modal[open]').at(-1);
+  if(!modal)return;
+  const items=focusableElements(modal),first=items[0],last=items.at(-1),active=document.activeElement;
+  if(!first){event.preventDefault();modal.focus({preventScroll:true});return;}
+  if(event.shiftKey&&(active===first||!modal.contains(active))){event.preventDefault();last.focus({preventScroll:true});}
+  else if(!event.shiftKey&&(active===last||!modal.contains(active))){event.preventDefault();first.focus({preventScroll:true});}
+}
+document.addEventListener('keydown',trapOpenModalFocus);
 document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;const modal=$$('.modal[open]').at(-1);if(modal){event.preventDefault();closeModal(modal);return;}if(!$('#activityFiltersPanel').hidden){event.preventDefault();setActivityFiltersOpen(false);$('#activityFiltersToggle').focus({preventScroll:true});return;}if(!$('#notificationCenter').hidden){event.preventDefault();closeNotifications(true);return;}if(!$('#accountMenu').hidden){event.preventDefault();toggleAccountMenu(false);$('#openSettings').focus({preventScroll:true});return;}closeCardMenus();});
 $$('.nav-item').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
 $$('[data-go-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.goView)));

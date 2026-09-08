@@ -53,7 +53,7 @@
   .invoice-body { padding:16px; }.invoice-footer { padding:12px 16px; }.invoice-footer button { flex:1 1 auto; }
   .invoice-two,.invoice-three { grid-template-columns:1fr; gap:0; }.invoice-party { padding:13px; }.invoice-party .invoice-two { grid-template-columns:.8fr 1.2fr; gap:10px; }
   .invoice-line-numbers { grid-template-columns:1fr 1fr; gap:10px; }.invoice-paper { padding:12px; }.invoice-paper h3 { font-size:19px; }.invoice-parties { gap:18px; }
-  .invoice-table { font-size:11px; }.invoice-table th,.invoice-table td { padding:9px 3px; }.invoice-table th { white-space:nowrap; font-size:10px; }.invoice-table th:first-child,.invoice-table td:first-child { width:30%; }
+  .invoice-table { font-size:11px; }.invoice-table th,.invoice-table td { padding:9px 3px; }.invoice-table th { white-space:normal; overflow-wrap:anywhere; font-size:10px; }.invoice-table th:first-child,.invoice-table td:first-child { width:30%; }
   .invoice-bottom { grid-template-columns:1fr; gap:18px; }.invoice-totals { grid-row:1; }.invoice-qr { width:110px; }
 }
 @media(prefers-reduced-motion:reduce) { .invoice-dialog[open] { animation:none; } }

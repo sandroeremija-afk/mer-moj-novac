@@ -11,6 +11,7 @@ const jsFiles = ['runtime.js','logo.js','core.js','demo-data.js','auth-core.js',
 jsFiles.push('enterprise-core.js','enterprise-ui.js','vault-core.js','security-enterprise.js','invoice-core.js','invoice-ui.js');
 jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-core.js','planning-ui.js','household-core.js','household-ui.js','app-update.js');
 const suiteCss=['enterprise.css','invoice.css','security-enterprise.css','receipt.css','planning.css','household.css','app-update.css'];
+jsFiles.push('circle-text.js','plan-navigation.js');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source

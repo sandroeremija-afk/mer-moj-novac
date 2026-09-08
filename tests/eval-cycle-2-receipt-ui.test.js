@@ -4,6 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const R=require('../receipt-core.js');
+const MerCore=require('../core.js');
 
 test('stored receipt viewer is readonly, escapes line items, excludes other profiles and clears on profile switch',()=>{
   const handlers={},controls={};
@@ -12,7 +13,7 @@ test('stored receipt viewer is readonly, escapes line items, excludes other prof
   const state={activeProfile:'personal',language:'hr',profiles:{personal:{transactions:[{id:'same',name:'Personal shop',date:'2026-09-07',receipts:[receipt,{...receipt,id:'wrong',profileId:'business',merchant:'SECRET OTHER PROFILE'}]}]},business:{transactions:[{id:'same',name:'Business shop',date:'2026-09-07',receipts:[{...receipt,profileId:'business',merchant:'Business receipt'}]}]}}};
   const original=JSON.stringify(state.profiles);
   const document={documentElement:{lang:'hr'},activeElement:null,createElement(){return dialog;},body:{append(){},classList:{remove(){}}},querySelector(){return null;},addEventListener(){}};
-  const window={document,MerReceipts:R,crypto:require('node:crypto').webcrypto,MerEnterpriseBridge:{getState:()=>state,openModal:node=>node.showModal(),closeModal:node=>node.close()}};
+  const window={document,MerReceipts:R,MerCore,crypto:require('node:crypto').webcrypto,MerEnterpriseBridge:{getState:()=>state,openModal:node=>node.showModal(),closeModal:node=>node.close()}};
   vm.runInNewContext(fs.readFileSync(require.resolve('../receipt-ui.js'),'utf8'),{window,document,Intl,URL,AbortController,setTimeout,clearTimeout});
   assert.equal(window.MerReceiptUI.view('same'),true);
   assert.equal(dialog.open,true);

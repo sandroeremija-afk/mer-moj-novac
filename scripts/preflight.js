@@ -10,6 +10,7 @@ const errors = [];
 jsFiles.push('enterprise-core.js','enterprise-ui.js','vault-core.js','security-enterprise.js','invoice-core.js','invoice-ui.js','api/cashflow.js','service-worker.js');
 jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-core.js','planning-ui.js','household-core.js','household-ui.js','api/receipt.js');
 jsFiles.push('app-update.js');
+jsFiles.push('circle-text.js','plan-navigation.js');
 
 for (const file of jsFiles) {
   const fullPath = path.join(root, file);

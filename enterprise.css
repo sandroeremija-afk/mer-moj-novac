@@ -101,3 +101,13 @@
 @media(min-width:1025px) and (max-height:800px) { .forecast-inline { min-height:45px; padding:6px 9px; } .safe-panel:has(.forecast-inline) .safe-ring { width:110px; height:110px; flex-basis:110px; } .safe-panel:has(.forecast-inline) .safe-content { gap:18px; } }
 @media(max-width:600px) { .enterprise-dialog { width:calc(100vw - 16px); max-width:calc(100vw - 16px); max-height:90dvh; padding:16px; margin:auto; } .enterprise-dialog[open] { gap:12px; } .enterprise-header-controls { gap:0; } .enterprise-header-controls .icon-button { width:44px; height:44px; } .enterprise-allocation-grid { grid-template-columns:1fr; } .enterprise-action-grid { grid-template-columns:1fr; } .enterprise-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .enterprise-metrics>div:first-child { grid-column:1/-1; } .forecast-inline strong { font-size:14px; } .enterprise-dialog .enterprise-tabs button { font-size:12px; } }
 @media(prefers-reduced-motion:reduce) { .enterprise-skeleton i { animation:none; } .topbar::before { transition:none; } }
+.plan-back { flex:0 0 auto; min-height:44px; white-space:nowrap; }
+.enterprise-dialog-head>h2,.receipt-head>div,.household-head>div { min-width:0; overflow-wrap:anywhere; }
+.enterprise-dialog-head .icon-button,.receipt-head .icon-button,.household-head .icon-button { flex-shrink:0; }
+.forecast-chart { min-width:0; }
+@media(max-width:600px) {
+  .enterprise-dialog-head:has(.plan-back:not([hidden])),.receipt-head:has(.plan-back),.household-head:has(.plan-back) { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:8px; }
+  .enterprise-dialog-head .plan-back:not([hidden]),.receipt-head .plan-back,.household-head .plan-back { grid-column:1; grid-row:1; justify-self:start; }
+  .enterprise-dialog-head:has(.plan-back:not([hidden]))>h2,.receipt-head:has(.plan-back)>div,.household-head:has(.plan-back)>div { grid-column:1/-1; grid-row:2; }
+  .enterprise-dialog-head:has(.plan-back:not([hidden]))>.icon-button,.receipt-head:has(.plan-back)>.icon-button,.household-head:has(.plan-back)>.icon-button { grid-column:2; grid-row:1; }
+}
