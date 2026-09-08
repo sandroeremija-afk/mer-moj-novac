@@ -71,7 +71,7 @@
       ...[['overview','Pregled','Overview'],['budgets','Budžete','Budgets'],['savings','Štednju','Savings'],['activity','Aktivnost','Activity'],['insights','Uvide','Insights']].map(([id,hr,en])=>({label:copy(`Idi na ${hr}`,`Go to ${en}`),run:()=>showView(id)})),
       {label:copy('Novi trošak','New expense'),run:()=>openTransaction()},
       {label:copy('Novi prihod','New income'),run:()=>openIncomeTransaction()},
-      {label:copy('Izvoz — sve transakcije','Export — all transactions'),run:()=>document.querySelector('[data-export-active]').click()},
+      {label:copy('Izvoz — sve transakcije','Export — all transactions'),run:()=>window.MerExportUI?.open('activity',{timeframe:'all'})},
       {label:copy('Izvoz — budžeti','Export — budgets'),run:()=>document.querySelector('[data-export-budget]').click()},
       {label:copy('Izvoz — izvještaj uvida','Export — insights report'),run:()=>document.querySelector('[data-export-insights]').click()},
       {label:copy('Lozinka — promjena lozinke','Password — change password'),run:()=>openSetting('security','currentPasswordInput')},

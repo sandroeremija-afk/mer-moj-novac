@@ -8,6 +8,8 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const premium = fs.readFileSync(path.join(root, 'premium.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+const exportUI = fs.readFileSync(path.join(root, 'export-ui.js'), 'utf8');
+const {buildReport} = require('../export-core.js');
 
 test('evaluation cycle 2: transaction modal switches copy and accepts a booking date', () => {
   assert.match(html, /id="transactionTitle"[^>]+data-i18n="addExpense">Dodaj trošak/);
@@ -28,10 +30,20 @@ test('evaluation cycle 2: import launched from transaction entry has an explicit
 });
 
 test('evaluation cycle 2: contextual Croatian export names are stable and descriptive', () => {
-  assert.match(premium, /Aktivnost_Sve_Transakcije\.csv/);
-  assert.match(premium, /Budzeti_Izvoz_\$\{croatianMonths[\s\S]*?\$\{year\}\.csv/);
-  assert.match(premium, /Uvidi_Izvjestaj_\$\{/);
+  const options = {profile:{transactions:[], categories:[], savingsEntries:[]}, profileId:'personal', referenceDate:'2026-09-08', currency:'EUR'};
+  for (const [context, timeframe, month, expected] of [
+    ['activity', 'all', undefined, 'Aktivnost_Transakcije_Sve_Ukupno_2026-09-08_personal'],
+    ['budget', 'monthly', undefined, 'Budzeti_Izvoz_Mjesec_2026-09_personal'],
+    ['insights', 'ytd', undefined, 'Uvidi_Izvjestaj_Godina_2026_personal'],
+    ['savings', 'custom-month', '2026-08', 'Stednja_Uplate_Mjesec_2026-08_personal']
+  ]) {
+    const report = buildReport({...options, context, timeframe, month});
+    assert.equal(report.filenameStem, expected);
+    for (const format of ['csv', 'pdf', 'json']) assert.equal(`${report.filenameStem}.${format}`, `${expected}.${format}`);
+  }
+  assert.match(exportUI, /anchor\.download = `\$\{report\.filenameStem\}\.\$\{format\}`/);
   assert.doesNotMatch(premium, /link\.download=['"]export\.(?:csv|json|pdf)['"]/);
+  assert.doesNotMatch(exportUI, /anchor\.download=['"]export\.(?:csv|json|pdf)['"]/);
 });
 
 test('evaluation cycle 2: number spinners are removed and savings history uses the shared thin scrollbar', () => {

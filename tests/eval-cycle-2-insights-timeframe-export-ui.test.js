@@ -9,13 +9,7 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const premium = fs.readFileSync(path.join(root, 'premium.js'), 'utf8');
-
-function functionBody(name, nextName) {
-  const start = premium.indexOf(`function ${name}`);
-  assert.ok(start >= 0, `${name} exists`);
-  const end = nextName ? premium.indexOf(`function ${nextName}`, start) : premium.length;
-  return premium.slice(start, end);
-}
+const exportUI = fs.readFileSync(path.join(root, 'export-ui.js'), 'utf8');
 
 test('evaluation cycle 2: Insights exposes the four canonical timeframes in the intended order', () => {
   const start = html.indexOf('id="insightsFilters"');
@@ -44,18 +38,23 @@ test('evaluation cycle 2: the Insights toolbar uses the requested export report 
   assert.match(app, /exportInsightsReport:'Izvoz izvještaja'/);
 });
 
-test('evaluation cycle 2: the exporter consumes one canonical report built from the active timeframe', () => {
-  const body = functionBody('exportInsightsReportCsv', 'openGlobalImport');
-  assert.match(body, /MerCore\.buildInsightsReport\(state\.transactions,insightsTimeframe,appReferenceDate\)/);
-  assert.match(body, /report\.totals/);
-  assert.match(body, /report\.transactionCount/);
-  assert.match(body, /report\.categories/);
-  assert.match(body, /report\.series/);
-  assert.match(body, /\{daily:'daily',monthly:'monthly',ytd:'yearToDate',all:'allTime'\}\[insightsTimeframe\]/);
-  assert.match(body, /exportFileName\('insights',report\.timeframe\)/);
-  assert.match(premium, /Uvidi_Izvjestaj_\$\{\(\{daily:'Dan',monthly:'Mjesec',ytd:'Godina',all:'Sve_Ukupno'\}\)\[timeframe\]\|\|'Mjesec'\}\.csv/);
-  assert.doesNotMatch(body, /transactionTotals\(state\.transactions,insightsTimeframe|filterTransactions\(state\.transactions,insightsTimeframe|categoryExpenseTotals\(state\.transactions,insightsTimeframe/);
-  assert.match(premium, /\$\$\('\[data-export-insights\]'\)\.forEach\(button=>button\.addEventListener\('click',exportInsightsReportCsv\)\)/);
+test('evaluation cycle 2: the modal starts from the active Insights timeframe and exports the user-confirmed selection', () => {
+  const bridgeStart = premium.indexOf('window.MerExportBridge=Object.freeze({');
+  const bridgeEnd = premium.indexOf('function openGlobalImport', bridgeStart);
+  assert.ok(bridgeStart >= 0 && bridgeEnd > bridgeStart);
+  const bridge = premium.slice(bridgeStart, bridgeEnd);
+  assert.match(bridge, /profile:state,profileId:appState\.activeAccount/);
+  assert.match(bridge, /referenceDate:appReferenceDate/);
+  assert.match(bridge, /timezone:appState\.settings\.timezone,insightsTimeframe/);
+  assert.match(premium, /\$\$\('\[data-export-insights\]'\)\.forEach\(button=>button\.addEventListener\('click',\(\)=>window\.MerExportUI\?\.open\('insights',\{timeframe:insightsTimeframe\}\)\)\)/);
+  assert.match(exportUI, /const chosenTimeframe = options\.timeframe \|\| \(context === 'insights' \? state\.insightsTimeframe : 'monthly'\)/);
+  assert.match(exportUI, /selection\.timeframe = el\('exportTimeframe'\)\.value/);
+  assert.match(exportUI, /MerExportCore\.buildReport\(\{\.\.\.state, context:selection\.context, timeframe:selection\.timeframe, month:selection\.month[,}]/);
+  assert.match(exportUI, /MerExportCore\.toCsv\(report\)/);
+  assert.match(exportUI, /MerExportPdf\.create\(report\)/);
+  assert.match(exportUI, /JSON\.stringify\(report, null, 2\)/);
+  assert.match(exportUI, /anchor\.download = `\$\{report\.filenameStem\}\.\$\{format\}`/);
+  assert.doesNotMatch(premium, /function exportInsightsReportCsv|exportInsightsReportCsv\(/);
 });
 
 test('evaluation cycle 2: every Insights consumer follows the selected timeframe', () => {

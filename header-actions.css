@@ -1,0 +1,139 @@
+/* Individual module actions stay visible, including their labels on small screens. */
+#appShell .view > .actions-only-heading {
+  min-width:0;
+  flex-shrink:0;
+}
+#appShell .actions-only-heading .heading-actions {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:stretch;
+  justify-content:flex-end;
+  gap:8px;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  margin-left:0;
+}
+#appShell .actions-only-heading .heading-actions > button {
+  flex:0 1 auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  width:auto;
+  min-width:44px;
+  max-width:100%;
+  min-height:44px;
+  height:auto;
+  padding:10px 12px;
+  font-size:13px;
+  line-height:1.45;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-align:center;
+}
+#appShell .actions-only-heading .heading-actions > button[hidden] { display:none; }
+#appShell .actions-only-heading .heading-actions > button > svg {
+  flex:0 0 17px;
+  width:17px;
+  height:17px;
+}
+#appShell .actions-only-heading .heading-actions > button > span {
+  display:block;
+  position:static;
+  width:auto;
+  min-width:0;
+  height:auto;
+  margin:0;
+  overflow:visible;
+  clip:auto;
+  clip-path:none;
+  white-space:normal;
+}
+#appShell .actions-only-heading .heading-actions > button:focus-visible {
+  outline:3px solid var(--blue,#00a9e4);
+  outline-offset:3px;
+}
+
+/* Native checked state is retained; only the visual surface is customized. */
+#bankSettingsModal input[type="checkbox"] {
+  -webkit-appearance:none;
+  appearance:none;
+  box-sizing:border-box;
+  display:inline-block;
+  flex:0 0 22px;
+  width:22px !important;
+  height:22px !important;
+  min-width:22px;
+  min-height:22px !important;
+  padding:0;
+  margin:1px 0 0;
+  border:1.5px solid #475569;
+  border-radius:4px;
+  color:#182b24;
+  background-color:#fff;
+  background-image:none;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:18px 18px;
+  box-shadow:none;
+  color-scheme:light;
+  cursor:pointer;
+  vertical-align:middle;
+}
+#bankSettingsModal input[type="checkbox"]:checked {
+  border-color:#182b24;
+  background-color:#fff;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m4 10 4 4 8-8' fill='none' stroke='%23182b24' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+#bankSettingsModal input[type="checkbox"]:indeterminate {
+  background-color:#fff;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 10h10' fill='none' stroke='%23182b24' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+#bankSettingsModal input[type="checkbox"]:focus-visible {
+  outline:3px solid #007da9;
+  outline-offset:3px;
+}
+#bankSettingsModal input[type="checkbox"]:disabled {
+  opacity:1;
+  background-color:#fff;
+  border-color:#94a3b8;
+  cursor:not-allowed;
+}
+#bankSettingsModal label:has(> input[type="checkbox"]) {
+  min-height:44px;
+  align-items:center !important;
+  gap:12px;
+  cursor:pointer;
+}
+#bankSettingsModal label:has(> input[type="checkbox"]:disabled) { cursor:not-allowed; }
+#bankSettingsModal label:has(> input[type="checkbox"]) > span {
+  min-width:0;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+
+@media (max-width:1024px) {
+  #appShell .actions-only-heading .heading-actions { justify-content:flex-start; }
+}
+@media (max-width:600px) {
+  #appShell .actions-only-heading .heading-actions {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  #appShell .actions-only-heading .heading-actions > button {
+    width:100%;
+    min-width:0;
+    padding:10px;
+  }
+  #appShell .actions-only-heading .heading-actions > .primary-button { grid-column:1 / -1; }
+}
+@media (forced-colors:active) {
+  #bankSettingsModal input[type="checkbox"] {
+    -webkit-appearance:auto;
+    appearance:auto;
+    forced-color-adjust:auto;
+  }
+  #bankSettingsModal input[type="checkbox"]:checked,
+  #bankSettingsModal input[type="checkbox"]:indeterminate { background-image:none; }
+}

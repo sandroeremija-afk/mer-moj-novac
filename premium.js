@@ -1,4 +1,6 @@
 (function initializePremiumFeatures() {
+  Object.assign(translations.hr,{activityTransfer:'Uvoz / Izvoz',exportSavings:'Izvoz štednje'});
+  Object.assign(translations.en,{activityTransfer:'Import / Export',exportSavings:'Export savings'});
   Object.assign(translations.hr, {
     userSettingsOverline:'KORISNIČKE POSTAVKE', userSettings:'Korisničke postavke', settingsIntro:'Privatnost, sigurnost, uvoz i automatizacija na jednom mjestu.', general:'Općenito', security:'Sigurnost', importData:'Uvoz podataka', automation:'Pravila', banksShort:'Banke', preferences:'PREFERENCE', regionalPrivacy:'Prikaz i privatnost', baseCurrency:'Osnovna valuta', dateFormat:'Format datuma', dateEuropean:'31. 12. 2026.', timezone:'Vremenska zona', hideBalances:'Sakrij iznose / Privatni način', hideBalancesHint:'Zamaglite iznose u aplikaciji. Prečac: Ctrl / ⌘ + Shift + H.', dataPortability:'Prijenos podataka', dataPortabilityHint:'Izvoz ne uključuje MFA tajnu ni recovery kodove.', exportAllJson:'Izvezi sve kao JSON', exportAllCsv:'Izvezi sve kao CSV', importJsonBackup:'Uvezi JSON sigurnosnu kopiju', importTransactions:'Uvezi CSV / Excel', importDataShort:'Uvoz', exportDataShort:'Izvoz', activeProfileOnly:'Aktivni profil ostaje potpuno izoliran.', bulkImport:'Grupni unos CSV / Excel', bulkImportHint:'Uvezite više prihoda i troškova uz pregled prije potvrde.', allProfilesIncluded:'Uključuje oba izolirana profila.', settingsSaved:'Postavke su spremljene.', dataExported:'Podaci su izvezeni.', dataImported:'Sigurnosna kopija je uvezena.', invalidBackup:'Datoteka nije valjana mer sigurnosna kopija.',
     accountProtection:'ZAŠTITA RAČUNA', mfaTitle:'Višefaktorska autentikacija', mfaEnabled:'Uključeno', mfaDisabled:'Isključeno', authenticatorApps:'Authenticator aplikacije', mfaDescription:'Koristite vremenski jednokratni kod iz Google Authenticatora, Authyja ili druge TOTP aplikacije.', enableMfa:'Uključi MFA', saveMfaSecret:'Spremite tajni ključ u authenticator aplikaciju', copySecret:'Kopiraj ključ', verifySixDigit:'Potvrdite šesteroznamenkasti kod', confirmAndEnable:'Potvrdi i uključi', recoveryCodesTitle:'Spremite recovery kodove', recoveryCodesHint:'Svaki se može upotrijebiti samo jednom. Nakon zatvaranja više ih ne prikazujemo.', downloadCodes:'Preuzmi kodove', disableCode:'TOTP ili recovery kod', disableMfa:'Isključi MFA', localMfaNotice:'Ova statička verzija štiti lokalnu sesiju. Produkcijski login zahtijeva serversku pohranu MFA tajne.', mfaInvalid:'Kod nije valjan. Provjerite vrijeme uređaja i pokušajte ponovno.', mfaReady:'MFA je uključen. Spremite recovery kodove.', mfaRemoved:'MFA je isključen.', secretCopied:'Tajni ključ je kopiran.', protectedSession:'ZAŠTIĆENA SESIJA', verifyIdentity:'Potvrdite svoj identitet', unlockHint:'Unesite kod iz authenticator aplikacije ili neiskorišteni recovery kod.', securityCode:'Sigurnosni kod', unlockApp:'Otključaj aplikaciju', unlockError:'Kod nije valjan ili je recovery kod već iskorišten.',
@@ -180,85 +182,17 @@
     const blob=new Blob([content],{type});const link=document.createElement('a');link.download=name;link.href=URL.createObjectURL(blob);document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),0);
   }
 
-  const croatianMonths=['Sijecanj','Veljaca','Ozujak','Travanj','Svibanj','Lipanj','Srpanj','Kolovoz','Rujan','Listopad','Studeni','Prosinac'];
-  function exportFileName(context,timeframe='') {
-    const [year,month]=String(appReferenceDate).slice(0,7).split('-').map(Number);
-    if(context==='activity')return 'Aktivnost_Sve_Transakcije.csv';
-    if(context==='budget')return `Budzeti_Izvoz_${croatianMonths[Math.max(0,Math.min(11,(month||1)-1))]}_${year}.csv`;
-    if(context==='insights')return `Uvidi_Izvjestaj_${({daily:'Dan',monthly:'Mjesec',ytd:'Godina',all:'Sve_Ukupno'})[timeframe]||'Mjesec'}.csv`;
-    return 'MER_Izvoz.csv';
-  }
-
-  function safeCsvText(value){const text=String(value??'');return /^[=+\-@\t]/.test(text)?`'${text}`:text;}
-  function csvCell(value){const text=String(value??'');return /[",\r\n]/.test(text)?`"${text.replaceAll('"','""')}"`:text;}
-
-  function exportActiveProfileCsv() {
-    const labels=currentLang==='hr'
-      ? ['ID','Vrijeme','Datum','Opis','Vrsta','Kategorija','Iznos','Valuta','Izvor','Status pregleda']
-      : ['ID','Timestamp','Date','Description','Type','Category','Amount','Currency','Source','Review status'];
-    const rows=[labels];
-    (state.transactions||[]).filter(tx=>tx&&Number.isFinite(Number(tx.amount))).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(tx=>{
-      const type=MerCore.transactionType(tx),timestamp=String(tx.timestamp||tx.date||''),category=type==='income'?incomeCategoryName(tx.category):categoryName(tx.category);
-      rows.push([safeCsvText(tx.id||''),safeCsvText(timestamp),timestamp.slice(0,10),safeCsvText(tx.name||''),currentLang==='hr'?(type==='income'?'Prihod':'Trošak'):type,safeCsvText(category),Number(tx.amount).toFixed(2),safeCsvText(tx.currency||appState.settings.currency),safeCsvText(tx.source||'Manual'),tx.needsReview?(currentLang==='hr'?'Potreban pregled':'Needs review'):(currentLang==='hr'?'Potvrđeno':'Confirmed')]);
-    });
-    downloadFile(exportFileName('activity'),`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');showToast(t('dataExported'));
-  }
-
-  function exportBudgetPlanCsv() {
-    const spentByCategory=MerCore.categoryExpenseTotals(state.transactions,'monthly',appReferenceDate);
-    const categories=(state.categories||[]).map(category=>{const spent=Number(spentByCategory[category.id]||0),limit=Math.max(0,Number(category.limit)||0);return {category,spent,limit,remaining:limit-spent,usage:limit>0?spent/limit*100:spent>0?100:0};});
-    const totals=categories.reduce((sum,item)=>({spent:sum.spent+item.spent,limit:sum.limit+item.limit,remaining:sum.remaining+item.remaining}),{spent:0,limit:0,remaining:0});
-    const hr=currentLang==='hr',currencyCode=appState.settings.currency;
-    const rows=[
-      [hr?'Izvješće':'Report',hr?'Mjesečni plan budžeta':'Monthly budget plan'],
-      [hr?'Profil':'Profile',safeCsvText(state.accountName)],
-      [hr?'Mjesec':'Month',appReferenceDate.slice(0,7)],
-      [hr?'Valuta':'Currency',currencyCode],
-      [],
-      [hr?'Sažetak':'Summary',hr?'Iznos':'Amount'],
-      [hr?'Ukupni limit':'Total limit',totals.limit.toFixed(2)],
-      [hr?'Ukupno potrošeno':'Total spent',totals.spent.toFixed(2)],
-      [hr?'Ukupno preostalo':'Total remaining',totals.remaining.toFixed(2)],
-      [],
-      [hr?'Kategorija':'Category',hr?'Potrošeno':'Spent',hr?'Limit':'Limit',hr?'Preostalo':'Remaining',hr?'Iskorištenost (%)':'Usage (%)',hr?'Valuta':'Currency']
-    ];
-    categories.forEach(item=>rows.push([safeCsvText(categoryName(item.category.id)),item.spent.toFixed(2),item.limit.toFixed(2),item.remaining.toFixed(2),item.usage.toFixed(1),currencyCode]));
-    downloadFile(exportFileName('budget'),`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
-    showToast(t('csvExported'));
-  }
-
-  function exportInsightsReportCsv() {
-    const report=MerCore.buildInsightsReport(state.transactions,insightsTimeframe,appReferenceDate);
-    const totals=report.totals;
-    const hr=currentLang==='hr',label=hr?{metric:'Pokazatelj',value:'Vrijednost',category:'Kategorija',amount:'Trošak',share:'Udio troškova (%)',income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto ukupno',rate:'Stopa štednje (%)',breakdown:'Raščlamba razdoblja',period:'Razdoblje',count:'Broj transakcija'}:{metric:'Metric',value:'Value',category:'Category',amount:'Expense',share:'Expense share (%)',income:'Total income',expenses:'Total expenses',net:'Net total',rate:'Savings rate (%)',breakdown:'Period breakdown',period:'Period',count:'Transaction count'};
-    const savingsRate=totals.income>0?(totals.net/totals.income)*100:null;
-    const timeframeLabel=t({daily:'daily',monthly:'monthly',ytd:'yearToDate',all:'allTime'}[insightsTimeframe]||'monthly');
-    const reportKind=hr
-      ? {daily:'Satna raščlamba dana',monthly:'Dnevni mjesečni pregled',ytd:'Mjesečni godišnji pregled',all:'Povijesni sažetak'}[report.timeframe]
-      : {daily:'Hourly daily breakdown',monthly:'Daily monthly report',ytd:'Monthly annual report',all:'Historical summary'}[report.timeframe];
-    const rows=[
-      [hr?'Izvješće':'Report',reportKind],
-      [hr?'Profil':'Profile',safeCsvText(state.accountName)],
-      [hr?'Razdoblje':'Timeframe',timeframeLabel],
-      [hr?'Datum izvješća':'Report date',appReferenceDate],
-      [hr?'Valuta':'Currency',appState.settings.currency],
-      [label.count,String(report.transactionCount)],
-      [],
-      [label.metric,label.value],
-      [label.income,Number(totals.income||0).toFixed(2)],
-      [label.expenses,Number(totals.expenses||0).toFixed(2)],
-      [label.net,Number(totals.net||0).toFixed(2)],
-      [label.rate,savingsRate===null?'—':savingsRate.toFixed(1)],
-      [],
-      [label.breakdown],
-      [label.period,label.income,label.expenses,label.net,label.count]
-    ];
-    report.series.forEach(item=>rows.push([item.key,item.income.toFixed(2),item.expenses.toFixed(2),item.net.toFixed(2),String(item.count)]));
-    rows.push([], [label.category,label.amount,label.share]);
-    report.categories.forEach(item=>rows.push([safeCsvText(categoryName(item.category)),item.amount.toFixed(2),item.share.toFixed(1)]));
-    downloadFile(exportFileName('insights',report.timeframe),`\ufeff${rows.map(row=>row.map(csvCell).join(',')).join('\r\n')}`,'text/csv;charset=utf-8');
-    showToast(t('csvExported'));
-  }
+  window.MerExportBridge=Object.freeze({
+    snapshot:()=>{
+      const session=window.MerAuthProvider?.currentSession?.();
+      return {profile:state,profileId:appState.activeAccount,referenceDate:appReferenceDate,currency:appState.settings.currency,language:currentLang,timezone:appState.settings.timezone,insightsTimeframe,
+        revision:reactiveStore.getRevision(),sessionId:session?`${session.userId}:${session.issuedAt}`:'',
+        authenticated:!$('#appShell').hidden&&!window.MerEnterpriseSecurity?.isLocked()&&!document.body.classList.contains('mfa-locked')};
+    },
+    categoryLabel:categoryName,incomeCategoryLabel:incomeCategoryName,
+    openModal,closeModal,openImport:()=>openGlobalImport(),
+    onDownloaded:()=>showToast(t('dataExported'))
+  });
 
   function openGlobalImport({fromTransaction=false}={}) {
     returnToTransactionEntry=Boolean(fromTransaction);
@@ -416,7 +350,7 @@
     editingGoalId=id;const goal=id?state.goalBuckets.find(item=>item.id===id):null;$('#goalForm').reset();$('#goalModalTitle').textContent=t(goal?'editGoal':'newSavingsGoal');$('#goalNameInput').value=goal?.name||'';$('#goalTargetInput').value=goal?.target||'';$('#goalCurrentInput').value=goal?.current||0;$('#goalDueDateInput').value=goal?.dueDate||'';$('#goalPrimaryInput').checked=Boolean(goal?.primary);$('#deleteSavingsGoal').hidden=!goal;openModal($('#goalModal'));setTimeout(()=>$('#goalNameInput').focus(),50);
   }
 
-  function renderPremium() { applyPrivacy();renderGoals();if($('#bankSettingsModal').open)renderPremiumSettings(); }
+  function renderPremium() { applyPrivacy();renderGoals();if($('#bankSettingsModal').open)renderPremiumSettings();window.MerExportUI?.refresh(); }
   const originalRenderAll=renderAll;
   renderAll=function renderAllWithPremium(){originalRenderAll();renderPremium();};
 
@@ -428,9 +362,11 @@
   $('#layoutEditToggle').addEventListener('click',()=>closeModal($('#bankSettingsModal')));
   $$('[data-open-global-import]').forEach(button=>button.addEventListener('click',()=>openGlobalImport({fromTransaction:Boolean(button.closest('#transactionModal'))})));
   $('#backToTransactionEntry').addEventListener('click',backToManualTransaction);
-  $$('[data-export-active]').forEach(button=>button.addEventListener('click',exportActiveProfileCsv));
-  $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();exportBudgetPlanCsv();}));
-  $$('[data-export-insights]').forEach(button=>button.addEventListener('click',exportInsightsReportCsv));
+  $$('[data-export-active]').forEach(button=>button.addEventListener('click',()=>window.MerExportUI?.open('activity')));
+  $$('[data-export-budget]').forEach(button=>button.addEventListener('click',()=>{closeCardMenus();window.MerExportUI?.open('budget');}));
+  $$('[data-export-insights]').forEach(button=>button.addEventListener('click',()=>window.MerExportUI?.open('insights',{timeframe:insightsTimeframe})));
+  $$('[data-export-savings]').forEach(button=>button.addEventListener('click',()=>window.MerExportUI?.open('savings')));
+  $$('[data-activity-transfer]').forEach(button=>button.addEventListener('click',()=>window.MerExportUI?.openActivityTransfer()));
 
   $('#changePasswordForm').addEventListener('submit',event=>{event.preventDefault();runAsyncAction(async()=>{const feedback=$('#passwordChangeFeedback'),result=await window.MerAuthProvider?.changePassword?.({currentPassword:$('#currentPasswordInput').value,newPassword:$('#newPasswordInput').value,confirmPassword:$('#confirmNewPasswordInput').value});const errorKeys={DEMO_READ_ONLY:'demoPasswordUnavailable',INVALID_CURRENT_PASSWORD:'invalidCurrentPassword',PASSWORD_MISMATCH:'passwordMismatch',PASSWORD_REUSED:'passwordReused',WEAK_PASSWORD:'passwordWeak'};feedback.className=`security-form-feedback ${result?.ok?'success':'error'}`;feedback.textContent=t(result?.ok?'passwordUpdated':(errorKeys[result?.code]||'passwordChangeFailed'));if(result?.ok){window.MerMfaState?.activate?.(result.session);window.MerMfaUnlock?.mark?.(result.session);event.currentTarget.reset();renderActiveSessions();}},'passwordChangeFailed');});
   $('#logoutOtherSessions').addEventListener('click',()=>{const result=window.MerAuthProvider?.revokeOtherSessions?.();if(!result?.ok){showToast(t('passwordChangeFailed'));return;}renderActiveSessions();showToast(t('otherSessionsLoggedOut',{count:result.revoked}));});

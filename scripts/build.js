@@ -11,8 +11,8 @@ const jsFiles = ['runtime.js','logo.js','core.js','demo-data.js','auth-core.js',
 jsFiles.push('enterprise-core.js','enterprise-ui.js','vault-core.js','security-enterprise.js','invoice-core.js','invoice-ui.js');
 jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-core.js','planning-ui.js','household-core.js','household-ui.js','app-update.js');
 const suiteCss=['enterprise.css','invoice.css','security-enterprise.css','receipt.css','planning.css','household.css','app-update.css'];
-jsFiles.push('circle-text.js','plan-navigation.js','module-toolbar.js');
-suiteCss.push('module-toolbar.css');
+jsFiles.push('circle-text.js','plan-navigation.js','export-core.js','export-pdf.js','export-ui.js');
+suiteCss.push('export-ui.css','header-actions.css');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source
@@ -78,7 +78,7 @@ async function main() {
     icon.src=`${url.pathname}?v=${createHash('sha256').update(bytes).digest('hex').slice(0,16)}`;
   }
   await fs.writeFile(path.join(output,'manifest.webmanifest'),JSON.stringify(manifest),'utf8');
-  const staticFiles=['/styles.min.css',...suiteCss.map(file=>'/'+file),'/manifest.webmanifest',...jsFiles.map(file=>'/'+file.replace(/\.js$/,'.min.js')),...(await fs.readdir(path.join(output,'assets'))).filter(file=>/\.(svg|png|js|woff2?)$/.test(file)).map(file=>'/assets/'+file)];
+  const staticFiles=['/styles.min.css',...suiteCss.map(file=>'/'+file),'/manifest.webmanifest',...jsFiles.map(file=>'/'+file.replace(/\.js$/,'.min.js')),...(await fs.readdir(path.join(output,'assets'))).filter(file=>/\.(svg|png|js|ttf|woff2?)$/.test(file)).map(file=>'/assets/'+file)];
   // A fresh HTML response must never share script/style cache keys with an older shell.
   // Exact query matching also bypasses already-installed legacy cache-first workers.
   const assetUrls=new Map();
@@ -90,7 +90,7 @@ async function main() {
     if(/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(value))return match;
     const url=new URL(value,'https://mer.invalid/'),versioned=assetUrls.get(url.pathname);
     if(!versioned){
-      if(/\.(?:js|css|svg|png|woff2?|webmanifest)$/.test(url.pathname))throw new Error(`Unversioned or missing shell asset: ${value}`);
+      if(/\.(?:js|css|svg|png|ttf|woff2?|webmanifest)$/.test(url.pathname))throw new Error(`Unversioned or missing shell asset: ${value}`);
       return match;
     }
     return `${attribute}=${quote}${value.startsWith('/')?'':'./'}${value.startsWith('/')?versioned:versioned.slice(1)}${url.hash}${quote}`;

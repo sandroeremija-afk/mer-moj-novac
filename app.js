@@ -1237,7 +1237,6 @@ function syncModalLayer() {
 }
 
 function closeAllOverlays() {
-  window.MerModuleToolbar?.closeAll({restoreFocus:false});
   $$('.modal[open]').forEach(modal=>modal.close());
   closeCardMenus();
   closeNotifications();
@@ -1251,9 +1250,7 @@ const modalReturnFocus=new WeakMap();
 function focusableElements(modal){return $$('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',modal).filter(element=>!element.hidden&&element.getClientRects().length>0);}
 function openModal(modal) {
   if(!modal||modal.open)return;
-  const focusedElement=document.activeElement instanceof HTMLElement?document.activeElement:null;
-  const activeElement=window.MerModuleToolbar?.returnFocusTarget(focusedElement)||focusedElement;
-  window.MerModuleToolbar?.closeAll({restoreFocus:false});
+  const activeElement=document.activeElement instanceof HTMLElement?document.activeElement:null;
   const mobileSidebarTrigger=window.innerWidth<768&&activeElement?.closest('#sidebar')?$('#menuToggle'):null;
   $$('.modal[open]').forEach(openDialog=>{if(openDialog!==modal)openDialog.close();});
   closeCardMenus();
@@ -1275,8 +1272,7 @@ function closeModal(modal) {
   const returnTarget=modal&&modalReturnFocus.get(modal);
   requestAnimationFrame(()=>{
     const openDialog=$('.modal[open]');
-    const origin=returnTarget?.closest('#intelligenceModal:not([open])')?$('#openIntelligence'):returnTarget;
-    const target=window.MerModuleToolbar?.returnFocusTarget(origin)||origin;
+    const target=returnTarget?.closest('#intelligenceModal:not([open])')?$('#openIntelligence'):returnTarget;
     if(target?.isConnected&&target.getClientRects().length&&(!openDialog||openDialog.contains(target)))target.focus({preventScroll:true});
   });
 }

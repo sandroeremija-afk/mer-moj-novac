@@ -44,7 +44,7 @@ test('cycle 1: secondary content uses progressive disclosure while the large imp
   assert.match(css, /@media \(max-width:540px\)/);
 });
 
-test('cycle 2: data actions are contextual to Budget, Activity and Insights', () => {
+test('cycle 2: data actions are contextual to Budget, Savings, Activity and Insights', () => {
   const viewHeading = view => {
     const start = html.indexOf(`id="${view}"`);
     const next = html.indexOf('<section class="view"', start);
@@ -52,15 +52,17 @@ test('cycle 2: data actions are contextual to Budget, Activity and Insights', ()
     return html.slice(start, end);
   };
   const budgets = viewHeading('budgetsView');
+  const savings = viewHeading('savingsView');
   const activity = viewHeading('activityView');
   const insights = viewHeading('insightsView');
   assert.doesNotMatch(budgets, /data-open-detail="budgetDataModal"|id="budgetDataModal"/);
   assert.doesNotMatch(budgets, /data-open-global-import/);
   assert.match(budgets, /data-export-budget/);
   assert.doesNotMatch(budgets.slice(0, budgets.indexOf('<dialog')), /data-open-assessment/);
-  assert.match(activity, /class="data-action-pair"/);
-  assert.match(activity, /data-open-global-import/);
-  assert.match(activity, /data-export-active/);
+  assert.equal((activity.match(/data-activity-transfer/g) || []).length, 1);
+  assert.match(activity, /data-i18n="activityTransfer">Uvoz \/ Izvoz<\/span>/);
+  assert.doesNotMatch(activity, /class="data-action-pair"|data-open-global-import|data-export-active/);
+  assert.match(savings, /data-export-savings/);
   assert.match(insights, /data-export-insights/);
   assert.doesNotMatch(insights, /data-open-global-import|data-export-active/);
 });
