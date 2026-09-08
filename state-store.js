@@ -1,9 +1,9 @@
 (function exposeMerStateStore(root, factory) {
   const common = typeof module === 'object' && module.exports;
-  const api = factory(common ? require('./core.js') : root.MerCore, common ? require('./enterprise-core.js') : root.MerEnterpriseCore);
+  const api = factory(common ? require('./core.js') : root.MerCore, common ? require('./enterprise-core.js') : root.MerEnterpriseCore, common ? require('./vaults-core.js') : root.MerVaults);
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.MerStateStore = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerStateStore(MerCore, Enterprise) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerStateStore(MerCore, Enterprise, Vaults) {
   if (!MerCore) throw new Error('MerCore is required before MerStateStore');
 
   const finiteAmount = value => Math.max(0, MerCore.financialAmount(value));
@@ -50,6 +50,7 @@
       profile.enterprise.taxVault??={enabled:true,rate:25,startDate:referenceDate,currency:options.currency||'EUR'};
     }
     Enterprise?.reconcileAutomations(profile, referenceDate, {...options,profileId});
+    Vaults?.reconcileRoundUps(profile, referenceDate, {...options,profileId});
     profile.savingsBalance = savingsTotal(profile);
     const financials = MerCore.FinancialEngine.calculate(profile, referenceDate, { openingBalance:balanceAnchor, savingsBalance:profile.savingsBalance });
     const totalsByTimeframe = Object.fromEntries(['daily','monthly','ytd','all'].map(timeframe => [timeframe, timeframe === 'monthly' ? financials.monthly : timeframe === 'all' ? financials.allTime : MerCore.transactionTotals(profile.transactions, timeframe, referenceDate)]));

@@ -1,0 +1,79 @@
+#billSplitModal { width:min(820px,calc(100vw - 24px)); max-width:calc(100vw - 24px); max-height:min(90dvh,calc(100dvh - 24px)); height:auto; padding:0; color:var(--ink); background:var(--panel); border:1px solid var(--line-strong); border-radius:16px; overflow:hidden; }
+#billSplitModal[open] { display:flex; flex-direction:column; gap:0; overflow:hidden; }
+#billSplitModal [hidden] { display:none !important; }
+#billSplitModal::backdrop { background:rgba(8,22,18,.55); backdrop-filter:blur(2px); }
+.split-modal-head { display:flex; align-items:center; gap:12px; padding:18px 20px; border-bottom:1px solid var(--line); flex-shrink:0; }
+.split-modal-head h2 { flex:1; min-width:0; margin:0; font-size:22px; line-height:1.35; overflow-wrap:anywhere; }
+.split-modal-head button { flex-shrink:0; }
+.bill-split-body { min-height:0; overflow:auto; overflow-x:hidden; padding:18px 20px; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent; }
+.bill-split-body::-webkit-scrollbar { width:6px; }
+.bill-split-body::-webkit-scrollbar-thumb { background:var(--line-strong); border-radius:9px; }
+.split-modal-footer { flex-shrink:0; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; padding:16px 20px; border-top:1px solid var(--line); }
+#billSplitModal button { min-height:44px; min-width:44px; height:auto; padding:9px 12px; font-size:14px; line-height:1.45; white-space:normal; }
+#billSplitModal button:focus-visible,#billSplitModal input:focus-visible,#billSplitModal select:focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
+#billSplitModal button:disabled { opacity:.5; cursor:not-allowed; }
+#billSplitModal label { display:flex; flex-direction:column; gap:7px; min-width:0; margin:0; font-size:14px; font-weight:600; line-height:1.5; }
+#billSplitModal input,#billSplitModal select { width:100%; min-width:0; min-height:44px; border:1px solid var(--line-strong); border-radius:8px; padding:8px 10px; background:var(--panel); color:var(--ink); font:inherit; font-size:16px; }
+.split-profile { color:var(--muted); font-size:12px; margin:0 0 14px; }
+.split-intro,.split-ledger-tools p,.split-empty p,#billSplitSettleForm p { font-size:14px; line-height:1.65; color:var(--muted); margin:12px 0; }
+.split-ledger-tools { display:grid; grid-template-columns:minmax(180px,.7fr) minmax(0,1.3fr); gap:18px; align-items:start; margin-bottom:16px; }
+.split-ledger-tools p { margin:0; }
+.split-ledger-list { display:grid; gap:14px; }
+.split-ledger-card { min-width:0; padding:16px; border:1px solid var(--line); border-radius:12px; }
+.split-ledger-heading,.split-expense-summary { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.split-ledger-heading h3 { margin:0; font-size:17px; line-height:1.45; overflow-wrap:anywhere; }
+.split-ledger-heading p { margin:5px 0 0; font-size:12px; color:var(--muted); }
+.split-status { display:inline-block; background:var(--blue-soft); color:var(--ink); padding:7px 9px; border-radius:8px; font-size:12px; line-height:1.4; }
+.split-status.warning { color:#70450b; background:#fff2d8; }
+.split-person-list { display:grid; gap:0; margin-top:12px; }
+.split-person-list > div { display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--line); }
+.split-person-list strong { font-size:14px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.split-person-list small { display:block; margin-top:4px; font-size:12px; color:var(--muted); }
+.split-person-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.split-ledger-card footer { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
+.split-ledger-card footer span { font-size:12px; color:var(--muted); }
+.split-edit-people { display:grid; gap:12px; margin:18px 0 12px; }
+.split-edit-people > div { display:grid; grid-template-columns:minmax(0,1fr) minmax(110px,.6fr) 44px; gap:10px; align-items:end; }
+.split-edit-people > div > span { align-self:center; font-size:13px; color:var(--muted); }
+.split-expense-summary { padding:12px; border:1px solid var(--line); background:var(--canvas); border-radius:9px; font-size:16px; line-height:1.5; }
+.split-share-preview { min-height:44px; margin:12px 0; font-size:14px; line-height:1.65; overflow-wrap:anywhere; }
+.split-notice { margin:12px 0; padding:12px; background:var(--canvas); border:1px solid var(--line); border-radius:8px; color:var(--muted); font-size:13px; line-height:1.6; }
+.split-empty { padding:28px 10px; text-align:center; }
+.split-empty h3 { font-size:19px; line-height:1.4; }
+.split-pages { display:flex; align-items:center; justify-content:center; gap:12px; margin-top:16px; }
+.split-payment-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:14px; }
+.split-code-preview { margin-top:18px; padding:16px; border:1px solid var(--line-strong); border-radius:10px; }
+.split-code-preview[hidden] { display:none; }
+.split-code-preview [data-barcode-svg] { background:white; padding:12px; border-radius:6px; }
+.split-code-preview svg { display:block; max-width:100%; width:100%; height:auto; max-height:280px; }
+/* Barcodes are filled matrices, not stroked app icons. Keep this isolated from
+   the global svg { fill:none; stroke:currentColor } icon reset in every theme. */
+#billSplitModal [data-barcode-svg] svg { fill:#000; stroke:none; stroke-width:0; color:#000; stroke-linecap:butt; stroke-linejoin:miter; shape-rendering:crispEdges; }
+#billSplitModal [data-barcode-svg] svg path { fill:#000; stroke:none; stroke-width:0; }
+#billSplitModal [data-barcode-svg] svg rect { fill:#fff; stroke:none; stroke-width:0; }
+.split-code-preview [data-code-heading] { margin:0 0 14px; font-size:18px; line-height:1.45; color:var(--ink); }
+.split-code-preview [data-code-heading]:focus-visible { outline:3px solid var(--blue); outline-offset:4px; border-radius:3px; }
+.split-code-preview dl { display:grid; gap:10px; margin:16px 0; }
+.split-code-preview dl > div { display:grid; grid-template-columns:100px minmax(0,1fr); gap:12px; font-size:14px; }
+.split-code-preview dt { color:var(--muted); }
+.split-code-preview dd { margin:0; overflow-wrap:anywhere; }
+[data-split-error] { margin:12px 0 0; color:#ba3434; font-size:14px; line-height:1.55; }
+#billSplitSettleForm { display:grid; gap:14px; }
+@media (max-width:600px) {
+  #billSplitModal { width:calc(100vw - 16px); max-width:calc(100vw - 16px); max-height:90dvh; inset:0; margin:auto; }
+  .split-modal-head { padding:14px; flex-wrap:wrap; gap:8px; }
+  .split-modal-head h2 { font-size:19px; }
+  .bill-split-body { padding:14px; }
+  .split-modal-footer { padding:12px 14px; }
+  .split-modal-footer button { flex:1; }
+  .split-ledger-tools,.split-payment-grid { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .split-person-list > div { grid-template-columns:minmax(0,1fr) auto; }
+  .split-person-actions { grid-column:1 / -1; }
+  .split-person-actions button { flex:1; }
+  .split-edit-people > div { grid-template-columns:minmax(0,1fr) 44px; padding-bottom:12px; border-bottom:1px solid var(--line); }
+  .split-edit-people > div > label:first-child { grid-column:1; }
+  .split-edit-people > div > label:nth-child(2),.split-edit-people > div > span:nth-child(2) { grid-row:2; grid-column:1 / -1; }
+  .split-edit-people > div > button { grid-column:2; grid-row:1; }
+  .split-code-preview { padding:10px; }
+  .split-code-preview dl > div { grid-template-columns:minmax(0,1fr); gap:3px; }
+}

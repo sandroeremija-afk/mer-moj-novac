@@ -13,6 +13,9 @@ jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-cor
 const suiteCss=['enterprise.css','invoice.css','security-enterprise.css','receipt.css','planning.css','household.css','app-update.css'];
 jsFiles.push('circle-text.js','plan-navigation.js','export-core.js','export-pdf.js','export-ui.js');
 suiteCss.push('export-ui.css','header-actions.css');
+jsFiles.push('vaults-core.js','vaults-ui.js','bill-split-core.js','bill-split-ui.js','natural-input-core.js','natural-input-ui.js','engagement-core.js','engagement-ui.js');
+suiteCss.push('vaults-ui.css','bill-split.css','natural-input-ui.css','engagement.css');
+jsFiles.push('engagement-init.js');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source

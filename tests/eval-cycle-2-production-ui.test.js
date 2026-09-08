@@ -14,7 +14,7 @@ test('cycle 2: Insights contains all four requested analytical visuals without a
 });
 
 test('cycle 2: Savings exposes progress rings, countdowns, monthly requirements and selectable round-up vaults',()=>{
-  assert.match(premium,/goal-progress-ring/);assert.match(premium,/goalMetrics/);assert.match(premium,/monthlyRequired/);assert.match(premium,/data-toggle-roundup/);assert.match(premium,/roundUpsEnabled=false/);assert.match(css,/\.goal-progress-ring/);assert.match(css,/\.roundup-toggle\.active/);
+  assert.match(premium,/goal-progress-ring/);assert.match(premium,/goalMetrics/);assert.match(premium,/monthlyRequired/);assert.match(premium,/data-toggle-roundup/);assert.match(premium,/MerVaults\.configureRoundUps/);assert.match(css,/\.goal-progress-ring/);assert.match(css,/\.roundup-toggle\.active/);
 });
 
 test('cycle 2: accounting review accepts CSV Excel and CAMT while the outer viewport remains locked',()=>{

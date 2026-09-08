@@ -97,7 +97,8 @@ function createCashflowHandler(options = {}) {
     let body;
     try { body = await readBody(request); }
     catch (error) { return send(response, error.status || 400, { error:error.status === 413 ? 'PAYLOAD_TOO_LARGE' : 'INVALID_JSON' }); }
-    const analysis = sanitizeAnalysis(body?.analysis);
+    if (options.requireConsent && body?.consent !== true) return send(response, 400, { error:'CONSENT_REQUIRED' });
+    const analysis = (options.sanitizeAnalysis || sanitizeAnalysis)(body?.analysis);
     if (!analysis) return send(response, 400, { error:'INVALID_ANALYSIS' });
     const config = resolveGeminiConfig(env);
     if (!config.isConfigured || typeof fetchImpl !== 'function') return send(response, 503, { source:'deterministic', error:'GEMINI_NOT_CONFIGURED' });
@@ -109,8 +110,8 @@ function createCashflowHandler(options = {}) {
         method:'POST', redirect:'error', signal:controller.signal,
         headers:{ 'Content-Type':'application/json', 'x-goog-api-key':config.apiKey },
         body:JSON.stringify({ model, store:false,
-          system_instruction:`You explain a deterministic cash-flow forecast in ${body.locale === 'en' ? 'English' : 'Croatian'}. All monetary fields are integer cents. Describe upcoming 30-day recurring bills inferred from a 90-day observation window, confidence and possible price increases. Use supplied figures only. Do not recalculate or replace ledger balances; do not invent merchants, dates, taxes, missing salary, or bank access. No investment recommendations. A pattern is an estimate, not a confirmed bill. Return at most 150 words in plain text.`,
-          input:JSON.stringify({...analysis,displayInstruction:'For human-readable money, convert cents to currency units by dividing by 100 and format two decimals. For example 65000 cents EUR is 650,00 €. Never show raw cent counts to the user.'}), generation_config:{ max_output_tokens:2000 }
+          system_instruction:options.systemInstruction ? options.systemInstruction(body.locale) : `You explain a deterministic cash-flow forecast in ${body.locale === 'en' ? 'English' : 'Croatian'}. All monetary fields are integer cents. Describe upcoming 30-day recurring bills inferred from a 90-day observation window, confidence and possible price increases. Use supplied figures only. Do not recalculate or replace ledger balances; do not invent merchants, dates, taxes, missing salary, or bank access. No investment recommendations. A pattern is an estimate, not a confirmed bill. Return at most 150 words in plain text.`,
+          input:JSON.stringify({...analysis,displayInstruction:'For human-readable money, convert cents to currency units by dividing by 100 and format two decimals. For example 65000 cents EUR is 650,00 €. Never show raw cent counts to the user.'}), generation_config:{ max_output_tokens:options.maxOutputTokens || 2000 }
         })
       });
       if (!upstream.ok) return send(response, upstream.status === 429 ? 429 : 502, { source:'deterministic', error:upstream.status === 429 ? 'AI_RATE_LIMITED' : 'GEMINI_UNAVAILABLE' });

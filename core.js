@@ -365,6 +365,7 @@
       bic: String(rawTransaction.bic || connection.bic || ''),
       merchantName: String(rawTransaction.merchantName || name),
       timestamp: String(rawTransaction.timestamp || rawTransaction.bookedAt || rawTransaction.bookingDate || dateValue),
+      paymentMethod: String(rawTransaction.paymentMethod || rawTransaction.paymentInstrument || (rawTransaction.isCardPayment === true || rawTransaction.cardId || connection.accountKindEn === 'Card' || connection.accountKind === 'Kartica' ? 'card' : 'unknown')).toLowerCase(),
       currency: String(rawTransaction.currency || rawTransaction.transactionAmount?.currency || connection.currency || 'EUR').toUpperCase()
     }, referenceValue);
   }
@@ -798,7 +799,7 @@
     if (!name) return { valid: false, reason: 'missing-name' };
     if (!Number.isFinite(target) || target <= 0) return { valid: false, reason: 'invalid-target' };
     if (!Number.isFinite(current) || current < 0) return { valid: false, reason: 'invalid-current' };
-    if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return { valid: false, reason: 'invalid-date' };
+    if (dueDate && (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate) || !transactionDate({date:dueDate}))) return { valid: false, reason: 'invalid-date' };
     return { valid: true, reason: null, percent: Math.min(100, current / target * 100), remaining: Math.max(0, target - current) };
   }
 
@@ -806,8 +807,8 @@
     const goal = (profile?.goalBuckets || []).find(item => item.id === goalId);
     const value = Number(amount) * Number(direction);
     if (!goal || !Number.isFinite(value) || value === 0 || goal.current + value < 0) return { valid: false, reason: 'invalid-contribution' };
-    goal.current += value;
-    profile.savingsBalance = (profile.goalBuckets || []).reduce((sum, item) => sum + Math.max(0, Number(item.current) || 0), 0);
+    goal.current = roundMoney(Number(goal.current) + value);
+    profile.savingsBalance = roundMoney((profile.goalBuckets || []).reduce((sum, item) => sum + Math.max(0, Number(item.current) || 0), 0));
     return { valid: true, goal, totalSavings: profile.savingsBalance };
   }
 

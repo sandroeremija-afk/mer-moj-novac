@@ -1,9 +1,10 @@
 (function exposeMerAccounting(root, factory) {
   const core = typeof module === 'object' && module.exports ? require('./core.js') : root.MerCore;
-  const api = factory(core);
+  const vaults = typeof module === 'object' && module.exports ? require('./vaults-core.js') : root.MerVaults;
+  const api = factory(core, vaults);
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.MerAccounting = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerAccounting(MerCore) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerAccounting(MerCore, MerVaults) {
   const PSD2_TRANSACTION_FIELDS = Object.freeze(['transactionId','accountId','iban','bic','merchantName','timestamp','amount','currency','creditDebitIndicator','remittanceInformation']);
   const SUPPORTED_INSTITUTIONS = Object.freeze([
     { id:'zaba', name:'Zagrebačka banka (ZABA)', country:'HR' }, { id:'pbz', name:'Privredna banka Zagreb (PBZ)', country:'HR' },
@@ -40,7 +41,8 @@
     return {
       transactionId:id, accountId:clean(account.accountId || account.id), iban:clean(payload.iban || account.iban), bic:clean(payload.bic || account.bic),
       merchantName, timestamp, amount:Math.abs(rawAmount), currency:clean(amountContainer?.currency || payload.currency || account.currency || 'EUR').toUpperCase(),
-      creditDebitIndicator, remittanceInformation:clean(payload.remittanceInformationUnstructured || payload.description || merchantName), provider:PROVIDERS.includes(provider) ? provider : 'custom'
+      creditDebitIndicator, remittanceInformation:clean(payload.remittanceInformationUnstructured || payload.description || merchantName), provider:PROVIDERS.includes(provider) ? provider : 'custom',
+      paymentMethod:clean(payload.paymentMethod || payload.paymentInstrument || (payload.isCardPayment === true || payload.cardId || account.kindEn === 'Card' ? 'card' : 'unknown')).toLowerCase()
     };
   }
 
@@ -135,8 +137,12 @@
     return {remaining,daysRemaining,monthsRemaining,monthlyRequired:remaining/monthsRemaining};
   }
 
-  const roundUpAmount = amount => Math.round((Math.ceil((Number(amount)||0)-1e-8)-(Number(amount)||0))*100)/100;
+  const roundUpAmount = (amount, increment = 1) => MerVaults ? MerVaults.roundUpAmount(amount, increment) : Math.round((Math.ceil((Number(amount)||0)-1e-8)-(Number(amount)||0))*100)/100;
   function applyRoundUp(profile, transaction, reference = new Date()) {
+    if (profile?.enterprise?.roundUps && MerVaults) {
+      MerVaults.reconcileRoundUps(profile, reference);
+      return (profile.savingsEntries || []).find(entry=>entry.sourceType==='round-up'&&entry.roundUpForTransactionId===String(transaction?.id)) || null;
+    }
     if (!profile || !MerCore.isTransactionEffective(transaction, reference) || MerCore.transactionType(transaction)!=='expense' || transaction.sourceType==='round-up' || transaction.roundUpAmount) return null;
     const goal=(profile.goalBuckets||[]).find(item=>item.roundUpsEnabled) || null;
     const amount=roundUpAmount(transaction.amount); if(!goal||amount<=0)return null;
@@ -146,9 +152,10 @@
     return entry;
   }
   function undoRoundUp(profile, transaction) {
-    const entries=(profile?.savingsEntries||[]).filter(entry=>entry.roundUpForTransactionId===String(transaction?.id));
+    const profileId=profile?.profileId||(profile?.accountLabel==='businessAccount'?'business':'personal');
+    const entries=(profile?.savingsEntries||[]).filter(entry=>entry.roundUpForTransactionId===String(transaction?.id)&&(!entry.profileId||entry.profileId===profileId));
     entries.forEach(entry=>MerCore.applySavingsContribution(profile,entry.goalId,entry.amount,-1));
-    if(profile)profile.savingsEntries=(profile.savingsEntries||[]).filter(entry=>entry.roundUpForTransactionId!==String(transaction?.id));
+    if(profile)profile.savingsEntries=(profile.savingsEntries||[]).filter(entry=>!entries.includes(entry));
     if(transaction){delete transaction.roundUpAmount;delete transaction.roundUpGoalId;}
     return entries.length;
   }

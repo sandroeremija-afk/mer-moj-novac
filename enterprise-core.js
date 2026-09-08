@@ -21,6 +21,7 @@
   const merchantKey = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\b(pos|card|payment|placanje|kartica)\b/g, ' ').replace(/\b\d{3,}\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
   const monthNumber = date => Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7));
   const median = values => { const sorted = [...values].sort((a, b) => a - b); return sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0; };
+  const automationIdentity=tx=>tx.importHash?`import:${tx.importHash}`:tx.bankTransactionId?`bank:${tx.connectionId||tx.bankConnectionId||''}:${tx.bankTransactionId}`:String(tx.id||'');
 
   // Import IDs/hashes are stable across retries. The last record wins so edits are respected.
   function transactionsFor(profile, reference, options = {}, includeFuture = false) {
@@ -28,7 +29,7 @@
     if (profile?.profileId && profile.profileId !== key) return [];
     list(profile?.transactions).forEach((tx, index) => {
       const date = iso(tx?.date);
-      if (!sameProfile(tx, key) || tx.offlineDraft === true || tx.status === 'draft' || !date || (!includeFuture && date > reference) || !Number.isFinite(Number(tx.amount))) return;
+      if (!sameProfile(tx, key) || tx.offlineDraft === true || tx.status === 'draft' || tx.status === 'pending' && tx.scheduled !== true || ['cancelled','canceled','rejected','failed'].includes(tx.status) || !date || (!includeFuture && date > reference) || !Number.isFinite(Number(tx.amount))) return;
       const identity = tx.importHash ? `import:${tx.importHash}` : tx.bankTransactionId ? `bank:${tx.bankConnectionId || ''}:${tx.bankTransactionId}` : tx.id ? `id:${tx.id}` : `row:${index}`;
       seen.set(identity, { ...tx, date, amountCents:cents(tx.amount) });
     });
@@ -148,6 +149,7 @@
     const allocations = list(rule.allocations), ids = new Set();
     if (!allocations.length) return { valid:false, reason:'missing-allocations' };
     for (const allocation of allocations) {
+      if (!allocation || typeof allocation !== 'object') return {valid:false,reason:'invalid-goal'};
       if (!list(profile?.goalBuckets).some(goal => goal.id === allocation.goalId && sameProfile(goal, profileKey(profile))) || ids.has(allocation.goalId)) return { valid:false, reason:'invalid-goal' };
       ids.add(allocation.goalId);
       if (!Number.isFinite(Number(allocation.percent)) || Number(allocation.percent) <= 0 || Number(allocation.percent) > 100) return { valid:false, reason:'invalid-percent' };
@@ -156,11 +158,24 @@
     return { valid:totalPercent <= 100, reason:totalPercent > 100 ? 'over-allocation' : null, totalPercent };
   }
 
+  function configurePaydayRule(profile, input, referenceValue, options = {}) {
+    const key=profileKey(profile,options),reference=referenceDay(referenceValue);
+    if(!profile||profile.profileId&&profile.profileId!==key||!input?.id)return {valid:false,reason:'invalid-profile-or-id'};
+    const rule={...input,profileId:key,forwardOnly:true,startDate:reference,currency:input.currency||options.currency||'EUR',enabled:input.enabled!==false,
+      allocations:list(input.allocations).map(item=>({goalId:item.goalId,percent:Number(item.percent)})),
+      excludedTransactionIds:transactionsFor(profile,reference,{profileId:key}).map(automationIdentity)};
+    const validation=validatePaydayRule(rule,profile);if(!validation.valid)return validation;
+    profile.enterprise||={};profile.enterprise.paydayRules=list(profile.enterprise.paydayRules);
+    const index=profile.enterprise.paydayRules.findIndex(item=>item.id===rule.id);
+    if(index<0)profile.enterprise.paydayRules.push(rule);else profile.enterprise.paydayRules[index]=rule;
+    return {valid:true,rule};
+  }
+
   function reconcileAutomations(profile, referenceValue, options = {}) {
     if (!profile || typeof profile !== 'object') return { changed:false, allocations:0, totalCents:0 };
     const reference = referenceDay(referenceValue), key = profileKey(profile, options);
     if (profile.profileId && profile.profileId !== key) return { changed:false, allocations:0, totalCents:0 };
-    const enterprise = profile.enterprise || {}, rules = list(enterprise.paydayRules).filter(rule => rule?.enabled !== false && validatePaydayRule(rule, profile).valid);
+    const enterprise = profile.enterprise || {}, rules = list(enterprise.paydayRules).filter(rule => sameProfile(rule,key) && rule?.enabled !== false && validatePaydayRule(rule, profile).valid);
     const taxEnabled = key === 'business' && enterprise.taxVault?.enabled === true;
     const taxGoalId = 'enterprise-tax-vault-business';
     const rate = 25;
@@ -174,6 +189,8 @@
     const manual = list(profile.savingsEntries).filter(entry => !previous.includes(entry));
     const desired = [];
     const incomes = transactionsFor(profile, reference, options).filter(tx => tx.type === 'income' && tx.amountCents > 0);
+    const assignmentsByTransaction=new Map(),excludedByRule=new Map(rules.filter(rule=>rule.forwardOnly).map(rule=>[rule.id,new Set(list(rule.excludedTransactionIds))]));
+    list(enterprise.paydayAssignments).filter(item=>item?.profileId===key).forEach(item=>{if(!assignmentsByTransaction.has(item.transactionId))assignmentsByTransaction.set(item.transactionId,[]);assignmentsByTransaction.get(item.transactionId).push(item);});
     const entry = (tx, kind, goalId, amountCents) => ({ id:`enterprise:${key}:${kind}:${tx.id || tx.importHash}:${goalId}`, profileId:key, transactionId:tx.id, currency:tx.currency || baseCurrency, sourceType:'enterprise-automation', source:'Automation', automationKind:kind, goalId, amount:amountCents / 100, date:`${tx.date}T12:00:00`, note:kind === 'tax' ? 'PDV pričuva iz B2B uplate (25% neto)' : 'Automatska raspodjela prihoda', locked:true });
     incomes.forEach(tx => {
       let remaining = tx.amountCents;
@@ -182,14 +199,37 @@
         if (tax) { desired.push(entry(tx, 'tax', taxGoalId, tax)); remaining -= tax; }
       }
       rules.forEach(rule => {
+        if(rule.forwardOnly)return;
         if ((tx.currency && tx.currency !== rule.currency) || tx.amountCents <= positive(rule.minimumAmount) || (rule.startDate && tx.date < rule.startDate)) return;
         rule.allocations.forEach(allocation => {
           const amount = Math.min(remaining, Math.round(tx.amountCents * Number(allocation.percent) / 100));
           if (amount > 0) { desired.push(entry(tx, `payday-${rule.id}`, allocation.goalId, amount)); remaining -= amount; }
         });
       });
+      const transactionKey=automationIdentity(tx);
+      if(!transactionKey)return;
+      const assignments=assignmentsByTransaction.get(transactionKey)||[];
+      rules.filter(rule=>rule.forwardOnly).forEach(rule=>{
+        if(assignments.some(item=>item.ruleId===rule.id)||excludedByRule.get(rule.id)?.has(transactionKey)||(tx.currency&&tx.currency!==rule.currency)||tx.amountCents<=positive(rule.minimumAmount)||rule.startDate&&tx.date<rule.startDate)return;
+        const assignment={profileId:key,transactionId:transactionKey,ruleId:rule.id,minimumAmount:rule.minimumAmount,currency:rule.currency,allocations:rule.allocations.map(item=>({...item}))};
+        enterprise.paydayAssignments=list(enterprise.paydayAssignments);enterprise.paydayAssignments.push(assignment);assignments.push(assignment);configurationChanged=true;
+      });
+      // Forward-only rules stop admitting new payments when disabled or removed.
+      // Existing source payments retain their terms and still reconcile edits,
+      // deletions, refunds and due-date changes without retroactive new stashing.
+      const assignedRules=new Set();
+      assignments.forEach(assignment=>{
+        if(assignedRules.has(assignment.ruleId))return;assignedRules.add(assignment.ruleId);
+        if((tx.currency&&tx.currency!==assignment.currency)||tx.amountCents<=positive(assignment.minimumAmount))return;
+        list(assignment.allocations).forEach(allocation=>{
+          if(!Number.isFinite(Number(allocation?.percent))||Number(allocation.percent)<=0||Number(allocation.percent)>100)return;
+          if(!list(profile.goalBuckets).some(goal=>goal.id===allocation.goalId&&sameProfile(goal,key)))return;
+          const amount=Math.min(remaining,Math.round(tx.amountCents*Number(allocation.percent)/100));
+          if(amount>0){desired.push(entry(tx,`payday-${assignment.ruleId}`,allocation.goalId,amount));remaining-=amount;}
+        });
+      });
     });
-    const previousTotals = {}, desiredTotals = {};
+    const previousTotals = Object.create(null), desiredTotals = Object.create(null);
     previous.forEach(item => { previousTotals[item.goalId] = (previousTotals[item.goalId] || 0) + positive(item.amount); });
     desired.forEach(item => { desiredTotals[item.goalId] = (desiredTotals[item.goalId] || 0) + positive(item.amount); });
     let changed = configurationChanged || JSON.stringify(previous) !== JSON.stringify(desired);
@@ -214,5 +254,5 @@
       scheduled:list(forecast.bills).filter(bill => bill.source !== 'pattern').slice(0, 30).map(bill => ({ amountCents:bill.amountCents, daysUntil:Math.max(0, dayNumber(bill.date) - dayNumber(forecast.referenceDate)) })) };
   }
 
-  return Object.freeze({ cents, transactionsFor, recurringPatterns, subscriptionRadar, forecastCashFlow, simulatePurchase, validatePaydayRule, reconcileAutomations, anonymizedForecast });
+  return Object.freeze({ cents, transactionsFor, recurringPatterns, subscriptionRadar, forecastCashFlow, simulatePurchase, validatePaydayRule, configurePaydayRule, reconcileAutomations, anonymizedForecast });
 });

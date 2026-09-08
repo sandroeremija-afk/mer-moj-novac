@@ -3,7 +3,7 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'../dist');
 const types={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png'};
-const handlers={'/api/cashflow':require('../api/cashflow.js'),'/api/assistant':require('../api/assistant.js'),'/api/receipt':require('../api/receipt.js')};
+const handlers={'/api/cashflow':require('../api/cashflow.js'),'/api/assistant':require('../api/assistant.js'),'/api/receipt':require('../api/receipt.js'),'/api/transaction-parse':require('../api/transaction-parse.js'),'/api/health-advice':require('../api/health-advice.js')};
 http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(handlers[url.pathname]){

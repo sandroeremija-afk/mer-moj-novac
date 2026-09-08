@@ -11,6 +11,8 @@ jsFiles.push('enterprise-core.js','enterprise-ui.js','vault-core.js','security-e
 jsFiles.push('discovery-core.js','receipt-core.js','receipt-ui.js','planning-core.js','planning-ui.js','household-core.js','household-ui.js','api/receipt.js');
 jsFiles.push('app-update.js');
 jsFiles.push('circle-text.js','plan-navigation.js','export-core.js','export-pdf.js','export-ui.js');
+jsFiles.push('vaults-core.js','vaults-ui.js','bill-split-core.js','bill-split-ui.js','natural-input-core.js','natural-input-ui.js','engagement-core.js','engagement-ui.js','api/health-advice.js','api/transaction-parse.js');
+jsFiles.push('engagement-init.js');
 
 for (const file of jsFiles) {
   const fullPath = path.join(root, file);

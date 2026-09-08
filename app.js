@@ -246,8 +246,8 @@ function normalizeProfile(profile,fallbackProfile=personalDefaults) {
   }
   profile.automationRules=(Array.isArray(profile.automationRules)?profile.automationRules:[]).filter(rule=>rule&&typeof rule==='object'&&String(rule.keyword||'').trim()).map((rule,index)=>{const type=rule.type==='income'?'income':'expense',available=type==='income'?profile.incomeCategories:profile.categories,fallbackCategory=type==='income'?incomeFallback:expenseFallback;return {...rule,id:safeIdentifier(rule.id,`rule-${index}`),keyword:String(rule.keyword).trim().slice(0,60),type,category:available.some(category=>category.id===rule.category)?rule.category:fallbackCategory.id,enabled:rule.enabled!==false};});
   const fallbackDue=new Date();fallbackDue.setFullYear(fallbackDue.getFullYear()+1);
-  profile.goalBuckets=(Array.isArray(profile.goalBuckets)?profile.goalBuckets:[]).filter(goal=>goal&&typeof goal==='object'&&String(goal.name||'').trim()).map((goal,index)=>({...goal,id:safeIdentifier(goal.id,`goal-${index}`),name:String(goal.name).trim().slice(0,40),current:Math.max(0,safeFinite(goal.current,0)),target:Math.max(1,safeFinite(goal.target,1)),dueDate:goal.dueDate&&validStoredDate(goal.dueDate)?String(goal.dueDate).slice(0,10):'',primary:index===0?goal.primary!==false:Boolean(goal.primary),roundUpsEnabled:goal.roundUpsEnabled===undefined?index===0:Boolean(goal.roundUpsEnabled)}));
-  if(!profile.goalBuckets.length)profile.goalBuckets=[{id:`goal-${profile.accountLabel==='businessAccount'?'business':'personal'}-reserve`,name:profile.accountLabel==='businessAccount'?'Poslovna rezerva':'Fond za hitne slučajeve',target:Math.max(1,safeFinite(profile.savingsGoal,10000)),current:Math.max(0,safeFinite(profile.savingsBalance,0)),dueDate:fallbackDue.toISOString().slice(0,10),icon:'◎',primary:true,roundUpsEnabled:true}];
+  profile.goalBuckets=(Array.isArray(profile.goalBuckets)?profile.goalBuckets:[]).filter(goal=>goal&&typeof goal==='object'&&String(goal.name||'').trim()).map((goal,index)=>({...goal,id:safeIdentifier(goal.id,`goal-${index}`),name:String(goal.name).trim().slice(0,40),current:Math.max(0,safeFinite(goal.current,0)),target:Math.max(1,safeFinite(goal.target,1)),dueDate:goal.dueDate&&validStoredDate(goal.dueDate)?String(goal.dueDate).slice(0,10):'',primary:index===0?goal.primary!==false:Boolean(goal.primary),roundUpsEnabled:Boolean(goal.roundUpsEnabled)}));
+  if(!profile.goalBuckets.length)profile.goalBuckets=[{id:`goal-${profile.accountLabel==='businessAccount'?'business':'personal'}-reserve`,name:profile.accountLabel==='businessAccount'?'Poslovna rezerva':'Fond za hitne slučajeve',target:Math.max(1,safeFinite(profile.savingsGoal,10000)),current:Math.max(0,safeFinite(profile.savingsBalance,0)),dueDate:fallbackDue.toISOString().slice(0,10),icon:'◎',primary:true,roundUpsEnabled:false}];
   if(!profile.goalBuckets.some(goal=>goal.primary))profile.goalBuckets[0].primary=true;
   const primaryGoalId=profile.goalBuckets.find(goal=>goal.primary)?.id||profile.goalBuckets[0].id;
   profile.savingsEntries=(Array.isArray(profile.savingsEntries)?profile.savingsEntries:[]).filter(entry=>entry&&typeof entry==='object'&&validStoredDate(entry.date)&&Number.isFinite(Number(entry.amount))&&Number(entry.amount)>0).map((entry,index)=>({...entry,id:safeIdentifier(entry.id,`saving-${index}`),amount:Number(entry.amount),note:String(entry.note||'Uplata u štednju').trim().slice(0,80),goalId:profile.goalBuckets.some(goal=>goal.id===entry.goalId)?entry.goalId:primaryGoalId}));
@@ -1024,6 +1024,7 @@ function renderActivity() {
     return `${header}<div class="transaction-item ${type}${isScheduled?' is-scheduled':''}"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><div class="transaction-meta"><small>${activityDateLabel}</small><span class="transaction-source ${tx.sourceType==='auto'||tx.sourceType==='import'?'auto':''}">${escapeHtml(sourceLabel)}</span>${isScheduled?`<span class="scheduled-transaction-tag">${t('scheduledTransaction')}</span>`:''}${tx.needsReview?`<span class="needs-review-tag">${t('needsReview')}</span>`:''}</div></div><span class="transaction-category">${escapeHtml(displayCategory)}</span><span class="transaction-amount ${type}">${type==='income'?'+':'−'}${currency(tx.amount)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
   }).join('');
   $$('[data-edit-transaction]').forEach(button=>button.addEventListener('click',()=>openTransaction(button.dataset.editTransaction)));
+  window.MerEngagementUI?.enhanceActivity?.();
 }
 
 function escapeHtml(value) { const div=document.createElement('div'); div.textContent=value; return div.innerHTML; }
@@ -1361,6 +1362,7 @@ function setTransactionType(type) {
   const existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
   $('#transactionTitle').textContent=t(existing?(transactionType==='income'?'editIncome':'editExpense'):(transactionType==='income'?'addIncome':'addExpense'));
   $('#transactionSubmit').textContent=t(existing?(transactionType==='income'?'updateIncome':'updateExpense'):(transactionType==='income'?'addIncomeSubmit':'addExpenseSubmit'));
+  if($('#transactionSplitSubmit'))$('#transactionSplitSubmit').hidden=transactionType==='income';
   renderCategorySelects();resetTransactionCheck();evaluateTransaction();
   if($('#transactionB2BRow'))$('#transactionB2BRow').hidden=appState.activeAccount!=='business'||transactionType!=='income';
 }
@@ -1408,16 +1410,18 @@ function evaluateTransaction() {
 }
 
 function openTransaction(id=null) {
+  window.MerNaturalInputUI?.reset?.();
   editingTransactionId=id===null?null:id;$('#transactionForm').reset();
   const existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
   $('#transactionDate').value=String(existing?.date||appReferenceDate).slice(0,10);
   transactionType=MerCore.transactionType(existing);setTransactionType(transactionType);$('#deleteTransaction').hidden=!existing;
   if(existing){$('#transactionName').value=existing.name;$('#transactionAmount').value=existing.amount;renderCategorySelects();$('#transactionCategory').value=existing.category;evaluateTransaction();}
   if($('#transactionB2B'))$('#transactionB2B').checked=Boolean(existing?.isB2B);
+  if($('#transactionPaymentMethod'))$('#transactionPaymentMethod').value=['card','cash'].includes(existing?.paymentMethod)?existing.paymentMethod:'transfer';
   openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50);
 }
 
-function openIncomeTransaction() { editingTransactionId=null;$('#transactionForm').reset();$('#transactionDate').value=appReferenceDate;transactionType='income';setTransactionType('income');$('#deleteTransaction').hidden=true;openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50); }
+function openIncomeTransaction() { window.MerNaturalInputUI?.reset?.();editingTransactionId=null;$('#transactionForm').reset();$('#transactionDate').value=appReferenceDate;transactionType='income';setTransactionType('income');$('#deleteTransaction').hidden=true;openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50); }
 
 function setAssessmentStep(step) {
   assessmentStep=step;
@@ -1638,7 +1642,7 @@ $('#transactionForm').addEventListener('submit',event=>{
   const warning=$('#spendCheck').dataset.budgetWarning||'',monthlyOver=Number($('#spendCheck').dataset.monthlyOver)||0,categoryOver=Number($('#spendCheck').dataset.categoryOver)||0,overage=warning==='monthly-over'?monthlyOver:categoryOver,category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
   if(!navigator.onLine&&existing&&!existing.offlineDraft){showToast(currentLang==='hr'?'Uređivanje potvrđenih transakcija zahtijeva vezu. Novi unos možete spremiti kao nacrt.':'Connect before editing posted transactions. New entries can be saved as drafts.');return;}
   if(existing)MerAccounting.undoRoundUp(state,existing);
-  const payload={type:transactionType,name,amount,category,date:`${dateValue}T12:00:00`,timestamp:`${dateValue}T12:00:00`,isB2B:appState.activeAccount==='business'&&transactionType==='income'&&Boolean($('#transactionB2B')?.checked)};
+  const payload={type:transactionType,name,amount,category,date:`${dateValue}T12:00:00`,timestamp:`${dateValue}T12:00:00`,paymentMethod:['card','cash'].includes($('#transactionPaymentMethod')?.value)?$('#transactionPaymentMethod').value:'transfer',isB2B:appState.activeAccount==='business'&&transactionType==='income'&&Boolean($('#transactionB2B')?.checked)};
   if(!navigator.onLine){payload.offlineDraft=true;payload.status='draft';}
   let savedTransaction;
   if(existing){
@@ -1654,6 +1658,7 @@ $('#transactionForm').addEventListener('submit',event=>{
   save(existing?'transaction-edit':'transaction-add');closeModal($('#transactionModal'));
   const successMessage=savedTransaction.status==='scheduled'?t('scheduledTransactionSaved',{date:formatIsoDate(dateValue)}):transactionType==='expense'&&(warning==='monthly-over'||warning==='category-over')?t('transactionAddedOverBudget',{amount:currency(overage)}):existing?.sourceType==='auto'?t('categoryApproved'):t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded'));
   showToast(savedTransaction.offlineDraft?(currentLang==='hr'?'Izvanmrežni nacrt je spremljen. Potvrdite ga nakon spajanja.':'Offline draft saved. Confirm it after reconnecting.'):successMessage);editingTransactionId=null;
+  if(event.submitter?.dataset.splitSubmit==='true'&&transactionType==='expense')queueMicrotask(()=>window.MerBillSplitUI?.open(savedTransaction.id));
 });
 $('#deleteTransaction').addEventListener('click',()=>{const existing=state.transactions.find(tx=>String(tx.id)===String(editingTransactionId));if(!existing)return;const type=MerCore.transactionType(existing);MerAccounting.undoRoundUp(state,existing);state.transactions=state.transactions.filter(tx=>String(tx.id)!==String(editingTransactionId));save('transaction-delete');closeModal($('#transactionModal'));showToast(t(type==='income'?'incomeDeleted':'expenseDeleted'));editingTransactionId=null;});
 
