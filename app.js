@@ -581,15 +581,47 @@ function renderSavingsHistoryChart() {
   const history=(state.savingsHistory||[]).map(value=>Math.max(0,Number(value)||0));
   const values=history.length?history:[0],points=savingsHistorySeries(values),linePath=smoothSavingsPath(points),baseline=184;
   const endMonth=new Date(`${appReferenceDate.slice(0,7)}-01T12:00:00Z`);
-  const series=points.map((point,index)=>{const date=new Date(endMonth);date.setUTCMonth(date.getUTCMonth()-(points.length-1-index));return {...point,label:new Intl.DateTimeFormat(locale(),{month:'short',timeZone:'UTC'}).format(date)};});
+  const series=points.map((point,index)=>{const date=new Date(endMonth);date.setUTCMonth(date.getUTCMonth()-(points.length-1-index));const fullMonth=new Intl.DateTimeFormat(locale(),{month:'long',timeZone:'UTC'}).format(date);return {...point,label:new Intl.DateTimeFormat(locale(),{month:'short',timeZone:'UTC'}).format(date),fullLabel:fullMonth.charAt(0).toLocaleUpperCase(locale())+fullMonth.slice(1)};});
   const areaPath=`${linePath} L ${points.at(-1).x} ${baseline} L ${points[0].x} ${baseline} Z`;
   $('#savingsHistorySvg').innerHTML=`<defs><linearGradient id="savingsAreaGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--blue)" stop-opacity=".28"></stop><stop offset="72%" stop-color="var(--green)" stop-opacity=".08"></stop><stop offset="100%" stop-color="var(--green)" stop-opacity="0"></stop></linearGradient></defs><g class="savings-chart-grid" aria-hidden="true"><line x1="28" y1="24" x2="972" y2="24"></line><line x1="28" y1="77" x2="972" y2="77"></line><line x1="28" y1="130" x2="972" y2="130"></line><line x1="28" y1="184" x2="972" y2="184"></line></g><path class="savings-area-fill" d="${areaPath}"></path><path class="savings-area-line" d="${linePath}"></path>`;
-  $('#savingsChartPoints').innerHTML=series.map((point,index)=>{const x=point.x/10,y=point.y/2.2,label=t('savingsPointLabel',{month:point.label,amount:currency(point.amount)});return `<button type="button" class="savings-chart-point ${index===series.length-1?'current':''}" style="--point-x:${x}%;--point-y:${y}%" data-savings-chart-point="${index}" aria-label="${escapeHtml(label)}"><span aria-hidden="true"></span></button>`;}).join('');
+  $('#savingsChartPoints').innerHTML=series.map((point,index)=>{const x=point.x/10,y=point.y/2.2,label=t('savingsPointLabel',{month:point.fullLabel,amount:currency(point.amount)});return `<button type="button" class="savings-chart-point ${index===series.length-1?'current':''}" style="--point-x:${x}%;--point-y:${y}%" data-savings-chart-point="${index}" aria-label="${escapeHtml(label)}"><span aria-hidden="true"></span></button>`;}).join('');
   $('#savingsChartAxis').style.setProperty('--chart-columns',String(series.length));
   $('#savingsChartAxis').innerHTML=series.map((point,index)=>`<span class="${series.length>8&&index%2===1&&index!==series.length-1?'axis-label-optional':''}">${escapeHtml(point.label)}</span>`).join('');
-  const tooltip=$('#savingsChartTooltip'),hideTooltip=()=>{tooltip.hidden=true;};
-  $$('[data-savings-chart-point]').forEach(button=>{const point=series[Number(button.dataset.savingsChartPoint)],showTooltip=()=>{tooltip.textContent=t('savingsPointLabel',{month:point.label,amount:currency(point.amount)});tooltip.style.setProperty('--tooltip-x',`${point.x/10}%`);tooltip.style.setProperty('--tooltip-y',`${point.y/2.2}%`);tooltip.hidden=false;};button.addEventListener('mouseenter',showTooltip);button.addEventListener('focus',showTooltip);button.addEventListener('click',showTooltip);button.addEventListener('mouseleave',hideTooltip);button.addEventListener('blur',hideTooltip);});
+  const chart=$('#contributionChart'),tooltip=$('#savingsChartTooltip'),buttons=$$('[data-savings-chart-point]');
+  tooltip.setAttribute('data-monetary','');
+  let activeIndex=-1;
+  const hideTooltip=()=>{tooltip.hidden=true;chart.removeAttribute('data-active-point');buttons.forEach(button=>button.classList.remove('active'));};
+  const showPoint=index=>{
+    activeIndex=Math.max(0,Math.min(series.length-1,index));
+    const point=series[activeIndex],label=t('savingsPointLabel',{month:point.fullLabel,amount:currency(point.amount)});
+    if(tooltip.textContent!==label)tooltip.textContent=label;
+    tooltip.hidden=false;chart.dataset.activePoint=String(activeIndex);chart.style.setProperty('--active-point-x',`${point.x/10}%`);
+    buttons.forEach((button,buttonIndex)=>button.classList.toggle('active',buttonIndex===activeIndex));
+    // Keep the full tooltip inside the plot, including the highest and edge points.
+    const width=chart.clientWidth,height=chart.clientHeight,tooltipWidth=tooltip.offsetWidth,tooltipHeight=tooltip.offsetHeight;
+    const left=Math.max(4,Math.min(width-tooltipWidth-4,width*point.x/1000-tooltipWidth/2));
+    const above=height*point.y/220-tooltipHeight-14;
+    const top=Math.max(4,Math.min(height-tooltipHeight-28,above>=4?above:height*point.y/220+14));
+    tooltip.style.left=`${left}px`;tooltip.style.top=`${top}px`;
+  };
+  buttons.forEach(button=>{const showTooltip=()=>showPoint(Number(button.dataset.savingsChartPoint));button.addEventListener('mouseenter',showTooltip);button.addEventListener('focus',showTooltip);button.addEventListener('click',showTooltip);button.addEventListener('blur',hideTooltip);});
+  const scrub=event=>{
+    if(document.body.classList.contains('layout-editing')||!Number.isFinite(event.clientX))return;
+    const bounds=chart.getBoundingClientRect(),x=(event.clientX-bounds.left)/Math.max(1,bounds.width)*1000;
+    showPoint(series.reduce((nearest,point,index)=>Math.abs(point.x-x)<Math.abs(series[nearest].x-x)?index:nearest,0));
+  };
+  chart.onpointermove=scrub;chart.onpointerdown=scrub;chart.onpointercancel=hideTooltip;
+  chart.onkeydown=event=>{
+    if(event.key==='Escape'){hideTooltip();event.stopPropagation();return;}
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+    event.preventDefault();event.stopPropagation();
+    const target=event.key==='Home'?0:event.key==='End'?series.length-1:Math.max(0,activeIndex)+(event.key==='ArrowRight'?1:-1);
+    showPoint(target);buttons[activeIndex]?.focus({preventScroll:true});
+  };
+  chart.onfocus=()=>showPoint(activeIndex<0?series.length-1:activeIndex);
+  chart.onfocusout=event=>{if(!chart.contains(event.relatedTarget))hideTooltip();};
   $('#contributionChart').onmouseleave=hideTooltip;
+  hideTooltip();
   $('#contributionChart').setAttribute('aria-label',`${t('monthlySavingsChart')}: ${series.map(point=>t('savingsPointLabel',{month:point.label,amount:currency(point.amount,true)})).join(', ')}. ${t('totalSavedPeriod')}: ${currency(values.reduce((sum,value)=>sum+value,0))}`);
   return series;
 }

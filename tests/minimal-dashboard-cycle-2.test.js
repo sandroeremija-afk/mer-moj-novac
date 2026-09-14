@@ -5,6 +5,8 @@ assert.match(css,/align-content:stretch/);assert.match(css,/grid-template-rows:m
 assert.match(css,/>:is\(\.safe-panel,\.budget-panel\)[^}]*height:100%/);
 assert.match(css,/>:is\(\.safe-panel,\.budget-panel\)[^}]*justify-content:space-between/);
 assert.match(css,/@media\(max-width:1024px\)/);assert.match(css,/height:auto/);
+assert.match(css,/flex:0 1 clamp\(340px,46dvh,420px\); max-height:420px/,'desktop row cannot grow into excessive card whitespace');
+assert.doesNotMatch(css,/min-height:320px/,'mobile uses content height, not an oversized minimum');
 assert.match(css,/\.safe-footer \.link-button[^}]*min-height:44px/);
 assert.doesNotMatch(css,/\.safe-ring strong|overflow:hidden|display:none/,'layout does not override ring fitting or hide card content');
 process.stdout.write('Minimal dashboard cycle 2: shared height track, mobile natural flow, touch targets and safe ring scaling passed.\\n');

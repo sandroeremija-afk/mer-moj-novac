@@ -72,6 +72,16 @@
     const weekly = doc.querySelector('#savingsRecommendationCard .recommendation-weekly');
     const strategy = el('savingsStrategyModal');
     if (weekly && strategy) strategy.querySelector('.modal-actions')?.before(weekly);
+    if (strategy && !strategy.querySelector('.savings-strategy-body')) {
+      // Reparent the live nodes, keeping existing translations, handlers and values intact.
+      const header = doc.createElement('header'), heading = doc.createElement('div'), body = doc.createElement('div');
+      header.className = 'savings-strategy-header'; body.className = 'savings-strategy-body';
+      const actions = strategy.querySelector('.modal-actions'), closeButton = strategy.querySelector('.modal-close');
+      [strategy.querySelector('.overline'), el('savingsStrategyTitle')].filter(Boolean).forEach(node => heading.append(node));
+      header.append(heading); if (closeButton) header.append(closeButton);
+      [...strategy.children].filter(node => node !== actions).forEach(node => body.append(node));
+      strategy.prepend(header, body); actions?.classList.add('savings-strategy-footer');
+    }
   }
   function entriesMarkup(entries, goals) {
     return entries.length ? `<div class="savings-detail-entry-list">${entries.map(entry => `<article><div><strong>${esc(entry.note || (Number(entry.amount) < 0 ? say('Isplata iz štednje', 'Savings withdrawal') : say('Uplata u štednju', 'Savings deposit')))}</strong><small>${esc(dateLabel(entry.date))} · ${esc(goals.find(goal => goal.id === entry.goalId)?.name || say('Uklonjeni cilj', 'Removed goal'))}</small></div><strong data-money>${entryMoney(entry)}</strong></article>`).join('')}</div>` : `<p class="savings-detail-empty">${say('Još nema evidentiranih uplata. Početno stanje cilja nije zasebna uplata.', 'No deposits have been recorded yet. The goal opening balance is not a separate deposit.')}</p>`;
@@ -129,14 +139,23 @@
   function makeClickable(card, kind, goalId, label) {
     if (!card) return;
     card.dataset.savingsSummary = kind; card.dataset.savingsGoal = goalId || '';
-    card.setAttribute('tabindex', '0'); card.setAttribute('role', 'button'); card.setAttribute('aria-haspopup', 'dialog');
+    card.setAttribute('tabindex', kind === 'history' ? '-1' : '0'); card.setAttribute('role', 'button'); card.setAttribute('aria-haspopup', 'dialog');
+    // Chart points are real controls, so the history card must not flatten their semantics.
+    if (kind === 'history') { card.setAttribute('role', 'group'); card.removeAttribute('aria-haspopup'); }
     card.setAttribute('aria-label', label); card.setAttribute('aria-controls', kind === 'history' ? 'savingsHistoryDetailModal' : kind === 'strategy' ? 'savingsStrategyModal' : 'savingsGoalDetailModal');
     let hint = card.querySelector('.savings-summary-link');
-    if (!hint) { hint = doc.createElement('span'); hint.className = 'savings-summary-link'; hint.setAttribute('aria-hidden', 'true'); card.append(hint); }
+    if (!hint) {
+      hint = doc.createElement(kind === 'history' ? 'button' : 'span'); hint.className = 'savings-summary-link';
+      if (kind === 'history') {
+        hint.type = 'button'; hint.setAttribute('aria-haspopup', 'dialog'); hint.setAttribute('aria-controls', 'savingsHistoryDetailModal');
+        hint.addEventListener('click', event => { event.stopPropagation(); if (!doc.body.classList.contains('layout-editing')) open('history'); });
+      } else hint.setAttribute('aria-hidden', 'true');
+      card.append(hint);
+    }
     hint.textContent = kind === 'strategy' ? say('Pregledaj strategiju ↗', 'Review strategy ↗') : say('Prikaži detalje ↗', 'View details ↗');
     if (bound.has(card)) return; bound.add(card);
     const activate = event => {
-      if (doc.body.classList.contains('layout-editing') || event.target.closest('button,a,input,select,textarea,.layout-drag-handle')) return;
+      if (doc.body.classList.contains('layout-editing') || event.target.closest('button,a,input,select,textarea,.layout-drag-handle,#contributionChart')) return;
       if (event.type === 'keydown' && (event.target !== card || !['Enter', ' '].includes(event.key))) return;
       if (event.type === 'keydown') event.preventDefault();
       const selection = root.getSelection?.();
@@ -149,7 +168,7 @@
     if (!bridge()) return;
     ensureDialogs(); const s = snapshot(), detail = savingsDetail(s), primary = detail.goals.find(goal => goal.primary) || detail.goals[0];
     makeClickable(doc.querySelector('#savingsView .savings-history-card'), 'history', null, say('Povijest štednje — prikaži detalje', 'Savings history — view details'));
-    el('contributionChart')?.setAttribute('tabindex', '-1');
+    el('contributionChart')?.setAttribute('tabindex', '0');
     makeClickable(el('savingsRecommendationCard'), 'strategy', null, say('MER Preporuka — pregledaj strategiju', 'MER Recommendation — review strategy'));
     const coverageLabel = doc.querySelector('#savingsRecommendationCard .recommendation-stat span');
     if (coverageLabel) { coverageLabel.removeAttribute('data-i18n'); coverageLabel.textContent = say('Pokrivenost', 'Coverage'); }
@@ -157,6 +176,9 @@
     doc.querySelectorAll('#goalBucketGrid .goal-bucket-card').forEach(card => {
       const goalId = card.querySelector('[data-edit-goal]')?.dataset.editGoal;
       const goal = detail.goals.find(item => item.id === goalId);
+      // A second umbrella/target glyph competes with the enlarged progress ring.
+      const icon = card.querySelector('.vault-goal-icon');
+      if (icon && ['☂', '☔', '🌂', '☂️', '🎯', '◎', '◉'].includes(icon.textContent.trim())) icon.remove();
       if (goal) makeClickable(card, 'goal', goal.id, `${goal.name} — ${say('detalji cilja', 'goal details')}`);
     });
     if (active?.open) {

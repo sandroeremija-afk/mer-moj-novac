@@ -35,9 +35,10 @@ test('evaluation cycle 2: each Insights analysis card has one clean h2 title', (
   const end = html.indexOf('id="insightsDetailsModal"', start);
   const cards = html.slice(start, end);
   assert.doesNotMatch(cards, /<p class="overline"/);
-  for (const key of ['categoryDonutTitle', 'incomeVsExpenses', 'topFiveMerchants', 'savingsRate']) {
+  for (const key of ['categoryDonutTitle', 'incomeVsExpenses', 'topFiveMerchants']) {
     assert.equal((cards.match(new RegExp(`<h2 data-i18n="${key}"`, 'g')) || []).length, 1);
   }
+  assert.doesNotMatch(cards, /data-layout-card="savings-rate"/, 'the savings rate belongs to the top summary row');
 });
 
 test('evaluation cycle 2: floating AI widget omits the aggregate-profile sentence only', () => {
@@ -49,4 +50,3 @@ test('evaluation cycle 2: floating AI widget omits the aggregate-profile sentenc
   assert.match(assistantUi, /assistantWidgetDisclaimer:'AI odgovor je informativan i ne zamjenjuje profesionalni financijski savjet\.'/);
   assert.match(assistantUi, /assistantWidgetDisclaimer:'AI responses are informational and do not replace professional financial advice\.'/);
 });
-

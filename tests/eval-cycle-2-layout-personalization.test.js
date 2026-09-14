@@ -124,7 +124,8 @@ test('evaluation cycle 2: personalization preserves responsive flow and one-page
   assert.match(ui, /MutationObserver/, 'dynamic Savings goals are re-registered after state renders');
   assert.match(app, /event\.reason\s*!==\s*'layout-reorder'/, 'layout-only commits do not rebuild dynamic cards mid-drag');
   assert.match(css, /\.dashboard-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,minmax\(0,1fr\)\)/, 'either Dashboard card receives an equally safe track after reordering');
-  assert.match(css, /\.advanced-insights-grid\s*\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/, 'Insights cards snap to symmetric tracks');
+  const insightsCss = fs.readFileSync(path.join(root, 'insights-polish.css'), 'utf8');
+  assert.match(insightsCss, /#insightsView > \.advanced-insights-grid\s*\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/, 'Insights analysis cards snap to three symmetric tracks');
 });
 
 test('evaluation cycle 2: closing chat with Escape does not also exit layout editing', () => {

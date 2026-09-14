@@ -1,4 +1,4 @@
-/* One calm row: the same grid track owns both dashboard card boundaries. */
+/* Content-proportioned cards share a bounded row instead of stretching to the screen bottom. */
 #overviewView>.dashboard-grid {
   align-content:stretch;
   align-items:stretch;
@@ -18,7 +18,7 @@
 #overviewView .safe-content {
   flex:1;
   min-height:0;
-  padding:24px 0;
+  padding:16px 0;
   gap:clamp(18px,3vw,44px);
   justify-content:center;
 }
@@ -28,8 +28,8 @@
   flex:1;
   min-height:0;
   grid-auto-rows:minmax(0,1fr);
-  gap:20px;
-  margin-top:24px;
+  gap:16px;
+  margin-top:20px;
   align-items:center;
 }
 #overviewView .budget-item-header { grid-template-columns:36px minmax(0,1fr) auto;gap:12px; }
@@ -37,14 +37,17 @@
 #overviewView .budget-item-title strong { font-size:14px;line-height:1.5; }
 #overviewView .budget-item-title span,#overviewView .budget-percent { font-size:12px;line-height:1.5; }
 #overviewView .budget-bar { height:6px; }
+@media(min-width:1025px) {
+  #overviewView>.dashboard-grid { flex:0 1 clamp(340px,46dvh,420px); max-height:420px; }
+}
 @media(max-width:1024px) {
   #overviewView>.dashboard-grid { flex:none;grid-template-rows:auto; }
-  #overviewView>.dashboard-grid>:is(.safe-panel,.budget-panel) { min-height:320px;height:auto; }
+  #overviewView>.dashboard-grid>:is(.safe-panel,.budget-panel) { min-height:0;height:auto; }
 }
 @media(max-width:600px) {
   #overviewView>.dashboard-grid { grid-template-columns:minmax(0,1fr);gap:16px; }
-  #overviewView>.dashboard-grid>:is(.safe-panel,.budget-panel) { padding:20px;min-height:320px; }
-  #overviewView .safe-content { gap:20px;padding:24px 0; }
+  #overviewView>.dashboard-grid>:is(.safe-panel,.budget-panel) { padding:20px;min-height:0; }
+  #overviewView .safe-content { gap:20px;padding:20px 0; }
   #overviewView .safe-footer { flex-wrap:wrap; }
   #overviewView .budget-list { gap:22px; }
 }

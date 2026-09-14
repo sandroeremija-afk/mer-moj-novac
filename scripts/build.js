@@ -14,7 +14,7 @@ const suiteCss=['enterprise.css','invoice.css','security-enterprise.css','receip
 jsFiles.push('circle-text.js','plan-navigation.js','export-core.js','export-pdf.js','export-ui.js');
 suiteCss.push('export-ui.css','header-actions.css');
 jsFiles.push('vaults-core.js','vaults-ui.js','natural-input-core.js','natural-input-ui.js','engagement-core.js','engagement-ui.js','savings-minimal.js');
-suiteCss.push('vaults-ui.css','natural-input-ui.css','engagement.css','dashboard-minimal.css','minimal-activity.css','savings-minimal.css');
+suiteCss.push('vaults-ui.css','natural-input-ui.css','engagement.css','dashboard-minimal.css','minimal-activity.css','savings-minimal.css','insights-polish.css');
 jsFiles.push('engagement-init.js');
 jsFiles.push('popup-layout.js');
 suiteCss.push('ui-consistency.css','recommendation-refresh.css','popup-layout.css');
