@@ -275,6 +275,15 @@
     }
   }
 
+  function formatTransactionAmount(transaction, options = {}) {
+    const amount = roundMoney(financialAmount(transaction?.amount));
+    const signedAmount = transactionType(transaction) === 'income' ? amount : -amount;
+    const sign = signedAmount > 0 ? '+' : signedAmount < 0 ? '-' : '';
+    // Records use their real signed direction, including refunds/corrections.
+    // Budget-limit decimal exceptions never apply to an individual transaction.
+    return `${sign}${formatCurrency(Math.abs(signedAmount), {currency:transaction?.currency||'EUR', ...options, categoryBudgetLimit:false})}`;
+  }
+
   function ratioPercent(value, total, maximum = Infinity) {
     const safeValue = Math.max(0, financialAmount(value));
     const safeTotal = Math.max(0, financialAmount(total));
@@ -833,6 +842,7 @@
     financialAmount,
     roundMoney,
     formatCurrency,
+    formatTransactionAmount,
     ratioPercent,
     stableTransactionHash,
     autoCategorizeBankTransaction,

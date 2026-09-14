@@ -19,7 +19,7 @@
     },
     {
       id:'budgets', view:'budgets', target:'#budgetsView .table-panel', mobileTarget:'#budgetsView .table-panel', contextTarget:'.nav-item[data-view="budgets"]', placement:'top', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody',
-      copy:copy('Mesečni budžeti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.', 'Monthly budgets', 'Set spending limits by category (food, transport, utilities) to make saving easier.')
+      copy:copy('Mjesečni budžeti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.', 'Monthly budgets', 'Set spending limits by category (food, transport, utilities) to make saving easier.')
     },
     {
       id:'savings', view:'savings', target:'#savingsView .goal-buckets-panel', mobileTarget:'#savingsView .goal-buckets-panel', contextTarget:'.nav-item[data-view="savings"]', placement:'top', titleKey:'onboardingSavingsTitle', bodyKey:'onboardingSavingsBody',
@@ -28,28 +28,6 @@
     {
       id:'insights', view:'insights', target:'#insightsView', mobileTarget:'#insightsView', contextTarget:'.nav-item[data-view="insights"]', placement:'bottom', titleKey:'onboardingInsightsTitle', bodyKey:'onboardingInsightsBody',
       copy:copy('Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.', 'Analytics and reports', 'Compare income and expenses by period. Choose a day, a month, a year or your full history.')
-    },
-    {
-      id:'settings', surface:'settings', target:'#settingsTourPreferences', mobileTarget:'#settingsTourPreferences', settingsTab:'general', placement:'left', titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody',
-      copy:copy('Korisničke postavke', 'Odaberite jezik, svijetlu ili tamnu temu te raspored nadzorne ploče. U sljedećem dijelu pogledajte sigurnost računa.', 'User settings', 'Choose your language, light or dark theme and dashboard layout. Next, explore account security.'),
-      substeps:Object.freeze([
-        Object.freeze({
-          id:'general', target:'#settingsTourPreferences', mobileTarget:'#settingsTourPreferences', settingsTab:'general',
-          copy:copy('Jezik, tema i raspored', 'Ovdje birate jezik, svijetlu ili tamnu temu i raspored nadzorne ploče. Vodič ne mijenja vaše postavke.', 'Language, theme and layout', 'Choose your language, light or dark theme and dashboard layout here. The tour does not change your settings.')
-        }),
-        Object.freeze({
-          id:'password', target:'#changePasswordForm', mobileTarget:'#changePasswordForm', settingsTab:'security',
-          copy:copy('Promjena lozinke', 'Za novu lozinku unesite trenutačnu lozinku, zatim novu lozinku dvaput. Tijekom vodiča ništa ne morate unositi.', 'Change your password', 'To change your password, enter your current password and the new one twice. You do not need to enter anything during this tour.')
-        }),
-        Object.freeze({
-          id:'mfa', target:'#settingsTourMfa', mobileTarget:'#settingsTourMfa', settingsTab:'security',
-          copy:copy('Dodatna zaštita računa', 'Uključite dvostruku autentifikaciju aplikacijom za potvrdu identiteta. Kodove za oporavak spremite na sigurno mjesto.', 'Extra account protection', 'Enable two-factor authentication with an authenticator app. Keep your recovery codes in a safe place.')
-        })
-      ])
-    },
-    {
-      id:'help', surface:'help', target:'#helpTourConversation', mobileTarget:'#helpTourConversation', placement:'left', titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
-      copy:copy('Pomoć i AI Asistent', 'Odaberite ponuđenu financijsku temu ili upišite pitanje u razgovor. AI asistent može objasniti vaše financije kada je usluga povezana.', 'Help and AI Assistant', 'Choose a suggested financial topic or type a question in the chat. The AI assistant can explain your finances when the service is connected.')
     }
   ].map(step => Object.freeze(step)));
 

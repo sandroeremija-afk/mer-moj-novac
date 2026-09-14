@@ -4,9 +4,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const MerOnboarding = require('../onboarding-core.js');
 
-test('evaluation cycle 1: the senior-friendly journey contains exactly seven purposeful steps', () => {
+test('evaluation cycle 1: the senior-friendly journey contains exactly five purposeful steps', () => {
   const ids = MerOnboarding.DEFAULT_STEPS.map(step => step.id);
-  assert.deepEqual(ids, ['overview', 'transaction', 'budgets', 'savings', 'insights', 'settings', 'help']);
+  assert.deepEqual(ids, ['overview', 'transaction', 'budgets', 'savings', 'insights']);
   assert.equal(MerOnboarding.DEFAULT_STEPS[1].target, '#sidebar .sidebar-transaction-button[data-open-transaction]');
   assert.equal(MerOnboarding.DEFAULT_STEPS[1].openSidebar, true);
 });
@@ -15,11 +15,9 @@ test('evaluation cycle 1: every step exposes the requested Croatian copy and an 
   const expected = [
     ['Glavni pregled', 'Ovdje u svakom trenutku vidite koliko novca imate na raspolaganju i brzi pregled mjesečne potrošnje.'],
     ['Unos transakcija', 'Jednim klikom možete ručno unijeti novi trošak ili prihod, ili uvoziti izvod iz vaše banke.'],
-    ['Mesečni budžeti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.'],
+    ['Mjesečni budžeti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.'],
     ['Ciljevi štednje', 'Pratite napredak svojih fondova za hitne slučajeve i postavite automatska pravila zaokruživanja.'],
-    ['Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.'],
-    ['Korisničke postavke', 'Odaberite jezik, svijetlu ili tamnu temu te raspored nadzorne ploče. U sljedećem dijelu pogledajte sigurnost računa.'],
-    ['Pomoć i AI Asistent', 'Odaberite ponuđenu financijsku temu ili upišite pitanje u razgovor. AI asistent može objasniti vaše financije kada je usluga povezana.']
+    ['Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.']
   ];
   MerOnboarding.DEFAULT_STEPS.forEach((step, index) => {
     assert.equal(step.copy.hr.title, expected[index][0]);
@@ -33,10 +31,7 @@ test('evaluation cycle 1: module steps carry a real sidebar context selector for
   for (const step of MerOnboarding.DEFAULT_STEPS.filter(step => step.view)) {
     assert.equal(step.contextTarget, `.nav-item[data-view="${step.view}"]`);
   }
-  for (const step of MerOnboarding.DEFAULT_STEPS.filter(step => step.surface)) {
-    assert.equal(step.contextTarget, undefined, 'modal walkthroughs must not keep the Uvidi sidebar spotlight');
-    assert.equal(step.view, undefined, 'modal walkthroughs do not navigate the underlying page');
-  }
+  assert.ok(MerOnboarding.DEFAULT_STEPS.every(step => !step.surface && !step.substeps), 'the five-step tour never opens a secondary dialog or filler substep');
 });
 
 test('evaluation cycle 1: module features point at the requested high-value surfaces', () => {
@@ -49,10 +44,7 @@ test('evaluation cycle 1: module features point at the requested high-value surf
   for (const id of ['overview', 'budgets', 'savings', 'insights']) {
     assert.equal(byId[id].mobileTarget, byId[id].target, 'mobile retains meaningful containers rather than thin borders');
   }
-  assert.equal(byId.settings.target, '#settingsTourPreferences');
-  assert.equal(byId.help.target, '#helpTourConversation');
-  assert.equal(byId.settings.surface, 'settings');
-  assert.equal(byId.help.surface, 'help');
-  assert.equal(byId.settings.openSidebar, undefined);
-  assert.equal(byId.help.openSidebar, undefined);
+  assert.equal(byId.settings, undefined);
+  assert.equal(byId.help, undefined);
+  assert.doesNotMatch(JSON.stringify(MerOnboarding.DEFAULT_STEPS), /Financijsko zdravlje|Podjela računa|healthScore|splitBill|TRENUTAČNI MODUL/i);
 });

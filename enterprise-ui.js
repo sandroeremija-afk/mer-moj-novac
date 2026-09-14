@@ -24,7 +24,6 @@
     getState:()=>({activeProfile:appState.activeAccount,profiles:appState.accounts,language:currentLang,currency:appState.settings.currency}),
     openModal(dialog){window.MerPlanNavigation?.enter(dialog);window.MerPlanNavigation?.enhance(dialog);openModal(dialog);}, closeModal,
     currentUser:()=>window.MerAuthProvider?.currentSession(),
-    mutateHousehold(action){reactiveStore.update('household-change',draft=>action(draft.accounts[draft.activeAccount]));},
     attachReceipt(profileId,transactionId,receipt){
       if(profileId!==appState.activeAccount)throw new Error('Profile changed');
       reactiveStore.update('receipt-attach',draft=>MerReceipts.attachReceipt(draft,profileId,transactionId,receipt));
@@ -63,8 +62,6 @@
   document.querySelector('#overviewView .heading-actions').prepend(invoiceButton);
   invoiceButton.addEventListener('click',()=>window.MerInvoiceUI?.open());
 
-  const forecastInline=document.createElement('button');forecastInline.type='button';forecastInline.id='forecastInline';forecastInline.className='forecast-inline';
-  document.querySelector('.safe-panel .safe-footer').before(forecastInline);
   const commandDialog=makeDialog('commandPalette',copy('Što želite učiniti?','What would you like to do?'),`<input id="commandSearch" type="search" autocomplete="off" placeholder="Pretražite naredbe…" aria-label="Pretraži naredbe" role="combobox" aria-expanded="true" aria-controls="commandResults" aria-autocomplete="list"><div id="commandResults" role="listbox" aria-label="Naredbe"></div><footer class="command-hint">↑ ↓ ${copy('Odabir','Choose')} · Enter · Esc</footer>`,'command-dialog');
   function commands() {
     return [
@@ -72,6 +69,7 @@
       {label:copy('Novi trošak','New expense'),run:()=>openTransaction()},
       {label:copy('Novi prihod','New income'),run:()=>openIncomeTransaction()},
       {label:copy('Mjesečni osvrt — Financial Wrapped','Monthly review — Financial Wrapped'),run:()=>window.MerEngagementUI?.openWrapped()},
+      {label:copy('Financijsko zdravlje — detaljna analiza','Financial health — detailed analysis'),run:()=>window.MerEngagementUI?.openHealth()},
       {label:copy('Izvoz — sve transakcije','Export — all transactions'),run:()=>window.MerExportUI?.open('activity',{timeframe:'all'})},
       {label:copy('Izvoz — budžeti','Export — budgets'),run:()=>document.querySelector('[data-export-budget]').click()},
       {label:copy('Izvoz — izvještaj uvida','Export — insights report'),run:()=>document.querySelector('[data-export-insights]').click()},
@@ -82,7 +80,6 @@
       {label:copy('Skeniraj račun — OCR i povezivanje','Scan receipt — OCR and matching'),run:()=>window.MerReceiptUI?.open()},
       {label:copy('FIRE — financijska neovisnost','FIRE — financial independence'),run:()=>window.MerPlanningUI?.open('fire')},
       {label:copy('Pretplate — podsjetnici za obnovu','Subscriptions — renewal reminders'),run:()=>window.MerPlanningUI?.open('renewals')},
-      {label:copy('Kućanstvo — zajednički troškovi','Household — shared bills'),run:()=>window.MerHouseholdUI?.open()},
       {label:copy('Isprobaj scenarij','Try a scenario'),run:()=>openIntelligence('scenario')},
       {label:copy('Automatska raspodjela prihoda','Payday auto-split'),run:()=>openIntelligence('rules')},
       {label:copy('Osobni profil · Moj eRačun','Personal profile · Moj eRačun'),run:()=>switchAccount('personal')},
@@ -162,7 +159,7 @@
   function openTaxVault(){if(appState.activeAccount!=='business')return;renderTaxVault();window.MerEnterpriseBridge.openModal(taxDialog);}
   suiteTools.addEventListener('click',event=>{if(event.target.closest('[data-suite-action]')?.dataset.suiteAction==='tax')openTaxVault();});
   intelligence.querySelector('.enterprise-dialog-body').prepend(suiteTools);
-  suiteTools.addEventListener('click',event=>{const action=event.target.closest('[data-suite-action]')?.dataset.suiteAction;if(action==='receipt')window.MerReceiptUI?.open();if(action==='fire'||action==='renewals')window.MerPlanningUI?.open(action);if(action==='household')window.MerHouseholdUI?.open();});
+  suiteTools.addEventListener('click',event=>{const action=event.target.closest('[data-suite-action]')?.dataset.suiteAction;if(action==='receipt')window.MerReceiptUI?.open();if(action==='fire'||action==='renewals')window.MerPlanningUI?.open(action);});
   const receiptTrigger=document.createElement('button');receiptTrigger.type='button';receiptTrigger.className='secondary-button';receiptTrigger.id='openReceiptScanner';document.querySelector('#activityView .heading-actions')?.prepend(receiptTrigger);receiptTrigger.addEventListener('click',()=>window.MerReceiptUI?.open());
   const receiptAction=document.createElement('button');receiptAction.type='button';receiptAction.className='secondary-button transaction-receipt-action';receiptAction.id='transactionReceiptAction';receiptAction.hidden=true;el('transactionForm').prepend(receiptAction);
   el('transactionModal').addEventListener('toggle',()=>{const tx=state.transactions.find(item=>item.id===editingTransactionId);receiptAction.hidden=!tx;receiptAction.textContent=tx?.receipts?.length?copy(`Povezani računi (${tx.receipts.length})`,`Linked receipts (${tx.receipts.length})`):copy('Poveži fotografiju računa','Attach receipt photo');});
@@ -217,7 +214,7 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
   }
   function showIntelligenceTab(tab){currentTab=tab;planBack.hidden=tab==='forecast';planBack.textContent=copy('← Natrag','← Back');['forecast','scenario','rules'].forEach(name=>{el(`enterprise${name[0].toUpperCase()+name.slice(1)}`).hidden=name!==tab;document.querySelector(`[data-intelligence-tab="${name}"]`).setAttribute('aria-selected',String(name===tab));});if(tab==='forecast')renderForecast();if(tab==='scenario')renderScenario();if(tab==='rules')renderRules();if(document.activeElement===planBack&&planBack.hidden)document.querySelector('[data-intelligence-tab="forecast"]').focus({preventScroll:true});}
   function openIntelligence(tab='forecast'){el('intelligenceProfile').textContent=state.accountName||appState.activeAccount;showIntelligenceTab(tab);openModal(intelligence);}
-  toolbar.addEventListener('click',()=>openIntelligence());forecastInline.addEventListener('click',()=>openIntelligence());
+  toolbar.addEventListener('click',()=>openIntelligence());
   document.querySelectorAll('[data-intelligence-tab]').forEach(button=>button.addEventListener('click',()=>showIntelligenceTab(button.dataset.intelligenceTab)));
 
   const b2b=document.createElement('label');b2b.id='transactionB2BRow';b2b.className='enterprise-b2b';b2b.hidden=true;b2b.innerHTML=`<input type="checkbox" id="transactionB2B"> ${copy('Oporeziva B2B uplata (iznos uključuje 25% PDV-a)','Taxable B2B payment (amount includes 25% VAT)')}`;
@@ -257,7 +254,7 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
   function render(){
     window.MerEnterpriseSecurity?.syncAutoLock();
     renderSecurity();
-    suiteTools.innerHTML=[['receipt','Skeniraj račun','Scan receipt'],['fire','FIRE simulator','FIRE simulator'],['renewals','Obnove pretplata','Renewals'],['household','Kućanstvo','Household']].map(([id,hr,en])=>`<button type="button" class="secondary-button" data-suite-action="${id}">${copy(hr,en)}</button>`).join('');
+    suiteTools.innerHTML=[['receipt','Skeniraj račun','Scan receipt'],['fire','FIRE simulator','FIRE simulator'],['renewals','Obnove pretplata','Renewals']].map(([id,hr,en])=>`<button type="button" class="secondary-button" data-suite-action="${id}">${copy(hr,en)}</button>`).join('');
     if(appState.activeAccount==='business')suiteTools.insertAdjacentHTML('beforeend',`<button type="button" class="secondary-button" data-suite-action="tax">${copy('Porezni trezor','Tax vault')}</button>`);
     if(taxDialog.open){const restore=window.MerPlanNavigation?.preserveFocus(taxDialog);renderTaxVault();restore?.();}
     receiptTrigger.innerHTML=`${icon('receipt')}<span>${copy('Skeniraj račun','Scan receipt')}</span>`;
@@ -270,11 +267,9 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
     if(commandDialog.open)renderCommands();
     [['forecast','Novčani tok','Cash flow'],['scenario','Isprobaj scenarij','What if?'],['rules','Automatizacija','Automation']].forEach(([tab,hr,en])=>{document.querySelector(`[data-intelligence-tab="${tab}"]`).textContent=copy(hr,en);});
     const f=forecast();document.querySelector('.topbar').dataset.health=f.health;
-    forecastInline.innerHTML=`<span>${copy('Sigurno za potrošnju · 30 dana','Safe to spend · 30 days')}<small>${copy('Nakon očekivanih računa','After expected bills')} · ${copy('Pretplate','Subscriptions')}: ${f.radar.length}</small></span><strong data-money>${money(f.safeToSpendCents)}</strong><span aria-hidden="true">↗</span>`;
     invoiceButton.hidden=appState.activeAccount!=='business';
     window.MerInvoiceUI?.refresh();
     window.MerReceiptUI?.refresh();
-    window.MerHouseholdUI?.render();
     renderRenewalStatus();
     const drafts=state.transactions.filter(tx=>tx.offlineDraft).length;offline.hidden=navigator.onLine&&!drafts;offline.textContent=copy(`${navigator.onLine?'Nacrti':'Izvanmrežno'} · ${drafts}`,`${navigator.onLine?'Drafts':'Offline'} · ${drafts}`);
     if(intelligence.open)showIntelligenceTab(currentTab);

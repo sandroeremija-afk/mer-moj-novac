@@ -56,25 +56,25 @@ async function main(){
   assert.equal((await call(handler,undefined,{method:'GET'})).statusCode,405);assert.equal((await call(handler,undefined,{headers:{origin:'https://evil.test',host:'mer.test','content-type':'application/json'}})).statusCode,403);assert.equal((await call(handler,undefined,{headers:{origin:'https://mer.test',host:'mer.test','content-type':'text/plain'}})).statusCode,415);
   const unavailable=createHealthHandler({env:{}});assert.equal((await call(unavailable)).statusCode,503);
   {
-    const h=harness();await h.click('healthImprove');assert.equal(h.get('financialHealthModal').open,true);assert.match(h.get('healthAiConsent').textContent,/bez imena, IBAN-a/);assert.equal(h.updates.length,0,'opening health does not change limits');
+    const h=harness();h.window.MerEngagementUI.openHealth();assert.equal(h.get('financialHealthModal').open,true);assert.match(h.get('healthAiConsent').textContent,/bez imena, IBAN-a/);assert.equal(h.updates.length,0,'opening health does not change limits');
     const pending=h.click('healthAiExplain');assert.equal(h.get('healthAiExplain').disabled,true);const request=JSON.parse(h.pending[0].options.body);assert.equal(request.consent,true);assert.ok(!JSON.stringify(request).includes('SECRET'));h.respond();await pending;assert.equal(h.get('healthAiResponse').textContent,'AI explanation');assert.equal(h.updates.length,0,'AI never applies limits');assert.equal(h.get('healthAiExplain').disabled,false);
     h.get('financialHealthModal').dismissBackdrop();assert.equal(h.get('financialHealthModal').open,false);
-    await h.click('healthImprove');assert.equal(h.get('financialHealthModal').dispatch('cancel').event.defaultPrevented,true);assert.equal(h.get('financialHealthModal').open,false);
+    h.window.MerEngagementUI.openHealth();assert.equal(h.get('financialHealthModal').dispatch('cancel').event.defaultPrevented,true);assert.equal(h.get('financialHealthModal').open,false);
   }
   for(const mutation of ['close','profile','session','revision','language']){
-    const h=harness();await h.click('healthImprove');const pending=h.click('healthAiExplain');
+    const h=harness();h.window.MerEngagementUI.openHealth();const pending=h.click('healthAiExplain');
     if(mutation==='close')h.get('financialHealthModal').close();if(mutation==='profile')h.switchProfile('business');if(mutation==='session')h.context.sessionId='s2';if(mutation==='revision')h.bump();if(mutation==='language'){h.context.currentLang='en';h.render();}
     h.respond(0,'STALE_RESPONSE');await pending;assert.notEqual(h.get('healthAiResponse').textContent,'STALE_RESPONSE',`${mutation} invalidates the response`);
   }
   {
-    const h=harness();await h.click('healthImprove');const old=h.click('healthAiExplain');h.get('financialHealthModal').close();await h.click('healthImprove');const next=h.click('healthAiExplain');h.respond(1,'Fresh response');await next;
+    const h=harness();h.window.MerEngagementUI.openHealth();const old=h.click('healthAiExplain');h.get('financialHealthModal').close();h.window.MerEngagementUI.openHealth();const next=h.click('healthAiExplain');h.respond(1,'Fresh response');await next;
     h.pending[0].resolve({ok:false,json:async()=>({error:'OLD_FAILURE'})});await old;assert.equal(h.get('healthAiResponse').textContent,'Fresh response','an old failed request cannot overwrite the newer explanation');
   }
   {
-    const h=harness();await h.click('healthImprove');const before=h.context.state.categories.map(category=>category.limit);
+    const h=harness();h.window.MerEngagementUI.openHealth();const before=h.context.state.categories.map(category=>category.limit);
     h.context.state.transactions.push({id:'rapid-edit',profileId:'personal',date:'2026-09-05',type:'expense',category:'food',amount:30});h.bump();await h.click('applyHealthPlan');
     assert.deepEqual(h.context.state.categories.map(category=>category.limit),before,'stale proposals cannot overwrite limits');assert.equal(h.get('applyHealthPlan').disabled,true);
-    h.get('financialHealthModal').close();await h.click('healthImprove');await h.click('applyHealthPlan');assert.equal(h.context.state.categories.reduce((sum,category)=>sum+category.limit,0),400);assert.equal(h.appState.accounts.business.categories[0].limit,100,'confirmed rebalance cannot cross profiles');
+    h.get('financialHealthModal').close();h.window.MerEngagementUI.openHealth();await h.click('applyHealthPlan');assert.equal(h.context.state.categories.reduce((sum,category)=>sum+category.limit,0),400);assert.equal(h.appState.accounts.business.categories[0].limit,100,'confirmed rebalance cannot cross profiles');
   }
   {
     const h=harness();assert.equal(h.get('openFinancialWrapped'),null,'the Insights toolbar has no extra monthly filter');h.window.MerEngagementUI.openWrapped();assert.equal(h.get('financialWrappedModal').open,true);assert.equal(h.get('wrappedStep').textContent,'1 od 4');assert.equal(h.get('wrappedBack').disabled,true);

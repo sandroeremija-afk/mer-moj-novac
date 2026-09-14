@@ -33,14 +33,6 @@
     node.addEventListener('cancel',event=>{event.preventDefault();closeModal(node);});
     MerRuntime.bindDialogBackdropDismiss(node,()=>closeModal(node));return node;
   }
-  const recommendationCopy = {
-    save:['Izdvojite do 20% prihoda u štednju.','Build toward saving 20% of income.'], 'keep-saving':['Zadržite redovite uplate u trezore.','Keep regular vault contributions.'],
-    rebalance:['Pregledajte prekoračene kategorije.','Review overspent categories.'], 'keep-budget':['Nastavite pratiti limite kategorija.','Keep monitoring category limits.'], 'set-budget':['Postavite mjesečne limite.','Set monthly category limits.'],
-    buffer:['Postupno gradite pričuvu za 6 mjeseci.','Build a six-month reserve gradually.'], 'keep-buffer':['Sačuvajte svoju sigurnosnu pričuvu.','Maintain your emergency reserve.'], 'set-essentials':['Unesite osnovne mjesečne troškove.','Set essential monthly costs.']
-  };
-  const healthCard=document.createElement('section');healthCard.id='financialHealthWidget';healthCard.className='financial-health-widget';healthCard.setAttribute('aria-label',say('Financijsko zdravlje','Financial health'));
-  healthCard.innerHTML='<button class="health-score-trigger" id="healthScoreTrigger" type="button"><span id="healthScore" data-money>—</span><span id="healthLabel"></span></button><ul id="healthRecommendations"></ul><button class="secondary-button" id="healthImprove" type="button"></button>';
-  document.querySelector('#overviewView .summary-grid').after(healthCard);
   const healthDialog=dialog('financialHealthModal','Financijsko zdravlje','<div class="engagement-body"><p id="healthExplanation"></p><div id="healthBreakdown"></div><h3 id="rebalanceTitle"></h3><p id="rebalanceDescription"></p><div id="rebalanceRows" class="engagement-table-wrap"></div><p id="rebalanceNote" role="status"></p><button type="button" class="secondary-button" id="healthAiExplain"></button><p id="healthAiConsent" class="engagement-caption"></p><p id="healthAiResponse" role="status"></p></div><footer class="engagement-footer"><button type="button" class="secondary-button" data-engagement-close id="healthCancel"></button><button type="button" class="primary-button" id="applyHealthPlan"></button></footer>');
   function openHealth() {
     if(!snapshot().authenticated)return;
@@ -58,7 +50,6 @@
     el('healthCancel').textContent=say('Otkaži','Cancel');el('applyHealthPlan').textContent=say('Primijeni prijedlog','Apply proposal');el('applyHealthPlan').disabled=!proposal.changed;
     openModal(healthDialog);
   }
-  el('healthScoreTrigger').addEventListener('click',openHealth);el('healthImprove').addEventListener('click',openHealth);
   el('applyHealthPlan').addEventListener('click',()=>{
     if(proposalOwner!==identity())return closeModal(healthDialog);
     try {window.MerEngagementBridge.mutate('health-rebalance',profile=>E.applyRebalance(profile,proposal,options()));closeModal(healthDialog);showToast(say('Limiti su preraspodijeljeni. Ukupni budžet je nepromijenjen.','Limits rebalanced. The total budget is unchanged.'));}
@@ -100,31 +91,17 @@
   el('wrappedBack').addEventListener('click',()=>{storyIndex=Math.max(0,storyIndex-1);renderStory();});el('wrappedNext').addEventListener('click',()=>{if(storyIndex===3)closeModal(storyDialog);else {storyIndex++;renderStory();}});
   el('wrappedMonth').addEventListener('change',()=>{if(!el('wrappedMonth').reportValidity()||!/^\d{4}-(0[1-9]|1[0-2])$/.test(el('wrappedMonth').value))return;storyMonth=el('wrappedMonth').value;storyIndex=0;renderStory();});
   const payment=document.createElement('label');payment.className='transaction-payment-method';payment.innerHTML='<span id="transactionPaymentLabel"></span><select id="transactionPaymentMethod"><option value="transfer"></option><option value="card"></option><option value="cash"></option></select>';el('spendCheck').before(payment);
-  const splitSubmit=document.createElement('button');splitSubmit.type='submit';splitSubmit.className='secondary-button';splitSubmit.id='transactionSplitSubmit';splitSubmit.dataset.splitSubmit='true';el('transactionForm').querySelector('.modal-primary-actions').prepend(splitSubmit);
-  const splitLedger=document.createElement('button');splitLedger.type='button';splitLedger.className='secondary-button';splitLedger.id='openBillSplits';splitLedger.addEventListener('click',()=>window.MerBillSplitUI?.open());document.querySelector('#activityView .heading-actions').prepend(splitLedger);
-  function enhanceActivity() {
-    document.querySelectorAll('#transactionList [data-edit-transaction]').forEach(edit=>{
-      const tx=state.transactions.find(row=>String(row.id)===String(edit.dataset.editTransaction));
-      if(!tx||MerCore.transactionType(tx)!=='expense'||!(tx.amount>0)||edit.closest('.transaction-row-actions'))return;
-      const actions=document.createElement('div');actions.className='transaction-row-actions';edit.before(actions);actions.append(edit);
-      const split=document.createElement('button');split.type='button';split.className='icon-button small';split.setAttribute('aria-label',say(`Podijeli račun: ${tx.name}`,`Split bill: ${tx.name}`));split.title=say('Podijeli račun','Split bill');split.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v7M12 10 5 17M12 10l7 7M5 12v5h5M14 17h5v-5"/></svg>';split.addEventListener('click',()=>window.MerBillSplitUI?.open(tx.id));actions.prepend(split);
-    });
-  }
   const oldRenderAll=renderAll;
-  renderAll=function renderEngagementApp(){oldRenderAll();render();window.MerVaultsUI?.render?.();window.MerBillSplitUI?.render?.();window.MerNaturalInputUI?.render?.();};
+  renderAll=function renderEngagementApp(){oldRenderAll();render();window.MerVaultsUI?.render?.();window.MerNaturalInputUI?.render?.();};
   function render() {
     const context=snapshot();
     if(!context.authenticated){if(storyDialog.open)closeModal(storyDialog);if(healthDialog.open)closeModal(healthDialog);return;}
     if(storyDialog.open&&owner!==identity())closeModal(storyDialog);
     if(healthDialog.open&&proposalOwner!==identity())closeModal(healthDialog);
-    const result=E.health(state,options());
-    el('healthScore').textContent=result.score===null?'—':`${result.score}/100`;el('healthLabel').textContent=say('Financijsko zdravlje','Financial health');
-    el('healthRecommendations').innerHTML=result.recommendations.map(key=>`<li>${esc(say(...recommendationCopy[key]))}</li>`).join('');el('healthImprove').textContent=say('Popravi sve','Improve all');
-    splitLedger.textContent=say('Podjela računa','Split bills');splitSubmit.textContent=say('Spremi i podijeli','Save and split');splitSubmit.hidden=transactionType==='income';enhanceActivity();
     el('transactionPaymentLabel').textContent=say('Način plaćanja','Payment method');
     const labels=[say('Prijenos / nije navedeno','Transfer / unspecified'),say('Kartica · zaokruživanje ako je uključeno','Card · roundup if enabled'),say('Gotovina','Cash')];[...el('transactionPaymentMethod').options].forEach((option,index)=>option.textContent=labels[index]);
     if(storyDialog.open)renderStory();
     if(E.shouldAutoOpen(state,context.userId,options())&&!document.querySelector('dialog[open],#onboardingTour:not([hidden])')&&activeView==='overview')setTimeout(()=>{if(activeView==='overview'&&snapshot().authenticated&&!document.querySelector('dialog[open],#onboardingTour:not([hidden])')&&E.shouldAutoOpen(state,snapshot().userId,options()))openWrapped();},250);
   }
-  window.MerEngagementUI={render,openHealth,openWrapped,enhanceActivity};render();
+  window.MerEngagementUI={render,openHealth,openWrapped};render();
 })();

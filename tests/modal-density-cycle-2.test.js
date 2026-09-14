@@ -11,7 +11,7 @@ const rules = source => [...source.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(match 
 test('cycle 2: structured dialogs opt out of the generic outer scrolling fallback', () => {
   const fallback = rules(styles).filter(rule => rule.selector.startsWith('[data-ui="dialog"]:not(.detail-modal)') && /overflow-y\s*:\s*auto/.test(rule.declarations));
   assert.equal(fallback.length, 1, 'one recognizable outer-scroll fallback remains for unstructured dialogs');
-  for (const className of ['premium-settings', 'import-data-modal', 'budget-categories-modal', 'help-assistant-modal', 'subscriptions-modal', 'enterprise-dialog', 'planning-dialog', 'receipt-dialog', 'household-dialog', 'savings-entries-modal', 'assessment-modal']) {
+  for (const className of ['premium-settings', 'import-data-modal', 'budget-categories-modal', 'help-assistant-modal', 'subscriptions-modal', 'enterprise-dialog', 'planning-dialog', 'receipt-dialog', 'savings-entries-modal', 'assessment-modal']) {
     assert.ok(fallback[0].selector.includes(`:not(.${className})`), `${className} must not receive a second outer scrollbar`);
   }
   assert.match(fallback[0].declarations, /overflow-x\s*:\s*hidden/);
@@ -22,7 +22,6 @@ test('cycle 2: long tool content retains its one bounded body scroll owner', () 
     ['enterprise.css', '.enterprise-dialog-body'],
     ['planning.css', '.planning-body'],
     ['receipt.css', '.receipt-body'],
-    ['household.css', '.household-body'],
     ['styles.css', '.savings-entry-list-all']
   ]) {
     const bodyRule = rules(read(file)).find(rule => rule.selector === selector && /overflow-y\s*:\s*auto/.test(rule.declarations));

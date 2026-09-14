@@ -2157,7 +2157,7 @@ select:not([multiple]) {
 .onboarding-popover-close svg { width:18px; }
 .onboarding-progress-row { display:flex; align-items:center; gap:11px; margin-right:34px; color:var(--ink); font-size:.875rem; font-weight:700; }
 .onboarding-progress-track { height:4px; flex:1; overflow:hidden; border-radius:999px; background:var(--line); }
-.onboarding-progress-track i { display:block; width:calc(100% / 7); height:100%; border-radius:inherit; background:var(--blue); transition:width .5s ease-in-out; }
+.onboarding-progress-track i { display:block; width:calc(100% / 5); height:100%; border-radius:inherit; background:var(--blue); transition:width .5s ease-in-out; }
 .onboarding-popover h2 { margin-top:18px; padding-right:8px; font-size:1.375rem; line-height:1.25; }
 .onboarding-popover > p:not(.overline) { margin:10px 0 0; color:var(--ink); font-size:1rem; line-height:1.6; }
 .onboarding-tip { display:flex; align-items:flex-start; gap:9px; margin:16px 0 18px; padding:12px; border:1px solid color-mix(in srgb,var(--blue) 34%,var(--line)); border-radius:9px; color:var(--ink); background:var(--blue-soft); font-size:.9375rem; line-height:1.55; }
@@ -2856,7 +2856,7 @@ body.ui-dialog-open { overflow:hidden !important; overscroll-behavior:none; }
 [data-ui="dialog"] > .modal-close { width:44px; min-width:44px; height:44px; min-height:44px; border-radius:var(--radius-md); }
 [data-ui="dialog"] :is(input,select,textarea) { max-inline-size:100%; }
 [data-ui="dialog"] [data-ui="dialog-footer"] { isolation:isolate; }
-[data-ui="dialog"]:not(.detail-modal):not(.premium-settings):not(.import-data-modal):not(.budget-categories-modal):not(.help-assistant-modal):not(.subscriptions-modal):not(.enterprise-dialog):not(.planning-dialog):not(.receipt-dialog):not(.household-dialog):not(.savings-entries-modal):not(.assessment-modal)[open] { overflow-x:hidden; overflow-y:auto; }
+[data-ui="dialog"]:not(.detail-modal):not(.premium-settings):not(.import-data-modal):not(.budget-categories-modal):not(.help-assistant-modal):not(.subscriptions-modal):not(.enterprise-dialog):not(.planning-dialog):not(.receipt-dialog):not(.savings-entries-modal):not(.assessment-modal)[open] { overflow-x:hidden; overflow-y:auto; }
 [data-ui="scroll-area"],
 [data-ui="table-viewport"] {
   min-inline-size:0;

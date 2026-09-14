@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const read=name=>fs.readFileSync(path.join(__dirname,'..',name),'utf8');
+const engagement=read('engagement-ui.js'),enterprise=read('enterprise-ui.js');
+assert.doesNotMatch(engagement,/financialHealthWidget|healthScoreTrigger|healthRecommendations|healthImprove/,'dashboard health banner is no longer constructed or rendered');
+assert.doesNotMatch(enterprise,/forecastInline/,'30-day inner box and event handlers are removed');
+assert.match(enterprise,/toolbar\.addEventListener\('click',\(\)=>openIntelligence\(\)\)/,'predictive tools remain in Plan ahead');
+assert.match(enterprise,/Financijsko zdravlje — detaljna analiza/,'secondary health information is available through search, not dashboard clutter');
+assert.match(engagement,/openHealth,openWrapped/,'the financial engine is preserved');
+const html=read('index.html');
+for(const id of ['safeRing','safeDaily','safeRemaining','safeBreakdown','budgetList'])assert.ok(html.includes('id="'+id+'"'),id+' is retained for the reactive engine');
+process.stdout.write('Minimal dashboard cycle 1: removed banner/forecast, retained reactive targets and secondary actions passed.\\n');

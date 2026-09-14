@@ -1021,10 +1021,10 @@ function renderActivity() {
     const isScheduled=!MerCore.isTransactionEffective(tx,appReferenceDate);
     const transactionClock=new Intl.DateTimeFormat(locale(),{hour:'2-digit',minute:'2-digit',timeZone:appState.settings.timezone||'Europe/Zagreb'}).format(new Date(tx.date));
     const activityDateLabel=amountSort?`${formatIsoDate(String(tx.date).slice(0,10))} · ${transactionClock}`:transactionClock;
-    return `${header}<div class="transaction-item ${type}${isScheduled?' is-scheduled':''}"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><div class="transaction-meta"><small>${activityDateLabel}</small><span class="transaction-source ${tx.sourceType==='auto'||tx.sourceType==='import'?'auto':''}">${escapeHtml(sourceLabel)}</span>${isScheduled?`<span class="scheduled-transaction-tag">${t('scheduledTransaction')}</span>`:''}${tx.needsReview?`<span class="needs-review-tag">${t('needsReview')}</span>`:''}</div></div><span class="transaction-category">${escapeHtml(displayCategory)}</span><span class="transaction-amount ${type}">${type==='income'?'+':'−'}${currency(tx.amount)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
+    const amountLabel=MerCore.formatTransactionAmount(tx,{locale:locale(),currency:tx.currency||appState.settings.currency||'EUR'});
+    return `${header}<div class="transaction-item ${type}${isScheduled?' is-scheduled':''}"><span class="category-icon ${meta.className}">${categoryIconMarkup(meta)}</span><div class="transaction-copy"><strong>${escapeHtml(tx.name)}</strong><div class="transaction-meta"><small>${activityDateLabel}</small><span class="transaction-source ${tx.sourceType==='auto'||tx.sourceType==='import'?'auto':''}">${escapeHtml(sourceLabel)}</span>${isScheduled?`<span class="scheduled-transaction-tag">${t('scheduledTransaction')}</span>`:''}${tx.needsReview?`<span class="needs-review-tag">${t('needsReview')}</span>`:''}</div></div><span class="transaction-category">${escapeHtml(displayCategory)}</span><span class="transaction-amount ${type}" data-monetary>${escapeHtml(amountLabel)}</span><button type="button" class="icon-button small" data-edit-transaction="${tx.id}" aria-label="${t(type==='income'?'editIncome':'editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;
   }).join('');
   $$('[data-edit-transaction]').forEach(button=>button.addEventListener('click',()=>openTransaction(button.dataset.editTransaction)));
-  window.MerEngagementUI?.enhanceActivity?.();
 }
 
 function escapeHtml(value) { const div=document.createElement('div'); div.textContent=value; return div.innerHTML; }
@@ -1362,7 +1362,6 @@ function setTransactionType(type) {
   const existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
   $('#transactionTitle').textContent=t(existing?(transactionType==='income'?'editIncome':'editExpense'):(transactionType==='income'?'addIncome':'addExpense'));
   $('#transactionSubmit').textContent=t(existing?(transactionType==='income'?'updateIncome':'updateExpense'):(transactionType==='income'?'addIncomeSubmit':'addExpenseSubmit'));
-  if($('#transactionSplitSubmit'))$('#transactionSplitSubmit').hidden=transactionType==='income';
   renderCategorySelects();resetTransactionCheck();evaluateTransaction();
   if($('#transactionB2BRow'))$('#transactionB2BRow').hidden=appState.activeAccount!=='business'||transactionType!=='income';
 }
@@ -1658,7 +1657,6 @@ $('#transactionForm').addEventListener('submit',event=>{
   save(existing?'transaction-edit':'transaction-add');closeModal($('#transactionModal'));
   const successMessage=savedTransaction.status==='scheduled'?t('scheduledTransactionSaved',{date:formatIsoDate(dateValue)}):transactionType==='expense'&&(warning==='monthly-over'||warning==='category-over')?t('transactionAddedOverBudget',{amount:currency(overage)}):existing?.sourceType==='auto'?t('categoryApproved'):t(transactionType==='income'?(existing?'incomeUpdated':'incomeAdded'):(existing?'expenseUpdated':'transactionAdded'));
   showToast(savedTransaction.offlineDraft?(currentLang==='hr'?'Izvanmrežni nacrt je spremljen. Potvrdite ga nakon spajanja.':'Offline draft saved. Confirm it after reconnecting.'):successMessage);editingTransactionId=null;
-  if(event.submitter?.dataset.splitSubmit==='true'&&transactionType==='expense')queueMicrotask(()=>window.MerBillSplitUI?.open(savedTransaction.id));
 });
 $('#deleteTransaction').addEventListener('click',()=>{const existing=state.transactions.find(tx=>String(tx.id)===String(editingTransactionId));if(!existing)return;const type=MerCore.transactionType(existing);MerAccounting.undoRoundUp(state,existing);state.transactions=state.transactions.filter(tx=>String(tx.id)!==String(editingTransactionId));save('transaction-delete');closeModal($('#transactionModal'));showToast(t(type==='income'?'incomeDeleted':'expenseDeleted'));editingTransactionId=null;});
 

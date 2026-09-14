@@ -1,7 +1,7 @@
 (function planNavigation(root) {
   'use strict';
   const origins = new WeakMap();
-  const tools = new Set(['receiptMatcherModal', 'merHouseholdDialog', 'fireSimulatorModal', 'subscriptionRenewalsModal', 'taxVaultModal']);
+  const tools = new Set(['receiptMatcherModal', 'fireSimulatorModal', 'subscriptionRenewalsModal', 'taxVaultModal']);
   const bridge = () => root.MerEnterpriseBridge;
   const context = () => ({ profile:bridge()?.getState().activeProfile, user:bridge()?.currentUser()?.userId });
   const same = (a,b) => a.profile === b.profile && a.user === b.user;

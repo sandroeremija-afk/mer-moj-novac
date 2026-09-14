@@ -1,0 +1,45 @@
+/* One edit action per row; monetary values own their full intrinsic width. */
+#activityView .transaction-item {
+  grid-template-columns:40px minmax(0,1fr) minmax(90px,.45fr) max-content 44px;
+  column-gap:14px;
+  align-items:center;
+  min-width:0;
+  padding-block:14px;
+}
+#activityView .transaction-amount {
+  display:block;
+  width:max-content;
+  max-width:none;
+  justify-self:end;
+  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+  font-size:clamp(.9375rem,1.2vw,1.0625rem);
+  line-height:1.4;
+  font-weight:750;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:0;
+}
+#activityView .transaction-amount.expense { color:#9b333b; }
+#activityView .transaction-amount.income { color:#187344 !important; }
+[data-theme="dark"] #activityView .transaction-amount.expense { color:#ffbec4; }
+[data-theme="dark"] #activityView .transaction-amount.income { color:#80ddb0 !important; }
+#activityView .transaction-item.is-scheduled .transaction-amount { opacity:1; }
+#activityView .transaction-item > [data-edit-transaction] {
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
+}
+#activityView .transaction-meta { min-width:0; flex-wrap:wrap; row-gap:4px; }
+@media (max-width:900px) {
+  #activityView .transaction-item { grid-template-columns:36px minmax(0,1fr) max-content 44px; gap:10px; }
+  #activityView .transaction-category { display:none; }
+}
+@media (max-width:520px) {
+  #activityView .transaction-item { grid-template-columns:32px minmax(0,1fr) 44px; column-gap:10px; row-gap:5px; }
+  #activityView .transaction-item > .category-icon { grid-column:1; grid-row:1 / span 2; align-self:start; width:32px; height:32px; }
+  #activityView .transaction-copy { grid-column:2; grid-row:1; }
+  #activityView .transaction-amount { grid-column:2; grid-row:2; font-size:.9375rem; }
+  #activityView .transaction-item > [data-edit-transaction] { grid-column:3; grid-row:1 / span 2; }
+}

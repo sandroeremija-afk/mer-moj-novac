@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const css=fs.readFileSync(path.join(__dirname,'../dashboard-minimal.css'),'utf8');
+assert.match(css,/align-content:stretch/);assert.match(css,/grid-template-rows:minmax\(0,1fr\)/);
+assert.match(css,/>:is\(\.safe-panel,\.budget-panel\)[^}]*height:100%/);
+assert.match(css,/>:is\(\.safe-panel,\.budget-panel\)[^}]*justify-content:space-between/);
+assert.match(css,/@media\(max-width:1024px\)/);assert.match(css,/height:auto/);
+assert.match(css,/\.safe-footer \.link-button[^}]*min-height:44px/);
+assert.doesNotMatch(css,/\.safe-ring strong|overflow:hidden|display:none/,'layout does not override ring fitting or hide card content');
+process.stdout.write('Minimal dashboard cycle 2: shared height track, mobile natural flow, touch targets and safe ring scaling passed.\\n');

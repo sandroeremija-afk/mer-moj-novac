@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const MerOnboardingCore = require('../onboarding-core.js');
+const ProductionOnboardingCore = require('../onboarding-core.js');
+const CustomSurfaceCore = require('./helpers/onboarding-surface-fixture.js');
 
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
@@ -13,7 +14,10 @@ const source = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 // Execute the real tour adapter without requiring a browser or replacing its
 // state machine. This small DOM models the native-dialog ownership boundaries;
 // responsive pixel geometry remains covered by the separate viewport tests.
-function harness({ width = 1440, height = 900, asynchronousClose = false } = {}) {
+function harness({ width = 1440, height = 900, asynchronousClose = false, minimal = false } = {}) {
+  // Native top-layer support remains tested with explicitly injected surfaces;
+  // production behavior is tested separately with the actual five-step defaults.
+  const MerOnboardingCore = minimal ? ProductionOnboardingCore : CustomSurfaceCore;
   const nodes = new Map();
   const aliases = new Map();
   const calls = [];
@@ -229,7 +233,66 @@ function harness({ width = 1440, height = 900, asynchronousClose = false } = {})
   return { nodes, document, calls, context, navLinks, shell, settings, help, tour, spotlight, originalSibling, start, next, click, flush };
 }
 
-test('cycle 2: Insights uses its full content and settings removes the obsolete nav highlight', () => {
+test('cycle 2: production journey highlights exactly five remaining cards and their navigation links', () => {
+  const env = harness({ minimal:true });
+  env.start();
+  const targetIds = ['overviewFeature', 'sidebarTransaction', 'budgetsFeature', 'savingsFeature', 'insightsView'];
+  for (const [index, step] of ProductionOnboardingCore.DEFAULT_STEPS.entries()) {
+    assert.equal(env.nodes.get('onboardingProgress').textContent, `Korak ${index + 1} od 5`);
+    assert.equal(env.nodes.get(targetIds[index]).classList.contains('tour-target-active'), true, step.id);
+    assert.equal(env.navLinks[step.view].classList.contains('tour-context-active'), true, step.view);
+    assert.equal(env.nodes.get('onboardingContextSpotlight').classList.contains('is-visible'), true);
+    assert.equal(env.nodes.get('onboardingSubstep').hidden, true, 'no invisible filler steps remain');
+    assert.equal(env.tour.parentNode, env.document.body, 'the tour does not open a secondary modal');
+    assert.equal(env.settings.open || env.help.open, false);
+    assert.equal(env.nodes.get('onboardingNext').textContent, index === 4 ? 'Završi' : 'Dalje');
+    env.next();
+  }
+  assert.equal(env.tour.hidden, true);
+  assert.equal(env.shell.inert, false);
+  assert.equal(env.context.activeView, 'insights');
+  assert.equal(env.calls.some(call => call[0] === 'settings' || call[0] === 'help'), false);
+  assert.equal([...env.nodes.values()].some(element => element.classList.contains('tour-target-active') || element.classList.contains('tour-context-active')), false);
+});
+
+test('cycle 2: production phone tour opens the sidebar only for input and restores interaction on Escape', () => {
+  for (const width of [375, 414, 768]) {
+    const env = harness({ minimal:true, width });
+    env.start();
+    env.next();
+    assert.equal(env.nodes.get('sidebar').classList.contains('open'), true);
+    assert.equal(env.nodes.get('sidebarTransaction').classList.contains('tour-target-active'), true);
+    env.next();
+    assert.equal(env.nodes.get('sidebar').classList.contains('open'), false);
+    assert.equal(env.nodes.get('budgetsFeature').classList.contains('tour-target-active'), true);
+    env.next(2);
+    env.document.dispatch('keydown', { key:'Escape' });
+    env.flush();
+    assert.equal(env.tour.hidden, true);
+    assert.equal(env.shell.inert, false);
+    assert.equal(env.context.activeView, 'overview');
+    assert.equal(env.settings.open || env.help.open, false);
+    env.start();
+    assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 1 od 5');
+  }
+});
+
+test('cycle 2: production rapid module navigation keeps one visible overlay and one active target', () => {
+  const env = harness({ minimal:true, asynchronousClose:true });
+  env.start();
+  env.nodes.get('onboardingNext').click();
+  env.nodes.get('onboardingNext').click();
+  env.nodes.get('onboardingPrevious').click();
+  env.flush();
+  assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 2 od 5');
+  assert.equal(env.tour.hidden, false);
+  assert.equal(env.tour.parentNode, env.document.body);
+  assert.equal([...env.nodes.values()].filter(element => element.classList.contains('tour-target-active')).length, 1);
+  assert.equal([...env.nodes.values()].filter(element => element.classList.contains('tour-context-active')).length, 1);
+  assert.equal(env.settings.open || env.help.open, false);
+});
+
+test('cycle 2: an explicitly injected modal journey uses full Insights and clears obsolete nav highlighting', () => {
   const env = harness();
   env.start();
   env.next(4);

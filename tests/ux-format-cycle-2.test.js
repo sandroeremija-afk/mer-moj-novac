@@ -167,7 +167,7 @@ test('cycle 2: redraw restores equivalent controls by ID or data identity', () =
   for (const byId of [true, false]) {
     const env = planHarness(); env.receipt.open = true;
     const original = env.node(byId ? 'receiptManual' : '', 'BUTTON');
-    original.attributes = byId ? [] : [{name:'data-household-tab', value:'members'}];
+    original.attributes = byId ? [] : [{name:'data-receipt-action', value:'review'}];
     env.receipt.children.push(original); original.focus();
     const restore = env.api.preserveFocus(env.receipt);
     original.isConnected = false; env.receipt.children = env.receipt.children.filter(child => child !== original);
@@ -282,10 +282,10 @@ test('cycle 2: Plan toolbar dispatches each action once through its permanent de
   vm.runInNewContext(listeners.join('\n'), {
     suiteTools:{addEventListener(type, callback) { assert.equal(type, 'click'); callbacks.push(callback); }},
     openTaxVault:() => calls.push('tax'),
-    window:{MerReceiptUI:{open:() => calls.push('receipt')}, MerPlanningUI:{open:action => calls.push(action)}, MerHouseholdUI:{open:() => calls.push('household')}}
+    window:{MerReceiptUI:{open:() => calls.push('receipt')}, MerPlanningUI:{open:action => calls.push(action)}}
   });
   for (const action of ['receipt', 'fire', 'renewals', 'household', 'tax']) {
     for (const callback of callbacks) callback({target:{closest:() => ({dataset:{suiteAction:action}})}});
   }
-  assert.deepEqual(calls, ['receipt', 'fire', 'renewals', 'household', 'tax']);
+  assert.deepEqual(calls, ['receipt', 'fire', 'renewals', 'tax'],'retired household actions never dispatch a tool');
 });

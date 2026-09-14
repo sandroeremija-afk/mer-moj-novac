@@ -1,5 +1,10 @@
 # Local household spaces
 
+> Archived feature: the minimalist UI release removed all shared bill splitting,
+> household forms, commands and runtime modules. Existing `enterprise.households`
+> cache data is preserved as inert historical data; it does not affect financial
+> totals or expose a current UI. The notes below document the retired prototype.
+
 The shared-space interface is an explicitly local prototype. It does not invite users, send messages, connect another account, transfer funds, or synchronize devices. Participant names are local ledger labels. The UI states this before creation and inside the space.
 
 ## Data boundary

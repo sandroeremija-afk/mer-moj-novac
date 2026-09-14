@@ -2,7 +2,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { DEFAULT_STEPS, createOnboardingController } = require('../onboarding-core.js');
+// Preserve custom-substep persistence coverage without restoring those steps in the app.
+const { DEFAULT_STEPS, createOnboardingController } = require('./helpers/onboarding-surface-fixture.js');
 
 function storage(seed = {}) {
   const values = new Map(Object.entries(seed));
@@ -17,7 +18,7 @@ function atSettings(options = {}) {
   return controller;
 }
 
-test('cycle 1: settings exposes preferences, password and MFA without adding main steps', () => {
+test('cycle 1: an explicit custom fixture exposes preferences, password and MFA substeps', () => {
   assert.equal(DEFAULT_STEPS.length, 7);
   const settings = DEFAULT_STEPS[5];
   assert.equal(settings.surface, 'settings');

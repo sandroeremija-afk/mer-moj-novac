@@ -19,8 +19,8 @@ test('evaluation cycle 2: onboarding popovers use dynamic density with no intern
   assert.doesNotMatch(ui, /maxHeight:`\$\{layout\.popover\.height\}px`/);
 });
 
-test('evaluation cycle 2: compact actions and runtime progress match the audited seven-step flow', () => {
-  assert.equal(MerOnboarding.DEFAULT_STEPS.length, 7);
+test('evaluation cycle 2: compact actions and runtime progress match the audited five-step flow', () => {
+  assert.equal(MerOnboarding.DEFAULT_STEPS.length, 5);
   assert.match(ui, /stepNumber \/ controller\.steps\.length \* 100/);
   assert.match(ui, /`Korak \$\{stepNumber\} od \$\{controller\.steps\.length\}`/);
   assert.match(css, /\.onboarding-actions\s*\{[^}]*align-items:center;[^}]*flex-direction:row;/);
