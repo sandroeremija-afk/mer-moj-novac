@@ -13,9 +13,9 @@
     const dialog = document.createElement('dialog');
     dialog.id=id; dialog.className=`modal enterprise-dialog ${className}`;
     dialog.setAttribute('aria-labelledby',`${id}Title`);
-    dialog.innerHTML=`<header class="enterprise-dialog-head"><h2 id="${id}Title">${esc(title)}</h2><button type="button" class="icon-button" data-enterprise-close aria-label="${copy('Zatvori','Close')}">${icon('x')}</button></header>${body}`;
+    dialog.innerHTML=`<header class="enterprise-dialog-head"><h2 id="${id}Title">${esc(title)}</h2><button type="button" class="icon-button" data-enterprise-close aria-label="${copy('Zatvori','Close')}">${icon('x')}</button></header>${body}<footer class="modal-actions enterprise-footer"><button type="button" class="secondary-button" data-enterprise-close data-enterprise-footer-close>${copy('Zatvori','Close')}</button></footer>`;
     document.body.append(dialog);
-    dialog.querySelector('[data-enterprise-close]').addEventListener('click',()=>closeModal(dialog));
+    dialog.querySelectorAll('[data-enterprise-close]').forEach(button=>button.addEventListener('click',()=>closeModal(dialog)));
     dialog.addEventListener('close',()=>{syncModalLayer(); if(dialog.id==='intelligenceModal')pendingAnalysis?.abort();});
     MerRuntime.bindDialogBackdropDismiss(dialog,()=>closeModal(dialog));
     return dialog;
@@ -147,7 +147,7 @@
   const intelligence=makeDialog('intelligenceModal',copy('Planirajte s više sigurnosti','Plan with confidence'),`<p class="enterprise-muted" id="intelligenceProfile"></p><div class="enterprise-tabs" role="tablist"><button type="button" data-intelligence-tab="forecast" role="tab">${copy('Novčani tok','Cash flow')}</button><button type="button" data-intelligence-tab="scenario" role="tab">${copy('Isprobaj scenarij','What if?')}</button><button type="button" data-intelligence-tab="rules" role="tab">${copy('Automatizacija','Automation')}</button></div><div class="enterprise-dialog-body"><section id="enterpriseForecast" role="tabpanel"></section><section id="enterpriseScenario" role="tabpanel" hidden><p>${copy('Isprobajte veću kupnju bez promjene stvarnih podataka.','Model a large purchase without changing your real data.')}</p><label class="enterprise-field">${copy('Iznos kupnje','Purchase amount')}<input id="scenarioAmount" type="number" min="0" max="999999999" step="0.01" value="0" inputmode="decimal"></label><div id="scenarioResults" aria-live="polite"></div></section><section id="enterpriseRules" role="tabpanel" hidden></section></div>`);
   const suiteTools=document.createElement('div');suiteTools.className='enterprise-tools';
   const planBack=document.createElement('button');planBack.type='button';planBack.className='secondary-button plan-back';planBack.id='planOverviewBack';planBack.hidden=true;
-  intelligence.querySelector('header').prepend(planBack);planBack.addEventListener('click',()=>showIntelligenceTab('forecast'));
+  intelligence.querySelector('.enterprise-footer').prepend(planBack);planBack.addEventListener('click',()=>showIntelligenceTab('forecast'));
   const taxDialog=makeDialog('taxVaultModal',copy('Porezni trezor','Tax vault'),'<div class="enterprise-dialog-body" id="planTaxBody"></div>');
   function renderTaxVault(){
     if(appState.activeAccount!=='business'){if(taxDialog.open)closeModal(taxDialog);return;}
@@ -212,7 +212,7 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
     document.querySelectorAll('[data-remove-payday]').forEach(button=>button.addEventListener('click',()=>{state.enterprise.paydayRules=rules.filter(r=>r.id!==button.dataset.removePayday);save('payday-rule-remove');}));
     el('taxVaultToggle')?.addEventListener('change',event=>{state.enterprise||={};state.enterprise.taxVault={...state.enterprise.taxVault,enabled:event.target.checked,rate:25,currency:state.enterprise.taxVault?.currency||appState.settings.currency,startDate:state.enterprise.taxVault?.startDate||appReferenceDate};save('tax-vault-toggle');});
   }
-  function showIntelligenceTab(tab){currentTab=tab;planBack.hidden=tab==='forecast';planBack.textContent=copy('← Natrag','← Back');['forecast','scenario','rules'].forEach(name=>{el(`enterprise${name[0].toUpperCase()+name.slice(1)}`).hidden=name!==tab;document.querySelector(`[data-intelligence-tab="${name}"]`).setAttribute('aria-selected',String(name===tab));});if(tab==='forecast')renderForecast();if(tab==='scenario')renderScenario();if(tab==='rules')renderRules();if(document.activeElement===planBack&&planBack.hidden)document.querySelector('[data-intelligence-tab="forecast"]').focus({preventScroll:true});}
+  function showIntelligenceTab(tab){currentTab=tab;planBack.hidden=tab==='forecast';planBack.textContent=copy('Natrag','Back');intelligence.querySelector('[data-enterprise-footer-close]').hidden=tab!=='forecast';['forecast','scenario','rules'].forEach(name=>{el(`enterprise${name[0].toUpperCase()+name.slice(1)}`).hidden=name!==tab;document.querySelector(`[data-intelligence-tab="${name}"]`).setAttribute('aria-selected',String(name===tab));});if(tab==='forecast')renderForecast();if(tab==='scenario')renderScenario();if(tab==='rules')renderRules();if(document.activeElement===planBack&&planBack.hidden)document.querySelector('[data-intelligence-tab="forecast"]').focus({preventScroll:true});}
   function openIntelligence(tab='forecast'){el('intelligenceProfile').textContent=state.accountName||appState.activeAccount;showIntelligenceTab(tab);openModal(intelligence);}
   toolbar.addEventListener('click',()=>openIntelligence());
   document.querySelectorAll('[data-intelligence-tab]').forEach(button=>button.addEventListener('click',()=>showIntelligenceTab(button.dataset.intelligenceTab)));
@@ -253,6 +253,7 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
   draftDialog.addEventListener('click',event=>{const post=event.target.closest('[data-post-draft]'),remove=event.target.closest('[data-delete-draft]');if(post&&navigator.onLine){const tx=state.transactions.find(tx=>tx.id===post.dataset.postDraft&&tx.offlineDraft);if(tx){delete tx.offlineDraft;tx.status='posted';MerCore.updateTransactionSchedule(tx,appReferenceDate);MerAccounting.applyRoundUp(state,tx,appReferenceDate);save('offline-draft-post');renderDrafts();}}if(remove){state.transactions=state.transactions.filter(tx=>!(tx.id===remove.dataset.deleteDraft&&tx.offlineDraft));save('offline-draft-delete');renderDrafts();}});
   function render(){
     window.MerEnterpriseSecurity?.syncAutoLock();
+    document.querySelectorAll('[data-enterprise-footer-close]').forEach(button=>{button.textContent=copy('Zatvori','Close');});
     renderSecurity();
     suiteTools.innerHTML=[['receipt','Skeniraj račun','Scan receipt'],['fire','FIRE simulator','FIRE simulator'],['renewals','Obnove pretplata','Renewals']].map(([id,hr,en])=>`<button type="button" class="secondary-button" data-suite-action="${id}">${copy(hr,en)}</button>`).join('');
     if(appState.activeAccount==='business')suiteTools.insertAdjacentHTML('beforeend',`<button type="button" class="secondary-button" data-suite-action="tax">${copy('Porezni trezor','Tax vault')}</button>`);

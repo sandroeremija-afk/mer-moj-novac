@@ -1,0 +1,91 @@
+/* Notification titles carry the hierarchy; actions remain quiet and easy to tap. */
+:root {
+  --notice-title:#111827;
+  --notice-body:#4b5563;
+  --notice-action:#0891b2;
+  --notice-secondary:#6b7280;
+  --notice-secondary-hover:#374151;
+}
+[data-theme="dark"] {
+  --notice-title:#f3f4f6;
+  --notice-body:#d1d5db;
+  --notice-action:#67e8f9;
+  --notice-secondary:#9ca3af;
+  --notice-secondary-hover:#e5e7eb;
+}
+#notificationCenter {
+  max-block-size:min(680px,calc(100dvh - 96px));
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+#notificationCenter .notification-copy > strong {
+  font-size:16px;
+  font-weight:600;
+  line-height:1.4;
+  color:var(--notice-title);
+  overflow-wrap:anywhere;
+}
+#notificationCenter .notification-copy :is(p,time),
+#notificationCenter .notification-empty {
+  font-size:14px;
+  font-weight:400;
+  line-height:1.5;
+  color:var(--notice-body);
+  overflow-wrap:anywhere;
+}
+#notificationCenter .notification-actions { gap:4px 12px; }
+#notificationCenter .notification-actions .link-button {
+  min-height:44px;
+  font-size:12px;
+  font-weight:500;
+  line-height:1.5;
+  color:var(--notice-action);
+  white-space:normal;
+  text-align:left;
+}
+#notificationCenter .notification-actions .resolve-alert-button {
+  font-weight:400;
+  color:var(--notice-secondary);
+}
+#notificationCenter .notification-actions .resolve-alert-button:hover {
+  color:var(--notice-secondary-hover);
+}
+
+/* Scheduled-payment, subscription and FIRE metadata share a readable neutral scale. */
+#subscriptionsModal :is(.subscription-item small,.subscription-summary small),
+#budgetDetailsModal .recurring-copy small,
+#recurringModal #recurringPreview,
+.planning-dialog :is(.planning-value-input span,.planning-savings-rate small,.planning-result > span,.planning-legend,.planning-renewal small,.planning-empty p) {
+  font-size:12px;
+  font-weight:400;
+  line-height:1.5;
+  color:var(--notice-body);
+  overflow-wrap:anywhere;
+}
+#subscriptionsModal .subscription-item strong,
+#budgetDetailsModal :is(.recurring-copy strong,.recurring-amount) {
+  font-size:14px;
+  font-weight:600;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+.planning-dialog :is(.planning-slider label,.planning-form-grid label) {
+  font-size:14px;
+  font-weight:500;
+  line-height:1.5;
+  color:var(--notice-body);
+}
+.planning-dialog :is(.planning-intro,.planning-note) {
+  font-size:14px;
+  color:var(--notice-body);
+}
+.planning-dialog .planning-chart text { font-size:12px; fill:var(--notice-body); }
+.planning-dialog .planning-badge { font-size:12px; line-height:1.5; }
+.planning-dialog .planning-value-input span { flex:0 0 auto; white-space:nowrap; overflow-wrap:normal; }
+#subscriptionsModal .subscription-item > :is(div,span:last-child) { min-width:0; }
+@media(max-width:480px) {
+  #subscriptionsModal .subscription-item { grid-template-columns:32px minmax(0,1fr); }
+  #subscriptionsModal .subscription-logo { width:32px; height:32px; }
+  #subscriptionsModal .subscription-item > span:last-child { grid-column:2; align-items:flex-start; }
+}

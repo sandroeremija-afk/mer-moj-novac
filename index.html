@@ -30,6 +30,8 @@
   <link rel="stylesheet" href="minimal-activity.css">
   <link rel="stylesheet" href="savings-minimal.css">
   <link rel="stylesheet" href="insights-polish.css">
+  <link rel="stylesheet" href="notification-hierarchy.css">
+  <link rel="stylesheet" href="modal-footer.css">
   <link id="exportPdfLibrary" rel="prefetch" as="script" href="assets/jspdf-4.2.1.min.js">
   <link id="exportPdfFont" rel="prefetch" as="fetch" href="assets/mer-export-font.ttf" crossorigin>
   <link rel="manifest" href="manifest.webmanifest">
@@ -267,18 +269,17 @@
         <div class="bank-empty-state" id="bankEmptyState"><span class="empty-bank-icon"><svg aria-hidden="true"><use href="#icon-bank"></use></svg></span><strong data-i18n="noBankConnections">Još nema povezanih računa</strong><p data-i18n="noBankConnectionsBody">Povežite demo banku kako biste isprobali automatski uvoz bez dijeljenja stvarnih vjerodajnica.</p></div>
       </section>
       <form class="bank-connect-flow bank-connection-wizard" id="bankConnectForm" hidden>
-        <div class="connect-flow-head"><div><p class="overline" id="bankConnectionStepLabel">KORAK 1 OD 2</p><h3 id="bankConnectionStepTitle" data-i18n="chooseInstitution">Odaberite instituciju</h3></div><button type="button" class="icon-button small" id="cancelBankConnection" aria-label="Zatvori" data-i18n-aria="close"><svg aria-hidden="true"><use href="#icon-x"></use></svg></button></div>
+        <div class="connect-flow-head"><div><p class="overline" id="bankConnectionStepLabel">KORAK 1 OD 2</p><h3 id="bankConnectionStepTitle" data-i18n="chooseInstitution">Odaberite instituciju</h3></div></div>
         <div class="bank-step-indicator" aria-hidden="true"><span class="active" data-bank-step-indicator="institution"></span><span data-bank-step-indicator="accounts"></span></div>
         <section class="bank-connect-step" id="bankInstitutionStep" data-bank-step="institution"><p class="bank-step-copy" data-i18n="institutionStepHint">Odaberite banku ili kartični servis koji želite povezati.</p><div class="provider-grid" id="providerGrid"></div></section>
         <section class="bank-connect-step" id="bankAccountStep" data-bank-step="accounts" hidden>
-          <button type="button" class="bank-wizard-back" id="bankConnectionBack"><svg aria-hidden="true"><use href="#icon-left"></use></svg><span data-i18n="backToInstitutions">Natrag na institucije</span></button>
           <fieldset class="bank-account-picker" id="bankAccountPicker" aria-describedby="bankAccountSelectionError"><legend data-i18n="chooseAccounts">Odaberite račune ili kartice</legend><div id="providerAccountList"></div></fieldset>
           <p class="bank-account-selection-error" id="bankAccountSelectionError" role="alert" aria-live="polite" data-i18n="bankAccountSelectionRequired" hidden>Molimo označite banku ili karticu prije nastavka.</p>
           <div class="bank-credentials-grid"><label><span data-i18n="connectionAlias">Naziv veze</span><input id="bankConnectionAlias" type="text" maxlength="40" autocomplete="off" placeholder="npr. Glavni račun" data-i18n-placeholder="connectionAliasPlaceholder"></label><label><span data-i18n="apiAccessToken">API pristupni token</span><input id="bankApiToken" type="password" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Demo token (neobavezno)" data-i18n-placeholder="apiTokenPlaceholder"></label></div>
           <label id="bankProfileLabel"><span data-i18n="assignProfile">Dodijeli profilu</span><select id="bankProfileSelect"><option value="personal" data-i18n="personalAccount">Osobni račun</option><option value="business" data-i18n="businessAccount">Poslovni račun</option></select></label>
           <p class="consent-copy" id="bankConsentCopy"><svg aria-hidden="true"><use href="#icon-lock"></use></svg><span data-i18n="demoConsentExtended">Demo token koristi se samo tijekom povezivanja i nikada se ne sprema. Bankovne lozinke nisu potrebne.</span></p>
-          <button type="submit" class="primary-button full-width" id="connectSelectedAccounts"><span data-i18n="connectAndSync">Poveži i sinkroniziraj</span></button>
         </section>
+        <footer class="modal-actions bank-flow-footer"><button type="button" class="secondary-button" id="bankConnectionBack" hidden><span data-i18n="back">Natrag</span></button><button type="button" class="secondary-button" id="cancelBankConnection"><span data-i18n="back">Natrag</span></button><button type="submit" class="primary-button" id="connectSelectedAccounts" hidden><span data-i18n="connectAndSync">Poveži i sinkroniziraj</span></button></footer>
       </form>
       <div class="bank-action-tooltip" id="bankActionTooltip" role="tooltip" hidden></div>
     </div>
@@ -401,5 +402,6 @@
   <script src="engagement-init.js"></script>
   <script src="popup-layout.js"></script>
   <script src="savings-minimal.js"></script>
+  <script src="modal-footer.js"></script>
 </body>
 </html>

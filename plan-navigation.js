@@ -25,16 +25,22 @@
   }
   function enhance(dialog) {
     if (!dialog || !tools.has(dialog.id)) return;
+    // Camera/review Back belongs to the receipt's current step, before returning to Plan.
+    if (dialog.querySelector('#receiptBack')) return;
     if (dialog.querySelector('[data-plan-back]')) return;
     // FIRE and renewal views supply their own translated Back controls.
     if (dialog.id==='fireSimulatorModal' || dialog.id==='subscriptionRenewalsModal') return;
-    const heading=dialog.querySelector('header');
-    if (!heading) return;
+    let footer=dialog.querySelector('footer');
+    if (!footer) {
+      footer=document.createElement('footer');
+      footer.className=dialog.id==='receiptMatcherModal'?'receipt-footer':'modal-actions enterprise-footer';
+      dialog.append(footer);
+    }
     const button=document.createElement('button');
     button.type='button';button.className='secondary-button plan-back';button.dataset.planBack='';
-    button.textContent=bridge()?.getState().language==='en'?'← Back':'← Natrag';
+    button.textContent=bridge()?.getState().language==='en'?'Back':'Natrag';
     button.addEventListener('click',()=>back(dialog));
-    heading.prepend(button);
+    footer.prepend(button);
   }
   function preserveFocus(dialog) {
     const active=document.activeElement;

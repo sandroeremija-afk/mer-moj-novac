@@ -110,9 +110,11 @@ function planHarness() {
       closest(selector) { return selector === '[data-suite-action]' && this.dataset.suiteAction ? this : null; },
       addEventListener(type, callback) { this[type] = callback; },
       prepend(child) { this.children.unshift(child); },
+      append(child) { this.children.push(child); },
       focus() { document.activeElement = this; },
       querySelector(selector) {
-        if (selector === 'header') return this.children.find(child => child.tagName === 'HEADER') || null;
+        if (selector === 'header' || selector === 'footer') return this.children.find(child => child.tagName === selector.toUpperCase()) || null;
+        if (selector.startsWith('#')) return this.descendants().find(child => child.id === selector.slice(1)) || null;
         if (selector === '[data-plan-back]') return this.descendants().find(child => child.dataset.planBack !== undefined) || null;
         return null;
       },
@@ -145,11 +147,35 @@ test('cycle 2: receipt Back returns to Plan and restores its originating action'
   env.plan.open = true; env.action.focus();
   env.api.enter(env.receipt); env.api.enhance(env.receipt);
   assert.ok(env.receipt.querySelector('[data-plan-back]'), 'the real receipt dialog receives a Back control');
+  const back=env.receipt.querySelector('[data-plan-back]');
+  assert.equal(env.receipt.querySelector('footer').children[0],back,'Plan navigation occupies the footer start');
+  assert.equal(env.receipt.querySelector('header').querySelector('[data-plan-back]'),null);
+  assert.equal(back.textContent,'Back','Back has a plain label');
+  env.api.enhance(env.receipt);
+  assert.equal(env.receipt.descendants().filter(child=>child.dataset.planBack!==undefined).length,1,'repeated enhancement preserves one existing handler');
   env.plan.open = false; env.receipt.open = true;
   env.api.back(env.receipt); env.flush();
   assert.deepEqual(env.closed, ['receiptMatcherModal']);
   assert.deepEqual(env.opened, ['forecast']);
   assert.equal(env.document.activeElement, env.action);
+});
+
+test('cycle 2: receipt camera/review Back retains priority over leaving Plan', () => {
+  const env = planHarness();
+  const footer=env.node('','FOOTER'), localBack=env.node('receiptBack','BUTTON');
+  footer.append(localBack);env.receipt.append(footer);
+  env.api.enhance(env.receipt);
+  assert.equal(env.receipt.querySelector('[data-plan-back]'),null);
+  assert.equal(footer.children[0],localBack,'normalization must not replace the local stage control');
+});
+
+test('cycle 2: existing tool footer retains its primary action after Plan Back is inserted', () => {
+  const env = planHarness(), footer=env.node('','FOOTER'), primary=env.node('receiptAnalyze','BUTTON');
+  footer.append(primary);env.receipt.append(footer);
+  env.api.enhance(env.receipt);
+  assert.equal(env.receipt.querySelector('footer'),footer);
+  assert.equal(footer.children[0],env.receipt.querySelector('[data-plan-back]'));
+  assert.equal(footer.children.at(-1),primary);
 });
 
 test('cycle 2: Back cannot reopen a Plan from another profile or a locked session', () => {

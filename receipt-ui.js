@@ -10,25 +10,34 @@
   const x = R.escapeHtml;
   const decimal = cents => cents === null || cents === undefined ? '' : (cents / 100).toFixed(2);
   const money = (cents,currency = 'EUR') => root.MerCore.formatCurrency((cents || 0)/100,{locale:snapshot().language==='en'?'en-IE':'hr-HR',currency});
-  let dialog, receipt, preparedImage, previewUrl, guard, owner, controller, selectedId = '', preferredId = '', viewedTransactionId = '', returnFocus;
+  let dialog, receipt, preparedImage, previewUrl, guard, owner, controller, cameraSession, selectedId = '', preferredId = '', viewedTransactionId = '', returnFocus;
   const current = () => dialog?.open && profileId() === owner;
+  const cameraAllowed = () => current() && !root.MerEnterpriseSecurity?.isLocked?.() && !document.getElementById?.('appShell')?.hidden && !document.getElementById?.('appShell')?.inert;
   const uid = () => `receipt-${root.crypto.randomUUID()}`;
   function clearImage() { if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = ''; preparedImage = null; }
-  function stop() { guard?.invalidate(); controller?.abort(); controller = null; }
-  function close() { if (dialog?.open) { if(bridge()?.closeModal)bridge().closeModal(dialog);else dialog.close(); } }
+  function stopCamera() {
+    const session=cameraSession;cameraSession=null;
+    if(!session)return;
+    session.shellObserver?.disconnect();
+    for(const track of session.stream?.getTracks()||[]) { track.removeEventListener?.('ended',session.onEnded);track.stop(); }
+    session.video.pause();session.video.srcObject=null;
+  }
+  function stop() { guard?.invalidate(); controller?.abort(); controller = null; stopCamera(); }
+  function close() { stop();if (dialog?.open) { if(bridge()?.closeModal)bridge().closeModal(dialog);else dialog.close(); } }
   function showError(message) { const box=dialog.querySelector('[data-receipt-error]'); if(box){box.textContent=message;box.hidden=!message;} }
   function heading(title) {
     return `<header class="receipt-head"><div><span>${copy('Računi i potvrde','Receipts and invoices')} · ${owner==='business'?copy('Poslovni profil','Business profile'):copy('Osobni profil','Personal profile')}</span><h2 id="receiptDialogTitle">${x(title)}</h2></div><button type="button" class="icon-button" data-receipt-close aria-label="${copy('Zatvori','Close')}">×</button></header>`;
   }
   function bindClose() { dialog.querySelectorAll('[data-receipt-close]').forEach(button=>button.addEventListener('click',close));root.MerPlanNavigation?.enhance(dialog); }
-  function renderUpload(message = '') {
-    dialog.innerHTML = `${heading(copy('Skenirajte i povežite račun','Scan and match a receipt'))}<div class="receipt-body"><p class="receipt-intro">${copy('Dodajte fotografiju računa. Pregledat ćete očitane stavke i potvrditi povezivanje s postojećom transakcijom.','Add a receipt photo. Review extracted items and confirm the link to an existing transaction.')}</p><div class="receipt-drop" id="receiptDrop" tabindex="0" role="button" aria-label="${copy('Odaberite fotografiju računa','Choose a receipt photo')}">${previewUrl?`<img src="${x(previewUrl)}" alt="${copy('Odabrani račun','Selected receipt')}"><span>${x(receipt.fileName)}</span>`:`<strong>${copy('Povucite račun ovdje','Drop a receipt here')}</strong><span>${copy('ili odaberite fotografiju · JPEG, PNG, WebP','or choose a photo · JPEG, PNG, WebP')}</span>`}</div><div class="receipt-upload-actions"><button class="secondary-button" type="button" id="receiptChoose">${copy('Odaberi datoteku','Choose file')}</button><button class="secondary-button" type="button" id="receiptCamera">${copy('Fotografiraj račun','Take photo')}</button></div><input id="receiptFile" type="file" accept="image/jpeg,image/png,image/webp" hidden><input id="receiptCameraFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden><label class="receipt-check"><input type="checkbox" id="receiptConsent"><span>${copy('Dopuštam slanje ove fotografije Google Gemini servisu radi očitavanja. Fotografija može sadržavati osobne podatke. Podaci o mojim bankovnim transakcijama ne šalju se.','I consent to sending this photo to Google Gemini for extraction. It may contain personal information. My bank transaction data will not be sent.')}</span></label><p class="receipt-note">${copy('Fotografija se ne sprema uz transakciju; spremit će se samo potvrđeni podaci računa.','The photo is not stored with the transaction; only reviewed receipt details are saved.')}</p><p role="alert" data-receipt-error ${message?'':'hidden'}>${x(message)}</p><div id="receiptLoading" class="receipt-loading" hidden role="status"><span>${copy('Očitavam račun…','Reading receipt…')}</span><i></i><i></i><i></i></div></div><footer class="receipt-footer"><button class="secondary-button" type="button" data-receipt-close>${copy('Otkaži','Cancel')}</button><button class="secondary-button" type="button" id="receiptManual">${copy('Unesi ručno','Enter manually')}</button><button class="primary-button" type="button" id="receiptAnalyze" ${preparedImage?'':'disabled'}>${copy('Očitaj račun','Read receipt')}</button></footer>`;
+  function renderUpload(message = '', nativeFallback = false) {
+    stopCamera();
+    dialog.innerHTML = `${heading(copy('Skenirajte i povežite račun','Scan and match a receipt'))}<div class="receipt-body"><p class="receipt-intro">${copy('Dodajte fotografiju računa. Pregledat ćete očitane stavke i potvrditi povezivanje s postojećom transakcijom.','Add a receipt photo. Review extracted items and confirm the link to an existing transaction.')}</p><div class="receipt-drop" id="receiptDrop" tabindex="0" role="button" aria-label="${copy('Odaberite fotografiju računa','Choose a receipt photo')}">${previewUrl?`<img src="${x(previewUrl)}" alt="${copy('Odabrani račun','Selected receipt')}"><span>${x(receipt.fileName)}</span>`:`<strong>${copy('Povucite račun ovdje','Drop a receipt here')}</strong><span>${copy('ili odaberite fotografiju · JPEG, PNG, WebP','or choose a photo · JPEG, PNG, WebP')}</span>`}</div><div class="receipt-upload-actions"><button class="secondary-button" type="button" id="receiptChoose">${copy('Odaberi datoteku','Choose file')}</button><button class="secondary-button" type="button" id="receiptCamera">${copy('Fotografiraj račun','Take photo')}</button></div><input id="receiptFile" type="file" accept="image/jpeg,image/png,image/webp" hidden><input id="receiptCameraFile" type="file" accept="image/*" capture="environment" hidden><label class="receipt-check"><input type="checkbox" id="receiptConsent"><span>${copy('Dopuštam slanje ove fotografije Google Gemini servisu radi očitavanja. Fotografija može sadržavati osobne podatke. Podaci o mojim bankovnim transakcijama ne šalju se.','I consent to sending this photo to Google Gemini for extraction. It may contain personal information. My bank transaction data will not be sent.')}</span></label><p class="receipt-note">${copy('Fotografija se ne sprema uz transakciju; spremit će se samo potvrđeni podaci računa.','The photo is not stored with the transaction; only reviewed receipt details are saved.')}</p><p role="alert" data-receipt-error ${message?'':'hidden'}>${x(message)}</p><div id="receiptLoading" class="receipt-loading" hidden role="status"><span>${copy('Očitavam račun…','Reading receipt…')}</span><i></i><i></i><i></i></div></div><footer class="receipt-footer"><button class="secondary-button" type="button" data-receipt-close>${copy('Zatvori','Close')}</button><button class="secondary-button" type="button" id="receiptManual">${copy('Unesi ručno','Enter manually')}</button><button class="primary-button" type="button" id="receiptAnalyze" ${preparedImage?'':'disabled'}>${copy('Očitaj račun','Read receipt')}</button></footer>`;
     bindClose();
     const input=dialog.querySelector('#receiptFile'), camera=dialog.querySelector('#receiptCameraFile'), drop=dialog.querySelector('#receiptDrop');
     const change=event=>{const file=event.target.files?.[0];if(file)prepareFile(file);};
     input.addEventListener('change',change);camera.addEventListener('change',change);
     dialog.querySelector('#receiptChoose').addEventListener('click',()=>input.click());
-    dialog.querySelector('#receiptCamera').addEventListener('click',()=>camera.click());
+    dialog.querySelector('#receiptCamera').addEventListener('click',()=>nativeFallback?camera.click():startCamera());
     drop.addEventListener('click',()=>input.click());
     drop.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();input.click();}});
     drop.addEventListener('dragover',event=>{event.preventDefault();drop.classList.add('dragging');});
@@ -36,6 +45,53 @@
     drop.addEventListener('drop',event=>{event.preventDefault();drop.classList.remove('dragging');const file=event.dataTransfer?.files?.[0];if(file)prepareFile(file);});
     dialog.querySelector('#receiptManual').addEventListener('click',()=>{stop();receipt.source='manual';renderReview();});
     dialog.querySelector('#receiptAnalyze').addEventListener('click',analyze);
+  }
+  function cameraFailure(failure) {
+    if(failure?.name==='NotAllowedError'||failure?.name==='SecurityError')return copy('Pristup kameri nije dopušten. Dopustite kameru u postavkama preglednika ili odaberite datoteku. Gumb Fotografiraj račun može otvoriti kameru uređaja.','Camera access is blocked. Allow camera access in your browser settings or choose a file. Take photo can open the device camera.');
+    if(failure?.name==='NotFoundError')return copy('Kamera nije pronađena. Priključite kameru ili odaberite fotografiju računa.','No camera was found. Connect a camera or choose a receipt photo.');
+    return copy('Kameru nije moguće pokrenuti. Zatvorite druge aplikacije koje je koriste ili odaberite fotografiju.','The camera could not start. Close other apps using it or choose a photo.');
+  }
+  async function startCamera() {
+    if(!cameraAllowed())return;
+    if(!root.navigator?.mediaDevices?.getUserMedia||root.isSecureContext===false){dialog.querySelector('#receiptCameraFile').click();return;}
+    stop();
+    dialog.innerHTML=`${heading(copy('Fotografiraj račun','Take a receipt photo'))}<div class="receipt-body"><p class="receipt-intro">${copy('Postavite cijeli račun u kadar i pričekajte da tekst bude oštar.','Fit the whole receipt in the frame and wait until the text is sharp.')}</p><div class="receipt-camera-preview"><video id="receiptCameraPreview" autoplay muted playsinline aria-label="${copy('Prikaz kamere uživo','Live camera preview')}"></video></div><p id="receiptCameraStatus" class="receipt-note" role="status" aria-live="polite">${copy('Čekam dopuštenje za kameru…','Waiting for camera permission…')}</p><p class="receipt-note">${copy('Fotografija ostaje na uređaju dok ne dopustite AI očitavanje. Zvuk se ne snima.','The photo stays on your device until you consent to AI extraction. Audio is not recorded.')}</p><p role="alert" data-receipt-error hidden></p></div><footer class="receipt-footer"><button class="secondary-button" type="button" id="receiptBack">${copy('Natrag','Back')}</button><button class="secondary-button" type="button" id="receiptCameraChoose">${copy('Odaberi datoteku','Choose file')}</button><button class="primary-button" type="button" id="receiptSnap" disabled>${copy('Snimi fotografiju','Capture photo')}</button></footer>`;
+    bindClose();
+    const video=dialog.querySelector('#receiptCameraPreview'),snap=dialog.querySelector('#receiptSnap'),status=dialog.querySelector('#receiptCameraStatus');
+    const session={video,stream:null,busy:false};cameraSession=session;
+    const active=()=>cameraSession===session&&cameraAllowed()&&!document.hidden;
+    const shell=document.getElementById?.('appShell');
+    if(shell&&root.MutationObserver){session.shellObserver=new root.MutationObserver(()=>{if(cameraSession===session&&(shell.hidden||shell.inert))close();});session.shellObserver.observe(shell,{attributes:true,attributeFilter:['hidden','inert']});}
+    const ready=()=>{if(active()&&!session.busy&&video.readyState>=2&&video.videoWidth&&video.videoHeight){snap.disabled=false;status.textContent=copy('Kamera je spremna. Snimite fotografiju računa.','Camera ready. Capture your receipt.');}};
+    video.muted=true;video.addEventListener('loadeddata',ready);video.addEventListener('canplay',ready);
+    dialog.querySelector('#receiptBack').addEventListener('click',()=>{stopCamera();renderUpload();dialog.querySelector('#receiptCamera').focus();});
+    dialog.querySelector('#receiptCameraChoose').addEventListener('click',()=>{stopCamera();renderUpload();dialog.querySelector('#receiptFile').click();});
+    snap.addEventListener('click',()=>snapPhoto(session));
+    try {
+      const stream=await root.navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+      if(!active()){stream.getTracks().forEach(track=>track.stop());return;}
+      session.stream=stream;
+      session.onEnded=()=>{if(active()){renderUpload(copy('Kamera je zaustavljena. Ponovno je otvorite ili odaberite fotografiju.','Camera stopped. Open it again or choose a photo.'));}};
+      stream.getTracks().forEach(track=>track.addEventListener?.('ended',session.onEnded));
+      video.srcObject=stream;status.textContent=copy('Pokrećem kameru…','Starting camera…');
+      await video.play();ready();
+    } catch(failure) {if(active())renderUpload(cameraFailure(failure),true);}
+  }
+  async function snapPhoto(session) {
+    const video=session.video;
+    if(cameraSession!==session||!cameraAllowed()||session.busy||video.readyState<2||!video.videoWidth||!video.videoHeight)return;
+    session.busy=true;dialog.querySelector('#receiptSnap').disabled=true;showError('');
+    try {
+      const ratio=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));
+      const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(video.videoWidth*ratio));canvas.height=Math.max(1,Math.round(video.videoHeight*ratio));
+      const context=canvas.getContext('2d');if(!context)throw new Error('CANVAS');
+      context.drawImage(video,0,0,canvas.width,canvas.height);
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9));
+      if(cameraSession!==session||!cameraAllowed()||document.hidden)return;
+      if(!blob)throw new Error('CAMERA_CAPTURE');
+      const file=new root.File([blob],`receipt-${new Date().toISOString().replace(/[:.]/g,'-')}.jpg`,{type:'image/jpeg'});
+      stopCamera();renderUpload();await prepareFile(file);
+    } catch {if(cameraSession===session&&current()){session.busy=false;dialog.querySelector('#receiptSnap').disabled=false;showError(copy('Fotografiju nije moguće snimiti. Pokušajte ponovno ili odaberite datoteku.','The photo could not be captured. Try again or choose a file.'));}}
   }
   async function prepareFile(file) {
     stop();
@@ -150,5 +206,9 @@
   }
   function refresh() {if(dialog?.open&&profileId()!==owner)close();else if(dialog?.open&&viewedTransactionId)renderStored();else if(dialog?.open&&dialog.querySelector('#receiptMatches'))renderMatches();}
   document.addEventListener('mer:locked',close);document.addEventListener('mer:profile-change',close);
+  root.addEventListener?.('mer-security-status',event=>{if(cameraSession&&(event.detail?.locked||!cameraAllowed()))close();});
+  function pauseCamera() {if(cameraSession){stopCamera();if(current())renderUpload(copy('Kamera je pauzirana jer aplikacija nije vidljiva. Ponovno odaberite Fotografiraj račun.','The camera was paused while the app was hidden. Choose Take photo to reopen it.'));}}
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseCamera();});
+  root.addEventListener?.('pagehide',pauseCamera);
   root.MerReceiptUI={open,view,close,refresh};
 })(window);

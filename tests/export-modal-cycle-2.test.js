@@ -86,6 +86,10 @@ async function main() {
     assert.equal(h.document.downloads.length,0);
     h.get('activityTransferExport').click();
     assert.equal(h.get('activityTransferModal').open,false);assert.equal(h.get('izvozModal').open,true);assert.equal(h.get('exportBack').hidden,false);
+    assert.equal(h.get('exportCancel').hidden,true,'the contextual footer has one visible Back action');
+    assert.equal(h.get('izvozModal').querySelector('header').querySelector('#exportBack'),null);
+    assert.equal(h.get('izvozModal').querySelector('footer').children[0],h.get('exportBack'));
+    assert.equal(h.get('exportDownload').closest('form'),h.get('exportForm'),'moving Back must retain submit ownership');
     h.get('exportBack').click();assert.equal(h.get('izvozModal').open,false);assert.equal(h.get('activityTransferModal').open,true);
     h.get('activityTransferImport').click();assert.equal(h.get('activityTransferModal').open,false);assert.deepEqual(h.imports,['import']);
     assert.equal(h.document.downloads.length,0,'neither choice downloads before final confirmation');
@@ -94,7 +98,7 @@ async function main() {
     const h=harness();
     for(const context of ['budget','activity','savings','insights']) {
       assert.equal(h.ui.open(context),true);
-      assert.equal(h.get('izvozModal').open,true);assert.equal(h.get('exportBack').hidden,true);assert.equal(h.get('exportCancel').textContent,'Otkaži');
+      assert.equal(h.get('izvozModal').open,true);assert.equal(h.get('exportBack').hidden,true);assert.equal(h.get('exportCancel').hidden,false);assert.equal(h.get('exportCancel').textContent,'Zatvori');
       assert.deepEqual(h.get('exportTimeframe').querySelectorAll('option').map(node=>node.textContent),['Danas','Ovaj mjesec','Određeni mjesec','Ova godina','Sve ukupno']);
       assert.deepEqual(h.get('exportFormat').querySelectorAll('option').map(node=>node.value),['csv','pdf','json']);
       assert.equal(h.document.downloads.length,0);h.get('exportCancel').click();
@@ -150,7 +154,7 @@ async function main() {
     h.state.authenticated=false;assert.equal(h.ui.open('activity'),false);assert.equal(h.ui.openActivityTransfer(),false);
   }
   {
-    const h=harness();h.state.language='en';h.ui.openActivityTransfer();assert.equal(h.get('activityTransferTitle').textContent,'Import / Export');h.get('activityTransferExport').click();assert.equal(h.get('exportTitle').textContent,'Export transactions');assert.equal(h.get('exportCancel').textContent,'Cancel');
+    const h=harness();h.state.language='en';h.ui.openActivityTransfer();assert.equal(h.get('activityTransferTitle').textContent,'Import / Export');h.get('activityTransferExport').click();assert.equal(h.get('exportTitle').textContent,'Export transactions');assert.equal(h.get('exportCancel').textContent,'Close');
     assert.equal(h.get('izvozModal').getAttribute('aria-labelledby'),'exportTitle');assert.equal(h.get('exportError').getAttribute('role'),'alert');
     assert.equal(h.get('activityTransferModal').getAttribute('aria-labelledby'),'activityTransferTitle');
   }

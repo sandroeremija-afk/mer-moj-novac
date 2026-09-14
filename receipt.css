@@ -8,9 +8,12 @@
 .receipt-drop { display:flex; min-height:160px; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; border:1.5px dashed var(--line-strong); border-radius:14px; background:var(--canvas); cursor:pointer; text-align:center; overflow-wrap:anywhere; }
 .receipt-drop strong { font-size:18px; }.receipt-drop span { font-size:13px; color:var(--muted); }.receipt-drop.dragging { border-color:var(--blue); background:var(--blue-soft); }.receipt-drop img { max-width:100%; max-height:220px; border-radius:7px; object-fit:contain; }
 .receipt-upload-actions { display:flex; flex-wrap:wrap; gap:10px; margin:14px 0 20px; }
+.receipt-camera-preview { display:flex; align-items:center; justify-content:center; min-height:220px; overflow:hidden; border:1px solid var(--line); border-radius:14px; background:#111827; }
+.receipt-camera-preview video { display:block; width:100%; max-height:48dvh; object-fit:contain; }
 .receipt-dialog .receipt-check { display:flex; align-items:flex-start; gap:10px; font-weight:400; font-size:13px; line-height:1.6; }.receipt-check input { width:20px; height:20px; flex:0 0 20px; padding:0; margin:0; accent-color:var(--blue); }
 .receipt-note { font-size:12px; color:var(--muted); line-height:1.6; margin:10px 0; }.receipt-dialog [data-receipt-error] { border:1px solid #ce8484; color:#ad3535; background:var(--red-soft); border-radius:9px; padding:12px; line-height:1.55; font-size:13px; }
 .receipt-footer { flex:none; display:flex; justify-content:flex-end; gap:9px; flex-wrap:wrap; padding:16px 24px; border-top:1px solid var(--line); background:var(--panel); }
+.receipt-footer>#receiptBack { margin-right:auto; }
 .receipt-dialog button { min-height:44px; font-size:13px; }.receipt-dialog .icon-button { min-width:44px; }
 .receipt-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:2px 12px; }.receipt-dialog label { font-size:13px; line-height:1.4; }.receipt-dialog input,.receipt-dialog select { min-width:0; color:var(--ink); background:var(--canvas); font:inherit; }
 .receipt-lines { margin:8px 0 18px; }.receipt-lines summary { min-height:44px; padding:12px 0; font-size:14px; font-weight:650; cursor:pointer; }

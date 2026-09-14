@@ -22,11 +22,7 @@
     root.MerRuntime?.bindDialogBackdropDismiss(dialog,close);
     const heading=doc.querySelector('.goal-buckets-panel > .panel-heading');
     if(heading&&!el('manageVaults')){const button=doc.createElement('button');button.id='manageVaults';button.type='button';button.className='secondary-button';button.addEventListener('click',()=>open());heading.append(button);}
-    const goalName=el('goalNameInput');
     ['goalTargetInput','goalCurrentInput'].forEach(id=>{if(el(id))el(id).step='0.01';});
-    if(goalName&&!el('goalIconInput')){
-      const label=doc.createElement('label');label.className='vault-icon-field';label.innerHTML=`<span id="goalIconLabel"></span><input id="goalIconInput" type="text" maxlength="16" list="vaultIconSuggestions" value="◎" autocomplete="off"><datalist id="vaultIconSuggestions"><option value="🏠"><option value="✈️"><option value="🚗"><option value="🎓"><option value="🌱"><option value="🛟"><option value="💼"><option value="🎯"></datalist>`;goalName.closest('label').after(label);
-    }
   }
   function open(nextView='vaults',goalId=null){
     create();const s=snapshot();if(!s?.profile||s.authenticated===false||root.MerEnterpriseSecurity?.isLocked?.())return;
@@ -34,7 +30,7 @@
   }
   function goalMarkup(goal){
     const percent=Math.max(0,Math.min(100,Number(goal.current)/Math.max(1,Number(goal.target))*100)),due=goal.dueDate||say('Bez roka','No target date');
-    return `<article class="vaults-item"><div class="vaults-item-title"><span class="vaults-emblem" aria-hidden="true">${esc(goal.icon||'◎')}</span><div><h3>${esc(goal.name)}</h3><p class="vaults-muted">${esc(due)}${goal.primary?` · ${say('Glavni cilj','Primary goal')}`:''}</p></div><button type="button" class="icon-button" data-vault-edit="${esc(goal.id)}" aria-label="${esc(say('Uredi','Edit')+' '+goal.name)}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div><div class="vaults-amounts"><strong data-money>${money(goal.current)}</strong><span>${say('od','of')} ${money(goal.target)}</span></div><div class="vaults-progress" role="progressbar" aria-label="${esc(goal.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(percent)}"><span style="width:${percent}%"></span></div><button type="button" class="secondary-button" data-vault-deposit="${esc(goal.id)}">${say('Dodaj uplatu','Add deposit')}</button></article>`;
+    return `<article class="vaults-item"><div class="vaults-item-title"><span class="vaults-progress-ring" style="--vault-progress:${percent}%" aria-hidden="true"><span>${Math.round(percent)}%</span></span><div><h3>${esc(goal.name)}</h3><p class="vaults-muted">${esc(due)}${goal.primary?` · ${say('Glavni cilj','Primary goal')}`:''}</p></div><button type="button" class="icon-button" data-vault-edit="${esc(goal.id)}" aria-label="${esc(say('Uredi','Edit')+' '+goal.name)}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div><div class="vaults-amounts"><strong data-money>${money(goal.current)}</strong><span>${say('od','of')} ${money(goal.target)}</span></div><div class="vaults-progress" role="progressbar" aria-label="${esc(goal.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(percent)}"><span style="width:${percent}%"></span></div><button type="button" class="secondary-button" data-vault-deposit="${esc(goal.id)}">${say('Dodaj uplatu','Add deposit')}</button></article>`;
   }
   function renderList(){
     const filtered=goals().filter(goal=>String(goal.name).toLocaleLowerCase().includes(search.toLocaleLowerCase())),pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));page=Math.min(page,pages-1);
@@ -45,7 +41,7 @@
     dialog.querySelectorAll('[data-vault-edit]').forEach(button=>button.addEventListener('click',()=>{const id=button.dataset.vaultEdit;close();bridge().openGoalEditor(id);}));
     dialog.querySelectorAll('[data-vault-deposit]').forEach(button=>button.addEventListener('click',()=>{const id=button.dataset.vaultDeposit;close();bridge().openDeposit(id);}));
   }
-  function options(selected){return goals().filter(goal=>!goal.taxVault).map(goal=>`<option value="${esc(goal.id)}" ${goal.id===selected?'selected':''}>${esc(goal.icon||'◎')} ${esc(goal.name)}</option>`).join('');}
+  function options(selected){return goals().filter(goal=>!goal.taxVault).map(goal=>`<option value="${esc(goal.id)}" ${goal.id===selected?'selected':''}>${esc(goal.name)}</option>`).join('');}
   function renderAutomation(){
     const s=snapshot(),config=s.profile.enterprise?.roundUps||{},allGoals=goals().filter(goal=>!goal.taxVault),rules=(s.profile.enterprise?.paydayRules||[]).filter(rule=>!rule.profileId||rule.profileId===owner);
     if(!paydayDraft)paydayDraft={minimumAmount:1000,allocations:allGoals.length?[{goalId:allGoals[0].id,percent:10}]:[]};
@@ -66,7 +62,7 @@
     showError('');if(view==='automation')renderAutomation();else renderList();
   }
   function refresh(){
-    create();const count=goals().length;if(el('manageVaults'))el('manageVaults').textContent=say(`Svi trezori (${count})`,`All vaults (${count})`);if(el('goalIconLabel'))el('goalIconLabel').textContent=say('Ikona / emoji','Icon / emoji');
+    create();const count=goals().length;if(el('manageVaults'))el('manageVaults').textContent=say(`Svi trezori (${count})`,`All vaults (${count})`);
     if(dialog.open)render();
   }
   root.MerVaultsUI=Object.freeze({open,refresh});

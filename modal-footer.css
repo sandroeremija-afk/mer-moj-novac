@@ -1,0 +1,34 @@
+/* One navigation lane at the left, commit actions at the right, across modal families. */
+html body dialog.mer-footer-standard .mer-modal-footer {
+  display:flex; flex-direction:row; align-items:center; justify-content:flex-end; flex-wrap:wrap;
+  gap:10px; width:100%; min-width:0; flex:0 0 auto; box-sizing:border-box;
+}
+html body dialog .mer-modal-footer .modal-primary-actions { display:flex; flex:0 1 max-content; align-items:center; gap:8px; width:max-content; max-width:100%; min-width:0; }
+html body dialog .mer-modal-footer [data-footer-left],
+html body dialog .mer-modal-footer #importTransactionBackWrap { margin-right:auto; margin-left:0; flex:0 0 auto; }
+html body dialog .mer-modal-footer [data-footer-left] {
+  position:static; min-height:44px; padding:10px 16px; border:1px solid var(--line);
+  border-radius:9px; background:var(--panel); color:var(--muted); font-size:14px; line-height:1.4; font-weight:500;
+}
+html body dialog .mer-modal-footer [data-footer-left]:hover { background:color-mix(in srgb,var(--muted) 7%,var(--panel)); color:var(--ink); }
+html body dialog .mer-modal-footer [data-footer-left]:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+html body dialog .mer-modal-footer [data-footer-redundant],
+html body dialog .mer-modal-footer [hidden] { display:none; }
+html body dialog .mer-modal-footer > button,
+html body dialog .mer-modal-footer .modal-primary-actions > button { width:auto; min-height:44px; white-space:normal; max-width:100%; }
+html body dialog .mer-modal-footer .modal-primary-actions > button,
+html body dialog .mer-modal-footer .primary-button:only-child { margin:0; }
+html body dialog .mer-modal-footer #importTransactionBackWrap { padding:0; margin-top:0; margin-bottom:0; }
+html body dialog .mer-modal-footer .primary-button { margin-left:0; }
+html body dialog > .mer-generated-footer { padding:16px 0 0; border-top:1px solid var(--line); margin-top:auto; background:var(--panel); }
+html body dialog > .mer-generated-footer[hidden] { display:none; }
+html body :is(.planning-head,.export-header,.receipt-head) { grid-template-columns:minmax(0,1fr) auto; }
+html body :is(.planning-head,.export-header,.receipt-head) > :is(.planning-heading,div,h2) { min-width:0; }
+html body dialog .import-commit-actions { padding-top:16px; border-top:1px solid var(--line); }
+@media(max-width:560px) {
+  html body dialog .mer-modal-footer { gap:8px; }
+  html body dialog .mer-modal-footer [data-footer-left] { padding:10px 12px; }
+  html body dialog .mer-modal-footer > .primary-button { flex:0 1 auto; max-width:calc(100% - 105px); }
+  html body dialog .mer-modal-footer .modal-primary-actions > .primary-button { flex:0 1 auto; max-width:100%; }
+  html body dialog > .mer-generated-footer { padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+}

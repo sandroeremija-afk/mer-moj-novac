@@ -4,9 +4,12 @@ const read=file=>fs.readFileSync(path.join(__dirname,'..',file),'utf8');const ui
 test('vault manager bounds unlimited goals with search and six-per-page navigation',()=>{
   assert.match(ui,/PAGE_SIZE=6/);assert.match(ui,/id='vaultsModal'/);assert.match(ui,/vaultsSearch/);assert.match(ui,/vaultsPrev/);assert.match(ui,/vaultsNext/);assert.match(ui,/filtered\.slice\(page\*PAGE_SIZE/);assert.match(premium,/slice\(0,2\)\.map/);
 });
-test('vault forms expose icon, dates, EUR 1/5 roundups, payday percentage destinations and explicit opt-in',()=>{
-  assert.match(ui,/goalIconInput/);assert.match(ui,/vaultsRoundEnabled/);assert.match(ui,/value="1"/);assert.match(ui,/value="5"/);assert.match(ui,/vaultsPaydayMinimum/);assert.match(ui,/data-vault-allocation-percent/);assert.match(ui,/configurePaydayRule/);assert.match(ui,/configureRoundUps/);assert.match(premium,/profileId:appState.activeAccount,roundUpsEnabled:false/);
+test('vault forms omit the icon picker while retaining dates, roundups, payday destinations and explicit opt-in',()=>{
+  assert.doesNotMatch(ui,/goalIconInput|goalIconLabel|vaultIconSuggestions|vault-icon-field/);assert.match(ui,/vaultsRoundEnabled/);assert.match(ui,/value="1"/);assert.match(ui,/value="5"/);assert.match(ui,/vaultsPaydayMinimum/);assert.match(ui,/data-vault-allocation-percent/);assert.match(ui,/configurePaydayRule/);assert.match(ui,/configureRoundUps/);assert.match(premium,/profileId:appState.activeAccount,roundUpsEnabled:false/);
   assert.match(ui,/step='0\.01'/);
+});
+test('vault cards show progress rings and destination choices omit stored decorative icons',()=>{
+  assert.match(ui,/class="vaults-progress-ring"/);assert.match(ui,/role="progressbar"/);assert.doesNotMatch(ui,/goal\.icon|vaults-emblem/);assert.match(css,/conic-gradient\(var\(--green,#93c841\) var\(--vault-progress\),var\(--line\) 0\)/);
 });
 test('modal supports Escape, safe backdrop selection, live profile invalidation and existing reactive store',()=>{
   assert.match(ui,/bindDialogBackdropDismiss\(dialog,close\)/);assert.match(ui,/addEventListener\('cancel'/);assert.match(ui,/owner!==s\.profileId/);assert.match(premium,/reactiveStore\.update\(reason/);assert.match(premium,/MerVaultsUI\?\.refresh/);

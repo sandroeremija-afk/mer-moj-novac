@@ -106,6 +106,9 @@ function harness() {
   assert.equal(renewals.querySelector('#fireInputs'), null);
   assert.equal(fire.querySelector('#renewalForm'), null);
   assert.equal(fire.querySelector('[data-planning-back]').hidden, false);
+  assert.equal(fire.querySelector('header').querySelector('[data-planning-back]'), null);
+  assert.equal(fire.querySelector('footer').children[0], fire.querySelector('[data-planning-back]'));
+  assert.equal(fire.querySelector('footer').children.at(-1), h.get('saveFirePlan'));
   const before = h.get('fireProjection').innerHTML;
   h.input('fire-savingsRate', 50);
   assert.equal(h.get('fire-monthlyContribution').value, '2000');
@@ -140,6 +143,10 @@ function harness() {
   assert.equal(fire.open, false);assert.equal(renewals.open, true);
   assert.ok(renewals.querySelector('#renewalForm'));
   assert.equal(renewals.querySelector('[data-planning-back]').hidden, false);
+  assert.equal(renewals.querySelector('header').querySelector('[data-planning-back]'), null);
+  assert.equal(renewals.querySelector('footer').children[0], renewals.querySelector('[data-planning-back]'));
+  assert.equal(renewals.querySelector('footer').children.at(-1),h.get('saveRenewalReminder'));
+  assert.equal(h.get('saveRenewalReminder').attributes.form,'renewalForm','footer submit retains the renewal form association');
   const editor = h.get('renewalForm'), name = editor.querySelector('input');
   name.value = 'Unfinished renewal';name.focus();
   h.reactiveStore.update('unrelated-setting', state => {state.settings.theme='light';});

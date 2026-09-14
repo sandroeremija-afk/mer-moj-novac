@@ -763,6 +763,9 @@ function setBankConnectionStep(step,{focus=false}={}) {
   form.hidden=!connecting;
   $('#bankInstitutionStep').hidden=next!=='institution';
   $('#bankAccountStep').hidden=next!=='accounts';
+  $('#bankConnectionBack').hidden=next!=='accounts';
+  $('#cancelBankConnection').hidden=next==='accounts';
+  $('#connectSelectedAccounts').hidden=next!=='accounts';
   $$('[data-bank-step-indicator]',form).forEach(marker=>marker.classList.toggle('active',marker.dataset.bankStepIndicator===next));
   if(connecting){
     const titleKey=next==='accounts'?'chooseAccounts':'chooseInstitution';
@@ -1293,6 +1296,7 @@ function openModal(modal) {
   $('#modalBackdrop').hidden=true;
   if(mobileSidebarTrigger||activeElement)modalReturnFocus.set(modal,mobileSidebarTrigger||activeElement);
   modal.setAttribute('aria-modal','true');
+  window.MerModalFooters?.enhance(modal);
   modal.showModal();
   document.body.classList.add('modal-active');
   requestAnimationFrame(()=>{const target=$('[autofocus]',modal)||focusableElements(modal)[0];target?.focus({preventScroll:true});});
