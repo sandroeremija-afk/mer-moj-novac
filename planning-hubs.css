@@ -1,0 +1,49 @@
+/* Contextual, small planning menus. The existing tools keep their own forms. */
+html body .planning-hub-modal {
+  width:min(580px,calc(100vw - 32px)); max-width:calc(100vw - 32px);
+  max-height:90dvh; padding:22px; overflow:hidden;
+  color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:16px;
+}
+html body .planning-hub-modal[open] { display:flex; flex-direction:column; gap:18px; }
+.planning-hub-modal::backdrop { background:rgba(10,24,22,.48); backdrop-filter:blur(3px); }
+.planning-hub-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-shrink:0; }
+.planning-hub-header>div { min-width:0; }
+.planning-hub-header h2 { margin:0; font-size:24px; font-weight:700; line-height:1.25; }
+.planning-hub-header .modal-close { position:static; flex:0 0 44px; width:44px; height:44px; }
+.planning-hub-context { margin:7px 0 0; font-size:14px; line-height:1.5; color:var(--muted); }
+.planning-hub-body { display:grid; gap:10px; min-width:0; overflow:hidden; }
+.planning-hub-entry { display:flex; align-items:center; gap:14px; width:100%; min-width:0; min-height:76px; padding:14px; border:1px solid var(--line); border-radius:12px; color:var(--ink); background:var(--panel); text-align:left; font:inherit; cursor:pointer; transition:background 160ms ease,border-color 160ms ease; }
+.planning-hub-entry:hover { border-color:#00a9e4; background:color-mix(in srgb,var(--panel) 95%,#00a9e4); }
+.planning-hub-entry:focus-visible { outline:3px solid #00a9e4; outline-offset:2px; }
+.planning-hub-entry>span:nth-child(2) { min-width:0; flex:1; }
+.planning-hub-entry strong { display:block; font-size:16px; line-height:1.4; font-weight:600; }
+.planning-hub-entry small { display:block; margin-top:4px; font-size:13px; line-height:1.5; color:var(--muted); overflow-wrap:anywhere; }
+.planning-hub-icon { flex:0 0 36px; display:grid; place-items:center; width:36px; height:36px; color:#007ea8; background:rgba(0,169,228,.09); border-radius:9px; }
+.planning-hub-icon svg { width:20px; height:20px; }
+.planning-hub-arrow { font-size:24px; color:var(--muted); }
+.planning-hub-header .modal-close { font-size:24px; line-height:1; }
+.subscription-price-alerts { padding:14px; border:1px solid var(--line); border-radius:12px; background:color-mix(in srgb,var(--panel) 94%,#e7b55e); }
+.subscription-price-alerts h3 { margin:0 0 10px; font-size:16px; line-height:1.4; }
+.subscription-price-alerts p { display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin:8px 0 0; font-size:14px; line-height:1.5; }
+.subscription-price-alerts strong { flex:1 1 160px; overflow-wrap:anywhere; }
+.subscription-price-alerts small { font-size:12px; color:var(--muted); }
+.planning-hub-footer { flex-shrink:0; margin-top:0; padding-top:14px; border-top:1px solid var(--line); }
+[data-theme="dark"] .planning-hub-icon { color:#6ed5f5; }
+@media(max-width:600px) {
+  html body .planning-hub-modal { padding:16px; width:calc(100vw - 20px); max-width:calc(100vw - 20px); }
+  html body .planning-hub-modal[open] { gap:12px; }
+  .planning-hub-header h2 { font-size:21px; }
+  .planning-hub-context { font-size:13px; }
+  .planning-hub-body { gap:8px; }
+  .planning-hub-entry { gap:10px; padding:11px; min-height:68px; }
+  .planning-hub-entry strong { font-size:15px; }
+  .planning-hub-entry small { font-size:12px; }
+}
+@media(max-height:590px) {
+  html body .planning-hub-modal[open] { gap:10px; padding:14px; }
+  .planning-hub-context { display:none; }
+  .planning-hub-entry { min-height:54px; padding:9px 11px; }
+  .planning-hub-entry small { display:none; }
+  .planning-hub-footer { padding-top:8px; }
+}
+@media(prefers-reduced-motion:reduce) { .planning-hub-entry { transition:none; } }

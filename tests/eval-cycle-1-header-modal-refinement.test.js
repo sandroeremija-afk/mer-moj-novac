@@ -84,7 +84,7 @@ test('evaluation cycle 1: weekly insight lives inside the single Savings recomme
   assert.doesNotMatch(sidebar, /weeklyCheck|tipSavings|openPlan/);
   assert.equal((savings.match(/\bsavings-insight-card\b/g) || []).length, 1);
   assert.match(savings, /id="savingsRecommendationCard"[\s\S]*?recommendation-badge[\s\S]*?recommendation-weekly[\s\S]*?id="tipSavings"[\s\S]*?data-open-savings-strategy[\s\S]*?data-i18n="reviewStrategy"/);
-  assert.match(savings, /data-open-detail="savingsDetailsModal"[\s\S]*?data-open-assessment[\s\S]*?data-i18n="adjustPlan"/);
+  assert.match(savings, /data-open-detail="savingsDetailsModal"[\s\S]*?data-planning-hub="savings"[\s\S]*?Planiranje štednje/);
   assert.match(savings, /id="savingsStrategyModal"[\s\S]*?id="strategyCoverageValue"[\s\S]*?id="strategyBufferValue"[\s\S]*?id="strategyContributionValue"/);
   assert.match(app, /strategyRecommendationValue'\)\.textContent=t\(coverage<3\?'strategyBuildReserve':coverage<=6\?'strategyMaintainPace':'strategyDiversify'\)/);
   assert.match(css, /@media \(max-width:640px\)[\s\S]*?\.savings-strategy-modal\[open\]\s*\{[^}]*overflow-y:auto/);

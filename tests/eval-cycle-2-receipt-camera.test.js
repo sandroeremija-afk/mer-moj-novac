@@ -133,6 +133,39 @@ test('late permission approval after backing out, locking, or hiding cannot leak
   }
 });
 
+test('pending permission cancellation by close, profile switch, inert shell, or file selection stops late streams',async()=>{
+  for(const action of ['close','profile','inert','fileChoose']) {
+    const pending=deferred(),app=harness({getUserMedia:()=>pending.promise}),late=stream();
+    const opening=app.click('#receiptCamera');
+    assert.equal(app.cameraRequests.length,1,action);
+    assert.equal(app.videos[0].srcObject,undefined,action);
+    if(action==='close')app.window.MerReceiptUI.close();
+    if(action==='profile'){app.state.activeProfile='business';await app.document.emit('mer:profile-change');}
+    if(action==='inert'){app.shell.inert=true;app.observers[0].handler();}
+    if(action==='fileChoose')await app.click('#receiptCameraChoose');
+
+    assert.equal(app.observers[0].active,false,action);
+    if(action==='fileChoose') {
+      assert.equal(app.dialog.open,true,action);
+      assert.ok(app.node('#receiptCamera'),action);
+      assert.equal(app.node('#receiptFile').clicks,1,action);
+    } else {
+      assert.equal(app.dialog.open,false,action);
+      assert.equal(app.dialog.innerHTML,'',action);
+    }
+
+    pending.resolve(late);await opening;
+    assert.equal(late.track.stops,1,action);
+    assert.equal(app.videos[0].srcObject,null,action);
+    assert.equal(app.videos[0].paused,true,action);
+    assert.equal(app.draws.length,0,action);
+    assert.equal(app.createdUrls.length,0,action);
+    assert.equal(app.requests.length,0,action);
+    if(action==='fileChoose')assert.ok(app.node('#receiptFile'),action);
+    else assert.equal(app.dialog.open,false,action);
+  }
+});
+
 test('actual security events and hidden/inert application shells release streams on session expiry or MFA',async()=>{
   for(const action of ['security','hidden','inert']) {
     const app=harness();await app.click('#receiptCamera');

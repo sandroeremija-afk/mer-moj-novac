@@ -46,9 +46,9 @@ test('cycle 2: all five modules retain visible direct header actions and origina
   }
   assert.match(heading('overview'), /data-open-assessment/);
   assert.match(heading('overview'), /overviewDetailsModal/);
-  assert.match(heading('budgets'), /budgetDetailsModal/);
+  assert.match(heading('budgets'), /data-planning-hub="payments"/);
   assert.match(heading('savings'), /savingsDetailsModal/);
-  assert.match(heading('savings'), /data-open-assessment/);
+  assert.match(heading('savings'), /data-planning-hub="savings"/);
   assert.match(enterprise, /querySelector\('#overviewView \.heading-actions'\)\.prepend\(toolbar\)/);
   assert.match(enterprise, /querySelector\('#activityView \.heading-actions'\)\?\.prepend\(receiptTrigger\)/);
 });

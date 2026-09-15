@@ -113,6 +113,7 @@ function planHarness() {
       append(child) { this.children.push(child); },
       focus() { document.activeElement = this; },
       querySelector(selector) {
+        if (selector === 'footer, .modal-actions') return this.children.find(child => child.tagName === 'FOOTER' || child.className?.includes('modal-actions')) || null;
         if (selector === 'header' || selector === 'footer') return this.children.find(child => child.tagName === selector.toUpperCase()) || null;
         if (selector.startsWith('#')) return this.descendants().find(child => child.id === selector.slice(1)) || null;
         if (selector === '[data-plan-back]') return this.descendants().find(child => child.dataset.planBack !== undefined) || null;
@@ -300,18 +301,13 @@ test('cycle 2: wizard capture owns its controls without a second modal trap', ()
   assert.match(onboarding, /document\.addEventListener\('keydown',\s*handleTourKeydown,\s*true\)/);
 });
 
-test('cycle 2: Plan toolbar dispatches each action once through its permanent delegated listener', () => {
+test('cycle 2: contextual hubs replace the unrelated Plan toolbar and duplicate automation', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'enterprise-ui.js'), 'utf8');
-  const listeners = source.split(/\r?\n/).filter(line => /^\s*suiteTools\.addEventListener\('click'/.test(line));
-  assert.equal(listeners.filter(line => line.includes("const action=")).length, 1, 'the shared Plan tools listener is installed once');
-  const callbacks = [], calls = [];
-  vm.runInNewContext(listeners.join('\n'), {
-    suiteTools:{addEventListener(type, callback) { assert.equal(type, 'click'); callbacks.push(callback); }},
-    openTaxVault:() => calls.push('tax'),
-    window:{MerReceiptUI:{open:() => calls.push('receipt')}, MerPlanningUI:{open:action => calls.push(action)}}
-  });
-  for (const action of ['receipt', 'fire', 'renewals', 'household', 'tax']) {
-    for (const callback of callbacks) callback({target:{closest:() => ({dataset:{suiteAction:action}})}});
-  }
-  assert.deepEqual(calls, ['receipt', 'fire', 'renewals', 'tax'],'retired household actions never dispatch a tool');
+  const hubs = fs.readFileSync(path.join(__dirname, '..', 'planning-hubs.js'), 'utf8');
+  assert.doesNotMatch(source, /suiteTools|function renderRules\(/, 'one contextual location replaces the mixed suite and duplicate payday form');
+  assert.match(hubs, /MerVaultsUI\?\.open\('automation'\)/, 'Savings uses the existing isolated auto-stash editor');
+  assert.match(hubs, /action === 'scheduled'/);
+  assert.match(hubs, /action === 'subscriptions'/);
+  assert.match(hubs, /action === 'tax' && state\(\)\.activeProfile === 'business'/);
+  assert.doesNotMatch(hubs, /id:'receipt'|id:'household'/, 'scanner stays in Activity, retired shared expenses stay retired');
 });

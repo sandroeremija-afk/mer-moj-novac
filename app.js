@@ -956,7 +956,7 @@ function buildNotifications() {
   const plan=getPlan();if(plan.monthlyBudget&&plan.safeRemaining/plan.monthlyBudget<.25)push({key:'safe-to-spend',fingerprint:notificationFingerprint([Math.round(plan.safeRemaining*100),Math.round(plan.monthlyBudget*100)]),priority:5,type:'warning',icon:'icon-shield',title:t('alertSpendingTitle'),body:t('alertSpendingBody',{amount:currency(plan.safeRemaining)}),action:t('reviewSpending'),view:'activity'});
   state.categories.forEach(cat=>{const threshold=MerCore.budgetThreshold(cat.spent,cat.limit);if(threshold.percent>=80)push({key:`budget:${cat.id}`,fingerprint:notificationFingerprint([cat.id,Math.round(cat.spent*100),Math.round(cat.limit*100)]),priority:threshold.level==='red'?4:3,type:threshold.level==='red'?'danger':'warning',icon:'icon-wallet',title:t('alertBudgetTitle'),body:t('alertBudgetBody',{category:categoryName(cat.id),percent:Math.round(threshold.percent)}),action:t('reviewBudget'),view:'budgets'});});
   (state.recurring||[]).forEach(rule=>{const next=MerCore.nextOccurrence(rule,appReferenceDate);if(next){const days=Math.round((new Date(`${next}T12:00:00`)-new Date(`${appReferenceDate}T12:00:00`))/86400000);if(days<=20)push({key:`recurring:${rule.id}`,fingerprint:notificationFingerprint([rule.id,next,Math.round(rule.amount*100)]),priority:2,type:'info',icon:'icon-calendar',title:t('alertRecurringTitle'),body:t('alertRecurringBody',{name:rule.name,amount:currency(rule.amount),date:formatIsoDate(next)}),action:t('reviewRecurring'),view:'budgets',detailModal:'budgetDetailsModal'});}});
-  MerAccounting.detectSubscriptions(state.transactions,appReferenceDate).filter(subscription=>subscription.daysUntil>=0&&subscription.daysUntil<=31).slice(0,2).forEach(subscription=>push({key:subscription.id,fingerprint:notificationFingerprint([subscription.id,subscription.nextRenewal,Math.round(subscription.amount*100)]),priority:2,type:'info',icon:'icon-refresh',title:t('recurringSubscriptions'),body:`${subscription.merchant} · ${currency(subscription.amount)} · ${t('renewsIn',{days:subscription.daysUntil})}`,action:t('manageSubscriptions'),view:'insights',subscriptions:true}));
+  activeSubscriptions().filter(subscription=>subscription.daysUntil>=0&&subscription.daysUntil<=31).slice(0,2).forEach(subscription=>push({key:subscription.id,fingerprint:notificationFingerprint([subscription.id,subscription.nextRenewal,Math.round(subscription.amount*100)]),priority:2,type:'info',icon:'icon-refresh',title:t('recurringSubscriptions'),body:`${subscription.merchant} · ${currency(subscription.amount)} · ${t('renewsIn',{days:subscription.daysUntil})}`,action:t('manageSubscriptions'),view:'budgets',subscriptions:true}));
   return notifications.sort((left,right)=>right.priority-left.priority||left.key.localeCompare(right.key)).slice(0,6);
 }
 
@@ -970,8 +970,17 @@ function renderNotifications() {
   $$('[data-notification-resolve]').forEach(button=>button.addEventListener('click',()=>resolveNotification(notifications[Number(button.dataset.notificationResolve)],{closeCenter:false})));
 }
 
+function activeSubscriptions() {
+  const subscriptionTransactions=MerEnterpriseCore.transactionsFor(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency}).filter(tx=>(tx.currency||appState.settings.currency)===appState.settings.currency&&!tx.isAggregate&&!/^(prethodni (mjesečni|poslovni) troškovi|historical monthly expenses)$/i.test(tx.merchantName||tx.name||''));
+  return MerAccounting.detectSubscriptions(subscriptionTransactions,appReferenceDate);
+}
 function renderSubscriptions() {
-  const subscriptions=MerAccounting.detectSubscriptions(state.transactions,appReferenceDate);
+  const subscriptions=activeSubscriptions();
+  let alerts=$('#subscriptionPriceAlerts');
+  if(!alerts){alerts=document.createElement('section');alerts.id='subscriptionPriceAlerts';alerts.className='subscription-price-alerts';$('#subscriptionList').before(alerts);}
+  const increases=window.MerEnterpriseCore?.subscriptionRadar(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency}).filter(item=>item.priceHike&&item.currency===appState.settings.currency)||[];
+  alerts.hidden=!increases.length;
+  alerts.innerHTML=increases.length?`<h3>${currentLang==='en'?'Price increases':'Upozorenja na poskupljenje'}</h3>${increases.map(item=>`<p><strong>${escapeHtml(item.name||item.merchant)}</strong><span data-money>${currency(item.previousCents/100)} → ${currency(item.amountCents/100)}</span><small>+${Number(item.increasePercent||0).toFixed(1)}%</small></p>`).join('')}`:'';
   $('#subscriptionCount').textContent=String(subscriptions.length);$('#subscriptionTotal').textContent=currency(subscriptions.reduce((sum,item)=>sum+item.amount,0),true);
   $('#subscriptionList').innerHTML=subscriptions.length?subscriptions.map(item=>`<article class="subscription-item"><span class="subscription-logo">${escapeHtml(item.merchant.slice(0,1).toUpperCase())}</span><div><strong>${escapeHtml(item.merchant)}</strong><small>${escapeHtml(categoryName(item.category))} · ${t('renewsIn',{days:Math.max(0,item.daysUntil)})}</small></div><span><strong>−${currency(item.amount)}</strong><small>${formatIsoDate(item.nextRenewal)}</small></span></article>`).join(''):`<div class="notification-empty">${t('noSubscriptions')}</div>`;
 }
@@ -1286,6 +1295,8 @@ const modalReturnFocus=new WeakMap();
 function focusableElements(modal){return $$('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',modal).filter(element=>!element.hidden&&element.getClientRects().length>0);}
 function openModal(modal) {
   if(!modal||modal.open)return;
+  window.MerPlanNavigation?.enter(modal);
+  window.MerPlanNavigation?.enhance(modal);
   const activeElement=document.activeElement instanceof HTMLElement?document.activeElement:null;
   const mobileSidebarTrigger=window.innerWidth<768&&activeElement?.closest('#sidebar')?$('#menuToggle'):null;
   $$('.modal[open]').forEach(openDialog=>{if(openDialog!==modal)openDialog.close();});
@@ -1309,7 +1320,11 @@ function closeModal(modal) {
   const returnTarget=modal&&modalReturnFocus.get(modal);
   requestAnimationFrame(()=>{
     const openDialog=$('.modal[open]');
-    const target=returnTarget?.closest('#intelligenceModal:not([open])')?$('#openIntelligence'):returnTarget;
+    const target=modal?.id==='planningPaymentsModal'?$('[data-planning-hub="payments"]'):
+      modal?.id==='planningSavingsModal'?$('[data-planning-hub="savings"]'):
+      returnTarget?.closest('#intelligenceModal:not([open])')?$('#openIntelligence'):
+      returnTarget?.closest('#planningPaymentsModal:not([open])')?$('[data-planning-hub="payments"]'):
+      returnTarget?.closest('#planningSavingsModal:not([open])')?$('[data-planning-hub="savings"]'):returnTarget;
     if(target?.isConnected&&target.getClientRects().length&&(!openDialog||openDialog.contains(target)))target.focus({preventScroll:true});
   });
 }

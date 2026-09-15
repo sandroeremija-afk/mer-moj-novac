@@ -17,6 +17,8 @@ jsFiles.push('vaults-core.js','vaults-ui.js','natural-input-core.js','natural-in
 suiteCss.push('vaults-ui.css','natural-input-ui.css','engagement.css','dashboard-minimal.css','minimal-activity.css','savings-minimal.css','insights-polish.css');
 jsFiles.push('engagement-init.js');
 jsFiles.push('popup-layout.js','modal-footer.js');
+jsFiles.push('planning-hubs.js');
+suiteCss.push('planning-hubs.css');
 suiteCss.push('ui-consistency.css','recommendation-refresh.css','popup-layout.css','modal-footer.css','notification-hierarchy.css');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
