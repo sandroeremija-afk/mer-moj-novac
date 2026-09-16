@@ -33,6 +33,8 @@
   <link rel="stylesheet" href="notification-hierarchy.css">
   <link rel="stylesheet" href="modal-footer.css">
   <link rel="stylesheet" href="planning-hubs.css">
+  <link rel="stylesheet" href="quick-tools.css">
+  <link rel="stylesheet" href="settings-enhancements.css">
   <link id="exportPdfLibrary" rel="prefetch" as="script" href="assets/jspdf-4.2.1.min.js">
   <link id="exportPdfFont" rel="prefetch" as="fetch" href="assets/mer-export-font.ttf" crossorigin>
   <link rel="manifest" href="manifest.webmanifest">
@@ -208,7 +210,7 @@
     <button type="button" class="modal-close" data-close-modal aria-label="Zatvori" data-i18n-aria="close"><svg aria-hidden="true"><use href="#icon-x"></use></svg></button>
     <p class="overline" data-i18n="userSettingsOverline">KORISNIČKE POSTAVKE</p><h2 id="bankSettingsTitle" data-i18n="userSettings">Korisničke postavke</h2><p class="modal-intro" data-i18n="settingsIntroClean">Prilagodite prikaz, privatnost, sigurnost i pravila automatizacije.</p>
     <div class="settings-modal-body">
-    <div class="settings-tabs" role="tablist" aria-label="Postavke" data-i18n-aria="userSettings"><button type="button" role="tab" class="active" data-settings-tab="general" data-i18n="general">Općenito</button><button type="button" role="tab" data-settings-tab="security" data-i18n="security">Sigurnost</button><button type="button" role="tab" data-settings-tab="automation" data-i18n="automation">Pravila</button></div>
+    <div class="settings-tabs" role="tablist" aria-label="Postavke" data-i18n-aria="userSettings"><button type="button" role="tab" class="active" data-settings-tab="general" data-i18n="general">Općenito</button><button type="button" role="tab" data-settings-tab="personal" data-i18n="personalDataTab">Podaci</button><button type="button" role="tab" data-settings-tab="security" data-i18n="security">Sigurnost</button><button type="button" role="tab" data-settings-tab="automation" data-i18n="automation">Pravila</button></div>
 
     <section class="settings-pane active" data-settings-panel="general">
       <div class="settings-pane-heading"><div><p class="overline" data-i18n="preferences">PREFERENCE</p><h3 data-i18n="regionalPrivacy">Prikaz i privatnost</h3></div></div>
@@ -219,6 +221,23 @@
       </div>
       <label class="toggle-setting"><input type="checkbox" role="switch" id="hideBalances" aria-describedby="hideBalancesHint"><span><strong data-i18n="hideBalances">Sakrij iznose / Privatni način</strong><small id="hideBalancesHint" data-i18n="hideBalancesHint">Zamaglite iznose u aplikaciji. Prečac: Ctrl / ⌘ + Shift + H.</small></span></label>
       <div class="demo-reset-card" id="demoResetCard" hidden><span class="demo-reset-icon"><svg aria-hidden="true"><use href="#icon-refresh"></use></svg></span><div><strong data-i18n="demoResetTitle">Vrati čisti demo prostor</strong><small data-i18n="demoResetHint">Uklanja probne promjene iz oba profila i vraća početne MER podatke. Postavke prikaza ostaju sačuvane.</small></div><button type="button" class="destructive-button" id="resetDemoData" data-i18n="resetDemoData">Vrati demo podatke</button></div>
+    </section>
+
+    <section class="settings-pane" data-settings-panel="personal" hidden>
+      <div class="settings-pane-heading"><div><p class="overline" data-i18n="personalDataOverline">OSOBNI PODACI</p><h3 data-i18n="personalDataTitle">Vaši osobni podaci</h3></div><span class="status-pill" data-i18n="personalDataLocal">Lokalni unos</span></div>
+      <p class="personal-data-intro" id="personalDataNotice" data-i18n="personalDataNotice">Neobavezni podaci za oba profila ovog korisnika, spremljeni samo u ovom pregledniku. Ne provodimo provjeru identiteta (KYC).</p>
+      <form id="personalDataForm" class="personal-data-form" aria-describedby="personalDataNotice personalDataStorage" novalidate>
+        <div class="personal-data-fields">
+          <label for="personalFirstName"><span data-i18n="personalFirstName">Ime</span><input id="personalFirstName" name="firstName" autocomplete="given-name" maxlength="80"></label>
+          <label for="personalLastName"><span data-i18n="personalLastName">Prezime</span><input id="personalLastName" name="lastName" autocomplete="family-name" maxlength="80"></label>
+          <label for="personalOib"><span>OIB</span><input id="personalOib" name="oib" type="text" inputmode="numeric" autocomplete="off" maxlength="11" pattern="[0-9]{11}" aria-describedby="personalOibHint"><small id="personalOibHint" data-i18n="personalOibHint">11 znamenki. Provjeravamo samo format unosa.</small></label>
+          <label for="personalAddress"><span data-i18n="personalAddress">Adresa</span><input id="personalAddress" name="address" autocomplete="street-address" maxlength="240"></label>
+        </div>
+        <p class="personal-data-storage" id="personalDataStorage"></p>
+        <p class="personal-data-feedback" id="personalDataFeedback" role="status" aria-live="polite"></p>
+        <div class="personal-data-actions"><button type="submit" class="primary-button" id="savePersonalData" data-i18n="savePersonalData">Spremi podatke</button></div>
+      </form>
+      <p class="personal-data-portability" data-i18n="personalDataPortability">Polje možete izbrisati i ponovno spremiti. Izvoz svih podataka i brisanje lokalnog računa dostupni su u Sigurnost → Vaši podaci.</p>
     </section>
 
     <section class="settings-pane" data-settings-panel="security" hidden>
@@ -252,6 +271,7 @@
         <button type="submit" class="primary-button rule-builder-submit" data-i18n="addRule">Dodaj pravilo</button>
       </form>
       <div class="automation-rule-list" id="automationRuleList" aria-live="polite"></div>
+      <nav class="rules-pagination" id="rulesPagination" aria-label="Stranice pravila" data-i18n-aria="rulesPagination" hidden><button type="button" class="secondary-button compact-button" id="rulesPrevious" data-i18n="previous" aria-controls="automationRuleList">Prethodno</button><span id="rulesPageLabel" role="status" aria-live="polite"></span><button type="button" class="secondary-button compact-button" id="rulesNext" data-i18n="next" aria-controls="automationRuleList">Sljedeće</button></nav>
     </section>
 
     </div>
@@ -309,7 +329,7 @@
     <section class="assessment-step" data-step="3"><p class="overline"><span data-i18n="step">KORAK</span> 3 / 3</p><h2 data-i18n="chooseGuardrail">Odaberite sigurnosnu rezervu.</h2><p class="modal-intro" data-i18n="breathingRoom">Koliki dio prihoda želite ostaviti netaknutim?</p><div class="guard-options"><label><input type="radio" name="guard" value="0.15"><span><strong data-i18n="comfortable">Komotno</strong><small data-i18n="buffer15">Sačuvaj 15% kao rezervu</small></span></label><label><input type="radio" name="guard" value="0.10" checked><span><strong data-i18n="balanced">Uravnoteženo</strong><small data-i18n="buffer10">Sačuvaj 10% kao rezervu</small></span></label><label><input type="radio" name="guard" value="0.05"><span><strong data-i18n="flexible">Fleksibilno</strong><small data-i18n="buffer5">Sačuvaj 5% kao rezervu</small></span></label></div><div class="plan-preview"><span data-i18n="recommendedBudget">Preporučeni budžet za potrošnju</span><strong id="recommendedBudget">2.070 € / mjesec</strong></div><p id="assessmentNotice" class="modal-context" role="status" aria-live="polite" hidden></p></section>
     <div class="modal-actions split-actions"><button type="button" class="secondary-button" id="assessmentBack" hidden data-i18n="back">Natrag</button><div class="modal-primary-actions"><button type="button" class="secondary-button" data-close-modal data-i18n="cancel">Otkaži</button><button type="button" class="primary-button" id="assessmentNext" data-i18n="continue">Nastavi</button><button type="submit" class="primary-button" id="assessmentSave" hidden data-i18n="usePlan">Primijeni plan</button></div></div></form></dialog>
 
-  <dialog class="modal breakdown-modal" id="breakdownModal" aria-labelledby="breakdownTitle"><button type="button" class="modal-close" data-close-modal aria-label="Zatvori" data-i18n-aria="close"><svg aria-hidden="true"><use href="#icon-x"></use></svg></button><p class="overline" data-i18n="spendingGuardrail">ZAŠTITA BUDŽETA</p><h2 id="breakdownTitle" data-i18n="calculationTitle">Kako smo izračunali siguran iznos</h2><div class="calculation-list"><div><span data-i18n="monthlyIncome">Mjesečni neto prihod</span><strong id="calcIncome">4.300 €</strong></div><div><span data-i18n="essentialBillsShort">Osnovne obveze</span><strong id="calcBills">−1.180 €</strong></div><div><span data-i18n="monthlySavingsTarget">Mjesečni cilj štednje</span><strong id="calcSavings">−620 €</strong></div><div><span data-i18n="safetyBuffer">Sigurnosna rezerva</span><strong id="calcBuffer">−430 €</strong></div><div class="calculation-total"><span data-i18n="flexibleMonthlyBudget">Fleksibilni mjesečni budžet</span><strong id="calcBudget">2.070 €</strong></div><div><span data-i18n="alreadySpent">Već potrošeno</span><strong id="calcSpent">−1.574,25 €</strong></div><div class="calculation-safe"><span data-i18n="safeRemainder">Sigurno preostaje</span><strong id="calcSafe">495,75 €</strong></div></div><p class="info-note"><svg aria-hidden="true"><use href="#icon-shield"></use></svg><span data-i18n="commitmentsProtected">Obvezni troškovi i cilj štednje ostaju zaštićeni pri svakoj novoj transakciji.</span></p></dialog>
+  <dialog class="modal breakdown-modal" id="breakdownModal" aria-labelledby="breakdownTitle"><button type="button" class="modal-close" data-close-modal aria-label="Zatvori" data-i18n-aria="close"><svg aria-hidden="true"><use href="#icon-x"></use></svg></button><p class="overline" data-i18n="spendingGuardrail">ZAŠTITA BUDŽETA</p><h2 id="breakdownTitle" data-i18n="calculationTitle">Kako smo izračunali siguran iznos</h2><div class="calculation-list"><div><span data-i18n="monthlyIncome">Mjesečni neto prihod</span><strong id="calcIncome">4.300 €</strong></div><div><span data-i18n="essentialBillsShort">Osnovne obveze</span><strong id="calcBills">−1.180 €</strong></div><div><span data-i18n="monthlySavingsTarget">Mjesečni cilj štednje</span><strong id="calcSavings">−620 €</strong></div><div><span data-i18n="safetyBuffer">Sigurnosna rezerva</span><strong id="calcBuffer">−430 €</strong></div><div class="calculation-total"><span data-i18n="flexibleMonthlyBudget">Fleksibilni mjesečni budžet</span><strong id="calcBudget">2.070 €</strong></div><div><span data-i18n="alreadySpent">Već potrošeno</span><strong id="calcSpent">−1.574,25 €</strong></div><div class="calculation-safe"><span data-i18n="safeRemainder">Sigurno preostaje</span><strong id="calcSafe">495,75 €</strong></div></div></dialog>
 
   <dialog class="modal edit-budget-modal" id="budgetModal" aria-labelledby="budgetModalTitle"><button type="button" class="modal-close" data-close-modal aria-label="Zatvori" data-i18n-aria="close"><svg aria-hidden="true"><use href="#icon-x"></use></svg></button><p class="overline" data-i18n="categoryBudget">BUDŽET KATEGORIJE</p><h2 id="budgetModalTitle">Hrana i restorani</h2><p class="modal-intro" data-i18n="setRealisticLimit">Postavite realističnu granicu. Novi iznos ne može biti manji od već potrošenog.</p><form id="budgetForm"><div class="form-row"><label><span data-i18n="categoryName">Naziv kategorije</span><input id="categoryNameInput" type="text" maxlength="30" required></label><label><span data-i18n="categoryIcon">Oznaka</span><input id="categoryIconInput" type="text" maxlength="2" placeholder="K"></label></div><label><span data-i18n="monthlyLimit">Mjesečni limit</span><span class="input-suffix"><input id="budgetLimitInput" type="number" min="0" step="0.01" required><span>€</span></span></label><div class="modal-context" id="budgetModalContext"></div><div class="modal-actions split-actions"><button type="button" class="destructive-button" id="deleteCategory" hidden data-i18n="deleteCategory">Izbriši kategoriju</button><div class="modal-primary-actions"><button type="button" class="secondary-button" data-close-modal data-i18n="cancel">Otkaži</button><button type="submit" class="primary-button" data-i18n="saveCategory">Spremi kategoriju</button></div></div></form></dialog>
 
@@ -374,6 +394,8 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
   <script src="vault-core.js"></script>
   <script src="security-enterprise.js"></script>
+  <script src="settings-enhancements.js"></script>
+  <script src="quick-tools-core.js"></script>
   <script src="app.js?v=20260901-branding-strategy-r1"></script>
   <script src="circle-text.js"></script>
   <script src="plan-navigation.js"></script>
@@ -405,5 +427,6 @@
   <script src="savings-minimal.js"></script>
   <script src="modal-footer.js"></script>
   <script src="planning-hubs.js"></script>
+  <script src="quick-tools-ui.js"></script>
 </body>
 </html>

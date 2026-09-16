@@ -13,7 +13,14 @@ class Events {
   constructor() {this.events=new Map();}
   addEventListener(name,handler) {if(!this.events.has(name))this.events.set(name,[]);this.events.get(name).push(handler);}
   removeEventListener(name,handler) {this.events.set(name,(this.events.get(name)||[]).filter(item=>item!==handler));}
-  async emit(name,event={}) {await Promise.all((this.events.get(name)||[]).map(handler=>handler({preventDefault(){},target:this,...event})));}
+  async emit(name,details={}) {
+    const event={defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},stopPropagation(){this.propagationStopped=true;},target:this,bubbles:false,...details};
+    for(let node=this;node;node=event.bubbles&&!event.propagationStopped?node.parentNode:null) {
+      event.currentTarget=node;
+      await Promise.all((node.events.get(name)||[]).map(handler=>handler(event)));
+    }
+    return event;
+  }
 }
 function stream() {
   const track=new Events();track.stops=0;track.stop=()=>{track.stops++;track.readyState='ended';};track.readyState='live';
@@ -37,7 +44,7 @@ function harness(options={}) {
   Object.defineProperty(dialog,'innerHTML',{get(){return this.html||'';},set(html){
     this.html=html;this.controls=new Map();this.closeButtons=[];
     for(const match of html.matchAll(/<(button|input|div|p|video|form)[\s\n]([^>]+)>/g)) {
-      const attributes=match[2],node=new Element(attributes),id=/\bid="([^"]+)"/.exec(attributes)?.[1],name=/\bname="([^"]+)"/.exec(attributes)?.[1];
+      const attributes=match[2],node=new Element(attributes),id=/\bid="([^"]+)"/.exec(attributes)?.[1],name=/\bname="([^"]+)"/.exec(attributes)?.[1];node.parentNode=this;
       if(id)this.controls.set('#'+id,node);if(name)this.controls.set('[name="'+name+'"]',node);
       if(attributes.includes('data-receipt-close'))this.closeButtons.push(node);
       if(attributes.includes('data-receipt-error'))this.controls.set('[data-receipt-error]',node);
@@ -105,6 +112,58 @@ test('back and file selection stop camera immediately and restore upload without
     if(action==='#receiptCameraChoose')assert.equal(app.node('#receiptFile').clicks,1);
     else assert.equal(app.node('#receiptCamera').focused,true);
   }
+});
+
+test('native file-picker cancellation bubbles without closing the receipt modal in either language',async()=>{
+  for(const language of ['hr','en']) {
+    const app=harness({language}),file=app.node('#receiptFile'),html=app.dialog.innerHTML;
+    let bubbled=0;app.dialog.addEventListener('cancel',event=>{if(event.target===file)bubbled++;});
+    await app.click('#receiptChoose');assert.equal(file.clicks,1);
+    const event=await file.emit('cancel',{bubbles:true});
+    assert.equal(bubbled,1);assert.equal(event.defaultPrevented,false);
+    assert.equal(app.dialog.open,true);assert.equal(app.dialog.innerHTML,html);
+    assert.equal(app.node('#receiptFile'),file);assert.equal(app.node('#receiptAnalyze').disabled,true);
+    assert.equal(app.createdUrls.length,0);assert.equal(app.requests.length,0);
+    await app.click('#receiptChoose');assert.equal(file.clicks,2);
+    const escape=await app.dialog.emit('cancel');
+    assert.equal(escape.defaultPrevented,true);assert.equal(app.dialog.open,false);assert.equal(app.dialog.innerHTML,'');
+  }
+});
+
+test('canceling replacement selection preserves the prepared receipt image and consent for extraction',async()=>{
+  const app=harness();await app.click('#receiptCamera');await app.click('#receiptSnap');
+  app.node('#receiptConsent').checked=true;
+  const file=app.node('#receiptFile'),html=app.dialog.innerHTML,revoked=[...app.revokedUrls];
+  await app.click('#receiptChoose');await file.emit('cancel',{bubbles:true});
+  assert.equal(app.dialog.open,true);assert.equal(app.dialog.innerHTML,html);
+  assert.equal(app.node('#receiptConsent').checked,true);assert.equal(app.node('#receiptAnalyze').disabled,false);
+  assert.deepEqual(app.revokedUrls,revoked);assert.equal(app.requests.length,0);
+  await app.click('#receiptAnalyze');assert.equal(app.requests.length,1);
+  assert.match(app.dialog.innerHTML,/Synthetic shop/);
+});
+
+test('canceling native camera fallback leaves upload open and profile changes still clear it',async()=>{
+  const app=harness({supported:false}),file=app.node('#receiptCameraFile');
+  await app.click('#receiptCamera');assert.equal(file.clicks,1);
+  await file.emit('cancel',{bubbles:true});
+  assert.equal(app.dialog.open,true);assert.equal(app.node('#receiptCameraFile'),file);
+  assert.equal(app.cameraRequests.length,0);assert.equal(app.requests.length,0);
+  app.state.activeProfile='business';await app.document.emit('mer:profile-change');
+  assert.equal(app.dialog.open,false);assert.equal(app.dialog.innerHTML,'');
+  app.window.MerReceiptUI.open();
+  assert.equal(app.dialog.open,true);assert.equal(app.node('#receiptAnalyze').disabled,true);
+  assert.match(app.dialog.innerHTML,/Poslovni profil/);
+});
+
+test('canceling file selection after leaving camera cannot revive a pending stream',async()=>{
+  const pending=deferred(),app=harness({getUserMedia:()=>pending.promise}),late=stream();
+  const opening=app.click('#receiptCamera');await app.click('#receiptCameraChoose');
+  const file=app.node('#receiptFile');assert.equal(file.clicks,1);
+  await file.emit('cancel',{bubbles:true});assert.equal(app.dialog.open,true);
+  pending.resolve(late);await opening;
+  assert.equal(late.track.stops,1);assert.equal(app.videos[0].srcObject,null);
+  assert.equal(app.dialog.open,true);assert.equal(app.node('#receiptFile'),file);
+  assert.equal(app.createdUrls.length,0);assert.equal(app.requests.length,0);
 });
 
 test('close, Escape, lock, profile switch, hidden tab, and pagehide all release camera tracks',async()=>{

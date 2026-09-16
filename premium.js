@@ -41,7 +41,12 @@
     smsMfaDescription:'The local SMS demo adapter displays a one-time code in the app; production requires a real delivery provider.',smsUnlockHint:'Enter the local demo SMS code or an unused recovery code.',disableSmsCode:'SMS code or recovery code',sendDisableSmsCode:'Send disable code',smsDisableDelivery:'Local demo disable code for {phone}: {code}'
   });
 
+  Object.assign(translations.hr,{personalDataTab:'Podaci',personalDataOverline:'OSOBNI PODACI',personalDataTitle:'Vaši osobni podaci',personalDataLocal:'Lokalni unos',personalDataNotice:'Neobavezni podaci za oba profila ovog korisnika, spremljeni samo u ovom pregledniku. Ne provodimo provjeru identiteta (KYC).',personalFirstName:'Ime',personalLastName:'Prezime',personalAddress:'Adresa',personalOibHint:'11 znamenki. Provjeravamo samo format unosa.',savePersonalData:'Spremi podatke',personalDataPortability:'Polje možete izbrisati i ponovno spremiti. Izvoz svih podataka i brisanje lokalnog računa dostupni su u Sigurnost → Vaši podaci.',rulesPagination:'Stranice pravila',rulesPageLabel:'{start}–{end} od {total} · {page}/{pages}'});
+  Object.assign(translations.en,{personalDataTab:'Personal data',personalDataOverline:'PERSONAL DATA',personalDataTitle:'Your personal data',personalDataLocal:'Local entry',personalDataNotice:'Optional details shared by both profiles of this user, stored only in this browser. We do not perform identity verification (KYC).',personalFirstName:'First name',personalLastName:'Last name',personalAddress:'Address',personalOibHint:'11 digits. We check the input format only.',savePersonalData:'Save details',personalDataPortability:'Clear a field and save to remove it. Export all data and delete the local account in Security → Your data.',rulesPagination:'Rule pages',rulesPageLabel:'{start}–{end} of {total} · {page}/{pages}'});
   let selectedSettingsTab = 'general';
+  let personalDataUI = null;
+  const rulesPages = new Map();
+  const rulesScope = () => `${window.MerAuthProvider?.currentSession?.()?.userId||''}:${appState.activeAccount}`;
   let selectedMfaMethod = MerSecurity.normalizeMfaMethod(appState.mfa?.method) || MerSecurity.MFA_METHODS.AUTHENTICATOR;
   let pendingEnrollment = null;
   let pendingSmsChallenge = null;
@@ -57,7 +62,7 @@
   const importPageSize = 50;
 
   function selectSettingsTab(tab) {
-    selectedSettingsTab = ['general', 'security', 'automation'].includes(tab) ? tab : 'general';
+    selectedSettingsTab = ['general', 'personal', 'security', 'automation'].includes(tab) ? tab : 'general';
     $$('[data-settings-tab]').forEach(button => { const active=button.dataset.settingsTab===selectedSettingsTab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1; });
     $$('[data-settings-panel]').forEach(panel => { const active=panel.dataset.settingsPanel===selectedSettingsTab;panel.hidden=!active;panel.classList.toggle('active',active); });
     const scrollBody=$('#bankSettingsModal .settings-modal-body');
@@ -111,7 +116,7 @@
     $('#importProfileBadge').textContent=t(state.accountLabel);
     $('#rulesProfileBadge').textContent=t(state.accountLabel);
     $('#demoResetCard').hidden=!Boolean(window.MerAuthProvider?.currentSession?.()?.demo);
-    renderMfa();renderActiveSessions();renderAutomationRules();renderImportReview();
+    renderMfa();renderActiveSessions();renderAutomationRules();renderImportReview();personalDataUI?.refresh();
   }
 
   function renderMfa() {
@@ -325,10 +330,16 @@
   function renderAutomationRules() {
     if(!$('#automationRuleList'))return;
     const rules=state.automationRules||[];
+    const scope=rulesScope(),page=window.MerSettingsEnhancements.paginateRules(rules,rulesPages.get(scope)||1);
+    rulesPages.set(scope,page.page);
     $('#automationRuleList').innerHTML=rules.length
-      ? `<div class="automation-rule-list-heading"><strong>${t('activeRules')}</strong><span>${rules.length}</span></div>${rules.map(rule=>`<article class="automation-rule"><div class="automation-rule-side"><small>${t('ruleIf')}</small><span>${t('ruleExampleContains')}</span><strong>“${escapeHtml(rule.keyword)}”</strong></div><span class="automation-rule-arrow" aria-hidden="true">→</span><div class="automation-rule-side result"><small>${t('ruleThen')}</small><span>${t('ruleAssignCategory')}</span><strong>${escapeHtml(rule.type==='income'?incomeCategoryName(rule.category):categoryName(rule.category))}</strong></div><span class="rule-type-pill">${t(rule.type)}</span><button type="button" class="icon-button small danger-icon" data-delete-rule="${rule.id}" aria-label="${t('deleteRule')}"><svg aria-hidden="true"><use href="#icon-x"></use></svg></button></article>`).join('')}`
+      ? `<div class="automation-rule-list-heading"><strong>${t('activeRules')}</strong><span>${rules.length}</span></div>${page.items.map(rule=>`<article class="automation-rule"><div class="automation-rule-side"><small>${t('ruleIf')}</small><span>${t('ruleExampleContains')}</span><strong>“${escapeHtml(rule.keyword)}”</strong></div><span class="automation-rule-arrow" aria-hidden="true">→</span><div class="automation-rule-side result"><small>${t('ruleThen')}</small><span>${t('ruleAssignCategory')}</span><strong>${escapeHtml(rule.type==='income'?incomeCategoryName(rule.category):categoryName(rule.category))}</strong></div><span class="rule-type-pill">${t(rule.type)}</span><button type="button" class="icon-button small danger-icon" data-delete-rule="${escapeHtml(rule.id)}" aria-label="${escapeHtml(`${t('deleteRule')}: ${rule.keyword}`)}"><svg aria-hidden="true"><use href="#icon-x"></use></svg></button></article>`).join('')}`
       : `<div class="rules-empty-state"><span class="rules-empty-icon" aria-hidden="true">◎</span><div class="rules-empty-copy"><strong>${t('noRulesTitle')}</strong><p>${t('noRulesBody')}</p></div><div class="rules-example"><small>${t('ruleExample')}</small><div><span class="rule-step-badge">${t('ruleIf')}</span><span>${t('ruleExampleContains')}</span><strong>“Uber”</strong><span aria-hidden="true">→</span><span class="rule-step-badge then">${t('ruleThen')}</span><strong>${t('transport')}</strong></div></div></div>`;
-    $$('[data-delete-rule]').forEach(button=>button.addEventListener('click',()=>{state.automationRules=state.automationRules.filter(rule=>rule.id!==button.dataset.deleteRule);save();renderAutomationRules();showToast(t('ruleDeleted'));}));
+    $('#rulesPagination').hidden=page.pages<=1;
+    $('#rulesPrevious').disabled=page.page<=1;
+    $('#rulesNext').disabled=page.page>=page.pages;
+    $('#rulesPageLabel').textContent=t('rulesPageLabel',page);
+    $$('[data-delete-rule]').forEach(button=>button.addEventListener('click',()=>{state.automationRules=state.automationRules.filter(rule=>rule.id!==button.dataset.deleteRule);save();renderAutomationRules();showToast(t('ruleDeleted'));($('#automationRuleList [data-delete-rule]')||$('#ruleKeyword')).focus({preventScroll:true});}));
     renderRuleCategorySelect();
   }
 
@@ -355,6 +366,22 @@
   renderAll=function renderAllWithPremium(){originalRenderAll();renderPremium();};
 
   $$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>selectSettingsTab(button.dataset.settingsTab)));
+  $$('[data-settings-tab]').forEach(button=>{
+    const panel=$(`[data-settings-panel="${button.dataset.settingsTab}"]`);
+    button.id=`settings-tab-${button.dataset.settingsTab}`;button.setAttribute('aria-controls',`settings-panel-${button.dataset.settingsTab}`);
+    panel.id=`settings-panel-${button.dataset.settingsTab}`;panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',button.id);
+    button.addEventListener('keydown',event=>{
+      if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+      event.preventDefault();const tabs=$$('[data-settings-tab]'),index=tabs.indexOf(button);
+      const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+      selectSettingsTab(tabs[next].dataset.settingsTab);tabs[next].focus({preventScroll:true});
+    });
+  });
+  [['rulesPrevious',-1],['rulesNext',1]].forEach(([id,direction])=>$('#'+id).addEventListener('click',()=>{
+    const scope=rulesScope();rulesPages.set(scope,(rulesPages.get(scope)||1)+direction);renderAutomationRules();
+    $('#bankSettingsModal .settings-modal-body').scrollTop=0;
+    if($('#'+id).disabled)$('#'+(direction>0?'rulesPrevious':'rulesNext')).focus({preventScroll:true});
+  }));
   $('#manageSettings').addEventListener('click',()=>openSettings('general'));
   $('#bankSettingsModal').addEventListener('close',()=>{visibleRecoveryCodes=[];pendingEnrollment=null;pendingSmsChallenge=null;pendingSmsDisableChallenge=null;$('#mfaDisableCode').value='';renderMfa();});
   ['baseCurrency','dateFormat','timezone','hideBalances'].forEach(id=>$('#'+id).addEventListener('change',()=>{appState.settings.currency=$('#baseCurrency').value;appState.settings.dateFormat=$('#dateFormat').value;appState.settings.timezone=$('#timezone').value;appState.settings.hideBalances=$('#hideBalances').checked;save('settings-change');showToast(t('settingsSaved'));}));
@@ -393,7 +420,7 @@
   $('#resetDemoData').addEventListener('click',()=>openModal($('#demoResetModal')));
   $('#confirmDemoReset').addEventListener('click',resetDemoWorkspace);
 
-  $('#ruleType').addEventListener('change',renderRuleCategorySelect);$('#automationRuleForm').addEventListener('submit',event=>{event.preventDefault();const keyword=$('#ruleKeyword').value.trim();if(!keyword){showToast(t('categoryNameRequired'));return;}if(state.automationRules.some(rule=>rule.keyword.toLocaleLowerCase()===keyword.toLocaleLowerCase())){showToast(t('ruleExists'));return;}state.automationRules.push({id:uniqueId('rule'),keyword:keyword.slice(0,60),type:$('#ruleType').value==='income'?'income':'expense',category:$('#ruleCategory').value,enabled:true});save();event.target.reset();renderAutomationRules();showToast(t('ruleSaved'));});
+  $('#ruleType').addEventListener('change',renderRuleCategorySelect);$('#automationRuleForm').addEventListener('submit',event=>{event.preventDefault();const keyword=$('#ruleKeyword').value.trim();if(!keyword){showToast(t('categoryNameRequired'));return;}if(state.automationRules.some(rule=>rule.keyword.toLocaleLowerCase()===keyword.toLocaleLowerCase())){showToast(t('ruleExists'));return;}state.automationRules.push({id:uniqueId('rule'),keyword:keyword.slice(0,60),type:$('#ruleType').value==='income'?'income':'expense',category:$('#ruleCategory').value,enabled:true});rulesPages.set(rulesScope(),Math.ceil(state.automationRules.length/window.MerSettingsEnhancements.RULES_PAGE_SIZE));save();event.target.reset();renderAutomationRules();showToast(t('ruleSaved'));});
 
   $('#addSavingsGoal').addEventListener('click',()=>openGoalEditor());$('#goalForm').addEventListener('submit',event=>{event.preventDefault();const payload={name:$('#goalNameInput').value.trim(),target:Number($('#goalTargetInput').value),current:Number($('#goalCurrentInput').value),dueDate:$('#goalDueDateInput').value,primary:$('#goalPrimaryInput').checked};const validation=MerCore.validateSavingsGoal(payload);if(!validation.valid){showToast(t('goalInvalid'));return;}if(payload.primary)state.goalBuckets.forEach(goal=>{goal.primary=false;});const existing=editingGoalId?state.goalBuckets.find(goal=>goal.id===editingGoalId):null;if(existing)Object.assign(existing,payload);else state.goalBuckets.push({id:uniqueId('goal'),profileId:appState.activeAccount,roundUpsEnabled:false,...payload});if(!state.goalBuckets.some(goal=>goal.primary))state.goalBuckets[0].primary=true;save(existing?'savings-goal-edit':'savings-goal-add');closeModal($('#goalModal'));showToast(t('goalSaved'));editingGoalId=null;});
   $('#deleteSavingsGoal').addEventListener('click',()=>{const goal=state.goalBuckets.find(item=>item.id===editingGoalId);if(!goal)return;if(state.goalBuckets.length===1){showToast(t('atLeastOneGoal'));return;}if(goal.current>0){showToast(t('goalHasBalance'));return;}if(state.enterprise?.roundUps?.goalId===goal.id)MerVaults.configureRoundUps(state,{enabled:false,goalId:goal.id,increment:state.enterprise.roundUps.increment},appReferenceDate,{profileId:appState.activeAccount});state.goalBuckets=state.goalBuckets.filter(item=>item.id!==goal.id);state.savingsEntries=state.savingsEntries.filter(entry=>entry.goalId!==goal.id);if(goal.primary)state.goalBuckets[0].primary=true;save('savings-goal-delete');closeModal($('#goalModal'));showToast(t('goalDeleted'));editingGoalId=null;});
@@ -405,5 +432,6 @@
     openDeposit:goalId=>{openSavingsDeposit();$('#savingsGoalInput').value=goalId;}
   });
   window.MerPremiumNavigation=Object.freeze({openSettings,openGoalEditor});
+  personalDataUI=window.MerSettingsEnhancements.createPersonalDataUI({document,store:reactiveStore,getSession:()=>window.MerAuthProvider?.currentSession?.(),getLanguage:()=>currentLang,isAvailable:()=>!$('#appShell').hidden&&!window.MerEnterpriseSecurity?.isLocked()&&!document.body.classList.contains('mfa-locked'),flush:()=>window.MerEnterpriseSecurity?.flush()});
   applyStaticTranslations();renderAll();selectSettingsTab(selectedSettingsTab);
 })();

@@ -179,6 +179,7 @@ test('evaluation cycle 1: proportional budget cents render no phantom zero-euro 
   };
   context.getPlan=()=>({monthlyBudget:1900,safeRemaining:1080});
   context.budgetCategoryRow=()=>'';
+  context.window={}; // Optional pagination extension is absent during early app startup.
   context.notificationFingerprint=()=> 'test-budget-fingerprint';
   context.isNotificationResolved=()=>false;
   const render=source.slice(source.indexOf('function renderBudgetView('),source.indexOf('function budgetCategoryPercent('));

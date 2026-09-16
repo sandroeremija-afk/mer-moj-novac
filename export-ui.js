@@ -53,7 +53,7 @@
     exportDialog.className = 'modal export-dialog';
     exportDialog.setAttribute('aria-labelledby', 'exportTitle');
     exportDialog.setAttribute('aria-describedby', 'exportDescription');
-    exportDialog.innerHTML = `<header class="export-header"><div><span class="export-profile" id="exportProfile"></span><h2 id="exportTitle"></h2></div><button type="button" class="icon-button" data-export-close id="exportClose">×</button></header><form id="exportForm" novalidate><div class="export-body"><p id="exportDescription" class="export-intro"></p><div class="export-fields"><label for="exportTimeframe"><span id="exportTimeframeLabel"></span><select id="exportTimeframe"><option value="daily"></option><option value="monthly"></option><option value="custom-month"></option><option value="ytd"></option><option value="all"></option></select></label><label for="exportFormat"><span id="exportFormatLabel"></span><select id="exportFormat"><option value="csv">CSV</option><option value="pdf">PDF</option><option value="json">JSON</option></select></label><label for="exportMonth" id="exportMonthField" hidden><span id="exportMonthLabel"></span><input id="exportMonth" type="month" min="1900-01" max="9999-12" aria-describedby="exportError"></label></div><section class="export-preview" aria-live="polite" aria-atomic="true"><h3 id="exportPreviewTitle"></h3><p id="exportPeriod"></p><p id="exportCount"></p><dl id="exportSummary"></dl><p id="exportEmpty" hidden></p></section><p class="export-notes" id="exportNotes"></p><p id="exportError" class="export-error" role="alert" hidden></p></div><footer class="export-footer"><button type="button" class="secondary-button export-back" id="exportBack"><span id="exportBackLabel"></span></button><button type="button" class="secondary-button" data-export-close id="exportCancel"></button><button type="submit" class="primary-button" id="exportDownload"></button></footer></form>`;
+    exportDialog.innerHTML = `<header class="export-header"><div><span class="export-profile" id="exportProfile"></span><h2 id="exportTitle"></h2></div><button type="button" class="icon-button" data-export-close id="exportClose">×</button></header><form id="exportForm" novalidate><div class="export-body"><p id="exportDescription" class="export-intro"></p><div class="export-fields"><label for="exportTimeframe"><span id="exportTimeframeLabel"></span><select id="exportTimeframe"><option value="daily"></option><option value="monthly"></option><option value="custom-month"></option><option value="ytd"></option><option value="all"></option></select></label><label for="exportFormat"><span id="exportFormatLabel"></span><select id="exportFormat"><option value="csv">CSV</option><option value="pdf">PDF</option><option value="json">JSON</option></select></label><label for="exportMonth" id="exportMonthField" hidden><span id="exportMonthLabel"></span><select id="exportMonth" aria-describedby="exportMonthHint exportError"></select><small id="exportMonthHint" class="export-month-hint"></small></label></div><section class="export-preview" aria-live="polite" aria-atomic="true"><h3 id="exportPreviewTitle"></h3><p id="exportPeriod"></p><p id="exportCount"></p><dl id="exportSummary"></dl><p id="exportEmpty" hidden></p></section><p class="export-notes" id="exportNotes"></p><p id="exportError" class="export-error" role="alert" hidden></p></div><footer class="export-footer"><button type="button" class="secondary-button export-back" id="exportBack"><span id="exportBackLabel"></span></button><button type="button" class="secondary-button" data-export-close id="exportCancel"></button><button type="submit" class="primary-button" id="exportDownload"></button></footer></form>`;
     transferDialog = document.createElement('dialog');
     transferDialog.id = 'activityTransferModal';
     transferDialog.className = 'modal export-dialog export-transfer-dialog';
@@ -74,11 +74,6 @@
       selection.format = el('exportFormat').value;
       renderPreview();
     }));
-    el('exportMonth').addEventListener('input', () => {
-      invalidate();
-      selection.month = el('exportMonth').value;
-      renderPreview();
-    });
     el('activityTransferExport').addEventListener('click', () => open('activity', { fromActivity:true }));
     el('activityTransferImport').addEventListener('click', () => {
       const state = snapshot();
@@ -94,13 +89,28 @@
       bridge().openImport();
     });
   }
-  function defaultMonth(state) {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(String(state.referenceDate || ''))) return state.referenceDate.slice(0, 7);
-    const date = state.referenceDate instanceof Date ? state.referenceDate : new Date(state.referenceDate || Date.now());
-    try {
-      const parts = new Intl.DateTimeFormat('en-CA', {year:'numeric', month:'2-digit', timeZone:state.timezone || 'Europe/Zagreb'}).formatToParts(date);
-      return `${parts.find(part => part.type === 'year').value}-${parts.find(part => part.type === 'month').value}`;
-    } catch { return new Date().toISOString().slice(0, 7); }
+  function renderMonths(state) {
+    const months = root.MerExportCore.availableMonths({...state, context:selection.context});
+    const field = el('exportMonth');
+    const signature = JSON.stringify([state.language, months]);
+    // Keep the native select and its options stable during unrelated store updates.
+    if (field.getAttribute('data-month-options') !== signature) {
+      field.textContent = '';
+      const options = months.length ? months : [{value:'', label:say('Nema zabilježenih mjeseci', 'No recorded months')}];
+      options.forEach(month => {
+        const option = document.createElement('option');
+        option.value = month.value;
+        option.textContent = month.label;
+        field.append(option);
+      });
+      field.setAttribute('data-month-options', signature);
+    }
+    if (!months.some(month => month.value === selection.month)) selection.month = months[0]?.value || '';
+    field.value = selection.month;
+    field.disabled = months.length === 0;
+    el('exportMonthHint').textContent = months.length
+      ? say('Mjeseci sa zapisima ovog profila, od najnovijeg.', 'Months with this profile’s records, newest first.')
+      : say('Nema zapisa za odabir mjeseca. Odaberite drugo razdoblje.', 'There are no records to choose a month. Select another period.');
   }
   function localizedTitles() {
     return {budget:say('Izvoz budžeta', 'Export budgets'), activity:say('Izvoz transakcija', 'Export transactions'), savings:say('Izvoz štednje', 'Export savings'), insights:say('Izvoz izvještaja', 'Export report')};
@@ -117,7 +127,7 @@
     el('exportBackLabel').textContent = say('Natrag', 'Back');
     el('exportClose').setAttribute('aria-label', say('Zatvori', 'Close'));
     el('exportTimeframeLabel').textContent = say('Razdoblje', 'Period');
-    const labels = [say('Danas', 'Today'), say('Ovaj mjesec', 'This month'), say('Određeni mjesec', 'Specific month'), say('Ova godina', 'This year'), say('Sve ukupno', 'All time')];
+    const labels = [say('Danas', 'Today'), say('Ovaj mjesec', 'This month'), say('Povijesni mjesec', 'Historical month'), say('Ova godina', 'This year'), say('Sve ukupno', 'All time')];
     el('exportTimeframe').querySelectorAll('option').forEach((option, index) => { option.textContent = labels[index]; });
     el('exportFormatLabel').textContent = say('Format datoteke', 'File format');
     el('exportMonthLabel').textContent = say('Odaberite mjesec', 'Choose a month');
@@ -128,7 +138,7 @@
   }
   function reportFor(state) {
     if (!timeframes.has(selection.timeframe) || !formats.has(selection.format)) throw new Error('INVALID_SELECTION');
-    if (selection.timeframe === 'custom-month' && !/^(?:19|[2-9]\d)\d{2}-(?:0[1-9]|1[0-2])$/.test(selection.month || '')) throw new Error('INVALID_MONTH');
+    if (selection.timeframe === 'custom-month' && !root.MerExportCore.availableMonths({...state, context:selection.context}).some(month => month.value === selection.month)) throw new Error('INVALID_MONTH');
     return root.MerExportCore.buildReport({...state, context:selection.context, timeframe:selection.timeframe, month:selection.month,
       categoryLabel:bridge()?.categoryLabel, incomeCategoryLabel:bridge()?.incomeCategoryLabel});
   }
@@ -166,11 +176,11 @@
     invalidate();
     owner = ownerOf(state);
     const chosenTimeframe = options.timeframe || (context === 'insights' ? state.insightsTimeframe : 'monthly');
-    selection = {context, timeframe:timeframes.has(chosenTimeframe) ? chosenTimeframe : 'monthly', month:options.month || defaultMonth(state), format:'csv', fromActivity:options.fromActivity === true};
+    selection = {context, timeframe:timeframes.has(chosenTimeframe) ? chosenTimeframe : 'monthly', month:options.month || '', format:'csv', fromActivity:options.fromActivity === true};
     el('exportTimeframe').value = selection.timeframe;
-    el('exportMonth').value = selection.month;
     el('exportFormat').value = selection.format;
     renderLabels(state);
+    renderMonths(state);
     renderPreview();
     (bridge().openModal || (node => node.showModal()))(exportDialog);
     return true;
@@ -254,7 +264,10 @@
     if (!available(state) || owner !== ownerOf(state)) {
       invalidate(); close(exportDialog); close(transferDialog); return;
     }
-    if (exportDialog.open && !busy) renderPreview();
+    if (exportDialog.open && !busy) {
+      renderMonths(state);
+      renderPreview();
+    }
   }
   root.addEventListener?.('mer-security-status', refresh);
   root.MerExportUI = {open, openActivityTransfer, refresh};

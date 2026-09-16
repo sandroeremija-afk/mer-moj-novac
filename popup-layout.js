@@ -13,19 +13,20 @@
   ['exportSovereignty','deleteSovereignty'].forEach(id=>{const button=document.getElementById(id);if(button)dataGrid.append(button);});
   panel.append(dataSection);
   const groups = {device:'.auto-lock-setting,.enterprise-security-actions',password:'#changePasswordForm',mfa:'#settingsTourMfa,.info-note',sessions:'.active-sessions-card',data:'.settings-data-actions'};
-  const picker = document.createElement('label');picker.className='settings-topic-picker';
-  picker.innerHTML='<span id="settingsTopicLabel"></span><select id="settingsTopic" aria-labelledby="settingsTopicLabel"><option value="device"></option><option value="password"></option><option value="mfa"></option><option value="sessions"></option><option value="data"></option></select>';
+  const picker = document.createElement('fieldset');picker.className='settings-topic-picker';
+  picker.innerHTML='<legend id="settingsTopicLabel"></legend><div class="settings-topic-options">'+Object.keys(groups).map(topic=>`<label class="settings-topic-option"><input type="radio" name="settingsTopic" value="${topic}"><span data-topic-label="${topic}"></span></label>`).join('')+'</div>';
   panel.querySelector('.settings-pane-heading').after(picker);
   panel.prepend(panel.querySelector('.settings-pane-heading'),picker);
-  const select = picker.querySelector('select');
+  const choices = [...picker.querySelectorAll('input[name="settingsTopic"]')];
   for (const [topic,selector] of Object.entries(groups)) panel.querySelectorAll(selector).forEach(node=>{node.dataset.settingsTopic=topic;});
   function chooseTopic(topic) {
-    select.value=Object.hasOwn(groups,topic)?topic:'device';
-    panel.querySelectorAll('[data-settings-topic]').forEach(node=>node.toggleAttribute('data-topic-hidden',node.dataset.settingsTopic!==select.value));
+    const selected=Object.hasOwn(groups,topic)?topic:'device';
+    choices.forEach(choice=>{choice.checked=choice.value===selected;});
+    panel.querySelectorAll('[data-settings-topic]').forEach(node=>node.toggleAttribute('data-topic-hidden',node.dataset.settingsTopic!==selected));
     schedule();
   }
   function revealTarget(target) {chooseTopic(topicForTarget(String(target||''))); }
-  select.addEventListener('change',()=>chooseTopic(select.value));
+  choices.forEach(choice=>choice.addEventListener('change',()=>{if(choice.checked)chooseTopic(choice.value);}));
   dialog.addEventListener('close',()=>chooseTopic('device'));
   root.MerPopupLayout=Object.freeze({revealTarget});
   function labels() {
@@ -33,7 +34,7 @@
     const label=document.getElementById('settingsTopicLabel'),text=english?'Security topic':'Sigurnosna tema';
     if(label.textContent!==text)label.textContent=text;
     const names=english?['Device and privacy','Password','Two-factor authentication','Local sessions','Your data']:['Uređaj i privatnost','Lozinka','Dvostruka autentifikacija','Lokalne sesije','Vaši podaci'];
-    [...select.options].forEach((option,index)=>{if(option.textContent!==names[index])option.textContent=names[index];});
+    choices.forEach((choice,index)=>{const label=picker.querySelector(`[data-topic-label="${choice.value}"]`);if(label.textContent!==names[index])label.textContent=names[index];});
     const texts={settingsDataTitle:english?'Your local data':'Vaši lokalni podaci',settingsDataHint:english?'Download a copy or request deletion of this browser’s local account. Bank accounts are not affected.':'Preuzmite kopiju ili zatražite brisanje lokalnog računa ovog preglednika. Bankovni računi ostaju nepromijenjeni.'};
     Object.entries(texts).forEach(([id,value])=>{const node=document.getElementById(id);if(node.textContent!==value)node.textContent=value;});
   }

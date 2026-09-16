@@ -18,6 +18,7 @@ function settingsNormalizer() {
   assert.ok(source, 'the centralized settings normalizer remains available');
   const context = {
     Intl,
+    window:{MerSettingsEnhancements:require('../settings-enhancements.js')},
     supportedCurrencies:new Set(['EUR', 'USD', 'GBP', 'CHF']),
     normalizeLayoutOrders:value => value || {}
   };
@@ -146,7 +147,7 @@ test('cycle 1: Settings checkbox renders the current global privacy state in bot
   const nodes = new Map();
   const appState = {settings:{currency:'EUR', dateFormat:'locale', timezone:'Europe/Zagreb', hideBalances:false, autoLockEnabled:false}};
   const context = {
-    appState, currentLang:'hr', state:{accountLabel:'personalAccount'},
+    appState, currentLang:'hr', state:{accountLabel:'personalAccount'},personalDataUI:{refresh(){}},
     $:id => { if (!nodes.has(id)) nodes.set(id, {}); return nodes.get(id); },
     window:{MerAuthProvider:{currentSession:() => ({demo:true})}, MerEnterpriseSecurity:{syncAutoLock() {}}},
     t:value => value,

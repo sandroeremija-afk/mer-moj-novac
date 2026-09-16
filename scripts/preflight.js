@@ -14,6 +14,7 @@ jsFiles.push('circle-text.js','plan-navigation.js','export-core.js','export-pdf.
 jsFiles.push('vaults-core.js','vaults-ui.js','natural-input-core.js','natural-input-ui.js','engagement-core.js','engagement-ui.js','savings-minimal.js','api/health-advice.js','api/transaction-parse.js');
 jsFiles.push('engagement-init.js');
 jsFiles.push('popup-layout.js','modal-footer.js','planning-hubs.js');
+jsFiles.push('quick-tools-core.js','quick-tools-ui.js','settings-enhancements.js');
 
 for (const file of jsFiles) {
   const fullPath = path.join(root, file);

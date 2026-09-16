@@ -11,7 +11,7 @@
   const words = {
     hr: {
       activity:'Aktivnost — transakcije', budget:'Budžeti — pregled kategorija', savings:'Štednja — uplate i isplate', insights:'Uvidi — financijski izvještaj',
-      daily:'Danas', monthly:'Ovaj mjesec', 'custom-month':'Određeni mjesec', ytd:'Ova godina', all:'Sve ukupno',
+      daily:'Danas', monthly:'Ovaj mjesec', 'custom-month':'Povijesni mjesec', ytd:'Ova godina', all:'Sve ukupno',
       personal:'Osobni račun', business:'Poslovni račun', date:'Datum', time:'Vrijeme', description:'Opis', category:'Kategorija', type:'Vrsta', amount:'Iznos', currency:'Valuta', status:'Status', profile:'Profil', source:'Izvor', id:'ID',
       income:'Prihodi', expense:'Troškovi', net:'Neto iznos', count:'Broj transakcija', posted:'Knjiženo', pending:'Na čekanju', scheduled:'Zakazano', draft:'Izvanmrežni nacrt', cancelled:'Otkazano', manual:'Ručno', unknown:'Nekategorizirano',
       transactions:'Pojedinačne transakcije', categories:'Potrošnja po kategorijama', currentLimit:'Trenutačni mjesečni limit', periodUsage:'Troškovi u odabranom razdoblju', configuredTotal:'Ukupni trenutačni mjesečni limiti', cashflow:'Prihodi i troškovi po razdobljima', period:'Razdoblje',
@@ -23,7 +23,7 @@
     },
     en: {
       activity:'Activity — transactions', budget:'Budgets — category overview', savings:'Savings — deposits and withdrawals', insights:'Insights — financial report',
-      daily:'Today', monthly:'This month', 'custom-month':'Specific month', ytd:'This year', all:'All-time',
+      daily:'Today', monthly:'This month', 'custom-month':'Historical month', ytd:'This year', all:'All-time',
       personal:'Personal account', business:'Business account', date:'Date', time:'Time', description:'Description', category:'Category', type:'Type', amount:'Amount', currency:'Currency', status:'Status', profile:'Profile', source:'Source', id:'ID',
       income:'Income', expense:'Expenses', net:'Net total', count:'Transaction count', posted:'Posted', pending:'Pending', scheduled:'Scheduled', draft:'Offline draft', cancelled:'Cancelled', manual:'Manual', unknown:'Uncategorized',
       transactions:'Itemized transactions', categories:'Spending by category', currentLimit:'Current monthly limit', periodUsage:'Expenses in selected period', configuredTotal:'Total current monthly limits', cashflow:'Income and expenses by period', period:'Period',
@@ -146,32 +146,23 @@
     return { start, end, label:`${w[timeframe]} · ${start === end ? start : `${start} – ${end}`}`, timeframe };
   }
 
-  function buildReport(options = {}) {
+  function reportScope(options) {
     const profile = options.profile;
     if (!profile || typeof profile !== 'object' || Array.isArray(profile)) throw new TypeError('An active profile is required');
     const profileId = String(options.profileId || profile.profileId || '');
     if (!profileId || (profile.profileId && profile.profileId !== profileId)) throw new TypeError('Export profile does not match the active account');
     const context = options.context || 'activity';
     if (!contexts.includes(context)) throw new TypeError('Unknown export context');
-    const timeframe = options.timeframe || 'monthly';
-    if (!timeframes.includes(timeframe)) throw new TypeError('Unknown export timeframe');
     const language = options.language === 'en' ? 'en' : 'hr';
-    const w = words[language];
     let timezone = options.timezone || 'Europe/Zagreb';
     try { new Intl.DateTimeFormat('en', {timeZone:timezone}).format(); } catch { timezone = 'Europe/Zagreb'; }
     const reference = options.referenceDate === undefined ? dateParts(new Date().toISOString(), timezone).day : validDay(options.referenceDate);
     if (!reference) throw new TypeError('A valid YYYY-MM-DD referenceDate is required');
     const currency = currencyCode(options.currency || profile.currency);
-    const locale = language === 'en' ? 'en-GB' : 'hr-HR';
-    const formatMoney = value => {
-      const whole = BigInt(Math.floor(Math.abs(value) / 100));
-      const signedWhole = value < 0 ? (whole === 0n ? -0 : -whole) : whole;
-      const fraction = String(Math.abs(value) % 100).padStart(2,'0');
-      return new Intl.NumberFormat(locale, {style:'currency', currency, minimumFractionDigits:value ? 2 : 0, maximumFractionDigits:value ? 2 : 0})
-        .formatToParts(signedWhole).map(part => part.type === 'fraction' ? fraction : part.value).join('');
-    };
-    const profileName = String(profile.accountName || w[profileId] || profileId);
-    const notes = [`${w.cutoff} ${reference}.`];
+    return {profile, profileId, context, language, timezone, reference, currency};
+  }
+
+  function reportEntries({profile, profileId, context, timezone, reference, currency}) {
     const source = context === 'savings' ? profile.savingsEntries : profile.transactions;
     let invalidCount = 0;
     const entries = (Array.isArray(source) ? source : []).flatMap(row => {
@@ -183,6 +174,41 @@
       if (!date || amount === null || !allowedTypes.includes(type)) { invalidCount += 1; return []; }
       return [{ row, ...date, amount, type, currency:currencyCode(row.currency, currency), status:statusAt(row, date.day, reference) }];
     });
+    return {entries, invalidCount};
+  }
+
+  function availableMonths(options = {}) {
+    const scope = reportScope(options);
+    const {entries} = reportEntries(scope);
+    const locale = scope.language === 'en' ? 'en-GB' : 'hr-HR';
+    const formatter = new Intl.DateTimeFormat(locale, {month:'long', year:'numeric', timeZone:'UTC'});
+    // Use the report's authoritative booking dates, validation and profile scope.
+    // Future schedules are available in the existing all-time export.
+    return [...new Set(entries.filter(entry => entry.day <= scope.reference).map(entry => entry.day.slice(0, 7)))].sort().reverse()
+      .map(value => {
+        const parts = formatter.formatToParts(new Date(`${value}-01T00:00:00Z`));
+        const month = parts.find(part => part.type === 'month').value;
+        return {value, label:`${month[0].toLocaleUpperCase(locale)}${month.slice(1)} ${parts.find(part => part.type === 'year').value}`};
+      });
+  }
+
+  function buildReport(options = {}) {
+    const scope = reportScope(options);
+    const {profile, profileId, context, language, reference, currency} = scope;
+    const timeframe = options.timeframe || 'monthly';
+    if (!timeframes.includes(timeframe)) throw new TypeError('Unknown export timeframe');
+    const w = words[language];
+    const locale = language === 'en' ? 'en-GB' : 'hr-HR';
+    const formatMoney = value => {
+      const whole = BigInt(Math.floor(Math.abs(value) / 100));
+      const signedWhole = value < 0 ? (whole === 0n ? -0 : -whole) : whole;
+      const fraction = String(Math.abs(value) % 100).padStart(2,'0');
+      return new Intl.NumberFormat(locale, {style:'currency', currency, minimumFractionDigits:value ? 2 : 0, maximumFractionDigits:value ? 2 : 0})
+        .formatToParts(signedWhole).map(part => part.type === 'fraction' ? fraction : part.value).join('');
+    };
+    const profileName = String(profile.accountName || w[profileId] || profileId);
+    const notes = [`${w.cutoff} ${reference}.`];
+    const {entries, invalidCount} = reportEntries(scope);
     const period = periodFor(timeframe, reference, options.month, entries, w);
     const selected = entries.filter(entry => entry.day >= period.start && entry.day <= period.end).sort((a, b) => a.day.localeCompare(b.day) || a.time.localeCompare(b.time) || String(a.row.id || '').localeCompare(String(b.row.id || '')));
     const effective = selected.filter(entry => entry.status === 'posted' && entry.day <= reference && entry.currency === currency);
@@ -278,5 +304,5 @@
     return `\uFEFF${rows.map(row => row.map(csvCell).join(',')).join('\r\n')}\r\n`;
   }
 
-  return {buildReport,toCsv};
+  return {buildReport,toCsv,availableMonths};
 });

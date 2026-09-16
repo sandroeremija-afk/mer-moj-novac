@@ -180,7 +180,12 @@
   }
   function ensureDialog() {
     if(dialog)return;dialog=document.createElement('dialog');dialog.id='receiptMatcherModal';dialog.className='modal receipt-dialog';dialog.setAttribute('aria-labelledby','receiptDialogTitle');document.body.append(dialog);
-    root.MerRuntime?.bindDialogBackdropDismiss(dialog,close);dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
+    root.MerRuntime?.bindDialogBackdropDismiss(dialog,close);
+    dialog.addEventListener('cancel',event=>{
+      // File inputs also emit a bubbling cancel event when their picker is dismissed.
+      if(event.target!==dialog)return;
+      event.preventDefault();close();
+    });
     dialog.addEventListener('close',()=>{stop();clearImage();receipt=null;selectedId='';viewedTransactionId='';dialog.replaceChildren();if(!document.querySelector('dialog[open]'))document.body.classList.remove('modal-active');if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});});
   }
   function open(options={}) {

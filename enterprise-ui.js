@@ -7,7 +7,7 @@
   const esc = escapeHtml;
   const icon = name => `<svg aria-hidden="true"><use href="#icon-${name}"></use></svg>`;
   let pendingAnalysis = null, commandIndex = 0, visibleCommands = [];
-  let currentTab = 'forecast';
+
   function act(fn) { return Promise.resolve().then(fn).catch(error => { window.MerRuntime?.report(error,{silent:true}); showToast(copy('Radnja nije uspjela. Pokušajte ponovno.','Action failed. Please try again.')); }); }
   function makeDialog(id,title,body,className='') {
     const dialog = document.createElement('dialog');
@@ -80,7 +80,6 @@
       {label:copy('Skeniraj račun — OCR i povezivanje','Scan receipt — OCR and matching'),run:()=>window.MerReceiptUI?.open()},
       {label:copy('FIRE — financijska neovisnost','FIRE — financial independence'),run:()=>window.MerPlanningUI?.open('fire')},
       {label:copy('Pretplate — podsjetnici za obnovu','Subscriptions — renewal reminders'),run:()=>window.MerPlanningUI?.open('renewals')},
-      {label:copy('Isprobaj scenarij','Try a scenario'),run:()=>openIntelligence('scenario')},
       {label:copy('Automatska raspodjela prihoda','Payday auto-split'),run:()=>openIntelligence('rules')},
       {label:copy('Osobni profil · Moj eRačun','Personal profile · Moj eRačun'),run:()=>switchAccount('personal')},
       {label:copy('Poslovni profil · Elektronički računi d.o.o.','Business profile · Elektronički računi d.o.o.'),run:()=>switchAccount('business')},
@@ -144,9 +143,7 @@
   }
   new MutationObserver(()=>{if(!privacyFrame)privacyFrame=requestAnimationFrame(markAmounts);}).observe(document.body,{childList:true,subtree:true,characterData:true});
 
-  const intelligence=makeDialog('intelligenceModal',copy('Novčani tok i scenariji','Cash flow and scenarios'),`<p class="enterprise-muted" id="intelligenceProfile"></p><div class="enterprise-tabs" role="tablist"><button type="button" data-intelligence-tab="forecast" role="tab">${copy('Novčani tok','Cash flow')}</button><button type="button" data-intelligence-tab="scenario" role="tab">${copy('Isprobaj scenarij','What if?')}</button></div><div class="enterprise-dialog-body"><section id="enterpriseForecast" role="tabpanel"></section><section id="enterpriseScenario" role="tabpanel" hidden><p>${copy('Isprobajte veću kupnju bez promjene stvarnih podataka.','Model a large purchase without changing your real data.')}</p><label class="enterprise-field">${copy('Iznos kupnje','Purchase amount')}<input id="scenarioAmount" type="number" min="0" max="999999999" step="0.01" value="0" inputmode="decimal"></label><div id="scenarioResults" aria-live="polite"></div></section></div>`);
-  const planBack=document.createElement('button');planBack.type='button';planBack.className='secondary-button plan-back';planBack.id='planOverviewBack';planBack.hidden=true;
-  intelligence.querySelector('.enterprise-footer').prepend(planBack);planBack.addEventListener('click',()=>showIntelligenceTab('forecast'));
+  const intelligence=makeDialog('intelligenceModal',copy('Novčani tok','Cash flow'),'<p class="enterprise-muted" id="intelligenceProfile"></p><div class="enterprise-dialog-body"><section id="enterpriseForecast"></section></div>');
   const taxDialog=makeDialog('taxVaultModal',copy('Porezni trezor','Tax vault'),'<div class="enterprise-dialog-body" id="planTaxBody"></div>');
   function renderTaxVault(){
     if(appState.activeAccount!=='business'){if(taxDialog.open)closeModal(taxDialog);return;}
@@ -160,11 +157,15 @@
   const receiptAction=document.createElement('button');receiptAction.type='button';receiptAction.className='secondary-button transaction-receipt-action';receiptAction.id='transactionReceiptAction';receiptAction.hidden=true;el('transactionForm').prepend(receiptAction);
   el('transactionModal').addEventListener('toggle',()=>{const tx=state.transactions.find(item=>item.id===editingTransactionId);receiptAction.hidden=!tx;receiptAction.textContent=tx?.receipts?.length?copy(`Povezani računi (${tx.receipts.length})`,`Linked receipts (${tx.receipts.length})`):copy('Poveži fotografiju računa','Attach receipt photo');});
   receiptAction.addEventListener('click',()=>{const tx=state.transactions.find(item=>item.id===editingTransactionId);if(!tx)return;if(tx.receipts?.length)window.MerReceiptUI?.view(tx.id);else window.MerReceiptUI?.open({transactionId:tx.id});});
-  new ResizeObserver(()=>{if(intelligence.open&&currentTab==='forecast')renderProjection();}).observe(intelligence);
+  let projectionWidth=0;
+  // Tooltip/inspector height changes must not rebuild the chart or steal focus.
+  const resizeProjection=()=>{const chart=el('enterpriseForecast').querySelector('.forecast-chart');if(intelligence.open&&chart&&Math.round(chart.clientWidth)!==projectionWidth)renderProjection();};
+  new ResizeObserver(resizeProjection).observe(intelligence);
   function forecast(){return E.forecastCashFlow(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency});}
   function metricsMarkup(f){return `<div class="enterprise-metrics"><div><span>${copy('Sigurno za potrošnju · 30 dana','Safe to spend · 30 days')}</span><strong data-money>${money(f.safeToSpendCents)}</strong></div><div><span>${copy('Očekivani računi','Expected bills')}</span><strong data-money>${money(f.predictedBillsCents)}</strong></div><div><span>${copy('Rezervirano u ciljevima','Reserved in goals')}</span><strong data-money>${money(f.reservedCents)}</strong></div></div>`;}
   function renderProjection(){
     const container=el('enterpriseForecast').querySelector('.forecast-chart');if(!container)return;
+    projectionWidth=Math.round(container.clientWidth);
     const model=MerDiscovery.forecastChart(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency});
     const width=Math.max(260,Math.round(container.clientWidth||680)),height=width<440?218:238,left=Math.min(width*.45,Math.max(82,...model.ticks.map(value=>money(value).length*6.7+16))),right=16,top=18,bottom=40,plotWidth=width-left-right,plotHeight=height-top-bottom;
     const x=index=>left+index/30*plotWidth,y=value=>top+(model.maximum-value)/model.range*plotHeight;
@@ -172,13 +173,27 @@
     const axisMoney=value=>MerCore.formatCurrency(value/100,{locale:currentLang==='en'?'en-GB':'hr-HR',currency:model.forecast.currency});
     const dateLabel=value=>new Intl.DateTimeFormat(currentLang==='en'?'en-GB':'hr-HR',{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z'));
     const ticks=[0,7,14,21,30];
-    container.innerHTML=`<svg viewBox="0 0 ${width} ${height}" style="height:${height}px" role="group" aria-label="${copy('Procjena novčanog toka s očekivanim prihodima i računima','Cash-flow projection with expected income and bills')}"><defs><linearGradient id="forecastAreaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00a9e4" stop-opacity=".20"/><stop offset="100%" stop-color="#00a9e4" stop-opacity="0"/></linearGradient></defs>${model.ticks.map(value=>`<line class="forecast-gridline" x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}"/><text class="forecast-axis" x="${left-8}" y="${y(value)+4}" text-anchor="end">${esc(axisMoney(value))}<title>${esc(money(value))}</title></text>`).join('')}<path d="${path} L${x(30)},${height-bottom} L${left},${height-bottom} Z" fill="url(#forecastAreaFill)"/><path d="${path}" fill="none" stroke="#00a9e4" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${ticks.map(index=>`<text class="forecast-axis" x="${x(index)}" y="${height-14}" text-anchor="${index===0?'start':index===30?'end':'middle'}">${esc(dateLabel(model.series[index].date))}</text>`).join('')}${model.series.map((point,index)=>{const hasExpense=point.events.some(event=>event.kind==='expense'),hasIncome=point.events.some(event=>event.kind==='income'),color=hasExpense?'#c46b2c':hasIncome?'#279465':'#00a9e4';return `<g data-forecast-point="${index}" ${point.events.length?'tabindex="0" role="button"':''} aria-label="${esc(`${dateLabel(point.date)} · ${money(point.balanceCents)} · ${point.events.map(event=>event.name).join(', ')}`)}"><circle cx="${x(index)}" cy="${y(point.balanceCents)}" r="12" fill="transparent"/>${point.events.length?`<circle class="forecast-event-node" cx="${x(index)}" cy="${y(point.balanceCents)}" r="5" fill="${color}"/>`:''}${hasExpense&&hasIncome?`<circle cx="${x(index)+5}" cy="${y(point.balanceCents)-5}" r="3" fill="#279465"/>`:''}</g>`;}).join('')}</svg><div class="forecast-legend"><span><i class="bill"></i>${copy('Očekivani račun','Expected bill')}</span><span><i class="income"></i>${copy('Očekivani prihod','Expected income')}</span></div><div class="forecast-inspector" aria-live="polite">${copy('Dodirnite točku ili prijeđite pokazivačem za detalje.','Tap or hover a point for details.')}</div>`;
-    const inspect=event=>{
-      const node=event.target.closest('[data-forecast-point]');if(!node)return;
-      const point=model.series[Number(node.dataset.forecastPoint)],inspector=container.querySelector('.forecast-inspector');
-inspector.innerHTML=`<strong data-money>${esc(formatIsoDate(point.date))} · ${money(point.balanceCents)}</strong><span>${point.events.map(item=>`${item.kind==='income'?copy('Očekivani prihod','Expected income'):copy('Očekivani račun','Expected bill')}: ${esc(item.name)} · ${money(item.amountCents)}${item.source==='pattern'?copy(' (procjena obrasca)',' (pattern estimate)'):''}`).join('<br>')||copy('Nema planiranih događaja.','No planned events.')}</span>`;
+    container.innerHTML=`<svg viewBox="0 0 ${width} ${height}" style="height:${height}px" role="group" aria-label="${copy('Procjena novčanog toka s očekivanim prihodima i računima','Cash-flow projection with expected income and bills')}"><defs><linearGradient id="forecastAreaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00a9e4" stop-opacity=".20"/><stop offset="100%" stop-color="#00a9e4" stop-opacity="0"/></linearGradient></defs>${model.ticks.map(value=>`<line class="forecast-gridline" x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}"/><text class="forecast-axis" x="${left-8}" y="${y(value)+4}" text-anchor="end">${esc(axisMoney(value))}<title>${esc(money(value))}</title></text>`).join('')}<path d="${path} L${x(30)},${height-bottom} L${left},${height-bottom} Z" fill="url(#forecastAreaFill)"/><path d="${path}" fill="none" stroke="#00a9e4" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${ticks.map(index=>`<text class="forecast-axis" x="${x(index)}" y="${height-14}" text-anchor="${index===0?'start':index===30?'end':'middle'}">${esc(dateLabel(model.series[index].date))}</text>`).join('')}${model.series.map((point,index)=>{const hasExpense=point.events.some(event=>event.kind==='expense'),hasIncome=point.events.some(event=>event.kind==='income'),color=hasExpense?'#c46b2c':hasIncome?'#279465':'#00a9e4';return `<g data-forecast-point="${index}" tabindex="${index===0?0:-1}" role="button" aria-label="${esc(`${formatIsoDate(point.date)} · ${money(point.balanceCents)} · ${point.events.map(event=>event.name).join(', ')}`)}"><circle cx="${x(index)}" cy="${y(point.balanceCents)}" r="12" fill="transparent"/>${point.events.length?`<circle class="forecast-event-node" cx="${x(index)}" cy="${y(point.balanceCents)}" r="5" fill="${color}"/>`:''}${hasExpense&&hasIncome?`<circle cx="${x(index)+5}" cy="${y(point.balanceCents)-5}" r="3" fill="#279465"/>`:''}</g>`;}).join('')}<line class="forecast-hover-line" visibility="hidden" y1="${top}" y2="${height-bottom}"/><circle class="forecast-hover-dot" visibility="hidden" r="5"/></svg><div class="forecast-tooltip" role="tooltip" hidden></div><div class="forecast-legend"><span><i class="bill"></i>${copy('Očekivani račun','Expected bill')}</span><span><i class="income"></i>${copy('Očekivani prihod','Expected income')}</span></div><div class="forecast-inspector" aria-live="polite">${copy('Dodirnite točku ili prijeđite pokazivačem za detalje.','Tap or hover a point for details.')}</div>`;
+    const svg=container.querySelector('svg'),tooltip=container.querySelector('.forecast-tooltip'),guide=container.querySelector('.forecast-hover-line'),dot=container.querySelector('.forecast-hover-dot');
+    let active=-1;
+    const inspectIndex=index=>{
+      const point=model.series[index];if(!point)return;
+      const rect=svg.getBoundingClientRect(),outer=container.getBoundingClientRect(),scale=rect.width/width;
+      if(index!==active){
+        active=index;
+        const text=`<strong data-money>${esc(formatIsoDate(point.date))} · ${money(point.balanceCents)}</strong><span>${point.events.map(item=>`${item.kind==='income'?copy('Očekivani prihod','Expected income'):copy('Očekivani račun','Expected bill')}: ${esc(item.name)} · ${money(item.amountCents)}${item.source==='pattern'?copy(' (procjena obrasca)',' (pattern estimate)'):''}`).join('<br>')||copy('Nema planiranih događaja.','No planned events.')}</span>`;
+        container.querySelector('.forecast-inspector').innerHTML=text;tooltip.innerHTML=text;
+      }
+      tooltip.hidden=false;guide.setAttribute('x1',x(index));guide.setAttribute('x2',x(index));guide.setAttribute('visibility','visible');dot.setAttribute('cx',x(index));dot.setAttribute('cy',y(point.balanceCents));dot.setAttribute('visibility','visible');
+      tooltip.style.left=`${Math.max(8,Math.min(container.clientWidth-tooltip.offsetWidth-8,rect.left-outer.left+x(index)*scale-tooltip.offsetWidth/2))}px`;
+      tooltip.style.top=`${Math.max(8,rect.top-outer.top+y(point.balanceCents)*scale-tooltip.offsetHeight-12)}px`;
     };
-    container.onpointerover=inspect;container.onclick=inspect;container.onfocusin=inspect;
+    const inspect=event=>{const node=event.target.closest('[data-forecast-point]');if(node)inspectIndex(Number(node.dataset.forecastPoint));};
+    const clear=()=>{tooltip.hidden=true;guide.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');};
+    svg.onpointermove=event=>inspectIndex(MerQuickToolsCore.chartIndex(event.clientX,svg.getBoundingClientRect(),width,left,plotWidth));
+    svg.onpointerleave=clear;container.onclick=inspect;container.onfocusin=inspect;
+    container.onfocusout=event=>{if(!svg.contains(event.relatedTarget))clear();};
+    container.onkeydown=event=>{const node=event.target.closest('[data-forecast-point]');if(!node)return;if(event.key==='Escape'&&!tooltip.hidden){event.preventDefault();event.stopPropagation();clear();return;}const index=Number(node.dataset.forecastPoint);const next=event.key==='ArrowRight'?Math.min(30,index+1):event.key==='ArrowLeft'?Math.max(0,index-1):event.key==='Home'?0:event.key==='End'?30:null;if(next===null)return;event.preventDefault();node.setAttribute('tabindex','-1');const target=container.querySelector(`[data-forecast-point="${next}"]`);target.setAttribute('tabindex','0');target.focus({preventScroll:true});inspectIndex(next);};
   }
   function renderForecast(){
     const f=forecast();
@@ -186,7 +201,7 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
     if(f.foreignCurrencyCount){const notice=document.createElement('p');notice.className='enterprise-muted';notice.textContent=copy(`Prognoza izostavlja ${f.foreignCurrencyCount} transakcija u drugim valutama; nema automatske konverzije.`,`Forecast excludes ${f.foreignCurrencyCount} transactions in other currencies; no automatic conversion.`);el('enterpriseForecast').prepend(notice);}
     el('analyzeCashflow').addEventListener('click',()=>act(analyzeCashflow));
     renderProjection();
-    requestAnimationFrame(()=>{if(intelligence.open&&currentTab==='forecast')renderProjection();});
+    requestAnimationFrame(resizeProjection);
   }
   async function analyzeCashflow(){
     pendingAnalysis?.abort();const controller=new AbortController();pendingAnalysis=controller;const account=appState.activeAccount,revision=reactiveStore.getRevision();
@@ -196,15 +211,8 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
     catch{if(intelligence.open&&account===appState.activeAccount)box.textContent=copy('Gemini nije dostupan. Provjerite vezu ili poslužiteljski API ključ. Lokalna procjena ostaje dostupna.','Gemini is unavailable. Check connectivity or the server API key. The local estimate remains available.');}
     finally{clearTimeout(timer);button.disabled=false;box.setAttribute('aria-busy','false');}
   }
-  function renderScenario(){
-    const result=E.simulatePurchase(state,el('scenarioAmount').value,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency});
-    el('scenarioResults').innerHTML=!result.valid?`<p role="alert">${copy('Unesite valjan nenegativan iznos.','Enter a valid non-negative amount.')}</p>`:`<div class="enterprise-metrics"><div><span>${copy('Prije kupnje','Before purchase')}</span><strong data-money>${money(result.safeBeforeCents)}</strong></div><div><span>${copy('Nakon kupnje','After purchase')}</span><strong data-money>${money(result.safeAfterCents)}</strong></div></div><div class="enterprise-list">${result.goals.map(goal=>`<div><span>${esc(goal.name)}<small>${esc(goal.originalDate||'—')} → ${esc(goal.simulatedDate||'—')}</small></span><strong>${goal.delayMonths===null?copy('Postavite mjesečnu uplatu','Set monthly contribution'):copy(`+${goal.delayMonths} mj.`,`+${goal.delayMonths} mo.`)}</strong></div>`).join('')}</div><p class="enterprise-muted">${copy('Kupnja prvo koristi slobodan novac. Ostatak odgađa planirane uplate proporcionalno po ciljevima. Prikaz je simulacija, bez knjiženja.','Purchase uses uncommitted cash first, then delays planned contributions proportionally. Simulation only; nothing is posted.')}</p>`;
-  }
-  el('scenarioAmount').addEventListener('input',renderScenario);
-  function showIntelligenceTab(tab){currentTab=tab;planBack.hidden=tab==='forecast';planBack.textContent=copy('Natrag','Back');intelligence.querySelector('[data-enterprise-footer-close]').hidden=tab!=='forecast';['forecast','scenario'].forEach(name=>{el(`enterprise${name[0].toUpperCase()+name.slice(1)}`).hidden=name!==tab;document.querySelector(`[data-intelligence-tab="${name}"]`).setAttribute('aria-selected',String(name===tab));});if(tab==='forecast')renderForecast();if(tab==='scenario')renderScenario();if(document.activeElement===planBack&&planBack.hidden)document.querySelector('[data-intelligence-tab="forecast"]').focus({preventScroll:true});}
-  function openIntelligence(tab='forecast'){if(tab==='rules'){window.MerVaultsUI?.open('automation');return;}tab=tab==='scenario'?'scenario':'forecast';el('intelligenceProfile').textContent=state.accountName||appState.activeAccount;showIntelligenceTab(tab);openModal(intelligence);}
+  function openIntelligence(tab='forecast'){if(tab==='rules'){window.MerVaultsUI?.open('automation');return;}el('intelligenceProfile').textContent=state.accountName||appState.activeAccount;renderForecast();openModal(intelligence);}
   toolbar.addEventListener('click',()=>openIntelligence());
-  document.querySelectorAll('[data-intelligence-tab]').forEach(button=>button.addEventListener('click',()=>showIntelligenceTab(button.dataset.intelligenceTab)));
 
   const b2b=document.createElement('label');b2b.id='transactionB2BRow';b2b.className='enterprise-b2b';b2b.hidden=true;b2b.innerHTML=`<input type="checkbox" id="transactionB2B"> ${copy('Oporeziva B2B uplata (iznos uključuje 25% PDV-a)','Taxable B2B payment (amount includes 25% VAT)')}`;
   el('transactionForm').querySelector('.modal-actions').before(b2b);
@@ -247,13 +255,12 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
     if(taxDialog.open){const restore=window.MerPlanNavigation?.preserveFocus(taxDialog);renderTaxVault();restore?.();}
     receiptTrigger.innerHTML=`${icon('receipt')}<span>${copy('Skeniraj račun','Scan receipt')}</span>`;
     toolbar.querySelector('span').textContent=copy('Novčani tok','Cash flow');
-    el('intelligenceModalTitle').textContent=copy('Novčani tok i scenariji','Cash flow and scenarios');
+    el('intelligenceModalTitle').textContent=copy('Novčani tok','Cash flow');
     el('commandPaletteTitle').textContent=copy('Što želite učiniti?','What would you like to do?');
     el('commandSearch').placeholder=copy('Pretražite transakcije, ciljeve, postavke…','Search transactions, goals, settings…');
     el('commandSearch').setAttribute('aria-label',copy('Globalna pretraga','Global search'));
     el('commandTrigger').setAttribute('aria-label',copy('Globalna pretraga (Ctrl K)','Global search (Ctrl K)'));
     if(commandDialog.open)renderCommands();
-    [['forecast','Novčani tok','Cash flow'],['scenario','Isprobaj scenarij','What if?']].forEach(([tab,hr,en])=>{document.querySelector(`[data-intelligence-tab="${tab}"]`).textContent=copy(hr,en);});
     const f=forecast();document.querySelector('.topbar').dataset.health=f.health;
     invoiceButton.hidden=appState.activeAccount!=='business';
     window.MerInvoiceUI?.refresh();
@@ -261,7 +268,7 @@ el('enterpriseForecast').innerHTML=`${metricsMarkup(f)}<div class="forecast-char
     window.MerPlanningHubs?.render();
     renderRenewalStatus();
     const drafts=state.transactions.filter(tx=>tx.offlineDraft).length;offline.hidden=navigator.onLine&&!drafts;offline.textContent=copy(`${navigator.onLine?'Nacrti':'Izvanmrežno'} · ${drafts}`,`${navigator.onLine?'Drafts':'Offline'} · ${drafts}`);
-    if(intelligence.open)showIntelligenceTab(currentTab);
+    if(intelligence.open)renderForecast();
     markAmounts();
   }
   window.addEventListener('online',render);window.addEventListener('offline',render);

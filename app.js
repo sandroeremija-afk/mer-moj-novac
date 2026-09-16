@@ -146,7 +146,7 @@ function normalizeLayoutOrders(value={}) {
   });
   return result;
 }
-function normalizeAppSettings(settings={}){const currency=String(settings.currency||'EUR').toUpperCase(),dateFormat=['locale','iso','us'].includes(settings.dateFormat)?settings.dateFormat:'locale';let timezone=String(settings.timezone||'Europe/Zagreb');try{new Intl.DateTimeFormat('en',{timeZone:timezone}).format();}catch{timezone='Europe/Zagreb';}return {currency:supportedCurrencies.has(currency)?currency:'EUR',dateFormat,timezone,hideBalances:Boolean(settings.hideBalances),autoLockEnabled:settings.autoLockEnabled===true,layoutOrders:normalizeLayoutOrders(settings.layoutOrders)};}
+function normalizeAppSettings(settings={}){const currency=String(settings.currency||'EUR').toUpperCase(),dateFormat=['locale','iso','us'].includes(settings.dateFormat)?settings.dateFormat:'locale';let timezone=String(settings.timezone||'Europe/Zagreb');try{new Intl.DateTimeFormat('en',{timeZone:timezone}).format();}catch{timezone='Europe/Zagreb';}return {currency:supportedCurrencies.has(currency)?currency:'EUR',dateFormat,timezone,hideBalances:Boolean(settings.hideBalances),autoLockEnabled:settings.autoLockEnabled===true,layoutOrders:normalizeLayoutOrders(settings.layoutOrders),personalData:window.MerSettingsEnhancements.normalizePersonalData(settings.personalData)};}
 appState.settings=normalizeAppSettings(storedSettings);
 appState.mfa=MerSecurity.createMfaMethodState({method:appState.mfa?.method||(appState.mfa?.secret?'authenticator':null),enabled:false,secret:null,recoveryCodeHashes:[],...(appState.mfa&&typeof appState.mfa==='object'?appState.mfa:{})});
 appState.mfaByUser=Object.fromEntries(Object.entries(appState.mfaByUser&&typeof appState.mfaByUser==='object'?appState.mfaByUser:{}).filter(([userId,value])=>typeof userId==='string'&&userId.length<=120&&value&&typeof value==='object').slice(-24).map(([userId,value])=>[userId,MerSecurity.createMfaMethodState(value)]));
@@ -510,7 +510,8 @@ function renderBudgetView() {
   $('#allocationProgress').style.width = `${Math.min(100,allocationPercent)}%`;
   $('.allocation-bar').classList.toggle('over', allocationPercent > 100);
   $('#allocationCopy').textContent = t('allocationCopy',{allocated:currency(allocated,true),budget:currency(plan.monthlyBudget,true)});
-  $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
+  if(window.MerBudgetPagination)window.MerBudgetPagination.render();
+  else $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
   const overspent=state.categories.filter(cat=>cat.spent>cat.limit+.005),donors=state.categories.filter(cat=>cat.limit>cat.spent+.005),overAllocated=difference<-.005,recovery=$('#budgetRecovery');
   const recoveryFingerprint=notificationFingerprint([overAllocated?'allocation':'category',Math.round(Math.abs(difference)*100),...overspent.map(cat=>`${cat.id}:${Math.round(cat.spent*100)}:${Math.round(cat.limit*100)}`).sort()]);
   const recoveryItem={key:'budget-recovery',fingerprint:recoveryFingerprint};
@@ -1252,6 +1253,7 @@ function openInsightDetail(kind) {
 function renderAll() {
   renderMonth();renderModuleTitle();renderAccountContext();renderOverview();renderBudgetLists();renderBudgetView();renderSavingsView();renderSavingsEntries();renderUpcoming();renderRecurring();renderCategorySelects();renderActivity();renderInsights();renderSubscriptions();renderNotifications();renderBankSyncStatus();if($('#connectedBanksModal').open)renderBankSettings();applyTheme();
   window.MerEnterpriseUI?.render();
+  window.MerQuickTools?.render();
 }
 
 function setLanguage(lang) {
