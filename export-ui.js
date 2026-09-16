@@ -96,7 +96,7 @@
     // Keep the native select and its options stable during unrelated store updates.
     if (field.getAttribute('data-month-options') !== signature) {
       field.textContent = '';
-      const options = months.length ? months : [{value:'', label:say('Nema zabilježenih mjeseci', 'No recorded months')}];
+      const options = months.length ? months : [{value:'', label:say('Nema prethodnih mjeseci', 'No previous months')}];
       options.forEach(month => {
         const option = document.createElement('option');
         option.value = month.value;
@@ -109,8 +109,8 @@
     field.value = selection.month;
     field.disabled = months.length === 0;
     el('exportMonthHint').textContent = months.length
-      ? say('Mjeseci sa zapisima ovog profila, od najnovijeg.', 'Months with this profile’s records, newest first.')
-      : say('Nema zapisa za odabir mjeseca. Odaberite drugo razdoblje.', 'There are no records to choose a month. Select another period.');
+      ? say('Prethodni mjeseci sa zapisima ovog profila, od najnovijeg.', 'Previous months with this profile’s records, newest first.')
+      : say('Nema zapisa iz prethodnih mjeseci. Odaberite drugo razdoblje.', 'There are no records from previous months. Select another period.');
   }
   function localizedTitles() {
     return {budget:say('Izvoz budžeta', 'Export budgets'), activity:say('Izvoz transakcija', 'Export transactions'), savings:say('Izvoz štednje', 'Export savings'), insights:say('Izvoz izvještaja', 'Export report')};
@@ -127,10 +127,10 @@
     el('exportBackLabel').textContent = say('Natrag', 'Back');
     el('exportClose').setAttribute('aria-label', say('Zatvori', 'Close'));
     el('exportTimeframeLabel').textContent = say('Razdoblje', 'Period');
-    const labels = [say('Danas', 'Today'), say('Ovaj mjesec', 'This month'), say('Povijesni mjesec', 'Historical month'), say('Ova godina', 'This year'), say('Sve ukupno', 'All time')];
+    const labels = [say('Danas', 'Today'), say('Ovaj mjesec', 'This month'), say('Prethodni mjeseci', 'Previous months'), say('Ova godina', 'This year'), say('Sve ukupno', 'All time')];
     el('exportTimeframe').querySelectorAll('option').forEach((option, index) => { option.textContent = labels[index]; });
     el('exportFormatLabel').textContent = say('Format datoteke', 'File format');
-    el('exportMonthLabel').textContent = say('Odaberite mjesec', 'Choose a month');
+    el('exportMonthLabel').textContent = say('Prethodni mjeseci', 'Previous months');
     el('exportPreviewTitle').textContent = say('Sažetak izvoza', 'Export summary');
     el('exportCancel').textContent = say('Zatvori', 'Close');
     el('exportDownload').textContent = say('Preuzmi datoteku', 'Download file');

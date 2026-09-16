@@ -11,7 +11,7 @@
   const words = {
     hr: {
       activity:'Aktivnost — transakcije', budget:'Budžeti — pregled kategorija', savings:'Štednja — uplate i isplate', insights:'Uvidi — financijski izvještaj',
-      daily:'Danas', monthly:'Ovaj mjesec', 'custom-month':'Povijesni mjesec', ytd:'Ova godina', all:'Sve ukupno',
+      daily:'Danas', monthly:'Ovaj mjesec', 'custom-month':'Prethodni mjeseci', ytd:'Ova godina', all:'Sve ukupno',
       personal:'Osobni račun', business:'Poslovni račun', date:'Datum', time:'Vrijeme', description:'Opis', category:'Kategorija', type:'Vrsta', amount:'Iznos', currency:'Valuta', status:'Status', profile:'Profil', source:'Izvor', id:'ID',
       income:'Prihodi', expense:'Troškovi', net:'Neto iznos', count:'Broj transakcija', posted:'Knjiženo', pending:'Na čekanju', scheduled:'Zakazano', draft:'Izvanmrežni nacrt', cancelled:'Otkazano', manual:'Ručno', unknown:'Nekategorizirano',
       transactions:'Pojedinačne transakcije', categories:'Potrošnja po kategorijama', currentLimit:'Trenutačni mjesečni limit', periodUsage:'Troškovi u odabranom razdoblju', configuredTotal:'Ukupni trenutačni mjesečni limiti', cashflow:'Prihodi i troškovi po razdobljima', period:'Razdoblje',
@@ -23,7 +23,7 @@
     },
     en: {
       activity:'Activity — transactions', budget:'Budgets — category overview', savings:'Savings — deposits and withdrawals', insights:'Insights — financial report',
-      daily:'Today', monthly:'This month', 'custom-month':'Historical month', ytd:'This year', all:'All-time',
+      daily:'Today', monthly:'This month', 'custom-month':'Previous months', ytd:'This year', all:'All-time',
       personal:'Personal account', business:'Business account', date:'Date', time:'Time', description:'Description', category:'Category', type:'Type', amount:'Amount', currency:'Currency', status:'Status', profile:'Profile', source:'Source', id:'ID',
       income:'Income', expense:'Expenses', net:'Net total', count:'Transaction count', posted:'Posted', pending:'Pending', scheduled:'Scheduled', draft:'Offline draft', cancelled:'Cancelled', manual:'Manual', unknown:'Uncategorized',
       transactions:'Itemized transactions', categories:'Spending by category', currentLimit:'Current monthly limit', periodUsage:'Expenses in selected period', configuredTotal:'Total current monthly limits', cashflow:'Income and expenses by period', period:'Period',
@@ -183,8 +183,10 @@
     const locale = scope.language === 'en' ? 'en-GB' : 'hr-HR';
     const formatter = new Intl.DateTimeFormat(locale, {month:'long', year:'numeric', timeZone:'UTC'});
     // Use the report's authoritative booking dates, validation and profile scope.
-    // Future schedules are available in the existing all-time export.
-    return [...new Set(entries.filter(entry => entry.day <= scope.reference).map(entry => entry.day.slice(0, 7)))].sort().reverse()
+    // This month has its own selector; previous months contain completed periods only.
+    // Future schedules remain available in the existing all-time export.
+    const currentMonth = scope.reference.slice(0, 7);
+    return [...new Set(entries.map(entry => entry.day.slice(0, 7)).filter(month => month < currentMonth))].sort().reverse()
       .map(value => {
         const parts = formatter.formatToParts(new Date(`${value}-01T00:00:00Z`));
         const month = parts.find(part => part.type === 'month').value;

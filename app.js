@@ -510,8 +510,7 @@ function renderBudgetView() {
   $('#allocationProgress').style.width = `${Math.min(100,allocationPercent)}%`;
   $('.allocation-bar').classList.toggle('over', allocationPercent > 100);
   $('#allocationCopy').textContent = t('allocationCopy',{allocated:currency(allocated,true),budget:currency(plan.monthlyBudget,true)});
-  if(window.MerBudgetPagination)window.MerBudgetPagination.render();
-  else $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
+  $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
   const overspent=state.categories.filter(cat=>cat.spent>cat.limit+.005),donors=state.categories.filter(cat=>cat.limit>cat.spent+.005),overAllocated=difference<-.005,recovery=$('#budgetRecovery');
   const recoveryFingerprint=notificationFingerprint([overAllocated?'allocation':'category',Math.round(Math.abs(difference)*100),...overspent.map(cat=>`${cat.id}:${Math.round(cat.spent*100)}:${Math.round(cat.limit*100)}`).sort()]);
   const recoveryItem={key:'budget-recovery',fingerprint:recoveryFingerprint};

@@ -99,12 +99,14 @@ async function main() {
     for(const context of ['budget','activity','savings','insights']) {
       assert.equal(h.ui.open(context),true);
       assert.equal(h.get('izvozModal').open,true);assert.equal(h.get('exportBack').hidden,true);assert.equal(h.get('exportCancel').hidden,false);assert.equal(h.get('exportCancel').textContent,'Zatvori');
-      assert.deepEqual(h.get('exportTimeframe').querySelectorAll('option').map(node=>node.textContent),['Danas','Ovaj mjesec','Povijesni mjesec','Ova godina','Sve ukupno']);
+      assert.deepEqual(h.get('exportTimeframe').querySelectorAll('option').map(node=>node.textContent),['Danas','Ovaj mjesec','Prethodni mjeseci','Ova godina','Sve ukupno']);
+      assert.equal(h.get('exportMonthLabel').textContent,'Prethodni mjeseci');
       assert.deepEqual(h.get('exportFormat').querySelectorAll('option').map(node=>node.value),['csv','pdf','json']);
       assert.equal(h.document.downloads.length,0);h.get('exportCancel').click();
     }
     h.ui.open('insights');assert.equal(h.get('exportTimeframe').value,'ytd','Insights starts with its active timeframe');
-    h.change('exportTimeframe','custom-month');assert.equal(h.get('exportMonthField').hidden,false);assert.equal(h.get('exportMonth').value,'2026-09');
+    h.change('exportTimeframe','custom-month');assert.equal(h.get('exportMonthField').hidden,false);assert.equal(h.get('exportMonth').value,'');
+    assert.equal(h.get('exportMonth').disabled,true);assert.equal(h.get('exportDownload').disabled,true,'current-month-only data has no previous-month choice');
     h.state.profile.transactions.push({date:'2026-02-28',amount:25,type:'expense'});h.state.revision+=1;h.ui.refresh();
     h.change('exportMonth','2026-02');assert.match(h.get('exportPeriod').textContent,/2026-02/);
     h.change('exportMonth','');assert.equal(h.get('exportDownload').disabled,true);assert.equal(h.get('exportError').hidden,false);await h.submit();assert.equal(h.document.downloads.length,0);
@@ -161,11 +163,12 @@ async function main() {
   }
   {
     const h=harness();h.state.referenceDate='2026-09-01';h.state.timezone='America/Los_Angeles';h.ui.open('activity');
-    assert.equal(h.get('exportMonth').value,'2026-09','date-only reference dates must not shift into the previous month in western timezones');
+    assert.equal(h.get('exportMonth').value,'','current records do not create previous-month choices');
     h.window.MerExportBridge.categoryLabel=id=>id==='groceries'?'Namirnice iz aplikacije':id;
     h.window.MerExportBridge.incomeCategoryLabel=id=>id==='salary'?'Redovna plaća':id;
     h.change('exportFormat','json');await h.submit();
     const report=JSON.parse(await h.blobs.get(h.document.downloads[0].url).text());
+    assert.equal(report.period.start,'2026-09-01','date-only reference dates must not shift into the previous month in western timezones');
     assert.ok(report.sections[0].rows.some(row=>row.includes('Namirnice iz aplikacije')));
     assert.ok(report.sections[0].rows.some(row=>row.includes('Redovna plaća')),'income labels use the current application translator too');
   }
@@ -180,8 +183,8 @@ async function main() {
   }
   {
     const h=harness();h.state.profile.transactions.push({date:'2024-02-29',amount:25,type:'expense'});h.ui.open('budget');h.change('exportTimeframe','custom-month');h.change('exportMonth','2024-02');
-    const input=h.get('exportMonth'),option=input.children[1];input.focus();h.state.revision+=1;h.ui.refresh();
-    assert.equal(h.get('exportMonth'),input);assert.equal(input.value,'2024-02');assert.equal(input.children[1],option);assert.equal(h.document.activeElement,input,'reactive preview refresh retains the chosen month and focused select');
+    const input=h.get('exportMonth'),option=input.children[0];input.focus();h.state.revision+=1;h.ui.refresh();
+    assert.equal(h.get('exportMonth'),input);assert.equal(input.value,'2024-02');assert.equal(input.children[0],option);assert.equal(h.document.activeElement,input,'reactive preview refresh retains the chosen month and focused select');
     assert.equal(h.get('exportSummary').querySelectorAll('[data-monetary]').length,h.get('exportSummary').querySelectorAll('dd').length,'all preview amounts participate in the existing stealth-mode selector');
   }
   {
@@ -189,7 +192,8 @@ async function main() {
     for(const context of ['budget','activity','insights']) {
       h.ui.open(context,{timeframe:'custom-month'});
       assert.equal(h.get('exportMonth').tagName,'select');
-      assert.deepEqual(h.get('exportMonth').children.map(option=>[option.value,option.textContent]),[['2026-09','Rujan 2026'],['2026-08','Kolovoz 2026'],['2026-07','Srpanj 2026']]);
+      assert.deepEqual(h.get('exportMonth').children.map(option=>[option.value,option.textContent]),[['2026-08','Kolovoz 2026'],['2026-07','Srpanj 2026']]);
+      assert.equal(h.get('exportMonth').value,'2026-08','the newest previous month is selected by default');
       h.change('exportMonth','2026-08');assert.equal(h.get('exportDownload').disabled,false);assert.equal(h.get('exportCount').textContent,'Broj zapisa: 1');
       h.change('exportFormat','json');await h.submit();
       const report=JSON.parse(await h.blobs.get(h.document.downloads.at(-1).url).text());
@@ -197,14 +201,20 @@ async function main() {
       h.get('exportCancel').click();
     }
     h.ui.open('savings',{timeframe:'custom-month'});
-    assert.deepEqual(h.get('exportMonth').children.map(option=>option.value),['2026-09'],'savings uses deposit and withdrawal dates only');
+    assert.deepEqual(h.get('exportMonth').children.map(option=>option.value),[''],'current deposits are not previous months');
+    assert.equal(h.get('exportMonth').disabled,true);assert.equal(h.get('exportDownload').disabled,true);
+    h.state.profile.savingsEntries.push({id:'save-past',date:'2026-06-07',amount:20,profileId:'personal'});h.state.revision+=1;h.ui.refresh();
+    assert.deepEqual(h.get('exportMonth').children.map(option=>option.value),['2026-06'],'savings uses previous deposit and withdrawal dates only');
+    assert.equal(h.get('exportMonth').disabled,false);assert.equal(h.get('exportDownload').disabled,false);
     h.get('exportCancel').click();h.state.language='en';h.ui.open('activity',{timeframe:'custom-month',month:'2026-07'});
-    assert.equal(h.get('exportMonth').value,'2026-07');assert.equal(h.get('exportMonth').children[1].textContent,'August 2026');
+    assert.equal(h.get('exportMonth').value,'2026-07');assert.equal(h.get('exportMonth').children[0].textContent,'August 2026');
+    assert.equal(h.get('exportMonthLabel').textContent,'Previous months');
+    assert.equal(h.get('exportTimeframe').querySelectorAll('option')[2].textContent,'Previous months');
   }
   {
     const h=harness();h.state.profile.transactions=[];h.ui.open('activity',{timeframe:'custom-month'});
     assert.equal(h.get('exportMonth').disabled,true);assert.equal(h.get('exportMonth').value,'');
-    assert.equal(h.get('exportMonth').children[0].textContent,'Nema zabilježenih mjeseci');assert.equal(h.get('exportDownload').disabled,true);
+    assert.equal(h.get('exportMonth').children[0].textContent,'Nema prethodnih mjeseci');assert.equal(h.get('exportDownload').disabled,true);
     await h.submit();assert.equal(h.document.downloads.length,0);
     h.change('exportTimeframe','all');assert.equal(h.get('exportDownload').disabled,false);
     h.state.profile.transactions.push({date:'2026-08-01',amount:25,type:'expense'});h.state.revision+=1;h.ui.refresh();
@@ -215,7 +225,7 @@ async function main() {
     h.change('exportMonth','2026-06');assert.equal(h.get('exportDownload').disabled,true,'a programmatic value without data cannot bypass the dropdown');
     h.state.profile.transactions=[];h.ui.refresh();assert.equal(h.get('exportMonth').disabled,true);assert.equal(h.get('exportDownload').disabled,true);
     h.get('exportCancel').click();h.state.language='en';h.ui.open('activity',{timeframe:'custom-month'});
-    assert.equal(h.get('exportMonth').children[0].textContent,'No recorded months','empty history is relocalized when reopening in English');
+    assert.equal(h.get('exportMonth').children[0].textContent,'No previous months','empty history is relocalized when reopening in English');
     h.state.profileId='business';h.ui.refresh();assert.equal(h.get('izvozModal').open,false);
     h.state.profile={transactions:[{date:'2026-05-01',amount:10,profileId:'business'}]};h.ui.open('activity',{timeframe:'custom-month'});
     assert.deepEqual(h.get('exportMonth').children.map(option=>option.value),['2026-05']);

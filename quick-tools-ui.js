@@ -44,17 +44,5 @@
   window.addEventListener('resize',position,{passive:true});window.visualViewport?.addEventListener('resize',position,{passive:true});
   function render(){syncCalculatorAccess();const title=copy('Kalkulator','Calculator');trigger.setAttribute('aria-label',title);trigger.title=title;el('calculatorTitle').textContent=title;el('calculatorLabel').textContent=copy('Izračun','Calculation');dialog.querySelectorAll('[data-close-calculator]').forEach(button=>{button.setAttribute('aria-label',copy('Zatvori','Close'));if(!button.classList.contains('modal-close'))button.textContent=copy('Zatvori','Close');});dialog.querySelector('[data-calculator-key="⌫"]').setAttribute('aria-label',copy('Izbriši znamenku','Delete digit'));dialog.querySelector('[data-calculator-key="C"]').setAttribute('aria-label',copy('Očisti izračun','Clear calculation'));if(dialog.open&&result.textContent&&!result.classList.contains('is-error'))evaluate();}
 
-  const table=el('budgetTable'),list=el('budgetTableWindow'),controls=document.createElement('div'),pager=document.createElement('nav');
-  controls.className='budget-view-controls';controls.setAttribute('role','group');list.before(controls);pager.className='budget-pagination';pager.setAttribute('aria-label','Stranice kategorija');list.after(pager);
-  let viewOwner='',page=1,mode='pages';
-  function renderBudgets(){
-    const active=`${window.MerAuthProvider?.currentSession()?.userId||'demo'}:${appState.activeAccount}`;if(viewOwner!==active){viewOwner=active;page=1;mode='pages';list.scrollTop=0;}
-    const items=state.categories,model=core.pageModel(items.length,page);page=model.page;
-    controls.setAttribute('aria-label',copy('Prikaz kategorija','Category display'));controls.innerHTML=`<button type="button" class="secondary-button" data-budget-mode="pages" aria-pressed="${mode==='pages'}">${copy('Stranice','Pages')}</button><button type="button" class="secondary-button" data-budget-mode="all" aria-pressed="${mode==='all'}">${copy('Prikaži sve','Show all')}</button><span>${items.length} ${copy('kategorija','categories')}</span>`;
-    table.innerHTML=(mode==='all'?items:items.slice(model.start,model.end)).map(cat=>budgetCategoryRow(cat)).join('');
-    list.dataset.listMode=mode;pager.hidden=mode==='all'||model.pages===1;pager.setAttribute('aria-label',copy('Stranice kategorija','Category pages'));pager.innerHTML=`<button type="button" class="secondary-button" data-budget-page="${page-1}" ${page===1?'disabled':''}>${copy('Prethodna','Previous')}</button><span aria-live="polite">${copy('Stranica','Page')} ${page} / ${model.pages}</span><button type="button" class="secondary-button" data-budget-page="${page+1}" ${page===model.pages?'disabled':''}>${copy('Sljedeća','Next')}</button>`;
-  }
-  controls.addEventListener('click',event=>{const next=event.target.closest('[data-budget-mode]')?.dataset.budgetMode;if(!next)return;mode=next;page=1;list.scrollTop=0;renderBudgets();controls.querySelector(`[data-budget-mode="${mode}"]`).focus({preventScroll:true});});
-  pager.addEventListener('click',event=>{const next=event.target.closest('[data-budget-page]');if(!next||next.disabled)return;page=Number(next.dataset.budgetPage);list.scrollTop=0;renderBudgets();list.focus({preventScroll:true});});
-  window.MerQuickTools=Object.freeze({render});window.MerBudgetPagination=Object.freeze({render:renderBudgets});render();renderBudgets();
+  window.MerQuickTools=Object.freeze({render});render();
 })();

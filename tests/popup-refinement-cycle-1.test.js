@@ -1,10 +1,12 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const {topicForTarget,hasOverflow}=require('../popup-layout.js');
-for(const target of ['currentPasswordInput','#changePasswordForm','confirmNewPasswordInput'])assert.equal(topicForTarget(target),'password');
-for(const target of ['startMfa','#settingsTourMfa','recoveryPanel'])assert.equal(topicForTarget(target),'mfa');
+for(const target of ['currentPasswordInput','#changePasswordForm','confirmNewPasswordInput'])assert.equal(topicForTarget(target),'access');
+for(const target of ['startMfa','#settingsTourMfa','recoveryPanel'])assert.equal(topicForTarget(target),'access');
 assert.equal(topicForTarget('logoutOtherSessions'),'sessions');assert.equal(topicForTarget('autoLockEnabled'),'device');
-assert.equal(topicForTarget('exportSovereignty'),'data');assert.equal(topicForTarget('deleteSovereignty'),'data');
+assert.equal(topicForTarget('exportSovereignty'),'personal');assert.equal(topicForTarget('deleteSovereignty'),'personal');
+for(const target of ['personalDataForm','personalFirstName','personalLastName','personalOib','personalAddress'])assert.equal(topicForTarget(target),'personal');
+for(const target of ['settingsTourPreferences','settingsLanguage','themeToggle','layoutEditToggle','hideBalances','baseCurrency','dateFormat','timezone'])assert.equal(topicForTarget(target),'general');
 assert.equal(hasOverflow(600,600),false);assert.equal(hasOverflow(602,600),false);assert.equal(hasOverflow(603,600),true);assert.equal(hasOverflow(NaN,600),false);
 const source=fs.readFileSync(require.resolve('../popup-layout.js'),'utf8');
 assert.match(source,/data-topic-hidden/);assert.doesNotMatch(source,/localStorage|reactiveStore\.update|\.value\s*=\s*''/);

@@ -31,32 +31,6 @@ test('calculator reports zero division and bounds oversized expressions and inte
   assert.deepEqual(core.calculate('1000000000000000'),{ok:true,value:1e15});
 });
 
-test('pagination clamps empty, boundary, stale and fractional page requests without losing rows',()=>{
-  assert.deepEqual(core.pageModel(0),{page:1,pages:1,start:0,end:0,total:0});
-  assert.deepEqual(core.pageModel(17),{page:1,pages:3,start:0,end:8,total:17});
-  assert.deepEqual(core.pageModel(17,2),{page:2,pages:3,start:8,end:16,total:17});
-  assert.deepEqual(core.pageModel(17,99),{page:3,pages:3,start:16,end:17,total:17});
-  assert.deepEqual(core.pageModel(17,-3),{page:1,pages:3,start:0,end:8,total:17});
-  assert.deepEqual(core.pageModel('17.9','2.9','4.9'),{page:2,pages:5,start:4,end:8,total:17});
-  assert.deepEqual(core.pageModel(-3,9),{page:1,pages:1,start:0,end:0,total:0});
-  assert.deepEqual(core.pageModel(17,'invalid',0),core.pageModel(17));
-  assert.deepEqual(core.pageModel(17,1,-8),{page:1,pages:17,start:0,end:1,total:17});
-  const indices=[];
-  for(let page=1;page<=3;page++){
-    const model=core.pageModel(17,page);
-    for(let index=model.start;index<model.end;index++)indices.push(index);
-  }
-  assert.deepEqual(indices,Array.from({length:17},(_,index)=>index));
-});
-
-test('pagination returns finite coherent bounds for non-finite inputs',()=>{
-  for(const args of [[Infinity,1,8],[10,Infinity,8],[10,1,Infinity],[-Infinity,-Infinity,-Infinity],[NaN,NaN,NaN]]){
-    const model=core.pageModel(...args);
-    assert.ok(Object.values(model).every(Number.isFinite),String(args));
-    assert.ok(model.page>=1&&model.page<=model.pages,String(args));
-    assert.ok(model.start>=0&&model.start<=model.end&&model.end<=model.total,String(args));
-  }
-});
 
 test('forecast picking scales viewport coordinates into the plot and clamps either edge',()=>{
   const viewWidth=660,left=84,plotWidth=560;
@@ -88,6 +62,6 @@ test('quick tools are packaged and loaded before consumers, with redraw hooks fo
   }
   assert.ok(html.indexOf('src="quick-tools-core.js"')<html.indexOf('src="enterprise-ui.js"'));
   assert.ok(html.indexOf('src="enterprise-ui.js"')<html.indexOf('src="quick-tools-ui.js"'));
-  assert.match(app,/window\.MerBudgetPagination\.render\(\)/);
+  assert.doesNotMatch(app,/MerBudgetPagination/);
   assert.match(app,/window\.MerQuickTools\?\.render\(\)/);
 });

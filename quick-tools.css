@@ -11,15 +11,6 @@
 .calculator-keys { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px; }
 .calculator-keys button { min-height:44px;min-width:0;padding:8px;font-size:18px; }
 #calculatorModal .modal-actions { margin-top:14px; }
-.budget-view-controls { display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;flex-shrink:0; }
-.budget-view-controls button { min-height:44px;font-size:13px; }
-.budget-view-controls [aria-pressed="true"] { background:var(--blue-soft);border-color:var(--blue);color:var(--ink); }
-.budget-view-controls span { margin-left:auto;font-size:13px;color:var(--muted); }
-.budget-pagination { display:flex;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0;padding-top:10px;font-size:13px; }
-.budget-pagination[hidden] { display:none; }
-.budget-pagination button { min-height:44px; }
-#budgetsView .table-panel { min-height:0; }
-#budgetsView .budget-table-window { margin-top:8px;flex:1 1 auto;min-height:100px; }
 #overviewView #safeDaily { font-size:clamp(28px,3vw,36px);line-height:1.15; }
 #overviewView #safeRemaining { font-size:clamp(27px,3.2vw,40px);line-height:1.2;overflow-wrap:anywhere; }
 #overviewView .safe-ring { flex-shrink:0;width:clamp(114px,11vw,144px);height:clamp(114px,11vw,144px); }

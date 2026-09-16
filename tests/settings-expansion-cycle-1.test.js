@@ -64,10 +64,11 @@ test('GDPR snapshot includes personal details in the existing user storage and A
 test('large rule sets stay bounded with stable order and a clamped final page after deletion',() => {
   const rules = Array.from({length:1003},(_,index) => ({id:`rule-${index}`}));
   const first = Settings.paginateRules(rules), middle = Settings.paginateRules(rules,80), last = Settings.paginateRules(rules,999);
-  assert.equal(first.items.length,5);assert.equal(first.items[0].id,'rule-0');
-  assert.equal(middle.items[0].id,'rule-395');assert.equal(middle.items.length,5);
-  assert.equal(last.page,201);assert.equal(last.items.length,3);assert.equal(last.start,1001);assert.equal(last.end,1003);
-  assert.equal(Settings.paginateRules(rules.slice(0,1000),201).page,200);
+  assert.equal(Settings.RULES_PAGE_SIZE,3);
+  assert.equal(first.items.length,3);assert.equal(first.items[0].id,'rule-0');
+  assert.equal(middle.items[0].id,'rule-237');assert.equal(middle.items.length,3);
+  assert.equal(last.page,335);assert.equal(last.items.length,1);assert.equal(last.start,1003);assert.equal(last.end,1003);
+  assert.equal(Settings.paginateRules(rules.slice(0,1000),335).page,334);
   assert.deepEqual(Settings.paginateRules([],5),{items:[],page:1,pages:1,total:0,start:0,end:0});
   assert.equal(Settings.paginateRules(rules,NaN).page,1);assert.equal(Settings.paginateRules(rules,-4).page,1);
   assert.equal(rules.length,1003);

@@ -6,7 +6,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function settingsEnhancements() {
   'use strict';
   const FIELDS = Object.freeze({firstName:80,lastName:80,oib:11,address:240});
-  const RULES_PAGE_SIZE = 5;
+  const RULES_PAGE_SIZE = 3;
   const cleanText = (value, limit) => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,limit) : '';
   const userId = value => typeof value === 'string' && value.length <= 200 && value.trim() && !/[\u0000-\u001f\u007f]/.test(value) ? value : '';
   function normalizePersonalData(value) {

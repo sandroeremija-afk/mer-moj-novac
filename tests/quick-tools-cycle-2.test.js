@@ -89,98 +89,63 @@ test('forecast keyboard updates the readout even when SVG focusin is not deliver
 });
 
 function budgetHarness(){
-  const nodes=new Map(),created=[],categories=(prefix,count)=>Array.from({length:count},(_,index)=>({id:`${prefix}-${index+1}`}));
+  const source=fs.readFileSync(require.resolve('../app.js'),'utf8');
+  const start=source.indexOf('function renderBudgetView()'),end=source.indexOf('function budgetCategoryPercent',start);
+  assert.ok(start>=0&&end>start,'execute the real complete budget view renderer');
+  const nodes=new Map(),categories=(prefix,count)=>Array.from({length:count},(_,index)=>({id:`${prefix}-${index+1}`,limit:100,spent:20}));
   const profiles={personal:{categories:categories('personal',17)},business:{categories:categories('business',3)}};
-  const context={core,state:profiles.personal,appState:{activeAccount:'personal'},currentLang:'hr',userId:'user-a'};
-  class Element{
-    constructor(){this.attributes={};this.dataset={};this.events={};this.children=[];this.scrollTop=0;this.hidden=false;this._html='';}
-    setAttribute(name,value){this.attributes[name]=String(value);}
-    getAttribute(name){return this.attributes[name];}
-    addEventListener(name,callback){this.events[name]=callback;}
-    before(node){this.previous=node;}
-    after(node){this.next=node;}
-    focus(){context.focused=this;}
-    matches(selector){const match=/^\[([^=\]]+)(?:="([^"]*)")?\]$/.exec(selector);return Boolean(match&&Object.hasOwn(this.attributes,match[1])&&(match[2]===undefined||this.attributes[match[1]]===match[2]));}
-    closest(selector){return this.matches(selector)?this:null;}
-    querySelector(selector){return this.children.find(node=>node.matches(selector))||null;}
-    querySelectorAll(selector){return this.children.filter(node=>node.matches(selector));}
-    get innerHTML(){return this._html;}
-    set innerHTML(html){
-      this._html=html;this.children=[];
-      for(const match of html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)){
-        const button=new Element();button.textContent=match[2];button.disabled=/\sdisabled(?:\s|$)/.test(match[1]);
-        for(const attribute of match[1].matchAll(/([\w-]+)="([^"]*)"/g)){
-          button.attributes[attribute[1]]=attribute[2];
-          if(attribute[1].startsWith('data-'))button.dataset[attribute[1].slice(5).replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase())]=attribute[2];
-        }
-        this.children.push(button);
-      }
+  const context={
+    state:profiles.personal,MerCore:require('../core.js'),window:{},
+    getPlan:()=>({monthlyBudget:2000,safeRemaining:1000}),
+    currency:value=>`${value} €`,t:key=>key,
+    notificationFingerprint:JSON.stringify,isNotificationResolved:()=>false,
+    budgetCategoryRow:category=>`<div data-category="${category.id}" data-limit="${category.limit}" data-spent="${category.spent}"></div>`,
+    $:selector=>{
+      if(!nodes.has(selector))nodes.set(selector,{textContent:'',innerHTML:'',style:{},dataset:{},classList:{toggle(){}}});
+      return nodes.get(selector);
     }
-  }
-  for(const id of ['budgetTable','budgetTableWindow'])nodes.set(id,new Element());
-  context.el=id=>nodes.get(id);
-  context.copy=(hr,en)=>context.currentLang==='en'?en:hr;
-  context.window={MerAuthProvider:{currentSession:()=>({userId:context.userId})}};
-  context.document={createElement(){const node=new Element();created.push(node);return node;}};
-  context.budgetCategoryRow=category=>`<div data-category="${category.id}"></div>`;
-  const start=quickSource.indexOf("  const table=el('budgetTable')"),end=quickSource.indexOf('  window.MerQuickTools=',start);
-  assert.ok(start>=0&&end>start,'execute the real budget controls, renderer, and event delegation');
-  vm.createContext(context);vm.runInContext(quickSource.slice(start,end)+';globalThis.render=renderBudgets;renderBudgets();',context);
-  const list=nodes.get('budgetTableWindow'),controls=list.previous,pager=list.next;
-  function click(parent,selector){const button=parent.querySelector(selector);assert.ok(button,selector);parent.events.click({target:button});return button;}
+  };
+  vm.createContext(context);vm.runInContext(source.slice(start,end),context);context.renderBudgetView();
   return {
-    context,profiles,list,controls,pager,table:nodes.get('budgetTable'),
-    rows:()=>[...nodes.get('budgetTable').innerHTML.matchAll(/data-category="([^"]+)"/g)].map(match=>match[1]),
-    page:value=>click(pager,`[data-budget-page="${value}"]`),mode:value=>click(controls,`[data-budget-mode="${value}"]`),
-    switchProfile(id){context.appState.activeAccount=id;context.state=profiles[id];context.render();}
+    context,profiles,table:nodes.get('#budgetTable'),
+    rows:()=>[...nodes.get('#budgetTable').innerHTML.matchAll(/data-category="([^"]+)"/g)].map(match=>match[1]),
+    switchProfile(id){context.state=profiles[id];context.renderBudgetView();}
   };
 }
 
-test('budget controls render seventeen categories as eight, eight, and one with functional disabled bounds',()=>{
-  const app=budgetHarness(),snapshot=JSON.stringify(app.profiles),seen=[...app.rows()];
-  assert.equal(app.rows().length,8);assert.equal(app.pager.hidden,false);
-  assert.equal(app.pager.querySelector('[data-budget-page="0"]').disabled,true);
-  app.page(0);assert.equal(app.rows()[0],'personal-1');
-  app.list.scrollTop=100;app.page(2);seen.push(...app.rows());
-  assert.equal(app.rows().length,8);assert.equal(app.rows()[0],'personal-9');
-  assert.equal(app.list.scrollTop,0);assert.equal(app.context.focused,app.list);
-  app.page(3);seen.push(...app.rows());assert.deepEqual(app.rows(),['personal-17']);
-  assert.equal(app.pager.querySelector('[data-budget-page="4"]').disabled,true);
-  app.page(4);assert.deepEqual(app.rows(),['personal-17']);
-  assert.deepEqual(seen,app.profiles.personal.categories.map(category=>category.id));
-  app.page(2);assert.equal(app.rows()[0],'personal-9');assert.equal(JSON.stringify(app.profiles),snapshot);
+test('budget view renders every category directly without controls or a pagination extension',()=>{
+  const app=budgetHarness(),snapshot=JSON.stringify(app.profiles);
+  assert.equal(app.rows().length,17);
+  assert.deepEqual(app.rows(),app.profiles.personal.categories.map(category=>category.id));
+  assert.equal(JSON.stringify(app.profiles),snapshot,'rendering does not mutate category limits or spending');
+  const css=fs.readFileSync(require.resolve('../quick-tools.css'),'utf8');
+  const source=fs.readFileSync(require.resolve('../app.js'),'utf8');
+  assert.doesNotMatch(quickSource,/MerBudgetPagination|budget-view-controls|budget-pagination|data-budget-mode|data-budget-page/);
+  assert.doesNotMatch(css,/budget-view-controls|budget-pagination/);
+  assert.doesNotMatch(source,/MerBudgetPagination/);
 });
 
-test('budget Show all removes paging and returning to Pages starts at the first eight categories',()=>{
-  const app=budgetHarness();app.page(2);app.list.scrollTop=70;app.mode('all');
-  assert.equal(app.rows().length,17);assert.equal(app.pager.hidden,true);assert.equal(app.list.dataset.listMode,'all');
-  assert.equal(app.list.scrollTop,0);assert.equal(app.controls.querySelector('[data-budget-mode="all"]').getAttribute('aria-pressed'),'true');
-  assert.equal(app.context.focused,app.controls.querySelector('[data-budget-mode="all"]'));
-  app.mode('pages');assert.equal(app.rows().length,8);assert.equal(app.rows()[0],'personal-1');assert.equal(app.pager.hidden,false);
-  assert.equal(app.controls.querySelector('[data-budget-mode="pages"]').getAttribute('aria-pressed'),'true');
+test('simple budget list responds to edits, additions and removals without a manual refresh',()=>{
+  const app=budgetHarness();
+  app.profiles.personal.categories[16].limit=150;
+  app.profiles.personal.categories[16].spent=42.5;
+  app.context.renderBudgetView();
+  assert.match(app.table.innerHTML,/data-category="personal-17" data-limit="150" data-spent="42.5"/);
+  app.profiles.personal.categories.push({id:'personal-18',limit:200,spent:0});
+  app.context.renderBudgetView();assert.equal(app.rows().length,18);assert.equal(app.rows().at(-1),'personal-18');
+  app.profiles.personal.categories.splice(0,1);
+  app.context.renderBudgetView();assert.equal(app.rows().length,17);assert.equal(app.rows()[0],'personal-2');
+  app.profiles.personal.categories.length=0;
+  app.context.renderBudgetView();assert.deepEqual(app.rows(),[]);assert.equal(app.table.innerHTML,'');
 });
 
-test('budget display resets pages, show-all state and scroll when the profile or signed-in user changes',()=>{
-  for(const mode of ['all','page-two']){
-    const app=budgetHarness();if(mode==='all')app.mode('all');else app.page(2);
-    app.list.scrollTop=99;app.switchProfile('business');
-    assert.deepEqual(app.rows(),['business-1','business-2','business-3']);
-    assert.equal(app.list.dataset.listMode,'pages');assert.equal(app.list.scrollTop,0);assert.equal(app.pager.hidden,true);
-    app.switchProfile('personal');assert.equal(app.rows()[0],'personal-1');assert.equal(app.rows().length,8);
-    app.mode('all');app.list.scrollTop=99;app.context.userId='user-b';app.context.render();
-    assert.equal(app.rows()[0],'personal-1');assert.equal(app.rows().length,8);
-    assert.equal(app.list.dataset.listMode,'pages');assert.equal(app.list.scrollTop,0);
-  }
-});
-
-test('budget redraw localizes controls, clamps the current page after deletion and handles an empty category list',()=>{
-  const app=budgetHarness();app.page(2);app.page(3);app.context.currentLang='en';app.context.render();
-  assert.equal(app.controls.getAttribute('aria-label'),'Category display');assert.equal(app.pager.getAttribute('aria-label'),'Category pages');
-  assert.match(app.pager.innerHTML,/Page 3 \/ 3/);assert.match(app.controls.innerHTML,/Show all/);
-  app.profiles.personal.categories.length=9;app.context.render();
-  assert.deepEqual(app.rows(),['personal-9']);assert.match(app.pager.innerHTML,/Page 2 \/ 2/);
-  app.profiles.personal.categories.length=0;app.context.render();
-  assert.deepEqual(app.rows(),[]);assert.equal(app.pager.hidden,true);assert.match(app.pager.innerHTML,/Page 1 \/ 1/);
+test('simple budget list displays only active-profile categories on each switch',()=>{
+  const app=budgetHarness(),snapshot=JSON.stringify(app.profiles);
+  app.switchProfile('business');assert.deepEqual(app.rows(),['business-1','business-2','business-3']);
+  assert.doesNotMatch(app.table.innerHTML,/personal-/);
+  app.switchProfile('personal');assert.equal(app.rows().length,17);assert.equal(app.rows()[0],'personal-1');
+  assert.doesNotMatch(app.table.innerHTML,/business-/);
+  assert.equal(JSON.stringify(app.profiles),snapshot);
 });
 
 test('cash flow has one forecast view and an accessible hover readout without the removed scenario controls',()=>{
