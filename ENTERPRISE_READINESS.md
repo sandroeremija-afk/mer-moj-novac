@@ -1,11 +1,13 @@
 # Mer enterprise feature release
 
+> Historical evaluation of an earlier implementation. Provider-specific checks below do not certify the current OpenAI integration. See README.md for current configuration; current live tests require an OpenAI key.
+
 ## Available workflows
 
 - `Ctrl/Cmd K`: searchable keyboard navigation, new income/expense, transaction export, profile switching, financial planning and lock.
 - Header shield or `Ctrl/Cmd Shift H`: visual privacy for monetary figures. This is a screen-sharing aid, not a replacement for authentication.
 - **Planiraj unaprijed**: deterministic 90-day recurrence detection and 30-day cash-flow forecast, subscription price radar, non-posting purchase simulation and payday goal allocations.
-- Gemini can explain anonymized aggregate forecasts on demand. The arithmetic never depends on model output. API credentials stay on the server (`GEMINI_API_KEY`; optional `CASHFLOW_GEMINI_MODEL`). WebUI settings are unchanged.
+- the prior AI provider can explain anonymized aggregate forecasts on demand. The arithmetic never depends on model output. API credentials stay on the server (`LEGACY_AI_API_KEY`; optional `LEGACY_CASHFLOW_MODEL`). WebUI settings are unchanged.
 - Business-only **e-Račun**: validated OIB/HR IBAN fields, KPD fields, itemized 25% VAT, local QR summary, saved drafts, UBL XML draft, print/save-as-PDF. See `INVOICE_READINESS.md` before issuing any legal invoice.
 - Tax reserve is restricted to explicitly marked VAT-inclusive B2B income. At a 25% VAT rate, EUR 1,250 gross reserves EUR 250, not EUR 312.50. Allocations are virtual, not bank transfers.
 - Settings → Security: ten-minute idle lock, demo PIN setup, encrypted vault setup, JSON data download, verified local account deletion, PWA installation when supported.
@@ -29,4 +31,4 @@ The service worker caches same-origin static application assets only, never API 
 
 For local production preview: `npm run build`, then `node --env-file-if-exists=.env.local scripts/preview.js`. The preview serves only `dist` and the two local API handlers. Never publish `.env.local`.
 
-Browser checks for this release include keyboard navigation, global amount blur, non-mutating EUR 5,000 purchase simulation, synthetic EUR 250 invoice preview/save, mobile sticky invoice actions, drag-safe backdrop dismissal, profile switching and lock-screen behavior. Dedicated clock/controller tests simulate the exact ten-minute inactivity deadline and credential verification. Live Gemini availability depends on the environment key, model access and network.
+Browser checks for this release include keyboard navigation, global amount blur, non-mutating EUR 5,000 purchase simulation, synthetic EUR 250 invoice preview/save, mobile sticky invoice actions, drag-safe backdrop dismissal, profile switching and lock-screen behavior. Dedicated clock/controller tests simulate the exact ten-minute inactivity deadline and credential verification. Live the prior AI provider availability depends on the environment key, model access and network.

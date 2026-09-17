@@ -21,6 +21,18 @@
     faqBalancePrivacyQuestion:'How do I temporarily hide amounts?', faqBalancePrivacyAnswer:'Enable Hide balances in User settings. Amounts are masked on Overview without deleting any data.', faqCategoryManageQuestion:'How do I manage many categories?', faqCategoryManageAnswer:'Choose Show all in Budgets. The expanded view lets you search, add and edit category limits.', faqEmergencyFundQuestion:'How should I estimate an emergency-fund target?', faqEmergencyFundAnswer:'A useful starting point is several months of essential expenses, adjusted for income stability and financial obligations.', faqImportedSourceQuestion:'How do I distinguish manual and bank entries?', faqImportedSourceAnswer:'Each Activity item shows its source, such as Manual or Auto: bank name, and can still be edited or recategorized.', faqNetTotalQuestion:'What does Net Total mean?', faqNetTotalAnswer:'Net Total is income minus expenses for the selected period. Changing the filter refreshes every metric and chart immediately.',
     suggestedQuestions:'Suggested questions', promptSafe:'How is Safe to Spend calculated?', promptSavings:'How can I improve my savings rate?', promptLimit:'How do I set a monthly limit?', askAssistant:'Ask the AI assistant', assistantPlaceholder:'Type a question...', send:'Send', assistantWidgetDisclaimer:'AI responses are informational and do not replace professional financial advice.', assistantDisclaimer:'AI responses are informational and do not replace professional financial advice. Only active-profile aggregate amounts are sent.', assistantWelcome:'Hello! I can explain MER metrics, help you find a feature, and provide guidance using aggregate totals from the active profile.', assistantThinking:'Reviewing your question…', assistantLocal:'Local guide', assistantRemote:'AI response', assistantError:'A response is not available right now. Please try again.'
   });
+  Object.assign(translations.hr, {
+    assistantThinking:'Mer priprema akciju…', assistantRemote:'Mer AI · OpenAI',
+    assistantWelcome:'Pozdrav! Mogu objasniti financije, otvoriti traženi modul te pripremiti transakciju ili cilj štednje. Vi provjeravate i spremate svaki unos.',
+    assistantDisclaimer:'Poruke i zbirni iznosi aktivnog profila šalju se OpenAIju. AI odgovor je informativan; svaki financijski unos spremate tek nakon provjere.',
+    assistantWidgetDisclaimer:'Poruke i zbirni iznosi aktivnog profila šalju se OpenAIju. Pripremljene unose provjerite prije spremanja.'
+  });
+  Object.assign(translations.en, {
+    assistantThinking:'Mer is preparing your action…', assistantRemote:'Mer AI · OpenAI',
+    assistantWelcome:'Hello! I can explain your finances, navigate to a module, and prepare a transaction or savings goal. You review and save every entry.',
+    assistantDisclaimer:'Messages and active-profile aggregate amounts are sent to OpenAI. AI guidance is informational; financial entries are saved only after your review.',
+    assistantWidgetDisclaimer:'Messages and active-profile aggregate amounts are sent to OpenAI. Review prepared entries before saving.'
+  });
   applyStaticTranslations();
 
   const modal = $('#helpAssistantModal');
@@ -241,6 +253,8 @@
 
   function renderMessages() {
     assistantSurfaces.forEach(surface => {
+      surface.send.setAttribute('aria-label', t('send'));
+      surface.send.dataset.i18nAria = 'send';
       const list = surface.messages;
       list.replaceChildren();
       profileHistory(appState.activeAccount).forEach(message => {
@@ -253,6 +267,7 @@
           const source = document.createElement('small');
           source.textContent = t(message.source === 'remote' ? 'assistantRemote' : 'assistantLocal');
           item.append(source);
+          (message.actions || []).forEach(action => item.append(renderActionCard(message, action)));
         }
         list.append(item);
       });
@@ -260,10 +275,48 @@
     });
   }
 
+  function renderActionCard(message, action) {
+    const card = document.createElement('div');
+    card.className = 'assistant-action-card';
+    const title = document.createElement('strong');
+    const description = document.createElement('span');
+    const button = document.createElement('button');
+    const status = message.actionStates?.[action.id] || 'ready';
+    const english = currentLang === 'en';
+    const labels = { add_transaction:english?'Transaction draft':'Prijedlog transakcije', create_savings_goal:english?'Savings goal draft':'Prijedlog cilja štednje', navigate_view:english?'Open module':'Otvori modul' };
+    title.textContent = labels[action.name];
+    if (action.name === 'add_transaction') description.textContent = `${action.arguments.merchant} · ${currency(action.arguments.amount)} · ${action.arguments.category}`;
+    else if (action.name === 'create_savings_goal') description.textContent = `${action.arguments.goal_name} · ${currency(action.arguments.target_amount)}`;
+    else description.textContent = t({pregled:'navOverview',budzeti:'navBudgets',stednja:'navSavings',aktivnost:'navActivity',uvidi:'navInsights'}[action.arguments.target_page]);
+    if (action.name !== 'navigate_view') description.setAttribute('data-money', '');
+    button.type = 'button';
+    button.className = 'secondary-button assistant-action-button';
+    const expired = message.owner !== window.MerAssistantActions?.owner?.();
+    button.disabled = expired || ['prepared','navigated','expired','invalid'].includes(status);
+    button.textContent = expired || status === 'expired' ? (english?'Session changed':'Sesija je promijenjena')
+      : status === 'prepared' ? (english?'Form prepared · not saved':'Obrazac pripremljen · nije spremljeno')
+      : status === 'navigated' ? (english?'Module opened':'Modul je otvoren')
+      : status === 'deferred' ? (english?'Close the open form, then review':'Zatvorite otvoreni obrazac pa pregledajte')
+      : (english?'Review action':'Pregledaj radnju');
+    button.addEventListener('click', () => applyAssistantAction(message, action));
+    card.append(title, description, button);
+    return card;
+  }
+
+  function applyAssistantAction(message, action) {
+    if (['prepared','navigated','expired','invalid'].includes(message.actionStates?.[action.id])) return;
+    const result = window.MerAssistantActions?.execute?.(action, message.owner) || {status:'deferred'};
+    message.actionStates ||= {};
+    message.actionStates[action.id] = result.status;
+    renderMessages();
+  }
+
   function setAssistantBusy(busy, statusKey = '') {
     assistantSurfaces.forEach(surface => {
       surface.send.disabled = busy;
       surface.status.textContent = statusKey ? t(statusKey) : '';
+      surface.status.classList.toggle('assistant-thinking', busy);
+      surface.status.setAttribute('aria-busy', String(busy));
     });
   }
 
@@ -337,6 +390,8 @@
     const message = String(rawMessage || '').trim().slice(0, MerFinancialAssistant.MAX_MESSAGE_LENGTH || 1000);
     if (!message) return;
     const requestProfileId = appState.activeAccount;
+    const requestOwner = window.MerAssistantActions?.owner?.();
+    if (!requestOwner) return;
     const history = profileHistory(requestProfileId);
     history.push({ id:`user-${Date.now()}`, role:'user', content:message, source:'local' });
     renderMessages();
@@ -353,11 +408,15 @@
       const financialContext = financialContextFor(requestProfileId);
       const signal = requestController.signal;
       const response = await MerFinancialAssistant.ask({messages,locale,profileId,financialContext,signal});
-      if (signal.aborted || appState.activeAccount !== requestProfileId) return;
-      history.push(response);
+      if (signal.aborted || activeRequest !== requestController || appState.activeAccount !== requestProfileId || requestOwner !== window.MerAssistantActions?.owner?.()) return;
+      const entry = {...response, owner:requestOwner, actionStates:{}};
+      history.push(entry);
       if (history.length > 24) history.splice(1, history.length - 24);
       renderMessages();
       setAssistantBusy(false);
+      // A single action opens a review form. Additional actions remain explicit
+      // cards so one response can never overwrite another prepared form.
+      if (entry.actions?.length) applyAssistantAction(entry, entry.actions[0]);
     } catch (error) {
       if (!requestController.signal.aborted && appState.activeAccount === requestProfileId) setAssistantBusy(false, 'assistantError');
     } finally {

@@ -24,7 +24,7 @@ function harness({fetchImpl,speech}={}){
   const state={profileId:'personal',sessionId:'s1',authenticated:true,revision:1,referenceDate:'2026-03-01',language:'hr',currency:'EUR',profile:{transactions:[]},categories:[{id:'food',name:'Hrana',type:'expense'},{id:'salary',name:'Plaća',type:'income'}]};
   const applied=[],requests=[];let locked=false;
   const window={document,MerNaturalInput:N,MerEnterpriseSecurity:{isLocked:()=>locked},SpeechRecognition:speech,addEventListener(){},MerEngagementBridge:{snapshot:()=>state,applyTransactionDraft(draft){applied.push(draft);return true;}}};
-  const context=vm.createContext({window,document,AbortController,setTimeout,clearTimeout,fetch:async(...args)=>{requests.push(args);return fetchImpl?fetchImpl(...args):{ok:true,text:async()=>JSON.stringify({source:'gemini',draft:{amount:35.5,merchant:'Konzum',categoryId:'food',type:'expense',date:'2026-02-28',currency:'EUR'}})};}});
+  const context=vm.createContext({window,document,AbortController,setTimeout,clearTimeout,fetch:async(...args)=>{requests.push(args);return fetchImpl?fetchImpl(...args):{ok:true,text:async()=>JSON.stringify({source:'openai',draft:{amount:35.5,merchant:'Konzum',categoryId:'food',type:'expense',date:'2026-02-28',currency:'EUR'}})};}});
   vm.runInContext(source,context);window.MerNaturalInputUI.init();window.MerNaturalInputUI.reset();
   const get=id=>document.getElementById(id),click=async id=>Promise.all(get(id).click()),text=value=>{get('naturalInputText').value=value;get('naturalInputText').dispatch('input');};
   return {window,state,document,dialog,applied,requests,get,click,text,ui:window.MerNaturalInputUI,lock(){locked=true;window.MerNaturalInputUI.render();}};
@@ -41,7 +41,8 @@ async function main(){
     assert.ok(h.dialog.className.includes('is-natural-input-open'),'progressive input replaces the full manual form instead of stacking');
     await h.click('naturalInputLocal');assert.equal(h.requests.length,0);assert.equal(h.applied[0].amount,35.5);assert.equal(h.applied[0].date,'2026-02-28');assert.equal(h.state.profile.transactions.length,0,'only draft fields are filled; finances never saved');assert.match(h.get('naturalInputStatus').textContent,/Lokalni prijedlog/);
     assert.equal(h.get('naturalInputBody').hidden,true,'successful fill returns to manual review');assert.ok(!h.dialog.className.includes('is-natural-input-open'));assert.equal(h.document.activeElement,h.get('transactionAmount'));
-    h.get('naturalConsent').checked=true;await h.click('naturalInputAI');assert.equal(h.requests.length,1);assert.equal(h.applied.length,2);assert.match(h.get('naturalInputStatus').textContent,/Gemini prijedlog/);
+    h.get('naturalConsent').checked=true;await h.click('naturalInputAI');assert.equal(h.requests.length,1);assert.equal(h.applied.length,2);assert.match(h.get('naturalInputStatus').textContent,/Mer AI prijedlog/);
+    assert.equal(h.requests[0][0],'/api/ai/parse-transaction');
     const body=JSON.parse(h.requests[0][1].body);assert.equal(body.consent,true);assert.equal(body.profile,undefined);assert.equal(body.transactions,undefined);assert.equal(body.sessionId,undefined);assert.equal(body.text,'Jučer sam potrošio 35,50 eura u Konzumu');
     h.text('U Konzumu');await h.click('naturalInputLocal');assert.equal(h.applied.length,2);assert.match(h.get('naturalInputStatus').textContent,/Iznos nije jasan/);
     h.text('10 USD u Konzumu');await h.click('naturalInputLocal');assert.equal(h.applied.length,2);assert.match(h.get('naturalInputStatus').textContent,/druga valuta/);
@@ -58,24 +59,24 @@ async function main(){
     h.dialog.close();assert.equal(h.get('naturalInputText').value,'');assert.ok(!h.dialog.className.includes('is-natural-input-open'),'dialog close clears progressive view state');
   }
   {
-    const h=harness({fetchImpl:async()=>({ok:false,status:503})});h.text('35 eura u Konzumu');h.get('naturalConsent').checked=true;await h.click('naturalInputAI');assert.equal(h.applied[0].amount,35);assert.match(h.get('naturalInputStatus').textContent,/Gemini nije dostupan.*lokalni prijedlog/);
+    const h=harness({fetchImpl:async()=>({ok:false,status:503})});h.text('35 eura u Konzumu');h.get('naturalConsent').checked=true;await h.click('naturalInputAI');assert.equal(h.applied[0].amount,35);assert.match(h.get('naturalInputStatus').textContent,/OpenAI nije dostupan.*lokalni prijedlog/);
     assert.equal(h.get('naturalInputAI').disabled,false);
   }
   for(const mutation of ['close','back','profile','session','form','text','revision','locked','logout','withdraw-consent']){
     let finish;const h=harness({fetchImpl:()=>new Promise(resolve=>{finish=resolve;})});h.text('35 eura u Konzumu');h.get('naturalConsent').checked=true;const pending=h.click('naturalInputAI');
     if(mutation==='close')h.dialog.close();if(mutation==='back')await h.click('naturalInputBack');if(mutation==='profile'){h.state.profileId='business';h.ui.render();}if(mutation==='session')h.state.sessionId='s2';if(mutation==='form')h.get('transactionAmount').value='99';if(mutation==='text')h.text('New text');if(mutation==='revision')h.state.revision++;if(mutation==='locked')h.lock();if(mutation==='logout')h.state.authenticated=false;if(mutation==='withdraw-consent'){h.get('naturalConsent').checked=false;h.get('naturalConsent').dispatch('change');}
-    finish({ok:true,text:async()=>JSON.stringify({source:'gemini',draft:{amount:35,merchant:'Konzum',categoryId:'food',type:'expense',date:'2026-03-01',currency:'EUR'}})});await pending;assert.equal(h.applied.length,0,`${mutation} prevents stale draft application`);
+    finish({ok:true,text:async()=>JSON.stringify({source:'openai',draft:{amount:35,merchant:'Konzum',categoryId:'food',type:'expense',date:'2026-03-01',currency:'EUR'}})});await pending;assert.equal(h.applied.length,0,`${mutation} prevents stale draft application`);
   }
   {
     const h=harness();await h.click('naturalMic');assert.match(h.get('naturalInputStatus').textContent,/ne podržava glasovni/);assert.equal(h.document.activeElement,h.get('naturalInputText'));assert.equal(h.requests.length,0);
     let instance;class Speech{constructor(){instance=this;}start(){}stop(){this.onend?.();}abort(){this.aborted=true;}}
     const s=harness({speech:Speech});await s.click('naturalMic');assert.equal(instance.lang,'hr-HR');assert.equal(s.get('naturalMic').getAttribute('aria-pressed'),'true');
-    instance.onresult({results:[[{transcript:'35 eura u Konzumu'}]]});instance.onend();assert.equal(s.get('naturalInputText').value,'35 eura u Konzumu');assert.equal(s.requests.length,0,'speech transcription does not automatically upload to Gemini');assert.equal(s.applied.length,0,'speech is reviewed before filling');
+    instance.onresult({results:[[{transcript:'35 eura u Konzumu'}]]});instance.onend();assert.equal(s.get('naturalInputText').value,'35 eura u Konzumu');assert.equal(s.requests.length,0,'speech transcription does not automatically upload to OpenAI');assert.equal(s.applied.length,0,'speech is reviewed before filling');
     await s.click('naturalMic');instance.onerror({error:'not-allowed'});instance.onend();assert.match(s.get('naturalInputStatus').textContent,/nije dopušten/);
     await s.click('naturalMic');await s.click('naturalMic');assert.match(s.get('naturalInputStatus').textContent,/zaustavljen/);assert.equal(s.get('naturalMic').getAttribute('aria-pressed'),'false');
     await s.click('naturalMic');s.dialog.close();assert.equal(instance.aborted,true);assert.equal(instance.onresult,null);assert.equal(s.get('naturalInputText').value,'');
   }
-  assert.match(css,/font-size:16px/);assert.match(css,/min-height:44px/);assert.match(css,/#transactionModal\{[^}]*overflow:hidden/);assert.match(css,/#transactionModal\.is-natural-input-open #transactionForm[^}]*display:none/);assert.doesNotMatch(css,/appearance:auto|overflow-y:auto|resize:vertical/);assert.match(source,/type="button"/);assert.doesNotMatch(source,/localStorage|apiKey|GEMINI_API_KEY|requestSubmit\(|\.submit\(/);
+  assert.match(css,/font-size:16px/);assert.match(css,/min-height:44px/);assert.match(css,/#transactionModal\{[^}]*overflow:hidden/);assert.match(css,/#transactionModal\.is-natural-input-open #transactionForm[^}]*display:none/);assert.doesNotMatch(css,/appearance:auto|overflow-y:auto|resize:vertical/);assert.match(source,/type="button"/);assert.doesNotMatch(source,/localStorage|apiKey|OPENAI_API_KEY|requestSubmit\(|\.submit\(/);
   process.stdout.write('Natural input cycle 2 passed: explicit consent, draft-only apply, honest fallback, stale request rejection, speech denial/unsupported/close, and safe typed entry.\n');
 }
 main().catch(error=>{process.stderr.write(`${error.stack}\n`);process.exitCode=1;});

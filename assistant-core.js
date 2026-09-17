@@ -12,6 +12,47 @@
 
   const assistantId = () => globalThis.crypto?.randomUUID?.() || `assistant-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   const cleanText = (value, limit) => String(value || '').trim().replace(/\u0000/g, '').slice(0, limit);
+  const ACTION_PAGES = Object.freeze({ pregled:'overview', budzeti:'budgets', stednja:'savings', aktivnost:'activity', uvidi:'insights' });
+  const validAmount = value => typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 999999999 && Math.abs(value * 100 - Math.round(value * 100)) < .00001;
+  const actionText = (value, limit) => typeof value === 'string' && value.trim() && value.trim().length <= limit ? cleanText(value, limit) : '';
+
+  // Treat tool output as untrusted data, never executable code or a saved record.
+  function sanitizeActions(actions) {
+    const ids = new Set();
+    return (Array.isArray(actions) ? actions : []).slice(0, 3).flatMap(action => {
+      if (!action || typeof action !== 'object' || !action.arguments || typeof action.arguments !== 'object') return [];
+      const args = action.arguments;
+      let safe;
+      if (action.name === 'add_transaction' && validAmount(args.amount) && ['income', 'expense'].includes(args.type)) {
+        const merchant = actionText(args.merchant, 100), category = actionText(args.category, 100);
+        if (merchant && typeof args.category === 'string' && args.category.trim().length <= 100) safe = { amount:args.amount, merchant, category, type:args.type };
+      } else if (action.name === 'create_savings_goal' && validAmount(args.target_amount)) {
+        const goal_name = actionText(args.goal_name, 40);
+        if (goal_name) safe = { goal_name, target_amount:args.target_amount };
+      } else if (action.name === 'navigate_view' && Object.hasOwn(ACTION_PAGES, args.target_page)) {
+        safe = { target_page:args.target_page };
+      }
+      const id = actionText(action.id, 120);
+      if (!safe || !id || ids.has(id)) return [];
+      ids.add(id);
+      return [Object.freeze({ id, name:action.name, arguments:Object.freeze(safe) })];
+    });
+  }
+
+  function prepareAction(action, context = {}) {
+    const safe = sanitizeActions([action])[0];
+    if (!safe) return null;
+    const args = safe.arguments;
+    if (safe.name === 'navigate_view') return { kind:'navigation', view:ACTION_PAGES[args.target_page] };
+    if (safe.name === 'create_savings_goal') return { kind:'goal', draft:{ name:args.goal_name, target:args.target_amount, current:0 } };
+    const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('hr').replace(/[^a-z0-9]+/g, ' ').trim();
+    const desired = normalize(args.category);
+    const categories = (Array.isArray(context.categories) ? context.categories : []).filter(category => category.type === args.type);
+    const exact = categories.find(category => normalize(category.id) === desired || normalize(category.name) === desired);
+    const matches = categories.filter(category => normalize(category.name).startsWith(`${desired} `));
+    const category = exact || (matches.length === 1 ? matches[0] : null);
+    return { kind:'transaction', draft:{ amount:args.amount, merchant:args.merchant, type:args.type, categoryId:category?.id || null, date:context.referenceDate, currency:context.currency || 'EUR' } };
+  }
 
   function sanitizeMessages(messages) {
     return (Array.isArray(messages) ? messages : [])
@@ -62,16 +103,16 @@
     }
     if (/bank|pravil|rule|uvoz|import/.test(text)) {
       return english
-        ? 'Local guidance: open User settings, then Banks to connect an account or Rules to create an If/Then auto-categorization rule.'
-        : 'Lokalni vodič: otvorite Korisničke postavke, zatim Banke za povezivanje računa ili Pravila za If/Then auto-kategorizaciju.';
+        ? 'Local guidance: use Connected banks in the header to connect an account. For auto-categorization, open User settings, then Rules.'
+        : 'Lokalni vodič: za povezivanje računa otvorite Povezane banke u zaglavlju. Za automatsku kategorizaciju otvorite Korisničke postavke, zatim Pravila.';
     }
     return english
-      ? 'Local guidance is available while the AI service is not connected. Try asking about safe to spend, daily pace, savings, budgets, banks, or rules.'
-      : 'Dostupan je lokalni vodič dok AI usluga nije povezana. Pitajte o sigurnom iznosu, dnevnom tempu, štednji, budžetima, bankama ili pravilima.';
+      ? 'The AI service is temporarily unavailable. This local guide cannot prepare actions. You can still add entries manually or ask about safe to spend, savings and budgets.'
+      : 'AI usluga trenutačno nije dostupna. Lokalni vodič ne može pripremiti radnje. Unose možete dodati ručno ili pitati o sigurnom iznosu, štednji i budžetima.';
   }
 
   function createAssistantClient(options = {}) {
-    const endpoint = options.endpoint || '/api/assistant';
+    const endpoint = options.endpoint || '/api/ai/chat';
     const fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
     const timeoutMs = Math.max(100, Number(options.timeoutMs) || 30000);
 
@@ -101,9 +142,10 @@
         });
         if (!response?.ok) return fallback();
         const result = await response.json();
-        const content = cleanText(result?.message || result?.content, 4000);
+        const actions = sanitizeActions(result?.actions);
+        const content = cleanText(result?.message || result?.content, 4000) || (actions.length ? (safeLocale === 'en' ? 'Your action is ready to review.' : 'Vaša je radnja pripremljena za pregled.') : '');
         if (!content) return fallback();
-        return Object.freeze({ id:cleanText(result?.id, 100) || assistantId(), role:'assistant', content, source:'remote' });
+        return Object.freeze({ id:cleanText(result?.id, 100) || assistantId(), role:'assistant', content, source:'remote', actions });
       } catch (error) {
         if (signal?.aborted && !timedOut) throw error;
         return fallback();
@@ -116,5 +158,5 @@
     return Object.freeze({ ask });
   }
 
-  return Object.freeze({ MAX_MESSAGE_LENGTH, MAX_HISTORY, CONTEXT_KEYS, sanitizeMessages, sanitizeFinancialContext, localReply, createAssistantClient, createFinancialAssistant:createAssistantClient });
+  return Object.freeze({ MAX_MESSAGE_LENGTH, MAX_HISTORY, CONTEXT_KEYS, ACTION_PAGES, sanitizeActions, prepareAction, sanitizeMessages, sanitizeFinancialContext, localReply, createAssistantClient, createFinancialAssistant:createAssistantClient });
 });

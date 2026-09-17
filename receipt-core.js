@@ -34,7 +34,8 @@
       currency:/^[A-Z]{3}$/.test(input.currency || '') ? input.currency : 'EUR',
       totalCents:cents(input.totalCents), type:input.type === 'income' ? 'income' : 'expense',
       invoiceNumber:text(input.invoiceNumber, 80), lines,
-      source:input.source === 'gemini' ? 'gemini' : 'manual',
+      // Retain older receipt provenance without relabeling it as a new provider result.
+      source:input.source === 'openai' ? 'openai' : !input.source || input.source === 'manual' ? 'manual' : 'imported',
       imageHash:/^[a-f0-9]{64}$/.test(input.imageHash || '') ? input.imageHash : '',
       fileName:text(input.fileName, 180), reviewed:input.reviewed === true
     };

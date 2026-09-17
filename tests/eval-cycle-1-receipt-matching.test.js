@@ -2,8 +2,13 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const R=require('../receipt-core.js');
-const draft=overrides=>({id:'receipt-test',merchant:'Konzum',date:'2026-09-07',currency:'EUR',totalCents:1250,lines:[{description:'Namirnice',quantity:2,totalCents:1250}],type:'expense',source:'gemini',imageHash:'a'.repeat(64),reviewed:true,...overrides});
+const draft=overrides=>({id:'receipt-test',merchant:'Konzum',date:'2026-09-07',currency:'EUR',totalCents:1250,lines:[{description:'Namirnice',quantity:2,totalCents:1250}],type:'expense',source:'openai',imageHash:'a'.repeat(64),reviewed:true,...overrides});
 const tx=(id,overrides={})=>({id,profileId:'personal',name:'POS KONZUM ZAGREB',date:'2026-09-07T10:00:00',amount:12.5,currency:'EUR',type:'expense',source:'Auto: Revolut',bankTransactionId:`bank-${id}`,...overrides});
+test('older provider receipt metadata remains readable without falsely claiming a new OpenAI extraction',()=>{
+  const old=R.normalizeReceipt(draft({source:'previous-provider'}));assert.equal(old.source,'imported');assert.equal(old.totalCents,1250);
+  assert.equal(R.normalizeReceipt(old).source,'imported');assert.equal(R.normalizeReceipt(draft({source:'openai'})).source,'openai');
+  assert.equal(R.normalizeReceipt(draft({source:'manual'})).source,'manual');
+});
 test('OCR review handles unknown fields, integer cents and malformed rows without inventing money',()=>{
   const blank=R.normalizeReceipt(null);assert.equal(blank.totalCents,null);assert.equal(blank.merchant,'');assert.equal(R.reviewReceipt(blank).valid,false);
   assert.equal(R.parseMoney('12,50'),1250);assert.equal(R.parseMoney('0.00'),0);

@@ -26,6 +26,8 @@ test('evaluation cycle 2: Help adds a second accessible AI surface without dupli
   assert.equal((ui.match(/const histories\s*=\s*new Map\(\)/g) || []).length, 1, 'both surfaces share one profile history map');
   assert.match(ui, /assistantSurfaces\.forEach\(surface\s*=>[\s\S]*surface\.messages/);
   assert.match(ui, /MerFinancialAssistant\.ask\s*\(\s*\{\s*messages\s*,\s*locale\s*,\s*profileId\s*,\s*financialContext\s*,\s*signal\s*\}\s*\)/);
+  assert.match(ui, /surface\.send\.setAttribute\('aria-label', t\('send'\)\)/, 'both icon-only mobile send controls retain localized accessible names');
+  assert.match(ui, /surface\.send\.dataset\.i18nAria = 'send'/);
 });
 
 test('evaluation cycle 2: Help FAQ and AI modes remain in-modal and keyboard-addressable', () => {

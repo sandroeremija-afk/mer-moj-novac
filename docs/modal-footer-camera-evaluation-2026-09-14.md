@@ -1,5 +1,7 @@
 # Modal footer, notifications, goals and receipt camera evaluation
 
+> Historical evaluation of an earlier implementation. Provider-specific checks below do not certify the current OpenAI integration. See README.md for current configuration; current live tests require an OpenAI key.
+
 ## Scope and safety
 
 - Standardize existing modal navigation nodes in the footer; preserve their listeners, draft state, form association and contextual Back routing.
@@ -14,7 +16,7 @@
 - Executable footer-controller tests cover existing-node identity, event handlers, normal/external form ownership, hidden Back stages, import-review confirmation gating, localization, repeat normalization, live close delegation, settings-body isolation and non-dismissible security locks.
 - Planning, export and Plan navigation tests verify contextual return, receipt-local Back precedence and profile/session boundaries.
 - Camera tests cover capture through consent and mocked OCR to review, duplicate and stale captures, denied/missing/busy device fallbacks, late permission responses, and track cleanup on Back, close, Escape, profile change, security lock, session expiry, hidden page and pagehide.
-- Vault, receipt and financial-state regressions remain green. No real receipt was sent to Gemini.
+- Vault, receipt and financial-state regressions remain green. No real receipt was sent to the prior AI provider.
 
 ## Evaluation cycle 2 — browser and responsive walkthrough
 

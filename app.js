@@ -1474,6 +1474,46 @@ function openTransaction(id=null) {
 
 function openIncomeTransaction() { window.MerNaturalInputUI?.reset?.();editingTransactionId=null;$('#transactionForm').reset();$('#transactionDate').value=appReferenceDate;transactionType='income';setTransactionType('income');$('#deleteTransaction').hidden=true;openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50); }
 
+// AI prepares ordinary application forms; the existing submit handlers remain
+// the only place that saves transactions and savings goals.
+window.MerAssistantActions=Object.freeze({
+  owner:()=>{
+    const context=window.MerEngagementBridge?.snapshot?.();
+    return context?.authenticated?[context.sessionId,context.profileId,context.language,context.currency].join('|'):'';
+  },
+  execute(action,expectedOwner){
+    const owner=window.MerAssistantActions.owner();
+    if(!owner||owner!==expectedOwner||window.MerEnterpriseSecurity?.isLocked?.())return {status:'expired'};
+    const context=window.MerEngagementBridge?.snapshot?.();
+    const prepared=window.MerFinancialAssistant?.prepareAction?.(action,context);
+    if(!prepared)return {status:'invalid'};
+    // Never replace another form, a spotlight tour, or an unsaved draft.
+    if($$('dialog[open]').some(dialog=>dialog.id!=='helpAssistantModal')||$('#onboardingTour')&&!$('#onboardingTour').hidden)return {status:'deferred'};
+    if(prepared.kind==='goal'&&!window.MerPremiumNavigation?.openGoalEditor)return {status:'deferred'};
+    if(prepared.kind==='transaction'&&!window.MerEngagementBridge?.applyTransactionDraft)return {status:'deferred'};
+    if($('#helpAssistantModal')?.open)closeModal($('#helpAssistantModal'));
+    window.MerAssistantUi?.close?.();
+    if(prepared.kind==='navigation'){
+      showView(prepared.view);
+      return {status:'navigated'};
+    }
+    if(prepared.kind==='goal'){
+      window.MerPremiumNavigation.openGoalEditor();
+      $('#goalNameInput').value=prepared.draft.name;
+      $('#goalTargetInput').value=prepared.draft.target.toFixed(2);
+      $('#goalTargetInput').step='0.01';
+      $('#goalCurrentInput').value='0';
+      $('#goalPrimaryInput').checked=false;
+      showToast(currentLang==='hr'?'Cilj štednje je pripremljen. Provjerite i spremite obrazac.':'Savings goal prepared. Review and save the form.');
+    }else{
+      openTransaction();
+      window.MerEngagementBridge.applyTransactionDraft(prepared.draft);
+      showToast(currentLang==='hr'?`Transakcija od ${currency(prepared.draft.amount)} u ${prepared.draft.merchant} pripremljena. Provjerite i spremite obrazac.`:`Transaction of ${currency(prepared.draft.amount)} at ${prepared.draft.merchant} prepared. Review and save the form.`);
+    }
+    return {status:'prepared'};
+  }
+});
+
 function setAssessmentStep(step) {
   assessmentStep=step;
   $$('.assessment-step').forEach(section=>section.classList.toggle('active',Number(section.dataset.step)===step));

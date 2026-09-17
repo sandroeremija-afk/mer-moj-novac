@@ -4,7 +4,7 @@ Production-prepared static application for savings, budgeting, income, and cash-
 
 ## Run and verify
 
-Node.js 20 or newer is required for the reproducible production pipeline.
+Node.js 22 or newer is required for the reproducible production pipeline.
 
 ```powershell
 npm install
@@ -13,16 +13,13 @@ npm run check
 
 `npm run check` performs the source/security preflight, runs every logic and UI contract evaluation, and creates the minified `dist/` output. For local UI work, serve the repository root with any static server and open `index.html`. App data is saved locally in the browser and Personal/Business profiles are isolated.
 
-The optional AI assistant runs through the server-only Vercel Function at `/api/assistant` and supports Google Gemini or an Open WebUI instance. To use the configured Open WebUI service locally, add the following values to the project-root `.env.local`, then run `vercel dev`:
+Mer AI uses the official `openai` Node SDK and `gpt-4o-mini` through server-only Vercel Functions. Add the following value to the project-root `.env.local`, then run `vercel dev`:
 
 ```ini
-AI_PROVIDER=openwebui
-OPEN_WEBUI_BASE_URL=https://webui.moj.eracun
-OPEN_WEBUI_API_KEY=PASTE_THE_SECRET_HERE
-OPEN_WEBUI_MODEL=gemma4:26b
+OPENAI_API_KEY=PASTE_THE_SECRET_HERE
 ```
 
-The base URL must identify an Open WebUI instance reachable by the server, while the model value must be an exact id available to the API-key owner. This CommonJS project intentionally does not use browser-visible `VITE_` or `NEXT_PUBLIC_` secrets. A missing key or unavailable provider never exposes an error to the conversation: both assistant surfaces fall back to deterministic local guidance.
+Set the same secret in the Vercel project's Production environment and redeploy. This CommonJS project intentionally does not use browser-visible `VITE_` or `NEXT_PUBLIC_` secrets. A missing key or unavailable provider produces a safe unavailable state and local guidance where supported; it never pretends a live model responded. A static file server cannot run the API handlers. Do not paste the key into chat or commit `.env.local`.
 
 ## Included
 
@@ -62,7 +59,7 @@ The base URL must identify an Open WebUI instance reachable by the server, while
 
 `auth-core.js` provides a browser-safe identity-provider boundary. The local adapter validates emails and password strength, derives a 256-bit password hash with PBKDF2-SHA256 (210,000 iterations and a unique random salt), never stores raw passwords, persists only an expiring tab session, and leaves financial data intact on logout. `security-core.js` implements standards-compatible TOTP using Web Crypto (HMAC-SHA1, 30-second period, six digits), accepts a one-step clock drift, and stores only SHA-256 hashes of recovery codes.
 
-This deployment intentionally includes a local/demo auth provider. The assistant has a narrowly scoped server route, but it is not an identity backend and does not change the local authentication trust model. Do not place a personal Open WebUI key behind this public demo route without server-backed user authentication and durable rate limiting. Before real customer onboarding, replace the auth adapter with Clerk/Auth0/Descope or another server-backed identity provider, move TOTP validation and Open Banking tokens server-side, use secure HttpOnly cookies, encrypt secrets at rest, and rate-limit authentication attempts. The UI and provider boundary are already separated for that migration.
+This deployment intentionally includes a local/demo auth provider. The assistant has narrowly scoped server routes, but these are not an identity backend and do not change the local authentication trust model. Same-origin checks and in-memory request limits do not authenticate users or provide global quota protection. Use a restricted project-scoped OpenAI key and provider budget controls; server-backed user authentication and durable rate limiting are required before unrestricted customer rollout. Before real customer onboarding, replace the auth adapter with Clerk/Auth0/Descope or another server-backed identity provider, move TOTP validation and Open Banking tokens server-side, use secure HttpOnly cookies, encrypt secrets at rest, and rate-limit authentication attempts. The UI and provider boundary are already separated for that migration.
 
 ## Import architecture
 
@@ -76,11 +73,15 @@ The demo never asks for or stores real banking credentials. A production Open Ba
 
 ## AI assistant architecture
 
-`assistant-core.js` is the shared client for the Help panel and floating chat widget. It limits history, sends only an allowlisted aggregate summary for the active profile, aborts stale requests during profile switches, and provides deterministic Croatian/English guidance when the remote service is unavailable. `api/assistant.js` independently validates and sanitizes the request before selecting a server-side provider adapter. The Gemini adapter uses the Interactions API with `store: false`; the Open WebUI adapter uses its OpenAI-compatible `/api/chat/completions` endpoint with a server-selected model. `api/gemini-config.js` and `api/open-webui-config.js` validate their respective server-only configuration. Provider keys are never written into the browser bundle, URL, logs, or response.
+`assistant-core.js` is the shared client for the Help panel and floating chat widget. It limits history, sends only an allowlisted aggregate summary for the active profile, aborts stale requests during profile switches, and provides deterministic Croatian/English guidance when the remote service is unavailable. `/api/ai/chat` validates messages and uses OpenAI function calling to return allowlisted transaction drafts, savings-goal drafts, or navigation actions. Financial actions open prefilled forms for human confirmation; the model does not write to the ledger. `/api/ai/parse-transaction` uses JSON mode and validates extracted values against the active profile's categories before returning a form draft. The older `/api/assistant` and `/api/transaction-parse` paths remain compatibility aliases.
 
-Set secrets through Vercel project environment variables for Production, Preview, and Development as required. For Open WebUI, create a dedicated non-admin service account and restrict its API access to the model and chat-completion endpoints it needs. `localhost` is not reachable from Vercel, so the configured host must be reachable from the deployed Function. Never add a populated `.env.local` file to Git; local environment variants are ignored and `.env.example` documents only the required names. Changing provider variables requires a new deployment.
+`server/openai-config.js` reads only `OPENAI_API_KEY` and fixes the model to `gpt-4o-mini`. All provider requests use `store:false`, bounded output and timeouts. Receipt extraction and cash-flow explanations also use the same SDK and key; explicit consent, image validation, anonymized forecast inputs and manual review are preserved. Provider keys are never written into the browser bundle, URL, logs, or response. Live-provider availability is separate from offline mocked regression tests and requires a valid funded OpenAI project key.
 
-### Open WebUI TLS trust
+Set secrets through Vercel project environment variables for Production, Preview, and Development as required. Never add a populated `.env.local` file to Git; local environment variants are ignored and `.env.example` documents only the required names. Changing provider variables requires a new deployment.
+
+### Archived Open WebUI TLS utility
+
+The following adapter documentation is retained for the independent private-PKI utility only. Current Mer AI routes do not use it or read its environment variables.
 
 The preferred production path is a publicly trusted TLS certificate. In that case, leave `OPEN_WEBUI_CA_CERT` and `OPEN_WEBUI_CERT_SHA256` unset and Node's normal public-CA and hostname verification applies.
 
@@ -107,7 +108,7 @@ Never set `NODE_TLS_REJECT_UNAUTHORIZED=0`, use `rejectUnauthorized:false`, or i
 
 ## Production output
 
-`npm run build` minifies every browser application script with Terser, compacts CSS/HTML/SVG assets, verifies that each bundle is non-empty, and writes a byte-reduction report to `dist/build-report.json`. Vercel publishes the static `dist/` assets and separately deploys the root `api/assistant.js` Function. `vercel.json` applies a restrictive Content Security Policy plus clickjacking, MIME-sniffing, referrer, permissions, and cross-origin isolation headers. `runtime.js` catches uncaught errors and rejected promises and presents an accessible recovery surface without exposing internal error details.
+`npm run build` minifies every browser application script with Terser, compacts CSS/HTML/SVG assets, verifies that each bundle is non-empty, and writes a byte-reduction report to `dist/build-report.json`. Vercel publishes the static `dist/` assets and separately deploys the `api/` Node Functions. `vercel.json` applies a restrictive Content Security Policy plus clickjacking, MIME-sniffing, referrer, permissions, and cross-origin isolation headers. `runtime.js` catches uncaught errors and rejected promises and presents an accessible recovery surface without exposing internal error details.
 
 The external SheetJS browser bundle is pinned to version `0.20.3` and restricted by the production CSP. Live financial onboarding still requires moving authentication, MFA secrets, and Open Banking tokens to a trusted server, as described in the security model above.
 

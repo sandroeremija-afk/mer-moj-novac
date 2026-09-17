@@ -1,11 +1,13 @@
 # Unified suite evaluation — 7 September 2026
 
+> Historical evaluation of an earlier implementation. Provider-specific checks below do not certify the current OpenAI integration. See README.md for current configuration; current live tests require an OpenAI key.
+
 ## Delivered
 
 - Croatian month genitives for the safe-to-spend card, aligned metrics and a distinct sparkle icon for planning.
 - Live, active-profile command search across transactions (including scheduled entries), budget and income categories, savings goals, and settings/export actions. Keyboard selection and direct entity dialogs; stealth mode masks result amounts.
 - Responsive cash-flow axes, weekly labels, currency ticks, cyan area fill and pointer/focus/touch event inspection. Projected income is a visualization layer and never contributes to posted balances or the conservative safe-to-spend figure.
-- Consented Gemini receipt OCR, editable line-item review, amount/date/vendor matching, duplicate-safe attachment and read-only saved receipts. Images are not persisted with financial records.
+- Consented the prior AI provider receipt OCR, editable line-item review, amount/date/vendor matching, duplicate-safe attachment and read-only saved receipts. Images are not persisted with financial records.
 - Inflation-aware FIRE scenarios, renewal schedules and calendar reminders, and a separate local household ledger with permission previews.
 - Existing B2B VAT reserve revalidated against edits and profile switches: VAT-inclusive gross payment × 25/125. No transfer or tax filing occurs.
 
@@ -13,7 +15,7 @@
 
 Automated regression tests cover all twelve month names, accent-insensitive full-text search, profile exclusion, future-income isolation, extreme chart domains, receipt normalization/matching/deduplication, asynchronous profile guards, FIRE assumptions, renewal dates and dismissal, and household permissions and exact-cent splits.
 
-The receipt handler was tested against the live Gemini service with a generated synthetic image only: merchant MER TEST TRGOVINA, 2026-09-07, total 1,250 cents, and two lines of 450 and 800 cents. The first live run revealed unsupported upstream schema constraints; the request schema was corrected while strict local validation was retained.
+The receipt handler was tested against the live the prior AI provider service with a generated synthetic image only: merchant MER TEST TRGOVINA, 2026-09-07, total 1,250 cents, and two lines of 450 and 800 cents. The first live run revealed unsupported upstream schema constraints; the request schema was corrected while strict local validation was retained.
 
 ## Cycle 2 — actual browser walkthrough
 
@@ -28,7 +30,7 @@ Visual findings fixed and retested: inherited SVG strokes caused unwanted circle
 - Shared households are **local bookkeeping and unsaved permission previews**, not remote partner accounts, invitations or real-time multi-user synchronization. Real collaboration still requires server identity, membership authorization, durable storage and conflict resolution. See `docs/household-spaces.md`.
 - FIRE dates are estimates under editable assumptions, not promised retirement dates or personalized investment advice. See `PLANNING_READINESS.md` and its primary sources.
 - Renewal reminders appear in-app. For delivery while the app is closed, the user must import the generated ICS into a calendar and enable notifications. This does not silently connect or modify their calendar.
-- OCR sends only the explicitly approved receipt image to the configured Gemini endpoint. Physical phone camera hardware was not available in the browser test; the camera input uses the standard capture=file flow. See `RECEIPT_READINESS.md`.
+- OCR sends only the explicitly approved receipt image to the configured the prior AI provider endpoint. Physical phone camera hardware was not available in the browser test; the camera input uses the standard capture=file flow. See `RECEIPT_READINESS.md`.
 - Forecasts exclude currency conversion; unsupported-currency transactions are explicitly excluded from the active-currency model.
 
 Build and full regression results are checked again immediately before the release commit. No API keys, private screenshots or test browser data are committed.

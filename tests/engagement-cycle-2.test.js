@@ -41,7 +41,7 @@ function harness(){
   window.MerExportBridge={snapshot:()=>({profileId:appState.activeAccount,profile:context.state,sessionId:context.sessionId||'session-1',authenticated:context.authenticated!==false,revision,referenceDate:context.appReferenceDate,currency:appState.settings.currency,language:context.currentLang})};
   vm.runInContext(source,context);
   const get=id=>document.getElementById(id),click=id=>Promise.all(get(id).click().results),render=()=>window.MerEngagementUI.render();
-  return {context,window,document,appState,updates,pending,timers,shares,get,click,render,bump(){revision++;},switchProfile(id){appState.activeAccount=id;context.state=appState.accounts[id];render();},respond(index=0,message='AI explanation'){pending[index].resolve({ok:true,json:async()=>({source:'gemini',message})});}};
+  return {context,window,document,appState,updates,pending,timers,shares,get,click,render,bump(){revision++;},switchProfile(id){appState.activeAccount=id;context.state=appState.accounts[id];render();},respond(index=0,message='AI explanation'){pending[index].resolve({ok:true,json:async()=>({source:'openai',message})});}};
 }
 async function main(){
   const sanitized=sanitizeHealth({...analysis,name:'Sandro',IBAN:'PRIVATE',transactions:[{secret:'PRIVATE'}]});
@@ -49,10 +49,10 @@ async function main(){
   assert.ok(!JSON.stringify(sanitized).includes('SECRET'));assert.equal(sanitized.name,undefined);assert.equal(sanitized.transactions,undefined);
   assert.equal(sanitizeHealth({...analysis,score:101}),null);assert.equal(sanitizeHealth({...analysis,shortfallCents:-1}),null,'a shortfall cannot be negative');assert.equal(sanitizeHealth({...analysis,incomeCents:1.1}),null);assert.equal(sanitizeHealth({...analysis,categories:[{spentCents:-1,limitCents:10,newLimitCents:10}]}),null);
   let upstream;
-  const handler=createHealthHandler({env:{GEMINI_API_KEY:'server-only-test-key',GEMINI_MODEL:'configured-model'},fetchImpl:async(url,options)=>{upstream={url,options};return {ok:true,status:200,headers:{get:()=>null},text:async()=>JSON.stringify({output_text:'Prijedlog je spreman za pregled.'})};}});
+  const handler=createHealthHandler({env:{OPENAI_API_KEY:'server-only-test-key',OPENAI_MODEL:'ignored-model-override'},fetchImpl:async(url,options)=>{upstream={url,options};return new Response(JSON.stringify({choices:[{finish_reason:'stop',message:{content:'Prijedlog je spreman za pregled.'}}]}),{status:200,headers:{'Content-Type':'application/json'}});}});
   let res=await call(handler,{analysis,locale:'hr'});assert.equal(res.statusCode,400);assert.equal(res.body.error,'CONSENT_REQUIRED');assert.equal(upstream,undefined);
-  res=await call(handler);assert.equal(res.statusCode,200);assert.equal(res.body.source,'gemini');assert.equal(res.body.model,'configured-model');assert.equal(res.headers['Cache-Control'],'no-store');assert.ok(!JSON.stringify(res.body).includes('server-only-test-key'));
-  const body=JSON.parse(upstream.options.body);assert.equal(body.store,false);assert.equal(upstream.options.redirect,'error');assert.equal(body.model,'configured-model');assert.ok(!body.input.includes('SECRET'));assert.ok(!body.input.includes('HR-PRIVATE'));assert.match(body.system_instruction,/No action has been performed/);assert.match(body.system_instruction,/Croatian/);
+  res=await call(handler);assert.equal(res.statusCode,200);assert.equal(res.body.source,'openai');assert.equal(res.body.model,'gpt-4o-mini');assert.equal(res.headers['Cache-Control'],'no-store');assert.ok(!JSON.stringify(res.body).includes('server-only-test-key'));
+  const body=JSON.parse(upstream.options.body);assert.equal(body.store,false);assert.equal(upstream.options.redirect,'error');assert.equal(body.model,'gpt-4o-mini');assert.ok(!body.messages[1].content.includes('SECRET'));assert.ok(!body.messages[1].content.includes('HR-PRIVATE'));assert.match(body.messages[0].content,/No action has been performed/);assert.match(body.messages[0].content,/Croatian/);
   assert.equal((await call(handler,undefined,{method:'GET'})).statusCode,405);assert.equal((await call(handler,undefined,{headers:{origin:'https://evil.test',host:'mer.test','content-type':'application/json'}})).statusCode,403);assert.equal((await call(handler,undefined,{headers:{origin:'https://mer.test',host:'mer.test','content-type':'text/plain'}})).statusCode,415);
   const unavailable=createHealthHandler({env:{}});assert.equal((await call(unavailable)).statusCode,503);
   {

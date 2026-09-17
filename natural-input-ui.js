@@ -23,7 +23,7 @@
     el('naturalSpeechNotice').textContent=copy('Mikrofon koristi prepoznavanje govora preglednika, koje može poslati glas svojem servisu.','The microphone uses your browser’s speech recognition, which may send audio to its service.');
     el('naturalInputLabel').textContent=copy('Opišite jednu transakciju','Describe one transaction');
     el('naturalInputText').placeholder=copy('Npr. Potrošio sam 15 € u Konzumu…','E.g. I spent €15 at Konzum…');
-    el('naturalConsentLabel').textContent=copy('Dopuštam slanje rečenice i naziva kategorija servisu Google Gemini.','I allow this sentence and category names to be sent to Google Gemini.');
+    el('naturalConsentLabel').textContent=copy('Dopuštam slanje rečenice i naziva kategorija servisu OpenAI.','I allow this sentence and category names to be sent to OpenAI.');
     el('naturalPrivacySummary').textContent=copy('Stanja i povijest ne šalju se. Lokalni unos radi bez slanja.','Balances and history are not sent. Local fill sends no data.');
     el('naturalInputAI').textContent=busy?copy('Pripremam prijedlog…','Preparing a suggestion…'):copy('Ispuni uz AI','Fill with AI');
     el('naturalInputLocal').textContent=copy('Ispuni lokalno','Fill locally');
@@ -41,7 +41,7 @@
     if(!draft.type||!draft.date){status(copy('Datum ili vrsta transakcije nisu jasni. Dopunite rečenicu ili ispunite obrazac ručno.','The date or transaction type is unclear. Clarify the sentence or fill in the form manually.'),true);return;}
     if(draft.currency!==snapshot().currency){status(copy('Prepoznata je druga valuta. Iznos nije prenesen; unesite odgovarajući iznos ručno. Tečaj se ne preračunava.','A different currency was detected. The amount was not applied; enter the appropriate amount manually. No currency conversion is performed.'),true);return;}
     try{if(!bridge()?.applyTransactionDraft||bridge().applyTransactionDraft(draft)===false)throw new Error('FORM_CHANGED');}catch{status(copy('Obrazac se promijenio. Pokušajte ponovno.','The form changed. Please try again.'),true);return;}
-    const prefix=result.source==='gemini'?copy('Gemini prijedlog ispunjen.','Gemini suggestion filled in.'):localFailure?copy('Gemini nije dostupan — ispunjen je lokalni prijedlog.','Gemini is unavailable — a local suggestion was filled in.'):copy('Lokalni prijedlog ispunjen, bez slanja podataka.','Local suggestion filled in without sending data.');
+    const prefix=result.source==='openai'?copy('Mer AI prijedlog ispunjen.','Mer AI suggestion filled in.'):localFailure?copy('OpenAI nije dostupan — ispunjen je lokalni prijedlog.','OpenAI is unavailable — a local suggestion was filled in.'):copy('Lokalni prijedlog ispunjen, bez slanja podataka.','Local suggestion filled in without sending data.');
     hideEditor();
     status(`${prefix} ${copy('Provjerite obrazac prije spremanja.','Review the form before saving.')} ${!draft.categoryId||!draft.merchant?copy('Dopunite nedostajuća polja.','Complete missing fields.'):''}`);
     el(draft.categoryId?'transactionAmount':'transactionCategory')?.focus();
@@ -49,16 +49,16 @@
   async function parse(source){
     if(!live()||busy)return;show();const request=N.validateRequest(requestData());
     if(!request){status(copy('Unesite kratku rečenicu (do 600 znakova).','Enter a short sentence (up to 600 characters).'),true);return;}
-    if(source==='gemini'&&!el('naturalConsent').checked){status(copy('Za AI obradu potvrdite slanje teksta ili odaberite „Ispuni lokalno”.','Allow text sharing for AI processing or choose “Fill locally”.'),true);el('naturalConsent').focus();return;}
+    if(source==='openai'&&!el('naturalConsent').checked){status(copy('Za AI obradu potvrdite slanje teksta ili odaberite „Ispuni lokalno”.','Allow text sharing for AI processing or choose “Fill locally”.'),true);el('naturalConsent').focus();return;}
     stop();const job=serial,current=snapshot(),key=ownerKey(current),form=formSignature(),text=el('naturalInputText').value,revision=current.revision;
     const guard=()=>job===serial&&live()&&key===ownerKey(snapshot())&&revision===snapshot().revision&&form===formSignature()&&text===el('naturalInputText').value;
     if(source==='local'){apply(N.parseLocal(request),request,guard);return;}
-    controller=new AbortController();const pendingController=controller;busy=true;renderLabels();status(copy('Gemini priprema prijedlog za pregled…','Gemini is preparing a suggestion for review…'));
+    controller=new AbortController();const pendingController=controller;busy=true;renderLabels();status(copy('Mer AI priprema prijedlog za pregled…','Mer AI is preparing a suggestion for review…'));
     const timeout=setTimeout(()=>pendingController.abort(),20000);
     try{
-      const response=await fetch('/api/transaction-parse',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},signal:pendingController.signal,body:JSON.stringify({...request,consent:true})});
+      const response=await fetch('/api/ai/parse-transaction',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},signal:pendingController.signal,body:JSON.stringify({...request,consent:true})});
       if(!response.ok)throw new Error('UNAVAILABLE');const raw=await response.text();if(raw.length>20000)throw new Error('LARGE_RESPONSE');const result=JSON.parse(raw);
-      if(result.source!=='gemini')throw new Error('INVALID_SOURCE');
+      if(result.source!=='openai')throw new Error('INVALID_SOURCE');
       if(!guard()){if(job===serial&&live()&&key===ownerKey(snapshot()))status(copy('Obrazac je izmijenjen. Prijedlog nije primijenjen; pokušajte ponovno.','The form was edited. The suggestion was not applied; try again.'));return;}
       apply(result,request,guard);
     }catch{
@@ -88,7 +88,7 @@
     dialog.insertBefore(panel,el('transactionForm'));
     el('naturalInputToggle').addEventListener('click',()=>{if(el('naturalInputBody').hidden){show();el('naturalInputText').focus();}else{stop();hideEditor();status('');}});
     el('naturalInputBack').addEventListener('click',()=>{stop();hideEditor();status('');el('naturalInputToggle').focus();});
-    el('naturalInputAI').addEventListener('click',()=>parse('gemini'));el('naturalInputLocal').addEventListener('click',()=>parse('local'));el('naturalMic').addEventListener('click',startSpeech);
+    el('naturalInputAI').addEventListener('click',()=>parse('openai'));el('naturalInputLocal').addEventListener('click',()=>parse('local'));el('naturalMic').addEventListener('click',startSpeech);
     el('naturalInputText').addEventListener('input',()=>{if(busy)stop();status('');});
     el('naturalConsent').addEventListener('change',()=>{if(busy&&!el('naturalConsent').checked){stop();status(copy('AI obrada je zaustavljena.','AI processing was stopped.'));}});
     dialog.addEventListener('close',reset);dialog.addEventListener('cancel',stop);root.addEventListener?.('mer-security-status',render);renderLabels();

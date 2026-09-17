@@ -27,7 +27,7 @@ test('evaluation cycle 2: bundled Open WebUI leaf matches the reviewed public ce
   assert.match(certificate.subjectAltName, /DNS:\*\.moj\.eracun/);
 });
 
-test('evaluation cycle 2: deployment documentation covers exact-pair pinning and certificate rotation', () => {
+test('evaluation cycle 2: archived TLS documentation preserves rotation guidance without advertising inactive provider configuration', () => {
   const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
   const example = fs.readFileSync(path.join(root, '.env.example'), 'utf8');
   assert.match(readme, /Both variables are required together/);
@@ -36,7 +36,7 @@ test('evaluation cycle 2: deployment documentation covers exact-pair pinning and
   assert.match(readme, /public verification material, not credentials/);
   assert.match(readme, /Never set `NODE_TLS_REJECT_UNAUTHORIZED=0`/);
   assert.match(readme, /publicly trusted TLS certificate/);
-  assert.match(example, /^OPEN_WEBUI_CA_CERT=$/m);
-  assert.match(example, /^OPEN_WEBUI_CERT_SHA256=$/m);
-  assert.match(example, /2027-06-30/);
+  assert.match(readme, /Current Mer AI routes do not use it/);
+  assert.match(example, /^OPENAI_API_KEY=$/m);
+  assert.doesNotMatch(example, /OPEN_WEBUI_/);
 });

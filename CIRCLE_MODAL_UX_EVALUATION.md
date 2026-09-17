@@ -1,5 +1,7 @@
 # Circular amounts and planning dialogs — 2026-09-08
 
+> Historical evaluation of an earlier implementation. Provider-specific checks below do not certify the current OpenAI integration. See README.md for current configuration; current live tests require an OpenAI key.
+
 ## Scope and safeguards
 
 Preserved the existing MER visual system, vanilla JavaScript architecture, reactive store, profile boundaries and financial formulas. Used accessible native-dialog patterns from the UI guidance without a framework or typography migration. Browser checks used an isolated local demo at port 4193; no production transactions or account data were changed.
@@ -32,4 +34,4 @@ Preserved the existing MER visual system, vanilla JavaScript architecture, react
 
 ## Deliberately unchanged
 
-This is a UI/navigation release, not a new financial-engine or provider-integration release. Existing half-cent intermediate rounding in `core.roundMoney` was not changed; entered integer-cent amounts are covered by regression tests. No real bank or Gemini credentials were transmitted during this evaluation. Native PDF/XML legal validation and remote-account security were not re-certified by these UI checks.
+This is a UI/navigation release, not a new financial-engine or provider-integration release. Existing half-cent intermediate rounding in `core.roundMoney` was not changed; entered integer-cent amounts are covered by regression tests. No real bank or the prior AI provider credentials were transmitted during this evaluation. Native PDF/XML legal validation and remote-account security were not re-certified by these UI checks.

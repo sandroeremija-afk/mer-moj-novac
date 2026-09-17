@@ -4,6 +4,8 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "functions": {
+    "api/ai/chat.js": { "maxDuration": 30 },
+    "api/ai/parse-transaction.js": { "maxDuration": 30 },
     "api/transaction-parse.js": { "maxDuration": 30 },
     "api/health-advice.js": { "maxDuration": 30 },
     "api/receipt.js": {

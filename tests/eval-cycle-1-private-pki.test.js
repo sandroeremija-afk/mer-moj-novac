@@ -6,31 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const AssistantApi = require('../api/assistant.js');
 const PrivatePki = require('../api/private-pki-transport.js');
-
-function responseRecorder() {
-  return {
-    statusCode:200,
-    body:'',
-    setHeader() {},
-    end(value = '') { this.body = String(value); },
-    json() { return JSON.parse(this.body || '{}'); }
-  };
-}
-
-function request() {
-  return {
-    method:'POST',
-    headers:{
-      host:'mer-moj-novac.vercel.app',
-      origin:'https://mer-moj-novac.vercel.app',
-      'content-type':'application/json',
-      'x-forwarded-for':'203.0.113.92'
-    },
-    body:{ messages:[{ role:'user', content:'Kako mogu povećati štednju?' }], locale:'hr' }
-  };
-}
 
 test('evaluation cycle 1: verified Open WebUI leaf is a host-bound pin with an enforced expiry', () => {
   const config = PrivatePki.resolvePinnedTlsConfig({}, {
@@ -134,61 +110,26 @@ test('evaluation cycle 1: pinned transport sends authorization and body only aft
   assert.equal(sentBody, '{"model":"gemma4:26b"}');
 });
 
-test('evaluation cycle 1: assistant selects pinned HTTPS without invoking fetch and rejects bad pin config before I/O', async () => {
-  let fetchCalls = 0;
-  let pinnedCalls = 0;
-  const handler = AssistantApi.createAssistantHandler({
-    env:{ AI_PROVIDER:'openwebui', OPEN_WEBUI_API_KEY:'private-key' },
-    fetchImpl:async () => { fetchCalls += 1;throw new Error('fetch must not run'); },
-    pinnedHttpsTransport:async (_url, options) => {
-      pinnedCalls += 1;
-      assert.equal(options.tlsConfig.source, 'bundled');
-      return {
-        ok:true,
-        status:200,
-        headers:{ get:() => null },
-        json:async () => ({ id:'pinned-response', choices:[{ message:{ content:'Siguran odgovor.' } }] })
-      };
-    }
-  });
-  const response = responseRecorder();
-  await handler(request(), response);
-  assert.equal(response.statusCode, 200);
-  assert.deepEqual(response.json(), { id:'pinned-response', message:'Siguran odgovor.' });
-  assert.equal(pinnedCalls, 1);
-  assert.equal(fetchCalls, 0);
-
-  const invalidHandler = AssistantApi.createAssistantHandler({
-    env:{ AI_PROVIDER:'openwebui', OPEN_WEBUI_API_KEY:'private-key', OPEN_WEBUI_CA_CERT:PrivatePki.PINNED_OPEN_WEBUI_CERTIFICATE_PEM },
-    fetchImpl:async () => { fetchCalls += 1; },
-    pinnedHttpsTransport:async () => { pinnedCalls += 1; }
-  });
-  const invalidResponse = responseRecorder();
-  await invalidHandler(request(), invalidResponse);
-  assert.equal(invalidResponse.statusCode, 503);
-  assert.deepEqual(invalidResponse.json(), { error:'AI_TLS_CONFIGURATION_INVALID', retryable:false });
-  assert.equal(pinnedCalls, 1);
-  assert.equal(fetchCalls, 0);
+test('evaluation cycle 1: retained private-PKI transport rejects missing trust and wrong hosts before I/O',async()=>{
+  let calls=0;
+  const transport=PrivatePki.createPinnedHttpsTransport({httpsImpl:{request(){calls++;throw new Error('I/O must not run');}}});
+  await assert.rejects(transport('https://webui.moj.eracun',{}),error=>error.code==='PINNED_TLS_REQUIRED');
+  const tlsConfig=PrivatePki.resolvePinnedTlsConfig({}, {targetUrl:'https://webui.moj.eracun'});
+  await assert.rejects(transport('https://attacker.example',{tlsConfig}),error=>error.code==='PINNED_TLS_HOSTNAME_MISMATCH');
+  assert.equal(calls,0);
 });
-
-test('evaluation cycle 1: pinned timeout is stable and global TLS verification is never bypassed', async () => {
-  let fetchCalls = 0;
-  const handler = AssistantApi.createAssistantHandler({
-    env:{ AI_PROVIDER:'openwebui', OPEN_WEBUI_API_KEY:'private-key' },
-    fetchImpl:async () => { fetchCalls += 1; },
-    pinnedHttpsTransport:async () => {
-      const error = new Error('private upstream timed out');
-      error.name = 'AbortError';
-      throw error;
-    }
-  });
-  const response = responseRecorder();
-  await handler(request(), response);
-  assert.equal(response.statusCode, 504);
-  assert.deepEqual(response.json(), { error:'AI_TIMEOUT', retryable:true });
-  assert.equal(fetchCalls, 0);
-
-  const source = fs.readFileSync(path.resolve(__dirname, '../api/private-pki-transport.js'), 'utf8');
-  assert.match(source, /rejectUnauthorized:true/);
-  assert.doesNotMatch(source, /rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED/);
+test('evaluation cycle 1: retained private-PKI transport aborts before sending and never bypasses TLS',async()=>{
+  let sent=0,destroyed=0;
+  const httpsImpl={request(){
+    const request=new EventEmitter();
+    request.end=()=>{sent++;};request.destroy=error=>{destroyed++;queueMicrotask(()=>request.emit('error',error));};
+    return request;
+  }};
+  const controller=new AbortController();controller.abort();
+  const transport=PrivatePki.createPinnedHttpsTransport({httpsImpl});
+  const tlsConfig=PrivatePki.resolvePinnedTlsConfig({}, {targetUrl:'https://webui.moj.eracun'});
+  await assert.rejects(transport('https://webui.moj.eracun',{tlsConfig,signal:controller.signal}),error=>error.name==='AbortError');
+  assert.equal(sent,0);assert.equal(destroyed,1);
+  const source=fs.readFileSync(path.resolve(__dirname,'../api/private-pki-transport.js'),'utf8');
+  assert.match(source,/rejectUnauthorized:true/);assert.doesNotMatch(source,/rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED/);
 });

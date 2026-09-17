@@ -5,7 +5,7 @@
   "description": "MER savings, budgeting and cash-flow workspace",
   "type": "commonjs",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "lint": "node scripts/preflight.js",
@@ -17,5 +17,8 @@
   },
   "devDependencies": {
     "terser": "5.50.0"
+  },
+  "dependencies": {
+    "openai": "7.17.0"
   }
 }

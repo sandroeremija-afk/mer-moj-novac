@@ -103,7 +103,7 @@ test('evaluation cycle 2: Help modal exposes contextual FAQ and the FAB owns the
 test('evaluation cycle 2: assistant requests are adapter-ready, profile scoped and race safe', () => {
   assert.match(javascript, /MerFinancialAssistant/);
   assert.match(javascript, /ask\s*\(\s*\{\s*messages\s*,\s*locale\s*,\s*profileId\s*,\s*financialContext\s*,\s*signal\s*\}\s*\)/);
-  assert.match(javascript, /\/api\/assistant/);
+  assert.match(javascript, /\/api\/ai\/chat/);
   assert.match(javascript, /AbortController/);
   assert.match(javascript, /requestProfileId[\s\S]*appState\.activeAccount\s*!==\s*requestProfileId/);
   assert.match(javascript, /\[data-ai-prompt\][\s\S]*addEventListener\('click'/);

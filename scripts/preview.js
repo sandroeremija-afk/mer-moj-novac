@@ -1,9 +1,12 @@
 'use strict';
 // Local production preview. Never serves source, environment files or user caches.
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
+// Secrets are loaded only in this local Node process, never into the static build.
+const localEnv=path.resolve(__dirname,'../.env.local');
+if(fs.existsSync(localEnv)&&typeof process.loadEnvFile==='function')process.loadEnvFile(localEnv);
 const root=path.resolve(__dirname,'../dist');
 const types={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.json':'application/json','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png'};
-const handlers={'/api/cashflow':require('../api/cashflow.js'),'/api/assistant':require('../api/assistant.js'),'/api/receipt':require('../api/receipt.js'),'/api/transaction-parse':require('../api/transaction-parse.js'),'/api/health-advice':require('../api/health-advice.js')};
+const handlers={'/api/cashflow':require('../api/cashflow.js'),'/api/assistant':require('../api/assistant.js'),'/api/receipt':require('../api/receipt.js'),'/api/transaction-parse':require('../api/transaction-parse.js'),'/api/health-advice':require('../api/health-advice.js'),'/api/ai/chat':require('../api/ai/chat.js'),'/api/ai/parse-transaction':require('../api/ai/parse-transaction.js')};
 http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(handlers[url.pathname]){
@@ -15,4 +18,4 @@ http.createServer(async(req,res)=>{
   const file=path.resolve(root,'.'+(decoded==='/'?'/index.html':decoded));
   if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}
   try{const bytes=fs.readFileSync(file);res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(bytes);}catch{res.writeHead(404).end('Not found');}
-}).listen(Number(process.env.PORT)||4188,'127.0.0.1',()=>process.stdout.write('Mer production preview: http://127.0.0.1:4188\n'));
+}).listen(Number(process.env.PORT)||4188,'127.0.0.1',()=>process.stdout.write(`Mer production preview: http://127.0.0.1:${Number(process.env.PORT)||4188}\n`));
