@@ -6,31 +6,49 @@ const fs = require('node:fs');
 const path = require('node:path');
 const read = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
 const styles = read('styles.css');
-const rules = source => [...source.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(match => ({selector:match[1].trim(), declarations:match[2]}));
+const rules = source => [...source.replace(/\/\*[\s\S]*?\*\//g,'').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(match => ({selector:match[1].trim(), declarations:match[2]}));
 
-test('cycle 2: structured dialogs opt out of the generic outer scrolling fallback', () => {
-  const fallback = rules(styles).filter(rule => rule.selector.startsWith('[data-ui="dialog"]:not(.detail-modal)') && /overflow-y\s*:\s*auto/.test(rule.declarations));
-  assert.equal(fallback.length, 1, 'one recognizable outer-scroll fallback remains for unstructured dialogs');
-  for (const className of ['premium-settings', 'import-data-modal', 'budget-categories-modal', 'help-assistant-modal', 'subscriptions-modal', 'enterprise-dialog', 'planning-dialog', 'receipt-dialog', 'savings-entries-modal', 'assessment-modal']) {
-    assert.ok(fallback[0].selector.includes(`:not(.${className})`), `${className} must not receive a second outer scrollbar`);
-  }
-  assert.match(fallback[0].declarations, /overflow-x\s*:\s*hidden/);
+test('cycle 2: shared dialog and list overrides replace the legacy scrolling fallback', () => {
+  const html=read('index.html'), zeroScroll=read('zero-scroll.css');
+  assert.ok(html.indexOf('href="zero-scroll.css"')>html.indexOf('href="styles.css'), 'zero-scroll rules follow the legacy layout');
+  assert.ok(rules(zeroScroll).some(rule=>rule.selector==='dialog.modal:not(.tour-modal-host)'&&/overflow\s*:\s*hidden/.test(rule.declarations)));
+  assert.ok(rules(zeroScroll).some(rule=>rule.selector==='dialog .mer-paged-list'&&/overflow\s*:\s*visible/.test(rule.declarations)));
+  assert.match(zeroScroll,/\[data-page-hidden="true"\][^}]*display:none !important/);
+  assert.match(read('pagination.js'),/aria-controls/);
+  assert.match(read('sections.js'),/aria-controls/);
 });
 
-test('cycle 2: long tool content retains its one bounded body scroll owner', () => {
+test('cycle 2: static tool bodies use reachable sections and pages without a body scrollbar', () => {
   for (const [file, selector] of [
     ['enterprise.css', '.enterprise-dialog-body'],
     ['planning.css', '.planning-body'],
-    ['receipt.css', '.receipt-body'],
-    ['styles.css', '.savings-entry-list-all']
+    ['receipt.css', '.receipt-dialog .receipt-body'],
+    ['invoice.css', '.invoice-dialog .invoice-body'],
+    ['settings-enhancements.css', 'html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body']
   ]) {
-    const bodyRule = rules(read(file)).find(rule => rule.selector === selector && /overflow-y\s*:\s*auto/.test(rule.declarations));
-    assert.ok(bodyRule, `${selector} retains scroll access for long data`);
-    assert.match(bodyRule.declarations, /min-height\s*:\s*0/, `${selector} can shrink within its dialog`);
+    const bodyRule = rules(read(file)).filter(rule=>rule.selector===selector&&/overflow\s*:/.test(rule.declarations)).at(-1);
+    assert.ok(bodyRule, `${selector} has a scoped final override`);
+    assert.match(bodyRule.declarations,/overflow\s*:\s*visible/,`${selector} no longer owns an inner scrollbar`);
+    assert.doesNotMatch(bodyRule.declarations,/overflow-y\s*:\s*(auto|scroll)/);
   }
-  const settingsBody = rules(styles).find(rule => rule.selector.split(',').map(part => part.trim()).includes('.settings-modal-body') && /overflow-y\s*:\s*auto/.test(rule.declarations));
-  assert.ok(settingsBody, 'Settings keeps its single body scrollbar');
-  assert.ok(rules(styles).some(rule => rule.selector === '.settings-modal-body .settings-pane.active' && /overflow\s*:\s*visible/.test(rule.declarations)), 'Settings panels must not introduce nested scrollbars');
+  for(const file of ['receipt-ui.js','invoice-ui.js']){
+    assert.match(read(file),/MerSections\.attach/);
+    assert.match(read(file),/MerPagination\?\.attach/);
+  }
+  for(const file of ['enterprise-ui.js','planning-ui.js']){
+    assert.match(read(file),/role="tabpanel"/);
+    assert.match(read(file),/MerPagination\?\.attach/);
+  }
+  const savingsRule=rules(read('list-pagination.css')).find(rule=>rule.selector.includes('#savingsDetailsModal #savingsEntryList')&&/overflow\s*:\s*visible/.test(rule.declarations));
+  assert.ok(savingsRule,'savings deposits use natural height with page navigation');
+  assert.match(read('app.js'),/renderListPagination\('#savingsEntryList'/);
+});
+
+test('cycle 2: AI message history retains its dedicated scrolling exception',()=>{
+  const messageRule=rules(read('zero-scroll.css')).find(rule=>rule.selector.includes('#assistantWidget .assistant-messages')&&/overflow-y\s*:\s*auto/.test(rule.declarations));
+  assert.ok(messageRule,'conversation history remains reachable as messages accumulate');
+  assert.match(messageRule.declarations,/min-height\s*:\s*0/);
+  assert.match(messageRule.declarations,/scrollbar-width\s*:\s*thin/);
 });
 
 test('cycle 2: planning dialog uses dvh after the vh fallback for mobile browser chrome', () => {

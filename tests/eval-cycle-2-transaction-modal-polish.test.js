@@ -46,10 +46,12 @@ test('evaluation cycle 2: contextual Croatian export names are stable and descri
   assert.doesNotMatch(exportUI, /anchor\.download=['"]export\.(?:csv|json|pdf)['"]/);
 });
 
-test('evaluation cycle 2: number spinners are removed and savings history uses the shared thin scrollbar', () => {
+test('evaluation cycle 2: number spinners are removed and financial lists use bounded pages', () => {
   assert.match(css, /input\[type="number"\][\s\S]*?-moz-appearance:textfield/);
   assert.match(css, /input\[type="number"\]::-webkit-outer-spin-button[\s\S]*?-webkit-appearance:none/);
-  assert.match(css, /\.savings-entry-list-all \{[\s\S]*?scrollbar-width:thin/);
-  assert.match(css, /\.savings-entry-list-all::-webkit-scrollbar-thumb/);
-  assert.match(html, /data-i18n="activityContinuous">Prikaži sve<\/button>/);
+  assert.match(app, /renderListPagination\('#savingsEntryList'/);
+  assert.match(app, /const ACTIVITY_PAGE_SIZE = 4;/);
+  assert.match(html, /id="activityPreviousPage"/);
+  assert.match(html, /id="activityNextPage"/);
+  assert.doesNotMatch(html, /data-activity-view-mode="continuous"/);
 });

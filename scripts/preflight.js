@@ -16,6 +16,7 @@ jsFiles.push('engagement-init.js');
 jsFiles.push('popup-layout.js','modal-footer.js','planning-hubs.js');
 jsFiles.push('quick-tools-core.js','quick-tools-ui.js','settings-enhancements.js');
 jsFiles.push('server/ai-http.js','server/provider-client.js');
+jsFiles.push('pagination.js','sections.js','zero-scroll.js');
 
 for (const file of jsFiles) {
   const fullPath = path.join(root, file);

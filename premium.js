@@ -59,7 +59,18 @@
   let pendingBulkOverride = null;
   let lastBulkOverride = null;
   let editingGoalId = null;
-  const importPageSize = 50;
+  let importPageSize = window.MerSettingsEnhancements.importPageSizeFor(window.innerWidth,window.innerHeight);
+  const paginationScope=()=>`${window.MerAuthProvider?.currentSession?.()?.userId||'anonymous'}:${appState.activeAccount}`;
+  function paginatePremiumLists() {
+    window.MerPagination?.attach($('#activeSessionList'),{pageSize:window.innerWidth<=800?2:3,itemSelector:'.active-session-item',scopeKey:`sessions:${paginationScope()}`,label:t('activeSessions')});
+    window.MerPagination?.attach($('#goalBucketGrid'),{pageSize:window.innerWidth<=800?1:2,itemSelector:'.goal-bucket-card',scopeKey:`goals:${paginationScope()}`,label:t('goalBuckets')});
+  }
+  document.addEventListener('DOMContentLoaded',paginatePremiumLists);
+  window.addEventListener('resize',()=>{
+    const nextSize=window.MerSettingsEnhancements.importPageSizeFor(window.innerWidth,window.innerHeight);
+    if(nextSize!==importPageSize){const firstRow=importPage*importPageSize;importPageSize=nextSize;importPage=Math.floor(firstRow/importPageSize);if(importStage)renderImportReview();}
+    paginatePremiumLists();
+  },{passive:true});
 
   function selectSettingsTab(tab) {
     selectedSettingsTab = ['general', 'personal', 'security', 'automation'].includes(tab) ? tab : 'general';
@@ -139,12 +150,14 @@
     $('#recoveryPanel').hidden=visibleRecoveryCodes.length===0;
     if(pendingEnrollment)$('#mfaSecret').textContent=pendingEnrollment.secret.match(/.{1,4}/g).join(' ');
     $('#recoveryCodes').innerHTML=visibleRecoveryCodes.map(code=>`<code>${code}</code>`).join('');
+    window.MerMfaRecoveryLayout?.refresh(visibleRecoveryCodes.length>0);
   }
 
   function renderActiveSessions() {
     const sessions=window.MerAuthProvider?.listActiveSessions?.()||[],location=appState.settings.timezone||'Europe/Zagreb';
     $('#activeSessionList').innerHTML=sessions.length?sessions.map(session=>`<article class="active-session-item"><span class="active-session-device"><svg aria-hidden="true"><use href="#icon-card"></use></svg></span><div class="active-session-copy"><strong>${escapeHtml(session.label||t('currentSession'))}</strong><small>${t('localSessionIp')} · ${t('sessionLocation',{location:escapeHtml(location)})}</small><small>${t('sessionStarted',{date:preferredDate(new Date(session.issuedAt).toISOString(),true)})}</small></div>${session.current?`<span class="active-session-current">${t('currentSession')}</span>`:''}</article>`).join(''):`<div class="notification-empty">${t('noOtherSessions')}</div>`;
     $('#logoutOtherSessions').disabled=sessions.filter(session=>!session.current).length===0;
+    paginatePremiumLists();
   }
 
   async function prepareSmsUnlockChallenge() {
@@ -229,6 +242,7 @@
 
   function stageImport(result,fileName) {
     importStage=MerImport.createReviewStage(result,fileName,appState.activeAccount);importPage=0;pendingBulkOverride=null;lastBulkOverride=null;renderImportReview();
+    window.MerImportLayout?.review();
   }
 
   function renderBulkOverrideState() {
@@ -245,6 +259,8 @@
     const review=$('#importReview');if(!review)return;
     if(importStage&&!MerImport.stageBelongsToProfile(importStage,appState.activeAccount)){importStage=null;pendingBulkOverride=null;lastBulkOverride=null;}
     review.hidden=!importStage;
+    $('#importDataModal').classList.toggle('has-import-review',Boolean(importStage));
+    window.MerImportLayout?.refresh(Boolean(importStage));
     if(!importStage){renderBulkOverrideState();return;}
     const rows=importStage.reviewRows||[];const pages=Math.max(1,Math.ceil(rows.length/importPageSize));importPage=Math.min(importPage,pages-1);
     $('#importSummary').textContent=t('importSummary',{ready:rows.filter(row=>!row.excluded).length,duplicates:importStage.duplicates||0,invalid:importStage.invalidRows?.length||0});
@@ -254,9 +270,9 @@
     $$('[data-import-include]').forEach(input=>input.addEventListener('change',()=>{rows[Number(input.dataset.importInclude)].excluded=!input.checked;$('#importSummary').textContent=t('importSummary',{ready:rows.filter(row=>!row.excluded).length,duplicates:importStage.duplicates||0,invalid:importStage.invalidRows?.length||0});}));
     $$('[data-import-type]').forEach(select=>select.addEventListener('change',()=>{const index=Number(select.dataset.importType),row=rows[index];row.type=select.value;row.category=(row.type==='income'?state.incomeCategories:state.categories)[0]?.id;row.needsReview=false;row.categoryConfidence='manual-review';row.categorizationRule='row-review';pendingBulkOverride=null;invalidateBulkUndo();renderImportReview();}));
     $$('[data-import-category]').forEach(select=>select.addEventListener('change',()=>{const row=rows[Number(select.dataset.importCategory)];row.category=select.value;row.needsReview=false;row.categoryConfidence='manual-review';row.categorizationRule='row-review';pendingBulkOverride=null;invalidateBulkUndo();}));
-    $$('[data-import-date]').forEach(input=>input.addEventListener('change',()=>{rows[Number(input.dataset.importDate)].date=input.value;}));
-    $$('[data-import-name]').forEach(input=>input.addEventListener('change',()=>{rows[Number(input.dataset.importName)].name=input.value.trim();}));
-    $$('[data-import-amount]').forEach(input=>input.addEventListener('change',()=>{rows[Number(input.dataset.importAmount)].amount=Math.abs(Number(input.value)||0);}));
+    $$('[data-import-date]').forEach(input=>input.addEventListener('input',()=>{rows[Number(input.dataset.importDate)].date=input.value;}));
+    $$('[data-import-name]').forEach(input=>input.addEventListener('input',()=>{rows[Number(input.dataset.importName)].name=input.value.trim();}));
+    $$('[data-import-amount]').forEach(input=>input.addEventListener('input',()=>{rows[Number(input.dataset.importAmount)].amount=Math.abs(Number(input.value)||0);}));
     $('#bulkImportCategory').innerHTML=categoryOptions($('#bulkImportType').value,$('#bulkImportCategory').value);
     renderBulkOverrideState();
   }
@@ -352,9 +368,10 @@
     $('#overviewView .goal-panel h2').textContent=primary.name;$('#goalCurrent').textContent=currency(primary.current,true);$('#goalOf').textContent=t('goalOf',{target:currency(primary.target,true)});$('#goalPercent').textContent=`${pct}%`;$('#goalProgress').style.width=`${pct}%`;$('#goalProgressTrack').setAttribute('aria-valuenow',String(pct));
     $('#savingsView .savings-hero h2').textContent=primary.name;$('#savingsHeroCurrent').textContent=currency(primary.current,true);$('#savingsHeroTarget').textContent=t('goalTargetOf',{target:currency(primary.target,true)});$('#savingsHeroProgress').style.width=`${pct}%`;$('#savingsHeroTrack').setAttribute('aria-valuenow',String(pct));$('#savingsHeroTrack').setAttribute('aria-valuetext',`${pct}% · ${currency(primary.current,true)} ${t('goalTargetOf',{target:currency(primary.target,true)})}`);$('#stillNeeded').textContent=currency(primaryResult.remaining,true);if(primary.dueDate)$('#savingsFinish').textContent=preferredDate(primary.dueDate);
     const milestones=$$('#savingsView .savings-milestones small');if(milestones.length===3){milestones[0].textContent=currency(0,true);milestones[1].textContent=currency(primary.target/2,true);milestones[2].textContent=currency(primary.target,true);}
-    $('#goalBucketGrid').innerHTML=[primary,...goals.filter(goal=>goal.id!==primary.id)].slice(0,2).map(goal=>{const result=MerCore.validateSavingsGoal(goal),percent=Math.round(result.percent||0),metrics=MerAccounting.goalMetrics(goal,appReferenceDate);return `<article class="goal-bucket-card rich-goal-card" data-layout-card="goal-${escapeHtml(goal.id)}"><div class="goal-bucket-head"><div class="goal-progress-ring" style="--goal-progress:${percent}" role="progressbar" aria-label="${escapeHtml(goal.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}" aria-valuetext="${percent}% · ${currency(goal.current,true)} ${t('goalOf',{target:currency(goal.target,true)})}"><svg viewBox="0 0 36 36" aria-hidden="true" focusable="false"><circle class="goal-ring-track" cx="18" cy="18" r="15.5" pathLength="100"></circle><circle class="goal-ring-value" cx="18" cy="18" r="15.5" pathLength="100"></circle></svg><span>${percent}%</span></div><div class="goal-bucket-title"><strong>${escapeHtml(goal.name)}</strong><small>${goal.primary?t('primaryGoal'):(goal.dueDate?t('goalDue',{date:preferredDate(goal.dueDate)}):t('goalNoDate'))}</small></div><button type="button" class="icon-button small" data-edit-goal="${goal.id}" aria-label="${t('editGoal')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div><div class="goal-bucket-values"><strong>${currency(goal.current,true)}</strong><span>${t('goalOf',{target:currency(goal.target,true)})}</span></div><div class="goal-linear-track" aria-hidden="true"><span style="width:${percent}%"></span></div><div class="goal-metric-grid"><span><small>${t('monthlyRequired')}</small><strong>${metrics.monthlyRequired===null?'—':currency(metrics.monthlyRequired,true)}</strong></span><span><small>${goal.dueDate?t('daysToGoal',{days:metrics.daysRemaining??0}):t('goalNoDate')}</small><strong>${currency(result.remaining,true)}</strong></span></div><button type="button" class="roundup-toggle ${goal.roundUpsEnabled?'active':''}" data-toggle-roundup="${goal.id}" aria-pressed="${Boolean(goal.roundUpsEnabled)}"><span><strong>${t('roundUps')}</strong><small>${t('roundUpsHint')}</small></span><i></i></button></article>`;}).join('');
+    $('#goalBucketGrid').innerHTML=[primary,...goals.filter(goal=>goal.id!==primary.id)].map(goal=>{const result=MerCore.validateSavingsGoal(goal),percent=Math.round(result.percent||0),metrics=MerAccounting.goalMetrics(goal,appReferenceDate);return `<article class="goal-bucket-card rich-goal-card" data-layout-card="goal-${escapeHtml(goal.id)}"><div class="goal-bucket-head"><div class="goal-progress-ring" style="--goal-progress:${percent}" role="progressbar" aria-label="${escapeHtml(goal.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}" aria-valuetext="${percent}% · ${currency(goal.current,true)} ${t('goalOf',{target:currency(goal.target,true)})}"><svg viewBox="0 0 36 36" aria-hidden="true" focusable="false"><circle class="goal-ring-track" cx="18" cy="18" r="15.5" pathLength="100"></circle><circle class="goal-ring-value" cx="18" cy="18" r="15.5" pathLength="100"></circle></svg><span>${percent}%</span></div><div class="goal-bucket-title"><strong>${escapeHtml(goal.name)}</strong><small>${goal.primary?t('primaryGoal'):(goal.dueDate?t('goalDue',{date:preferredDate(goal.dueDate)}):t('goalNoDate'))}</small></div><button type="button" class="icon-button small" data-edit-goal="${goal.id}" aria-label="${t('editGoal')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div><div class="goal-bucket-values"><strong>${currency(goal.current,true)}</strong><span>${t('goalOf',{target:currency(goal.target,true)})}</span></div><div class="goal-linear-track" aria-hidden="true"><span style="width:${percent}%"></span></div><div class="goal-metric-grid"><span><small>${t('monthlyRequired')}</small><strong>${metrics.monthlyRequired===null?'—':currency(metrics.monthlyRequired,true)}</strong></span><span><small>${goal.dueDate?t('daysToGoal',{days:metrics.daysRemaining??0}):t('goalNoDate')}</small><strong>${currency(result.remaining,true)}</strong></span></div><button type="button" class="roundup-toggle ${goal.roundUpsEnabled?'active':''}" data-toggle-roundup="${goal.id}" aria-pressed="${Boolean(goal.roundUpsEnabled)}"><span><strong>${t('roundUps')}</strong><small>${t('roundUpsHint')}</small></span><i></i></button></article>`;}).join('');
     $$('[data-edit-goal]').forEach(button=>button.addEventListener('click',()=>openGoalEditor(button.dataset.editGoal)));
     $$('[data-toggle-roundup]').forEach(button=>button.addEventListener('click',()=>{window.MerVaultsUI?.open('automation',button.dataset.toggleRoundup);}));
+    paginatePremiumLists();
   }
 
   function openGoalEditor(id=null) {

@@ -35,21 +35,19 @@ test('evaluation cycle 2: Activity pagination fails soft for empty and malformed
   assert.deepEqual(fallback.items, [1, 2, 3]);
 });
 
-test('evaluation cycle 2: Activity exposes accessible page and continuous-scroll controls', () => {
-  assert.match(index, /id="activityPagesMode"[^>]+data-activity-view-mode="pages"[^>]+aria-pressed="true"/);
-  assert.match(index, /id="activityContinuousMode"[^>]+data-activity-view-mode="continuous"[^>]+aria-pressed="false"/);
-  assert.match(index, /data-i18n="activityContinuous">Prikaži sve<\/button>/);
-  assert.doesNotMatch(index, /Kontinuirani scroll/);
+test('evaluation cycle 2: Activity exposes accessible page controls without an unbounded mode', () => {
+  assert.doesNotMatch(index, /data-activity-view-mode|activityContinuousMode/);
   assert.match(index, /id="activityPreviousPage"[^>]+data-i18n="previousPage">Prethodna/);
   assert.match(index, /id="activityPageNumbers"/);
   assert.match(index, /id="activityNextPage"[^>]+data-i18n="nextPage">Sljedeća/);
   assert.match(index, /id="activityPagination"[^>]+data-i18n-aria="activityPagination"/);
 });
 
-test('evaluation cycle 2: filtered results feed either the current page or continuous list', () => {
-  assert.match(app, /const ACTIVITY_PAGE_SIZE = 8;/);
+test('evaluation cycle 2: filtered results feed a bounded four-transaction page', () => {
+  assert.match(app, /const ACTIVITY_PAGE_SIZE = 4;/);
   assert.match(app, /const pagination=MerCore\.paginateItems\(filtered,activityPage,ACTIVITY_PAGE_SIZE\);/);
-  assert.match(app, /const visibleTransactions=activityViewMode==='continuous'\?filtered:pagination\.items;/);
+  assert.match(app, /const visibleTransactions=pagination\.items;/);
+  assert.doesNotMatch(app, /activityViewMode|activityContinuous/);
   assert.match(app, /\$\('#transactionList'\)\.innerHTML = visibleTransactions\.map/);
   assert.match(app, /function renderActivityFromFirstPage\(\)\{activityPage=1;renderActivity\(\);\}/);
   assert.match(app, /activityReviewOnly=false;activityPage=1;processDueRecurring/);

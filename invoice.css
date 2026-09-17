@@ -57,3 +57,31 @@
   .invoice-bottom { grid-template-columns:1fr; gap:18px; }.invoice-totals { grid-row:1; }.invoice-qr { width:110px; }
 }
 @media(prefers-reduced-motion:reduce) { .invoice-dialog[open] { animation:none; } }
+
+/* The composer and preview use sections; paper exports still contain every item. */
+.invoice-dialog .invoice-body { overflow:visible; scrollbar-gutter:auto; }
+.invoice-dialog .mer-section-panel .invoice-description { margin-bottom:12px; font-size:12px; }
+.invoice-dialog .mer-section-panel .invoice-party { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; margin-bottom:12px; padding:12px; }
+.invoice-dialog .mer-section-panel .invoice-party > .invoice-two { grid-column:1 / -1; gap:12px; }
+.invoice-dialog .mer-section-panel label { margin-bottom:8px; }
+.invoice-dialog .mer-section-panel .invoice-line { margin-bottom:8px; padding:12px; }
+.invoice-dialog .mer-section-panel .invoice-vat-check { margin-bottom:0; font-size:12px; line-height:1.4; }
+.invoice-dialog .mer-section-panel .invoice-caveat { margin-block:8px; font-size:11px; }
+.invoice-dialog .invoice-paper { padding:12px; }
+.invoice-dialog .invoice-parties { margin-block:12px 0; }
+.invoice-dialog .invoice-qr { width:110px; margin-top:8px; }
+.invoice-dialog .invoice-saved-row { min-height:54px; padding:9px; }
+@media(max-width:600px) {
+  .invoice-dialog .invoice-head { padding:10px 14px; }
+  .invoice-dialog .invoice-head h2 { font-size:19px; }
+  .invoice-dialog .invoice-body { padding:12px 14px; }
+  .invoice-dialog .mer-section-panel .invoice-three { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .invoice-dialog .mer-section-panel .invoice-three > label:first-child { grid-column:1 / -1; }
+  .invoice-dialog .mer-section-panel .invoice-party { gap:4px 10px; padding:9px; }
+  .invoice-dialog .mer-section-panel .invoice-party > label:first-of-type,
+  .invoice-dialog .mer-section-panel .invoice-party > label:last-child { grid-column:1 / -1; }
+  .invoice-dialog .invoice-parties { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; font-size:11px; }
+  .invoice-dialog .invoice-paper p { font-size:11px; }
+  .invoice-dialog .invoice-footer { gap:6px; padding:10px 12px; }
+  .invoice-dialog .invoice-footer button { padding-inline:10px; font-size:11px; }
+}

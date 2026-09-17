@@ -1,0 +1,85 @@
+/* Page navigation replaces nested scroll windows; the message log is the exception. */
+[data-page-hidden="true"], [data-section-hidden="true"] { display:none !important; }
+.mer-paged-list { min-width:0; max-height:none; overflow:visible; }
+.mer-pagination { display:flex; align-items:center; justify-content:space-between; gap:8px; flex:0 0 auto; padding:8px 0 2px; min-width:0; }
+.mer-pagination[hidden] { display:none; }
+.mer-pagination button { min-height:44px; min-width:44px; font-size:13px; padding:8px 12px; }
+.mer-pagination span { font-size:12px; color:var(--muted); text-align:center; font-variant-numeric:tabular-nums; }
+.mer-section-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 12px; flex:0 0 auto; }
+.mer-section-tabs button { min-height:44px; padding:8px 12px; border:1px solid var(--border); border-radius:9px; background:var(--surface); color:var(--muted); font:inherit; font-size:13px; }
+.mer-section-tabs button[aria-pressed="true"] { background:var(--cyan-soft,#e8f7fc); color:var(--text); border-color:#00a9e4; }
+.mer-section-panel { min-width:0; min-height:0; }
+.mer-section-panel > :first-child { margin-top:0; }
+.mer-section-panel[hidden] { display:none !important; }
+dialog.modal:not(.tour-modal-host) { overflow:hidden; }
+dialog .mer-paged-list { overflow:visible; max-height:none; }
+#commandPalette #commandResults { max-height:none; overflow:hidden; }
+#commandPalette { max-height:calc(100dvh - 24px); }
+#commandPalette .command-group { display:none; }
+#commandResults button { min-height:48px; }
+#helpAssistantModal .help-assistant-body { overflow:hidden; display:flex; flex-direction:column; min-height:0; }
+#helpFaqPanel { min-height:0; }
+#helpFaqPanel .faq-list { overflow:visible; }
+#helpFaqPanel .help-nav-grid { display:flex; flex-wrap:wrap; gap:6px; }
+#helpFaqPanel .help-nav-grid button { flex:1 1 90px; padding:8px; min-height:44px; }
+#helpFaqPanel .help-nav-grid small { display:none; }
+#helpAssistantModal .assistant-mode, #helpModalAiPanel, #assistantWidget { overflow:hidden; min-height:0; }
+#assistantWidget .assistant-messages, #helpModalAiPanel .assistant-messages { flex:1 1 0; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#b2cad2 transparent; scroll-behavior:smooth; }
+.assistant-messages::-webkit-scrollbar { width:5px; }
+.assistant-messages::-webkit-scrollbar-thumb { background:#b2cad2; border-radius:8px; }
+.assistant-composer, .assistant-suggestions, .assistant-disclaimer, .help-tour-conversation { flex-shrink:0; }
+#helpAssistantModal .help-tour-conversation { min-height:0; }
+#helpAssistantModal .assistant-suggestions { display:flex; flex-wrap:wrap; overflow:hidden; }
+#helpAssistantModal .assistant-suggestion { flex:1 1 160px; white-space:normal; }
+#helpAssistantModal .assistant-composer textarea { resize:none; min-height:44px; max-height:44px; }
+.savings-detail-entry-list, .savings-detail-months, .savings-strategy-modal .calculation-list { max-height:none; overflow:visible; }
+.savings-detail-body, .savings-strategy-modal, .insight-expanded-modal .insight-detail-body, .detail-modal-grid { overflow:hidden; }
+#savingsStrategyModal .savings-strategy-body { overflow:hidden; }
+#savingsStrategyModal .savings-strategy-grid { height:auto; }
+#overviewDetailsModal .detail-modal-grid { display:block; }
+#overviewDetailsModal .detail-modal-grid .panel { width:100%; height:auto; min-height:0; }
+#overviewDetailsModal .chart-container { height:220px; min-height:0; }
+#insightChartModal #insightExpandedChart { min-height:0; }
+#insightChartModal .expanded-ranked-list { overflow:visible; }
+#insightChartModal .expanded-cashflow-chart { height:210px; min-height:0; }
+dialog.vaults-modal .vaults-body { overflow:hidden; }
+dialog.vaults-modal .vaults-rule-section { padding:0; margin:0; border:0; }
+dialog.vaults-modal .vaults-rule-section form { gap:10px; }
+dialog.vaults-modal .vaults-muted { font-size:13px; line-height:1.45; }
+.mer-section-panel .savings-detail-entry-list article { padding:10px 0; }
+:root input[type="checkbox"], :root input[type="checkbox"][role="switch"] { background-color:#fff; color:#12313c; accent-color:#fff; }
+@media(max-width:640px) {
+  dialog.modal:not(.tour-modal-host) { width:calc(100% - 20px); max-height:calc(100dvh - 20px); padding:18px 14px; border-radius:18px; }
+  dialog.modal h2 { font-size:22px; line-height:1.25; padding-right:28px; }
+  dialog.modal > .modal-intro { font-size:13px; line-height:1.4; margin-bottom:10px; }
+  .mer-pagination { padding-top:6px; }
+  .mer-pagination button { padding:8px; }
+  #helpAssistantModal { height:min(740px,calc(100dvh - 20px)); }
+  #helpAssistantModal .help-assistant-heading { padding-right:24px; gap:8px; }
+  #helpAssistantModal .help-modal-icon, #helpAssistantModal .overline { display:none; }
+  #helpAssistantModal .help-modal-toolbar { gap:6px; margin:8px 0; }
+  #helpAssistantModal .help-tour-restart { font-size:12px; padding:8px; }
+  #helpAssistantModal .help-nav-grid button svg { display:none; }
+  #helpAssistantModal .help-nav-grid button { flex-basis:28%; }
+  #helpAssistantModal .faq-list summary { font-size:14px; padding:12px; line-height:1.4; }
+  #helpAssistantModal .faq-list details p { font-size:14px; line-height:1.5; padding:0 12px 12px; }
+  #helpAssistantModal .assistant-suggestions { display:none; }
+  #helpAssistantModal .assistant-disclaimer { font-size:11px; line-height:1.4; margin:6px 0; }
+  #commandResults button { padding:8px; }
+  #insightChartModal .expanded-donut, #insightChartModal .expanded-savings-ring { width:136px; height:136px; min-width:136px; min-height:136px; }
+  #insightChartModal .expanded-donut strong, #insightChartModal .expanded-savings-ring strong { font-size:19px; }
+  #insightChartModal .expanded-donut-layout, #insightChartModal .expanded-savings-layout { gap:12px; }
+  #insightChartModal .insight-expanded-chart { padding:10px; margin-top:0; }
+  #insightChartModal .insight-expanded-intro { margin-bottom:8px; font-size:13px; }
+  #overviewDetailsModal .detail-modal-grid .panel { padding:14px; }
+  #overviewDetailsModal .cashflow-chart { min-height:160px; height:180px; }
+  #savingsStrategyModal .savings-strategy-body { padding:12px 16px; }
+  .savings-detail-metrics { gap:12px; margin:12px 0; }
+  dialog.vaults-modal .vaults-body { padding:12px; }
+  dialog.vaults-modal .vaults-header, dialog.vaults-modal .vaults-footer { padding:12px; }
+  dialog.vaults-modal .vaults-list-toolbar { flex-direction:row; align-items:end; }
+  dialog.vaults-modal .vaults-fields { grid-template-columns:1fr 1fr; gap:8px; }
+  dialog.vaults-modal .vaults-item { padding:12px; }
+  dialog.vaults-modal .vaults-body > .vaults-muted { display:none; }
+  dialog.vaults-modal .vaults-pagination { padding-top:8px; }
+}

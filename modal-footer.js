@@ -57,7 +57,7 @@
           const wrapper = dialog.querySelector('#importTransactionBackWrap');
           if (wrapper && wrapper.parentElement !== footer) footer.prepend(wrapper);
           const submit = footer.querySelector('#confirmImport');
-          if (submit) submit.hidden = Boolean(review?.hidden);
+        if (submit) submit.hidden = hidden(review);
         }
       }
       let footers = [...dialog.querySelectorAll(footerSelector)].filter(node => node.closest('dialog') === dialog && !node.closest('.settings-modal-body'));

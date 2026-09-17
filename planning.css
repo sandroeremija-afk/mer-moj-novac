@@ -9,7 +9,7 @@
 .planning-head h2{margin:4px 0 0;font-size:clamp(20px,2.3vw,27px);line-height:1.2}
 .planning-head span{font-size:12px;color:var(--planning-muted)}
 .planning-head .icon-button{font-size:26px;flex-shrink:0;min-width:44px;min-height:44px}
-.planning-body{overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:thin;scrollbar-color:#b0c2b7 transparent;padding:0 3px 5px}
+.planning-body{overflow:visible;min-height:0;padding:0 3px 5px}
 .planning-body>*{min-width:0;max-width:100%}
 .planning-dialog :is(form,article,section,label,output){min-width:0;max-width:100%;box-sizing:border-box}
 .planning-dialog :is(p,small,strong,b,[data-money]){overflow-wrap:anywhere}
@@ -44,3 +44,63 @@
 [data-theme=dark] .planning-dialog{--planning-bg:#14271f;--planning-ink:#eef6f1;--planning-muted:#b2c9bb;--planning-line:#365344;--planning-soft:#1d3528}[data-theme=dark] .planning-badge.warning{background:#493719;color:#ffe3a7;border-color:#776039}[data-theme=dark] .planning-error{color:#ffb7b7}
 @media(max-width:680px){.planning-dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px);padding:16px;margin:auto}.planning-dialog[open]{gap:12px}.planning-fire-grid{grid-template-columns:1fr;gap:20px}.planning-inputs{gap:13px}.planning-slider{grid-template-columns:minmax(0,1fr) 116px}.planning-form-grid{grid-template-columns:1fr}.planning-head h2{font-size:20px}.planning-back{padding:8px 10px}.planning-renewal-actions button{flex:1}.planning-footer{padding-bottom:max(0px,env(safe-area-inset-bottom))}.planning-sensitivity{font-size:12px}}
 @media(max-width:480px){.planning-head{gap:8px}.planning-head h2{font-size:18px}.planning-renewal{grid-template-columns:1fr}.planning-renewal>b{grid-row:2;text-align:left}.planning-renewal-actions{grid-row:3}.planning-form-actions{flex-wrap:wrap}.planning-form-actions button{flex:1;min-width:0}.planning-footer button{flex:1}.planning-sensitivity{flex-wrap:wrap}.planning-sensitivity strong{max-width:100%}}
+
+/* Each tab is a complete, compact view; nothing depends on a hidden scroll rail. */
+html body .planning-dialog{width:min(820px,calc(100vw - 24px))}
+.planning-tabs{display:flex;gap:6px;margin:0 0 16px;min-width:0;padding:3px;border-radius:10px;background:var(--planning-soft)}
+.planning-tabs button{flex:1;min-width:0;min-height:44px;padding:8px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--planning-muted);font:inherit;font-size:14px;line-height:1.35;cursor:pointer}
+.planning-tabs button[aria-selected=true]{background:var(--planning-bg);color:var(--planning-ink);border-color:var(--planning-line);box-shadow:0 1px 3px #19352a0a}
+.planning-panel{display:grid;gap:14px;min-width:0}
+.planning-panel[hidden]{display:none!important}
+.planning-panel>.planning-note{margin:0;padding:16px;border:1px solid var(--planning-line);border-radius:12px;font-size:14px}
+.planning-panel .planning-sensitivity{margin:0}
+.planning-inputs{gap:0}
+.planning-inputs .planning-panel{gap:16px}
+.planning-dialog .planning-slider label,.planning-dialog .planning-form-grid label{margin:0}
+.planning-dialog .planning-head h2{padding-right:0}
+.planning-footer .planning-back{margin-right:auto;flex:0 0 auto}
+.planning-renewal-list{grid-template-columns:repeat(2,minmax(0,1fr));margin:0;gap:10px}
+.planning-renewal{padding:12px;gap:8px;align-content:start}
+.planning-renewal-actions{gap:5px}
+.planning-renewal-actions button{padding:7px;font-size:12px}
+.planning-renewal-list>.planning-empty{grid-column:1/-1}
+.planning-suggestion{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid var(--planning-line);border-radius:10px;font-size:14px}
+.planning-suggestion span{min-width:0;overflow-wrap:anywhere}
+.planning-suggestion button{min-height:44px;flex-shrink:0}
+.planning-panel .planning-intro{margin:0;font-size:13px;line-height:1.5}
+.planning-renewal-form{padding:14px}
+.planning-renewal-form .planning-form-actions{margin-top:10px}
+@media(max-width:680px){
+  html body .planning-dialog{padding:14px}
+  .planning-tabs{gap:2px;margin-bottom:12px}
+  .planning-tabs button{font-size:12px;padding:7px 4px}
+  .planning-panel,.planning-inputs .planning-panel{gap:12px}
+  .planning-renewal-list{grid-template-columns:1fr}
+  .planning-renewal{grid-template-columns:minmax(0,1fr) auto}
+  .planning-renewal>b{grid-row:auto;text-align:right;font-size:14px}
+  .planning-renewal-actions{grid-row:auto}
+  .planning-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .planning-form-grid label:first-child{grid-column:1/-1}
+  .planning-form-grid label{font-size:12px;gap:5px}
+  .planning-slider{gap:4px 8px}
+  .planning-savings-rate small{font-size:12px;line-height:1.4}
+  .planning-footer button{font-size:13px}
+  .planning-footer .planning-back{flex:0 0 auto}
+  .planning-sensitivity{flex-wrap:nowrap}
+  .planning-sensitivity strong{max-width:65%}
+}
+@media(max-height:620px){
+  .planning-dialog[open]{gap:8px}
+  html body .planning-dialog{padding:12px}
+  .planning-tabs{margin-bottom:8px}
+  .planning-inputs .planning-panel{gap:8px}
+  .planning-slider input[type=range]{min-height:28px}
+  .planning-footer{padding-top:8px}
+  .planning-renewal-list{grid-template-columns:1fr}
+}
+@media(max-width:680px) and (max-height:740px){
+  html body .planning-dialog[open]{padding:14px;gap:8px}
+  .planning-dialog .planning-tabs{margin-bottom:8px}
+  .planning-dialog .planning-tabs button{padding-block:4px}
+  .planning-dialog .planning-inputs .planning-panel{gap:8px}
+}

@@ -1,0 +1,93 @@
+/* Paged lists use natural row height; the pager owns access to every record. */
+#budgetsView #budgetTableWindow,
+#budgetCategoryModalList,
+#savingsDetailsModal #savingsEntryList,
+#budgetDetailsModal #recurringList,
+#notificationCenter #notificationList,
+#subscriptionsModal #subscriptionList,
+#incomeCategoryList,
+#categoryBreakdown,
+#bankConnectionList,
+#providerAccountList,
+#providerGrid,
+#activityView #transactionList {
+  min-height:0;
+  max-height:none;
+  overflow:visible;
+  overscroll-behavior:auto;
+  scrollbar-gutter:auto;
+  padding-inline-end:0;
+  align-content:start;
+}
+
+#budgetsView #budgetTableWindow,
+#budgetCategoryModalList,
+#savingsDetailsModal #savingsEntryList,
+#subscriptionsModal #subscriptionList,
+#activityView #transactionList { flex:0 0 auto; }
+
+#budgetTable .budget-row,
+#budgetCategoryModalList .budget-manager-row { min-height:56px; padding-block:8px; }
+#savingsEntryList .savings-entry-item,
+#recurringList .recurring-item { padding-block:8px; }
+#savingsEntryList .savings-entry-profile { margin-top:2px; padding-block:2px; }
+#notificationList .notification-item { padding-block:10px; }
+#notificationList .notification-copy p { margin-block:4px 6px; }
+#subscriptionList .subscription-item { padding-block:9px; }
+#bankConnectionList .bank-connection-card { padding-block:10px; }
+#activityView #transactionList .transaction-item { min-height:58px; padding-block:8px; }
+#activityView #transactionList .transaction-date { padding-block:8px 3px; font-size:.625rem; }
+#activityView #transactionList .transaction-date:first-child { padding-top:0; }
+#activityPagination { flex:0 0 auto; margin-top:10px; padding-top:8px; }
+
+@media (max-width:767px) {
+  #budgetTable .budget-row,
+  #budgetCategoryModalList .budget-manager-row { gap:6px 10px; padding-block:8px; }
+  #savingsEntryList .savings-entry-item { gap:4px 10px; }
+  #savingsEntryList .savings-entry-profile { margin-top:0; }
+  #notificationList .notification-item { gap:8px; padding-block:8px; }
+  #notificationList .notification-copy p { font-size:.6875rem; line-height:1.4; }
+  #notificationList .notification-actions { gap:5px 12px; }
+  #activityView #transactionList .transaction-item { gap:8px; padding-block:6px; }
+  #activityView #transactionList .transaction-date { padding-top:6px; }
+}
+
+/* Short editors retain paired fields on phones, leaving room for their actions. */
+@media (max-width:700px) {
+  :is(#recurringModal,#goalModal,#budgetModal,#incomeCategoryModal,#savingsModal) .form-row {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+  :is(#recurringModal,#goalModal,#budgetModal,#incomeCategoryModal,#savingsModal) label {
+    min-width:0;
+    gap:5px;
+    margin-bottom:8px;
+    font-size:13px;
+    line-height:1.4;
+  }
+  :is(#recurringModal,#goalModal,#budgetModal,#incomeCategoryModal,#savingsModal) :is(input:not([type="checkbox"]),select) {
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    font-size:16px;
+  }
+  :is(#recurringModal,#goalModal,#budgetModal,#incomeCategoryModal,#savingsModal) > h2 {
+    margin-block:5px 0;
+    padding-right:40px;
+    font-size:20px;
+    line-height:1.25;
+  }
+  :is(#recurringModal,#goalModal,#budgetModal,#incomeCategoryModal,#savingsModal) > .modal-intro {
+    margin-block:6px 12px;
+    font-size:12px;
+    line-height:1.4;
+  }
+  :is(#recurringModal,#goalModal,#budgetModal,#incomeCategoryModal,#savingsModal) .modal-context {
+    margin-block:4px 10px;
+    font-size:12px;
+    line-height:1.4;
+  }
+  #goalModal .compact-toggle { min-height:44px; margin-top:6px; padding-block:8px; }
+  #goalModal .compact-toggle small { font-size:11px; line-height:1.4; }
+  #savingsModal .spend-check { margin-block:4px 10px; padding:10px; }
+}

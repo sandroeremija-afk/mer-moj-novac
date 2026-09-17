@@ -34,7 +34,7 @@ html body #transactionModal[data-content-fits="false"] { overflow-y:auto; }
 #bankSettingsModal .settings-pane-heading { min-height:0; }
 #bankSettingsModal .enterprise-action-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
 #bankSettingsModal .enterprise-action-grid button { min-width:0;min-height:44px;line-height:1.45;padding:10px;white-space:normal; }
-#bankSettingsModal .active-session-list { max-height:220px;overflow-y:auto; }
+#bankSettingsModal .active-session-list { max-height:none;overflow:visible; }
 #bankSettingsModal .security-form-grid { gap:12px; }
 #bankSettingsModal #settingsTourMfa:has(#mfaSetup:not([hidden]),#recoveryPanel:not([hidden]),#mfaSmsVerify:not([hidden])) .security-card { display:none; }
 #bankSettingsModal .security-subheading { gap:10px;margin:0 0 12px; }

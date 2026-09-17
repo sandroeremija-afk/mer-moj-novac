@@ -7,6 +7,7 @@
   'use strict';
   const FIELDS = Object.freeze({firstName:80,lastName:80,oib:11,address:240});
   const RULES_PAGE_SIZE = 3;
+  function importPageSizeFor(width,height) { return width <= 800 ? 1 : height <= 720 ? 3 : 4; }
   const cleanText = (value, limit) => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,limit) : '';
   const userId = value => typeof value === 'string' && value.length <= 200 && value.trim() && !/[\u0000-\u001f\u007f]/.test(value) ? value : '';
   function normalizePersonalData(value) {
@@ -107,5 +108,5 @@
     refresh();
     return {refresh};
   }
-  return {FIELDS,RULES_PAGE_SIZE,normalizePersonalData,personalDataFor,validatePersonalData,savePersonalData,paginateRules,createPersonalDataUI};
+  return {FIELDS,RULES_PAGE_SIZE,importPageSizeFor,normalizePersonalData,personalDataFor,validatePersonalData,savePersonalData,paginateRules,createPersonalDataUI};
 });

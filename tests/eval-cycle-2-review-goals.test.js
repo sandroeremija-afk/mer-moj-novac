@@ -81,7 +81,7 @@ test('Cycle 2: settings UI exposes MFA, review pagination, privacy, display pref
   assert.doesNotMatch(html, /id="budgetDataModal"/);
   assert.match(html, /data-export-budget/);
   assert.match(html, /data-export-insights/);
-  assert.match(script, /const importPageSize = 50/);
+  assert.match(script, /let importPageSize = window\.MerSettingsEnhancements\.importPageSizeFor/);
   assert.match(script, /MerSecurity\.validateTotp/);
   assert.match(script, /MerImport\.commitReviewStage/);
   assert.match(script, /MerImport\.stageBelongsToProfile/);

@@ -11,6 +11,7 @@
   const x = core.escapeXml;
   const amount = cents => root.MerCore.formatCurrency(cents / 100, { locale:en() ? 'en-IE' : 'hr-HR', currency:'EUR' });
   let dialog, draft = null, preview = null, originFocus;
+  let formSections, linePager;
 
   function close() {
     if (!dialog?.open) return;
@@ -39,7 +40,7 @@
   function lineRow(line, index) {
     return `<fieldset class="invoice-line" data-invoice-line><legend>${say('Stavka', 'Item')} ${index + 1}</legend>${input('description', say('Roba ili usluga', 'Goods or service'), line.description, 'required maxlength="500"')}<div class="invoice-line-numbers">${input('quantity', say('Količina', 'Quantity'), line.quantity, 'type="number" min="0.001" max="1000000" step="0.001" required')}${input('unitPrice', say('Cijena bez PDV-a (€)', 'Net unit price (€)'), line.unitPrice, 'type="number" min="0.01" step="0.01" required')}${input('kpd', 'KPD 2025', line.kpd, 'required placeholder="62.20.20" maxlength="8" pattern="[0-9]{2}\\.?[0-9]{2}\\.?[0-9]{2}"')}<button class="secondary-button invoice-remove" type="button" data-invoice-remove="${index}" aria-label="${say('Ukloni stavku', 'Remove item')} ${index + 1}" ${draft.lines.length === 1 ? 'disabled' : ''}>${say('Ukloni', 'Remove')}</button></div></fieldset>`;
   }
-  function renderForm() {
+  function renderForm(section=formSections?.selected||0, linePage=linePager?.page||1) {
     preview = null;
     dialog.innerHTML = `<header class="invoice-head"><div><span class="invoice-eyebrow">${say('Poslovni prostor', 'Business workspace')}</span><h2 id="merInvoiceTitle">${say('Nacrt e-Računa', 'e-Invoice draft')}</h2></div><button type="button" class="modal-close" data-invoice-close aria-label="${say('Zatvori', 'Close')}">×</button></header>
       <form id="merInvoiceForm" class="invoice-form"><div class="invoice-body"><p class="invoice-description">${say('Pripremite domaći račun u eurima. Iznosi su neto, a PDV je 25%.', 'Prepare a domestic invoice in euros. Prices are net, with 25% VAT.')}</p><div class="invoice-three">${input('number', say('Broj računa', 'Invoice number'), draft.number, 'required maxlength="60" placeholder="1-P1-1"')}${input('issueDate', say('Datum izdavanja', 'Issue date'), draft.issueDate, 'type="date" min="2026-01-01" max="2099-12-31" required')}${input('dueDate', say('Dospijeće', 'Due date'), draft.dueDate, 'type="date" min="2026-01-01" max="2099-12-31" required')}</div><div class="invoice-two">${partyFields('seller', draft.seller, say('Izdavatelj', 'Seller'))}${partyFields('buyer', draft.buyer, say('Kupac', 'Buyer'))}</div>
@@ -47,6 +48,23 @@
       <div id="merInvoiceLines">${draft.lines.map(lineRow).join('')}</div><button type="button" class="secondary-button" data-invoice-add>${say('+ Dodaj stavku', '+ Add item')}</button>${input('note', say('Napomena (neobavezno)', 'Note (optional)'), draft.note, 'maxlength="1000"')}<p class="invoice-caveat">${say('Nacrt nije fiskaliziran. Prije izdavanja potrebno je provjeriti KPD i potvrditi račun putem ovlaštenog sustava e-Računa.', 'Drafts are not fiscalized. Verify KPD codes and validate the invoice through an authorized e-Invoicing system before issuing.')}</p><p class="invoice-error" role="alert" data-invoice-error hidden></p><details class="invoice-saved"><summary>${say('Spremljeni nacrti', 'Saved drafts')} (${business().enterprise?.invoices?.length || 0})</summary><div class="invoice-saved-list">${renderSavedList()}</div></details></div>
       <footer class="invoice-footer"><button class="secondary-button" type="button" data-invoice-close>${say('Otkaži', 'Cancel')}</button><button class="primary-button" type="submit">${say('Pregledaj račun', 'Preview invoice')}</button></footer></form>`;
     bindForm();
+    if(root.MerSections){
+      const body=dialog.querySelector('.invoice-body'),parties=[...body.querySelectorAll('.invoice-party')],partyGroup=parties[0]?.parentElement;
+      const lines=body.querySelector('#merInvoiceLines'),saved=body.querySelector('.invoice-saved');
+      linePager=root.MerPagination?.attach(lines,{pageSize:1,itemSelector:'.invoice-line',scopeKey:'business',label:say('Stavke računa','Invoice items')});
+      linePager?.goTo(linePage);
+      root.MerPagination?.attach(body.querySelector('.invoice-saved-list'),{pageSize:4,itemSelector:'.invoice-saved-row',scopeKey:'business',label:say('Spremljeni nacrti','Saved drafts')});
+      saved.open=true;
+      formSections=root.MerSections.attach(body,[
+        {label:say('Podaci','Details'),nodes:[body.querySelector('.invoice-description'),body.querySelector('.invoice-three'),body.querySelector('[name="note"]').closest('label'),body.querySelector('.invoice-caveat')]},
+        {label:say('Izdavatelj','Seller'),nodes:[parties[0],body.querySelector('.invoice-vat-check')]},
+        {label:say('Kupac','Buyer'),nodes:[parties[1]]},
+        {label:say('Stavke','Items'),nodes:[lines,lines.nextElementSibling?.matches('.mer-pagination')?lines.nextElementSibling:null,body.querySelector('[data-invoice-add]')]},
+        {label:say('Nacrti','Drafts'),nodes:[saved]}
+      ],{key:'invoiceComposer'});
+      if(partyGroup&&!partyGroup.children.length)partyGroup.remove();
+      formSections?.select(section);
+    }
   }
   function renderSavedList() {
     const items = business().enterprise?.invoices || [];
@@ -64,8 +82,8 @@
       draft = capture();
       if (draft.lines.length >= 100) return error(say('Najviše 100 stavki po nacrtu.', 'Maximum 100 items per draft.'));
       draft.lines.push({ description:'', quantity:1, unitPrice:'', kpd:'', vatRate:25 });
-      renderForm();
-      dialog.querySelector('#merInvoiceLines').lastElementChild.querySelector('input').focus();
+      renderForm(3,draft.lines.length);
+      dialog.querySelector('#merInvoiceLines').lastElementChild.querySelector('input').focus({preventScroll:true});
     });
     dialog.querySelectorAll('[data-invoice-remove]').forEach(button => button.addEventListener('click', () => {
       draft = capture();
@@ -76,7 +94,7 @@
     dialog.querySelectorAll('[data-invoice-load]').forEach(button => button.addEventListener('click', () => {
       if (!isBusiness()) return close();
       const saved = business().enterprise?.invoices?.find(item => item.id === button.dataset.invoiceLoad);
-      if (saved) { draft = structuredClone(saved); renderForm(); dialog.querySelector('[name="number"]').focus(); }
+      if (saved) { draft = structuredClone(saved); renderForm(0,1); dialog.querySelector('[name="number"]').focus({preventScroll:true}); }
     }));
     dialog.querySelector('form').addEventListener('submit', event => {
       event.preventDefault();
@@ -99,7 +117,18 @@
   function renderPreview() {
     dialog.innerHTML = `<header class="invoice-head"><h2 id="merInvoiceTitle">${say('Pregled nacrta', 'Draft preview')}</h2><button class="modal-close" type="button" data-invoice-close aria-label="${say('Zatvori', 'Close')}">×</button></header><div class="invoice-body">${documentHtml(preview)}<p class="invoice-caveat">${say('XML nacrt i PDF pregled nisu izdani e-Račun. Nacrt nema potpis, potvrdu sukladnosti ni fiskalizaciju. Spremanje ne dodaje prihod u Aktivnost.', 'The XML draft and PDF preview are not an issued e-Invoice. Drafts are unsigned, unvalidated and not fiscalized. Saving does not add income to Activity.')}</p><p class="invoice-error" role="alert" data-invoice-error hidden></p></div><footer class="invoice-footer"><button class="secondary-button" type="button" data-invoice-back>${say('Natrag', 'Back')}</button><button class="secondary-button" type="button" data-invoice-close>${say('Otkaži', 'Cancel')}</button><button class="secondary-button" type="button" data-invoice-xml>XML ${say('nacrt', 'draft')}</button><button class="secondary-button" type="button" data-invoice-print>PDF / ${say('Ispis', 'Print')}</button><button class="primary-button" type="button" data-invoice-save>${say('Spremi nacrt', 'Save draft')}</button></footer>`;
     dialog.querySelectorAll('[data-invoice-close]').forEach(button => button.addEventListener('click', close));
-    dialog.querySelector('[data-invoice-back]').addEventListener('click', renderForm);
+    if(root.MerSections){
+      const paper=dialog.querySelector('.invoice-paper'),table=paper.querySelector('.invoice-table'),bottom=paper.querySelector('.invoice-bottom');
+      root.MerPagination?.attach(table.querySelector('tbody'),{pageSize:4,itemSelector:'tr',navAnchor:table,scopeKey:preview.id,label:say('Stavke računa','Invoice items')});
+      root.MerSections.attach(paper,[
+        {label:say('Podaci','Details'),nodes:[paper.querySelector('.invoice-paper-heading'),paper.querySelector('.invoice-parties')]},
+        {label:say('Stavke','Items'),nodes:[paper.querySelector('.invoice-table-wrap')]},
+        {label:say('Iznosi','Totals'),nodes:[paper.querySelector('.invoice-totals')]},
+        {label:say('Plaćanje','Payment'),nodes:[paper.querySelector('.invoice-payment')]}
+      ],{key:'invoicePreview'});
+      if(!bottom.children.length)bottom.remove();
+    }
+    dialog.querySelector('[data-invoice-back]').addEventListener('click', ()=>renderForm());
     dialog.querySelector('[data-invoice-xml]').addEventListener('click', () => {
       if (!isBusiness()) return close();
       const url = URL.createObjectURL(new Blob([core.toXml(preview)], { type:'application/xml;charset=utf-8' }));
@@ -147,6 +176,7 @@
     if (!isBusiness()) { bridge()?.toast?.(say('Računi su dostupni u poslovnom profilu.', 'Invoices are available in the business profile.')); return false; }
     ensureDialog();
     originFocus = document.activeElement;
+    formSections=null;linePager=null;
     draft = freshDraft(); renderForm();
     if (bridge()?.openModal) bridge().openModal(dialog); else { dialog.showModal(); document.body.classList.add('modal-active'); }
     return true;

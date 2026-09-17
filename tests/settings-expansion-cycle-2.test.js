@@ -25,13 +25,13 @@ test('all security topics are exposed as native radio choices while existing dee
   assert.match(source('popup-layout.css'),/input:focus-visible/);
 });
 
-test('settings use content-sized desktop grids with a measured small-screen fallback and three-row rule pages',() => {
+test('settings use mounted subviews without an inner scroller and three-row rule pages',() => {
   const css = source('settings-enhancements.css'), premium = source('premium.js'), html = source('index.html');
-  assert.match(css,/height:auto;max-height:calc\(100dvh - 32px\)/);
-  assert.match(css,/\.settings-modal-body\s*\{[^}]*overflow-y:auto/);
-  assert.match(css,/\.settings-modal-body\[data-content-fits="true"\]\s*\{[^}]*overflow-y:hidden/);
-  assert.match(css,/\.settings-personal-grid\s*\{[^}]*grid-template-columns:minmax\(0,1\.25fr\) minmax\(0,1fr\)/);
-  assert.match(css,/\.security-access-grid\s*\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(0,1\.15fr\)/);
+  assert.match(css,/height:fit-content;max-height:calc\(100dvh - 32px\)/);
+  assert.match(css,/\.settings-modal-body\s*\{[^}]*overflow:visible/);
+  assert.doesNotMatch(css,/\.settings-modal-body\s*\{[^}]*overflow-y:auto/);
+  assert.match(css,/\.settings-personal-grid\s*\{[^}]*display:block/);
+  assert.match(css,/\.security-access-grid\s*\{[^}]*grid-template-columns:minmax\(0,1fr\)/);
   assert.match(css,/#automationRuleList\s*\{[^}]*overflow:visible/);
   assert.match(html,/id="rulesPrevious"[^>]*aria-controls="automationRuleList"/);
   assert.match(html,/id="rulesNext"[^>]*aria-controls="automationRuleList"/);

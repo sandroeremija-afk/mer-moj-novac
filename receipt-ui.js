@@ -11,6 +11,7 @@
   const decimal = cents => cents === null || cents === undefined ? '' : (cents / 100).toFixed(2);
   const money = (cents,currency = 'EUR') => root.MerCore.formatCurrency((cents || 0)/100,{locale:snapshot().language==='en'?'en-IE':'hr-HR',currency});
   let dialog, receipt, preparedImage, previewUrl, guard, owner, controller, cameraSession, selectedId = '', preferredId = '', viewedTransactionId = '', returnFocus;
+  let uploadSections, reviewSections, reviewLinePager;
   const current = () => dialog?.open && profileId() === owner;
   const cameraAllowed = () => current() && !root.MerEnterpriseSecurity?.isLocked?.() && !document.getElementById?.('appShell')?.hidden && !document.getElementById?.('appShell')?.inert;
   const uid = () => `receipt-${root.crypto.randomUUID()}`;
@@ -45,6 +46,14 @@
     drop.addEventListener('drop',event=>{event.preventDefault();drop.classList.remove('dragging');const file=event.dataTransfer?.files?.[0];if(file)prepareFile(file);});
     dialog.querySelector('#receiptManual').addEventListener('click',()=>{stop();receipt.source='manual';renderReview();});
     dialog.querySelector('#receiptAnalyze').addEventListener('click',analyze);
+    if(root.MerSections){
+      const body=dialog.querySelector('.receipt-body'),consent=body.querySelector('.receipt-check');
+      uploadSections=root.MerSections.attach(body,[
+        {label:copy('Fotografija','Photo'),nodes:[body.querySelector('.receipt-intro'),drop,body.querySelector('.receipt-upload-actions')]},
+        {label:copy('Očitavanje','Extraction'),nodes:[consent,consent.nextElementSibling,body.querySelector('#receiptLoading')]}
+      ],{key:'receiptUpload'});
+      uploadSections?.select(preparedImage?1:0);
+    }
   }
   function cameraFailure(failure) {
     if(failure?.name==='NotAllowedError'||failure?.name==='SecurityError')return copy('Pristup kameri nije dopušten. Dopustite kameru u postavkama preglednika ili odaberite datoteku. Gumb Fotografiraj račun može otvoriti kameru uređaja.','Camera access is blocked. Allow camera access in your browser settings or choose a file. Take photo can open the device camera.');
@@ -117,7 +126,7 @@
   }
   async function analyze() {
     if(!current()||!preparedImage)return;
-    if(!dialog.querySelector('#receiptConsent').checked)return showError(copy('Za AI očitavanje potvrdite pristanak ili odaberite ručni unos.','Consent to AI extraction or choose manual entry.'));
+    if(!dialog.querySelector('#receiptConsent').checked){uploadSections?.select(1);return showError(copy('Za AI očitavanje potvrdite pristanak ili odaberite ručni unos.','Consent to AI extraction or choose manual entry.'));}
     stop();const token=guard.begin(), requestController=new AbortController();controller=requestController;
     const loading=dialog.querySelector('#receiptLoading');loading.hidden=false;
     dialog.querySelector('#receiptAnalyze').disabled=true;showError('');
@@ -141,11 +150,11 @@
     const form=dialog.querySelector('#receiptReviewForm'), values=new FormData(form);
     return R.normalizeReceipt({...receipt,merchant:values.get('merchant'),date:values.get('date'),currency:values.get('currency'),totalCents:R.parseMoney(values.get('total')),type:values.get('type'),invoiceNumber:values.get('invoiceNumber'),reviewed:values.get('reviewed')==='on',lines:[...form.querySelectorAll('[data-receipt-line]')].map(row=>({description:row.querySelector('[name="description"]').value,quantity:row.querySelector('[name="quantity"]').value?Number(row.querySelector('[name="quantity"]').value):null,totalCents:R.parseMoney(row.querySelector('[name="lineTotal"]').value)}))});
   }
-  function renderReview(message='') {
+  function renderReview(message='', section=reviewSections?.selected||0, linePage=reviewLinePager?.page||1) {
     dialog.innerHTML=`${heading(copy('Provjerite i povežite','Review and match'))}<form id="receiptReviewForm" class="receipt-form"><div class="receipt-body"><p class="receipt-intro">${receipt.source==='openai'?copy('AI prijedlog — provjerite svako polje prije potvrde.','AI suggestion — check each field before confirming.'):receipt.source==='imported'?copy('Prethodni unos — provjerite podatke prije potvrde.','Previous entry — review details before confirming.'):copy('Ručni pregled — automatsko očitavanje nije korišteno.','Manual review — automatic extraction was not used.')}</p><div class="receipt-fields">${field('merchant',copy('Trgovac / izdavatelj','Merchant / issuer'),receipt.merchant,'required maxlength="160"')}${field('date',copy('Datum računa','Receipt date'),receipt.date,'type="date" required')}${field('total',copy('Ukupni iznos','Total amount'),decimal(receipt.totalCents),'type="number" min="0.01" step="0.01" required')}<label>${copy('Valuta','Currency')}<select name="currency">${[...new Set(['EUR','USD','GBP','CHF',receipt.currency])].map(value=>`<option ${receipt.currency===value?'selected':''}>${value}</option>`).join('')}</select></label><label>${copy('Vrsta transakcije','Transaction type')}<select name="type"><option value="expense" ${receipt.type==='expense'?'selected':''}>${copy('Trošak','Expense')}</option><option value="income" ${receipt.type==='income'?'selected':''}>${copy('Prihod','Income')}</option></select></label>${field('invoiceNumber',copy('Broj računa (neobavezno)','Document number (optional)'),receipt.invoiceNumber,'maxlength="80"')}</div><details class="receipt-lines" ${receipt.lines.length?'open':''}><summary>${copy('Stavke računa','Receipt items')} (${receipt.lines.length})</summary><div id="receiptLines">${receipt.lines.map(lineFields).join('')}</div><button class="secondary-button" type="button" id="receiptAddLine">${copy('+ Dodaj stavku','+ Add item')}</button></details><p class="receipt-note" id="receiptLineWarning"></p><div class="receipt-match-head"><h3>${copy('Podudarne transakcije','Matching transactions')}</h3><label class="receipt-check"><input type="checkbox" id="receiptIncludeManual"><span>${copy('Uključi ručne unose','Include manual entries')}</span></label></div><p class="receipt-note">${copy('Isti iznos i valuta, datum unutar 7 dana. Odaberite transakciju; povezivanje nikada ne mijenja iznos niti stvara novi unos.','Same amount and currency, date within 7 days. Choose a transaction; linking never changes amounts or creates an entry.')}</p><div id="receiptMatches" role="radiogroup" aria-label="${copy('Odaberite transakciju','Choose a transaction')}"></div><label class="receipt-check receipt-approval"><input type="checkbox" name="reviewed" required><span>${copy('Provjerio/la sam podatke računa i odabranu transakciju.','I have checked the receipt details and selected transaction.')}</span></label><p role="alert" data-receipt-error ${message?'':'hidden'}>${x(message)}</p></div><footer class="receipt-footer"><button class="secondary-button" type="button" id="receiptBack">${copy('Natrag','Back')}</button><button class="secondary-button" type="button" data-receipt-close>${copy('Otkaži','Cancel')}</button><button class="primary-button" type="submit" id="receiptAttach" disabled>${copy('Poveži s transakcijom','Link to transaction')}</button></footer></form>`;
     bindClose();
     dialog.querySelector('#receiptBack').addEventListener('click',()=>{receipt=capture();renderUpload();});
-    dialog.querySelector('#receiptAddLine').addEventListener('click',()=>{receipt=capture();if(receipt.lines.length>=R.MAX_LINES)return showError(copy('Najviše 100 stavki.','Maximum 100 items.'));receipt.lines.push({description:'',quantity:1,totalCents:null});renderReview();dialog.querySelector('#receiptLines').lastElementChild.querySelector('input').focus();});
+    dialog.querySelector('#receiptAddLine').addEventListener('click',()=>{receipt=capture();if(receipt.lines.length>=R.MAX_LINES)return showError(copy('Najviše 100 stavki.','Maximum 100 items.'));receipt.lines.push({description:'',quantity:1,totalCents:null});renderReview('',1,receipt.lines.length);dialog.querySelector('#receiptLines').lastElementChild.querySelector('input').focus({preventScroll:true});});
     dialog.querySelectorAll('[data-remove-line]').forEach(button=>button.addEventListener('click',()=>{receipt=capture();receipt.lines.splice(Number(button.dataset.removeLine),1);renderReview();}));
     dialog.querySelector('#receiptReviewForm').addEventListener('input',event=>{
       if(event.target.name==='receiptTransaction'){selectedId=event.target.value;dialog.querySelector('#receiptAttach').disabled=!dialog.querySelector('[name="reviewed"]').checked;return;}
@@ -154,6 +163,18 @@
     });
     dialog.querySelector('#receiptReviewForm').addEventListener('submit',attach);
     renderMatches();
+    if(root.MerSections){
+      const body=dialog.querySelector('.receipt-body'),lines=dialog.querySelector('.receipt-lines'),matches=dialog.querySelector('#receiptMatches');
+      lines.open=true;
+      reviewLinePager=root.MerPagination?.attach(dialog.querySelector('#receiptLines'),{pageSize:1,itemSelector:'.receipt-line',scopeKey:owner,label:copy('Stavke računa','Receipt items')});
+      reviewLinePager?.goTo(linePage);
+      reviewSections=root.MerSections.attach(body,[
+        {label:copy('Podaci','Details'),nodes:[body.querySelector('.receipt-intro'),body.querySelector('.receipt-fields')]},
+        {label:copy('Stavke','Items'),nodes:[lines,body.querySelector('#receiptLineWarning')]},
+        {label:copy('Povezivanje','Match'),nodes:[body.querySelector('.receipt-match-head'),body.querySelector('.receipt-match-head + .receipt-note'),matches,matches.nextElementSibling?.matches('.mer-pagination')?matches.nextElementSibling:null,body.querySelector('.receipt-approval')]}
+      ],{key:'receiptReview'});
+      reviewSections?.select(section);
+    }
   }
   function renderMatches() {
     if(!current())return;
@@ -165,6 +186,9 @@
     if(!selectedId&&preferredId&&candidates.some(item=>item.id===preferredId))selectedId=preferredId;
     dialog.querySelector('#receiptMatches').innerHTML=candidates.length?candidates.map(item=>`<label class="receipt-match"><input type="radio" name="receiptTransaction" value="${x(item.id)}" ${selectedId===item.id?'checked':''}><span><strong>${x(item.name)}</strong><small>${x(item.date)} · ${x(item.source)} · ${item.merchantMatch?copy('Trgovac se podudara','Merchant matches'):copy('Provjerite trgovca','Check merchant')}</small></span><strong data-monetary>${x(money(item.amountCents,item.currency))}</strong></label>`).join(''):`<p class="receipt-empty">${check.valid?copy('Nema podudaranja. Provjerite podatke, uključite ručne unose ili prvo sinkronizirajte banku. Nova transakcija neće se automatski dodati.','No match. Check the details, include manual entries or sync your bank first. No transaction will be added automatically.'):copy('Unesite trgovca, valjan datum, iznos i stavke da biste pronašli transakciju.','Enter a merchant, valid date, total and item details to find a transaction.')}</p>`;
     dialog.querySelector('#receiptAttach').disabled=!selectedId||!dialog.querySelector('[name="reviewed"]').checked||!check.valid;
+    const pager=root.MerPagination?.attach(dialog.querySelector('#receiptMatches'),{pageSize:4,itemSelector:'.receipt-match',scopeKey:JSON.stringify([owner,receipt.merchant,receipt.date,receipt.totalCents,receipt.currency,receipt.type,includeManual]),label:copy('Podudarne transakcije','Matching transactions')});
+    const selectedIndex=candidates.findIndex(item=>item.id===selectedId);
+    if(selectedIndex>=0)pager?.goTo(Math.floor(selectedIndex/4)+1);
   }
   async function attach(event) {
     event.preventDefault();if(!current())return close();receipt=capture();
@@ -189,6 +213,7 @@
     dialog.addEventListener('close',()=>{stop();clearImage();receipt=null;selectedId='';viewedTransactionId='';dialog.replaceChildren();if(!document.querySelector('dialog[open]'))document.body.classList.remove('modal-active');if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});});
   }
   function open(options={}) {
+    reviewSections=null;reviewLinePager=null;
     if(!['personal','business'].includes(profileId()))return false;ensureDialog();stop();clearImage();owner=profileId();guard=R.createRequestGuard(owner);returnFocus=document.activeElement;preferredId=options.transactionId?String(options.transactionId):'';selectedId='';viewedTransactionId='';receipt=R.normalizeReceipt({id:uid()});
     const wasOpen=dialog.open;renderUpload();if(bridge()?.openModal)bridge().openModal(dialog);else if(!dialog.open)dialog.showModal();if(wasOpen)dialog.querySelector('[data-plan-back], input, button')?.focus({preventScroll:true});return true;
   }
@@ -203,6 +228,8 @@
       const item=R.normalizeReceipt(raw);
       return `<article class="receipt-stored"><header><div><h3>${x(item.merchant)}</h3><p>${x(item.date)}${item.invoiceNumber?` · ${x(item.invoiceNumber)}`:''}</p></div><strong data-monetary>${x(money(item.totalCents,item.currency))}</strong></header><p class="receipt-note">${item.source==='openai'?copy('AI očitavanje · potvrđeno pregledom','AI extraction · reviewed'):item.source==='imported'?copy('Prethodni unos · potvrđeno pregledom','Previous entry · reviewed'):copy('Ručni unos · potvrđeno pregledom','Manual entry · reviewed')}${item.fileName?` · ${x(item.fileName)}`:''}</p>${item.lines.length?`<ul class="receipt-stored-lines">${item.lines.map(line=>`<li><span>${x(line.description)}${line.quantity!==null?` <small>× ${x(line.quantity)}</small>`:''}</span><strong data-monetary>${x(money(line.totalCents,item.currency))}</strong></li>`).join('')}</ul>`:`<p class="receipt-note">${copy('Nema pohranjenih stavki.','No stored item lines.')}</p>`}</article>`;
     }).join(''):`<p class="receipt-empty">${copy('Ova transakcija još nema povezan račun.','This transaction has no linked receipt yet.')}</p>`}</div><footer class="receipt-footer"><button class="secondary-button" type="button" data-receipt-close>${copy('Zatvori','Close')}</button><button class="primary-button" type="button" id="receiptAddStored">${copy('Dodaj račun','Add receipt')}</button></footer>`;
+    root.MerPagination?.attach(dialog.querySelector('.receipt-body'),{pageSize:1,itemSelector:'.receipt-stored',scopeKey:JSON.stringify([owner,viewedTransactionId]),label:copy('Povezani računi','Linked receipts')});
+    dialog.querySelectorAll('.receipt-stored-lines').forEach(list=>root.MerPagination?.attach(list,{pageSize:4,itemSelector:'li',scopeKey:owner,label:copy('Stavke računa','Receipt items')}));
     bindClose();dialog.querySelector('#receiptAddStored').addEventListener('click',()=>open({transactionId:viewedTransactionId}));return true;
   }
   function view(transactionId) {

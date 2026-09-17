@@ -19,9 +19,11 @@ jsFiles.push('engagement-init.js');
 jsFiles.push('popup-layout.js','modal-footer.js');
 jsFiles.push('planning-hubs.js');
 jsFiles.push('quick-tools-core.js','quick-tools-ui.js','settings-enhancements.js');
+jsFiles.push('pagination.js','sections.js','zero-scroll.js');
 suiteCss.push('quick-tools.css','settings-enhancements.css');
 suiteCss.push('planning-hubs.css');
 suiteCss.push('ui-consistency.css','recommendation-refresh.css','popup-layout.css','modal-footer.css','notification-hierarchy.css');
+suiteCss.push('list-pagination.css','zero-scroll.css');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source

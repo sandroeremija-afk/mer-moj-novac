@@ -59,6 +59,7 @@
       else button.textContent = say('Zatvori','Close');
     });
     dialog.querySelector('.planning-hub-body').innerHTML = entries(kind).map(item => `<button type="button" class="planning-hub-entry" data-hub-action="${item.id}" aria-haspopup="dialog"><span class="planning-hub-icon" aria-hidden="true"><svg><use href="#icon-${item.icon}"></use></svg></span><span><strong>${escape(item.title)}</strong><small>${escape(item.description)}</small></span><span class="planning-hub-arrow" aria-hidden="true">›</span></button>`).join('');
+    root.MerPagination?.attach(dialog.querySelector('.planning-hub-body'),{pageSize:()=>root.innerHeight<600?1:root.innerWidth<600?2:4,itemSelector:'[data-hub-action]',scopeKey:`${state().activeProfile}:${kind}`,label:say('Alati za planiranje','Planning tools')});
     restoreFocus?.();
   }
   function open(kind) {

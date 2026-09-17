@@ -71,8 +71,8 @@ Object.assign(translations.hr,{monthlyBudget:'Fleksibilni budžet za potrošnju'
 Object.assign(translations.en,{monthlyBudget:'Flexible spending budget',afterCommitments:'Income after bills, savings and buffer',remainingBudget:'Safe remainder after spending',allocatedCategories:'Allocated to categories',budgetOf:'{percent}% of the {budget} flexible budget',budgetOverageExact:'{percent}% · {amount} over limit',budgetRecoveryOverTitle:'Category plan exceeds the flexible budget',budgetRecoveryOverCopy:'Reduce only unused category headroom by {amount}; recorded spending stays untouched.',budgetRecoveryCategoryTitle:'One or more categories are over limit',budgetRecoveryCategoryCopy:'Move unused room from another category without changing the total budget.',autoBalanceBudget:'Balance plan',coverOverspending:'Cover overspending',rebalanceBudget:'BUDGET REALLOCATION',coverOverspendingIntro:'Move unused room from one category to an overspent category without changing the total budget.',overspentCategory:'Overspent category',fundFromCategory:'Move from category',transferAmount:'Transfer amount',confirmTransfer:'Confirm reallocation',transferContext:'Available to move: {available}. Overage: {overage}.',transferInvalid:'Choose valid categories and an amount.',transferSaved:'Moved {amount}. The total budget stayed unchanged.',balancePlanConfirm:'Only unused category headroom will be reduced. Recorded spending will not change. Continue?',balancePlanReady:'The plan was balanced by {amount}.',balancePlanPartial:'Reduced by {amount}, but {remaining} cannot be covered without changing the total plan.',spentCategory:'Spent: {spent}. The minimum allowed limit is {minimum}; the current plan allows up to {maximum}.',positiveAmountRequired:'Amount must be greater than zero.',demoWorkspace:'DEMO WORKSPACE',demoResetTitle:'Restore a clean demo workspace',demoResetHint:'Removes trial changes from both profiles and restores the original MER sample data. Display preferences stay saved.',resetDemoData:'Reset demo data',confirmDemoResetTitle:'Restore the original demo data?',confirmDemoResetBody:'All trial transactions, rules, goals and bank connections in Personal and Business will be replaced with the original examples. This cannot be undone.',confirmDemoReset:'Yes, restore data',demoResetComplete:'The demo workspace was restored.',demoResetUnavailable:'Reset is available only in demo mode.',cancel:'Cancel'});
 Object.assign(translations.hr,{activityFilters:'Filtri aktivnosti',filters:'Filteri',dateFrom:'Od datuma',dateTo:'Do datuma',sortTransactions:'Sortiraj transakcije',sortNewest:'Najnovije prvo',sortOldest:'Najstarije prvo',sortAmountHigh:'Iznos: veći prema manjem',sortAmountLow:'Iznos: manji prema većem',clearFilters:'Očisti filtere'});
 Object.assign(translations.en,{activityFilters:'Activity filters',filters:'Filters',dateFrom:'From date',dateTo:'To date',sortTransactions:'Sort transactions',sortNewest:'Newest first',sortOldest:'Oldest first',sortAmountHigh:'Amount: high to low',sortAmountLow:'Amount: low to high',clearFilters:'Clear filters'});
-Object.assign(translations.hr,{activityViewMode:'Način prikaza aktivnosti',activityPages:'Stranice',activityContinuous:'Prikaži sve',activityPagination:'Stranice aktivnosti',previousPage:'Prethodna',nextPage:'Sljedeća',activityPageLabel:'Stranica {page} od {pages}',activityResultCount:'Prikazano {visible} od {total} transakcija'});
-Object.assign(translations.en,{activityViewMode:'Activity view mode',activityPages:'Pages',activityContinuous:'Show all',activityPagination:'Activity pages',previousPage:'Previous',nextPage:'Next',activityPageLabel:'Page {page} of {pages}',activityResultCount:'Showing {visible} of {total} transactions'});
+Object.assign(translations.hr,{activityPagination:'Stranice aktivnosti',previousPage:'Prethodna',nextPage:'Sljedeća',activityPageLabel:'Stranica {page} od {pages}',activityResultCount:'Prikazano {visible} od {total} transakcija'});
+Object.assign(translations.en,{activityPagination:'Activity pages',previousPage:'Previous',nextPage:'Next',activityPageLabel:'Page {page} of {pages}',activityResultCount:'Showing {visible} of {total} transactions'});
 Object.assign(translations.hr,{allTime:'Sve ukupno',appLanguage:'Jezik aplikacije',appTheme:'Tema aplikacije',lightTheme:'Svijetla',darkTheme:'Tamna',editLayout:'Uredi',themeSettingHint:'Prilagodite izgled aplikacije uvjetima rada.',dashboardLayout:'Raspored nadzorne ploče',layoutSettingHint:'Promijenite redoslijed kartica povlačenjem.',openBanking:'OPEN BANKING',syncStatus:'Status sinkronizacije',reviewImportedTransactions:'Pregledajte uvezene transakcije bez potvrđene kategorije.',budgetDataActions:'Uvoz / izvoz budžeta',budgetDataOverline:'PODACI BUDŽETA',budgetDataIntro:'Uvezite promet za kategorizaciju ili preuzmite mjesečni plan grupiran po kategorijama.',budgetImportHint:'Pregledajte CSV, Excel ili CAMT.053 zapise prije potvrde.',budgetExportHint:'Preuzmite limite, potrošnju i iskorištenost po kategorijama.',importBankStatement:'Uvezi bankovni izvod',exportBudgetPlan:'Izvezi plan budžeta',exportInsightsReport:'Izvezi izvješće',goToSavings:'Idi na Štednju',showAllTransactions:'Prikaži sve transakcije'});
 Object.assign(translations.en,{appLanguage:'App language',appTheme:'App theme',lightTheme:'Light',darkTheme:'Dark',editLayout:'Edit',themeSettingHint:'Adapt the interface to your working environment.',dashboardLayout:'Dashboard layout',layoutSettingHint:'Change card order with drag and drop.',openBanking:'OPEN BANKING',syncStatus:'Sync status',reviewImportedTransactions:'Review imported transactions without a confirmed category.',budgetDataActions:'Import / export budget',budgetDataOverline:'BUDGET DATA',budgetDataIntro:'Import activity for categorization or download the monthly plan grouped by category.',budgetImportHint:'Review CSV, Excel, or CAMT.053 records before confirming.',budgetExportHint:'Download category limits, spending, and usage.',importBankStatement:'Import bank statement',exportBudgetPlan:'Export budget plan',exportInsightsReport:'Export report',goToSavings:'Go to Savings',showAllTransactions:'Show all transactions'});
 Object.assign(translations.hr,{bankAccountSelectionRequired:'Molimo označite banku ili karticu prije nastavka.',unlinkBankTitle:'Prekid veze',unlinkBankQuestion:'Jeste li sigurni da želite prekinuti vezu s ovom bankom/karticom?',unlinkBankConfirm:'Prekini vezu',unlinkBankCancel:'Odustani'});
@@ -282,9 +282,8 @@ let transactionType = 'expense';
 let insightsTimeframe = 'monthly';
 let activeInsightDetail = null;
 let activityReviewOnly = false;
-const ACTIVITY_PAGE_SIZE = 8;
+const ACTIVITY_PAGE_SIZE = 4;
 let activityPage = 1;
-let activityViewMode = 'pages';
 let selectedBankProviderId = null;
 let bankConnectionStep = 'overview';
 let pendingBankUnlinkId = null;
@@ -482,6 +481,19 @@ function renderSpendingPaceChart() {
 function levelClass(percent) { return `threshold-${percent>=100?'red':percent>=80?'yellow':'green'}`; }
 function thresholdMessage(percent) { return percent>=100?t('budgetLimitReached'):percent>=80?t('budgetLimitNear'):''; }
 
+function bulkyListPageSize() {
+  return window.innerWidth<=640?1:4;
+}
+
+function renderListPagination(selector,{scopeKey='',itemSelector,label,pageSize=4}={}) {
+  const list=$(selector);
+  if(!list)return;
+  const scope=JSON.stringify([appState.activeAccount,currentLang,scopeKey]);
+  list.dataset.paginatedList='true';
+  list.dataset.paginationScope=scope;
+  return window.MerPagination?.attach(list,{pageSize,itemSelector,scopeKey:scope,label});
+}
+
 function renderBudgetLists() {
   const overviewCategories = state.categories.slice(0, 3);
   $('#budgetList').innerHTML = overviewCategories.map(cat => {
@@ -511,6 +523,7 @@ function renderBudgetView() {
   $('.allocation-bar').classList.toggle('over', allocationPercent > 100);
   $('#allocationCopy').textContent = t('allocationCopy',{allocated:currency(allocated,true),budget:currency(plan.monthlyBudget,true)});
   $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
+  renderListPagination('#budgetTable',{itemSelector:'.budget-row',label:t('budgetCategoryList')});
   const overspent=state.categories.filter(cat=>cat.spent>cat.limit+.005),donors=state.categories.filter(cat=>cat.limit>cat.spent+.005),overAllocated=difference<-.005,recovery=$('#budgetRecovery');
   const recoveryFingerprint=notificationFingerprint([overAllocated?'allocation':'category',Math.round(Math.abs(difference)*100),...overspent.map(cat=>`${cat.id}:${Math.round(cat.spent*100)}:${Math.round(cat.limit*100)}`).sort()]);
   const recoveryItem={key:'budget-recovery',fingerprint:recoveryFingerprint};
@@ -542,6 +555,7 @@ function renderBudgetCategoryManager() {
   $('#budgetCategoryResultCount').textContent=t('budgetCategoryCount',{visible:filtered.length,total:state.categories.length});
   $('#budgetCategoryModalList').innerHTML=filtered.map(cat=>budgetCategoryRow(cat,true)).join('');
   $('#budgetCategoryManagerEmpty').hidden=filtered.length>0;
+  renderListPagination('#budgetCategoryModalList',{itemSelector:'.budget-row',scopeKey:[query,status],label:t('budgetCategoryList')});
 }
 
 function openBudgetCategoryManager({reset=false}={}) {
@@ -656,6 +670,7 @@ function renderSavingsEntries() {
   state.savingsEntries=state.savingsEntries||[];
   $('#savingsEntryList').innerHTML=state.savingsEntries.length?state.savingsEntries.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(entry=>{const goal=state.goalBuckets?.find(item=>item.id===entry.goalId);return `<article class="savings-entry-item"><span class="savings-entry-icon"><svg aria-hidden="true"><use href="#icon-leaf"></use></svg></span><div class="savings-entry-copy"><strong>${escapeHtml(entry.note)}</strong><small><time datetime="${escapeHtml(String(entry.date).slice(0,10))}">${new Intl.DateTimeFormat(locale(),{day:'numeric',month:'long',year:'numeric'}).format(new Date(entry.date))}</time> · ${escapeHtml(goal?.name||t('unknownSavingsGoal'))}</small><span class="savings-entry-profile">${escapeHtml(t(state.accountLabel))}</span></div><span class="savings-entry-amount">+${currency(entry.amount)}</span><button type="button" class="icon-button small" data-edit-savings="${entry.id}" ${entry.locked||entry.sourceType==='enterprise-automation'?`disabled title="${currentLang==='hr'?'Uredite izvorni prihod ili pravilo':'Edit source income or rule'}"`:''} aria-label="${entry.locked||entry.sourceType==='enterprise-automation'?(currentLang==='hr'?'Uredite izvorni prihod ili pravilo':'Edit source income or rule'):t('editSavingsEntry')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></article>`;}).join(''):`<div class="notification-empty">${t('emptyActivity')}</div>`;
   $$('[data-edit-savings]').forEach(button=>button.addEventListener('click',()=>openSavingsDeposit(button.dataset.editSavings)));
+  renderListPagination('#savingsEntryList',{pageSize:bulkyListPageSize,itemSelector:'.savings-entry-item',label:t('allSavingsDeposits')});
 }
 
 function renderUpcoming() {
@@ -723,6 +738,7 @@ function renderProviderPicker() {
   const providers=MerBankProviders.getProviders();
   $('#providerGrid').innerHTML=providers.map(provider=>`<button type="button" class="provider-option ${selectedBankProviderId===provider.id?'active':''}" data-provider-id="${provider.id}" aria-pressed="${selectedBankProviderId===provider.id}"><span class="institution-mark" style="background:${provider.color}">${escapeHtml(provider.name.slice(0,3))}</span><span><strong>${escapeHtml(provider.name)}</strong><small>${escapeHtml(provider.region)}</small></span></button>`).join('');
   $$('[data-provider-id]').forEach(button=>button.addEventListener('click',()=>selectBankProvider(button.dataset.providerId)));
+  renderListPagination('#providerGrid',{itemSelector:'.provider-option',label:t('selectInstitution')});
 }
 
 function selectBankProvider(providerId) {
@@ -739,6 +755,7 @@ function renderProviderAccounts() {
   const alreadyConnected=new Set(appState.bankConnections.filter(connection=>connection.providerId===provider.id).map(connection=>connection.accountId));
   $('#providerAccountList').innerHTML=provider.accounts.map(account=>`<label class="bank-account-choice"><input type="checkbox" name="bankAccount" value="${account.id}" ${alreadyConnected.has(account.id)?'disabled':''}><span><strong>${escapeHtml(account.name)} ${escapeHtml(account.mask)}</strong><small>${escapeHtml(currentLang==='hr'?account.kind:account.kindEn)}${alreadyConnected.has(account.id)?` · ${t('connectedAccount')}`:''}</small></span></label>`).join('');
   setBankAccountSelectionError(false);
+  renderListPagination('#providerAccountList',{pageSize:bulkyListPageSize,itemSelector:'.bank-account-choice',scopeKey:selectedBankProviderId,label:t('chooseAccounts')});
 }
 
 function setBankAccountSelectionError(visible) {
@@ -849,6 +866,7 @@ function renderBankSettings() {
   $$('[data-refresh-bank]').forEach(button=>button.addEventListener('click',()=>runAsyncAction(()=>refreshBankConnection(button.dataset.refreshBank))));
   $$('[data-unlink-bank]').forEach(button=>button.addEventListener('click',()=>requestUnlinkBank(button)));
   bindBankActionTooltips();
+  renderListPagination('#bankConnectionList',{pageSize:bulkyListPageSize,itemSelector:'.bank-connection-card',label:t('connectedBanks')});
   if(bankConnectionStep==='institution')renderProviderPicker();
 }
 
@@ -948,6 +966,7 @@ function renderRecurring() {
   state.recurring=state.recurring||[];
   $('#recurringList').innerHTML=state.recurring.length?state.recurring.map(rule=>{const next=MerCore.nextOccurrence(rule,appReferenceDate);return `<div class="recurring-item"><span class="recurring-date-icon"><svg aria-hidden="true"><use href="#icon-calendar"></use></svg></span><div class="recurring-copy"><strong>${escapeHtml(rule.name)}</strong><small>${t('monthlyOnDay',{day:rule.day})} · ${t('nextCharge',{date:formatIsoDate(next)})}</small></div><span class="recurring-amount">−${currency(rule.amount)}</span><button type="button" class="icon-button small" data-edit-recurring="${rule.id}" aria-label="${t('editExpense')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div>`;}).join(''):`<div class="notification-empty">${t('noRecurring')}</div>`;
   $$('[data-edit-recurring]').forEach(button=>button.addEventListener('click',()=>openRecurring(button.dataset.editRecurring)));
+  renderListPagination('#recurringList',{pageSize:bulkyListPageSize,itemSelector:'.recurring-item',label:t('scheduledPayments')});
 }
 
 function buildNotifications() {
@@ -956,8 +975,8 @@ function buildNotifications() {
   const plan=getPlan();if(plan.monthlyBudget&&plan.safeRemaining/plan.monthlyBudget<.25)push({key:'safe-to-spend',fingerprint:notificationFingerprint([Math.round(plan.safeRemaining*100),Math.round(plan.monthlyBudget*100)]),priority:5,type:'warning',icon:'icon-shield',title:t('alertSpendingTitle'),body:t('alertSpendingBody',{amount:currency(plan.safeRemaining)}),action:t('reviewSpending'),view:'activity'});
   state.categories.forEach(cat=>{const threshold=MerCore.budgetThreshold(cat.spent,cat.limit);if(threshold.percent>=80)push({key:`budget:${cat.id}`,fingerprint:notificationFingerprint([cat.id,Math.round(cat.spent*100),Math.round(cat.limit*100)]),priority:threshold.level==='red'?4:3,type:threshold.level==='red'?'danger':'warning',icon:'icon-wallet',title:t('alertBudgetTitle'),body:t('alertBudgetBody',{category:categoryName(cat.id),percent:Math.round(threshold.percent)}),action:t('reviewBudget'),view:'budgets'});});
   (state.recurring||[]).forEach(rule=>{const next=MerCore.nextOccurrence(rule,appReferenceDate);if(next){const days=Math.round((new Date(`${next}T12:00:00`)-new Date(`${appReferenceDate}T12:00:00`))/86400000);if(days<=20)push({key:`recurring:${rule.id}`,fingerprint:notificationFingerprint([rule.id,next,Math.round(rule.amount*100)]),priority:2,type:'info',icon:'icon-calendar',title:t('alertRecurringTitle'),body:t('alertRecurringBody',{name:rule.name,amount:currency(rule.amount),date:formatIsoDate(next)}),action:t('reviewRecurring'),view:'budgets',detailModal:'budgetDetailsModal'});}});
-  activeSubscriptions().filter(subscription=>subscription.daysUntil>=0&&subscription.daysUntil<=31).slice(0,2).forEach(subscription=>push({key:subscription.id,fingerprint:notificationFingerprint([subscription.id,subscription.nextRenewal,Math.round(subscription.amount*100)]),priority:2,type:'info',icon:'icon-refresh',title:t('recurringSubscriptions'),body:`${subscription.merchant} · ${currency(subscription.amount)} · ${t('renewsIn',{days:subscription.daysUntil})}`,action:t('manageSubscriptions'),view:'budgets',subscriptions:true}));
-  return notifications.sort((left,right)=>right.priority-left.priority||left.key.localeCompare(right.key)).slice(0,6);
+  activeSubscriptions().filter(subscription=>subscription.daysUntil>=0&&subscription.daysUntil<=31).forEach(subscription=>push({key:subscription.id,fingerprint:notificationFingerprint([subscription.id,subscription.nextRenewal,Math.round(subscription.amount*100)]),priority:2,type:'info',icon:'icon-refresh',title:t('recurringSubscriptions'),body:`${subscription.merchant} · ${currency(subscription.amount)} · ${t('renewsIn',{days:subscription.daysUntil})}`,action:t('manageSubscriptions'),view:'budgets',subscriptions:true}));
+  return notifications.sort((left,right)=>right.priority-left.priority||left.key.localeCompare(right.key));
 }
 
 function renderNotifications() {
@@ -968,6 +987,7 @@ function renderNotifications() {
   $('#notificationList').innerHTML=notifications.length?notifications.map((item,index)=>`<article class="notification-item"><span class="notification-symbol ${item.type}"><svg aria-hidden="true"><use href="#${item.icon}"></use></svg></span><div class="notification-copy"><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><div class="notification-actions"><button type="button" class="link-button" data-notification-view="${item.view}" data-notification-review="${item.reviewOnly?'true':'false'}" data-notification-index="${index}">${escapeHtml(item.action)}<span aria-hidden="true">→</span></button><button type="button" class="link-button resolve-alert-button" data-notification-resolve="${index}" aria-label="${escapeHtml(t('resolveNotificationLabel',{title:item.title}))}">${t('markResolved')}</button></div></div></article>`).join(''):`<div class="notification-empty">${t('noNotifications')}</div>`;
   $$('[data-notification-view]').forEach(button=>button.addEventListener('click',()=>{const item=notifications[Number(button.dataset.notificationIndex)];activityReviewOnly=button.dataset.notificationReview==='true';showView(button.dataset.notificationView);renderActivity();closeNotifications();if(item?.subscriptions)openModal($('#subscriptionsModal'));else if(item?.detailModal)openModal($(`#${item.detailModal}`));}));
   $$('[data-notification-resolve]').forEach(button=>button.addEventListener('click',()=>resolveNotification(notifications[Number(button.dataset.notificationResolve)],{closeCenter:false})));
+  renderListPagination('#notificationList',{pageSize:bulkyListPageSize,itemSelector:'.notification-item',label:t('notificationCenter')});
 }
 
 function activeSubscriptions() {
@@ -981,8 +1001,10 @@ function renderSubscriptions() {
   const increases=window.MerEnterpriseCore?.subscriptionRadar(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency}).filter(item=>item.priceHike&&item.currency===appState.settings.currency)||[];
   alerts.hidden=!increases.length;
   alerts.innerHTML=increases.length?`<h3>${currentLang==='en'?'Price increases':'Upozorenja na poskupljenje'}</h3>${increases.map(item=>`<p><strong>${escapeHtml(item.name||item.merchant)}</strong><span data-money>${currency(item.previousCents/100)} → ${currency(item.amountCents/100)}</span><small>+${Number(item.increasePercent||0).toFixed(1)}%</small></p>`).join('')}`:'';
+  renderListPagination('#subscriptionPriceAlerts',{pageSize:bulkyListPageSize,itemSelector:'p',label:currentLang==='en'?'Price increases':'Upozorenja na poskupljenje'});
   $('#subscriptionCount').textContent=String(subscriptions.length);$('#subscriptionTotal').textContent=currency(subscriptions.reduce((sum,item)=>sum+item.amount,0),true);
   $('#subscriptionList').innerHTML=subscriptions.length?subscriptions.map(item=>`<article class="subscription-item"><span class="subscription-logo">${escapeHtml(item.merchant.slice(0,1).toUpperCase())}</span><div><strong>${escapeHtml(item.merchant)}</strong><small>${escapeHtml(categoryName(item.category))} · ${t('renewsIn',{days:Math.max(0,item.daysUntil)})}</small></div><span><strong>−${currency(item.amount)}</strong><small>${formatIsoDate(item.nextRenewal)}</small></span></article>`).join(''):`<div class="notification-empty">${t('noSubscriptions')}</div>`;
+  renderListPagination('#subscriptionList',{pageSize:bulkyListPageSize,itemSelector:'.subscription-item',label:t('recurringSubscriptions')});
 }
 
 function renderCategorySelects() {
@@ -1015,13 +1037,10 @@ function activityPageSequence(totalPages,currentPage,compact=window.matchMedia('
 
 function renderActivityPagination(pagination) {
   activityPage=pagination.page;
-  const continuous=activityViewMode==='continuous';
-  const visible=continuous?pagination.totalItems:pagination.items.length;
-  $('#transactionList').classList.toggle('continuous',continuous);
+  const visible=pagination.items.length;
   $('#activityResultSummary').textContent=t('activityResultCount',{visible,total:pagination.totalItems});
-  $$('[data-activity-view-mode]').forEach(button=>{const active=button.dataset.activityViewMode===activityViewMode;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
   const navigation=$('#activityPagination');
-  navigation.hidden=continuous||pagination.totalItems<=pagination.pageSize;
+  navigation.hidden=pagination.totalItems<=pagination.pageSize;
   $('#activityPreviousPage').disabled=pagination.page<=1;
   $('#activityNextPage').disabled=pagination.page>=pagination.totalPages;
   $('#activityPageNumbers').innerHTML=activityPageSequence(pagination.totalPages,pagination.page).map(page=>page===null?'<span class="activity-page-ellipsis" aria-hidden="true">…</span>':`<button type="button" class="activity-page-button${page===pagination.page?' active':''}" data-activity-page="${page}" ${page===pagination.page?'aria-current="page"':''} aria-label="${t('activityPageLabel',{page,pages:pagination.totalPages})}">${page}</button>`).join('');
@@ -1051,7 +1070,7 @@ function renderActivity() {
     getCategoryLabel:(tx,type)=>type==='income'?incomeCategoryName(tx.category):categoryName(tx.category)
   });
   const pagination=MerCore.paginateItems(filtered,activityPage,ACTIVITY_PAGE_SIZE);
-  const visibleTransactions=activityViewMode==='continuous'?filtered:pagination.items;
+  const visibleTransactions=pagination.items;
   renderActivityPagination(pagination);
   $('#activityEmpty').hidden = filtered.length > 0;
   let lastDate = '';
@@ -1083,6 +1102,7 @@ function cashflowLabel(key) {
 function renderIncomeCategories() {
   $('#incomeCategoryList').innerHTML=state.incomeCategories.map(cat=>{const visual=incomeCategoryVisual(cat);const count=state.transactions.filter(tx=>MerCore.transactionType(tx)==='income'&&tx.category===cat.id).length;return `<div class="income-category-item"><span class="category-icon ${visual.className}">${categoryIconMarkup(visual)}</span><div><strong>${escapeHtml(incomeCategoryName(cat.id))}</strong><small>${count} ${t('transactionsShort')}</small></div>${cat.isCustom?`<button type="button" class="icon-button small" data-edit-income-category="${cat.id}" aria-label="${t('editIncome')}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button>`:'<span class="default-category-mark">mer</span>'}</div>`;}).join('');
   $$('[data-edit-income-category]').forEach(button=>button.addEventListener('click',()=>openIncomeCategoryEditor(button.dataset.editIncomeCategory)));
+  renderListPagination('#incomeCategoryList',{pageSize:bulkyListPageSize,itemSelector:'.income-category-item',label:t('incomeCategories')});
 }
 
 function renderInsights() {
@@ -1115,6 +1135,7 @@ function renderInsights() {
   if(!chartEmpty){const cashflowDomain=MerCore.chartDomain(groups.flatMap(group=>[group.income,group.expenses]));$('#cashflowChart').innerHTML=groups.map(group=>`<div class="cashflow-column" aria-label="${cashflowLabel(group.key)}: ${t('income')} ${currency(group.income)}, ${t('expense')} ${currency(group.expenses)}"><div class="cashflow-bars"><span class="income-bar" style="height:${MerCore.scaleChartValue(group.income,cashflowDomain,150,8)}px"><b>${group.income?currency(group.income,true):''}</b></span><span class="expense-bar" style="height:${MerCore.scaleChartValue(group.expenses,cashflowDomain,150,8)}px"><b>${group.expenses?currency(group.expenses,true):''}</b></span></div><small>${cashflowLabel(group.key)}</small></div>`).join('');$('#cashflowChart').setAttribute('aria-label',`${t('cashflowChart')}: ${groups.map(group=>`${cashflowLabel(group.key)}, ${t('income')} ${currency(group.income)}, ${t('expense')} ${currency(group.expenses)}`).join('; ')}`);}
   const expenses=filtered.filter(tx=>MerCore.transactionType(tx)==='expense');const byCategory=MerCore.categoryExpenseTotals(state.transactions,insightsTimeframe,reference);const breakdown=Object.entries(byCategory).filter(([,amount])=>amount>0).sort((a,b)=>b[1]-a[1]);const expenseTotal=breakdown.reduce((sum,[,amount])=>sum+amount,0);
   $('#categoryBreakdown').innerHTML=breakdown.length?breakdown.map(([id,amount])=>{const pct=MerCore.ratioPercent(amount,expenseTotal,100);return `<div class="breakdown-row"><div><strong>${escapeHtml(categoryName(id))}</strong><span>${currency(amount)}</span></div><div class="breakdown-track"><span style="width:${pct}%"></span></div><small>${number(pct,0)}%</small></div>`;}).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
+  renderListPagination('#categoryBreakdown',{itemSelector:'.breakdown-row',scopeKey:insightsTimeframe,label:t('categoryBreakdown')});
   const palette=['#16574b','#00a9e4','#a7c83f','#f2b544','#e66d65','#755bb4','#8fa39e'];
   const segments=MerCore.proportionalSegments(breakdown).map((segment,index)=>({id:segment.entry[0],amount:segment.value,start:segment.start,end:segment.end,color:palette[index%palette.length]}));
   $('#categoryDonut').style.background=segments.length?`conic-gradient(${segments.map(segment=>`${segment.color} ${segment.start}% ${segment.end}%`).join(',')})`:'var(--canvas)';
@@ -1308,6 +1329,7 @@ function openModal(modal) {
   $('#modalBackdrop').hidden=true;
   if(mobileSidebarTrigger||activeElement)modalReturnFocus.set(modal,mobileSidebarTrigger||activeElement);
   modal.setAttribute('aria-modal','true');
+  window.MerZeroScroll?.enhance(modal);
   window.MerModalFooters?.enhance(modal);
   modal.showModal();
   document.body.classList.add('modal-active');
@@ -1781,7 +1803,6 @@ function renderActivityFromFirstPage(){activityPage=1;renderActivity();}
 $('#activitySearch').addEventListener('input',renderActivityFromFirstPage);
 $('#activityFiltersToggle').addEventListener('click',()=>setActivityFiltersOpen($('#activityFiltersPanel').hidden));
 ['activityFilter','activityTypeFilter','activityDateFrom','activityDateTo','activitySort'].forEach(id=>$('#'+id).addEventListener('change',renderActivityFromFirstPage));
-$$('[data-activity-view-mode]').forEach(button=>button.addEventListener('click',()=>{activityViewMode=button.dataset.activityViewMode==='continuous'?'continuous':'pages';activityPage=1;renderActivity();$('#transactionList').scrollTop=0;}));
 $('#activityPreviousPage').addEventListener('click',()=>{if(activityPage<=1)return;activityPage-=1;renderActivity();$('#transactionList').scrollTop=0;});
 $('#activityNextPage').addEventListener('click',()=>{activityPage+=1;renderActivity();$('#transactionList').scrollTop=0;});
 function resetActivityFilters({render=true}={}) {

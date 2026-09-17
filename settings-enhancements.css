@@ -1,12 +1,12 @@
-/* Compact desktop settings; one fallback scroll owner keeps zoom/mobile usable. */
+/* Settings use mounted subviews and short pages, with no inner scroll owner. */
 html body #bankSettingsModal:not(.tour-modal-host)[open] {
   width:min(1040px,calc(100vw - 32px));max-width:1040px;
-  height:auto;max-height:calc(100dvh - 32px);padding:24px;overflow:hidden;
+  height:fit-content;max-height:calc(100dvh - 32px);padding:24px;overflow:visible;
 }
 html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body {
-  flex:0 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0;scrollbar-gutter:auto;
+  flex:0 0 auto;min-height:0;overflow:visible;padding:0;scrollbar-gutter:auto;
 }
-html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body[data-content-fits="true"] { overflow-y:hidden; }
+html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body[data-content-fits="true"] { overflow:visible; }
 #bankSettingsModal>.modal-intro { margin:6px 0 0;font-size:13px;line-height:1.45; }
 #bankSettingsModal .settings-tabs { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:10px 0;position:static; }
 #bankSettingsModal .settings-tabs button { min-width:0;min-height:44px;white-space:normal;text-wrap:balance; }
@@ -17,7 +17,7 @@ html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body[data-con
 #bankSettingsModal .settings-action-row { padding:12px; }
 #bankSettingsModal .settings-action-row small { display:none; }
 #bankSettingsModal [data-settings-panel="general"]>.toggle-setting { margin:0;padding:12px; }
-#bankSettingsModal .settings-personal-grid { display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px;align-items:start; }
+#bankSettingsModal .settings-personal-grid { display:block; }
 #bankSettingsModal .personal-data-intro { font-size:13px;line-height:1.5;color:var(--muted);margin:0 0 14px; }
 #bankSettingsModal .personal-data-fields { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
 #bankSettingsModal .personal-data-fields label { display:flex;flex-direction:column;gap:5px;min-width:0;font-size:14px;line-height:1.5;color:var(--ink);margin:0; }
@@ -30,7 +30,7 @@ html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body[data-con
 #bankSettingsModal .personal-data-feedback:empty { display:none; }
 #bankSettingsModal .personal-data-actions { display:flex;justify-content:flex-end;margin:12px 0 0; }
 #bankSettingsModal .personal-data-portability { margin:12px 0 0;font-size:12px;line-height:1.5;color:var(--muted); }
-#bankSettingsModal .settings-data-actions { min-width:0;border-left:1px solid var(--line);padding-left:24px; }
+#bankSettingsModal .settings-data-actions { min-width:0;border:0;padding:0; }
 #bankSettingsModal .settings-data-actions h3 { margin:0 0 6px;font-size:16px; }
 #bankSettingsModal .settings-data-actions p { margin:0 0 12px;font-size:13px;line-height:1.5; }
 #bankSettingsModal .settings-data-actions .enterprise-action-grid { grid-template-columns:1fr;gap:8px; }
@@ -49,10 +49,12 @@ html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body[data-con
 #bankSettingsModal .settings-topic-option input:checked { border:5px solid var(--blue); }
 #bankSettingsModal .security-access-card { border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0; }
 #bankSettingsModal .security-access-header h3 { margin:0 0 8px;font-size:17px;line-height:1.4; }
-#bankSettingsModal .security-access-grid { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start; }
+#bankSettingsModal .security-access-grid { display:grid;grid-template-columns:minmax(0,1fr);gap:0;align-items:start; }
 #bankSettingsModal .security-access-grid>form { padding:0;border:0;background:transparent;min-width:0; }
-#bankSettingsModal .security-access-grid>#settingsTourMfa { min-width:0;border-left:1px solid var(--line);padding-left:20px; }
-#bankSettingsModal .security-access-tabs { display:none; }
+#bankSettingsModal .security-access-grid>#settingsTourMfa { min-width:0;border:0;padding:0; }
+#bankSettingsModal .security-access-tabs { display:flex;gap:6px;margin:0 0 12px; }
+#bankSettingsModal .security-access-tabs button { flex:1;min-height:44px; }
+#bankSettingsModal .security-access-tabs [aria-pressed="true"] { border-color:var(--blue);background:var(--blue-soft); }
 #bankSettingsModal .security-form-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
 #bankSettingsModal .security-form-grid label { font-size:13px;line-height:1.4;gap:4px;margin:0;min-width:0; }
 #bankSettingsModal .security-form-grid label:first-child { grid-column:1 / -1; }
@@ -94,13 +96,13 @@ html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body[data-con
   #bankSettingsModal .rule-builder-submit { grid-column:4;min-width:120px; }
 }
 @media(max-width:800px) {
-  html body #bankSettingsModal:not(.tour-modal-host)[open] { width:calc(100vw - 20px);max-height:calc(100dvh - 20px);height:auto;padding:18px 16px; }
+  html body #bankSettingsModal:not(.tour-modal-host)[open] { width:calc(100vw - 20px);max-height:calc(100dvh - 20px);height:fit-content;padding:18px 16px; }
   #bankSettingsModal .settings-tabs { margin:12px 0; }
   #bankSettingsModal .settings-tabs button { font-size:12px;min-height:44px;padding:7px 4px; }
   #bankSettingsModal .settings-form-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
   #bankSettingsModal .settings-quick-actions { grid-template-columns:1fr;gap:8px;margin:12px 0; }
   #bankSettingsModal .settings-personal-grid { grid-template-columns:1fr;gap:16px; }
-  #bankSettingsModal .settings-data-actions { border-left:0;border-top:1px solid var(--line);padding:14px 0 0; }
+  #bankSettingsModal .settings-data-actions { border:0;padding:0; }
   #bankSettingsModal .personal-data-fields input { font-size:16px; }
   #bankSettingsModal .settings-topic-options { grid-template-columns:repeat(3,minmax(0,1fr));gap:5px; }
   #bankSettingsModal .settings-topic-option { padding:8px 6px;gap:5px;align-items:center; }
@@ -119,3 +121,103 @@ html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body[data-con
   #bankSettingsModal .rules-pagination button { padding:8px;font-size:12px; }
 }
 @media(prefers-reduced-motion:reduce) { #bankSettingsModal .settings-pane { animation:none; } }
+
+/* Each tab has its own bounded page; switching never recreates the form. */
+:is(#bankSettingsModal,#importDataModal) .settings-subtabs { display:flex;gap:6px;margin:0 0 12px; }
+:is(#bankSettingsModal,#importDataModal) .settings-subtabs[hidden],
+:is(#bankSettingsModal,#importDataModal) .settings-subview[hidden] { display:none!important; }
+:is(#bankSettingsModal,#importDataModal) .settings-subtabs button { flex:1;min-width:0;min-height:44px;padding:8px 10px;font-size:13px;line-height:1.35;white-space:normal; }
+:is(#bankSettingsModal,#importDataModal) .settings-subtabs [aria-selected="true"] { border-color:var(--blue);background:var(--blue-soft);color:var(--ink); }
+:is(#bankSettingsModal,#importDataModal) .settings-subtabs button:focus-visible { outline:2px solid var(--blue);outline-offset:2px; }
+:is(#bankSettingsModal,#importDataModal) .settings-subview { min-width:0;overflow:visible; }
+#bankSettingsModal .security-access-header h3 { position:absolute;width:1px;height:1px;margin:-1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap; }
+#bankSettingsModal .security-access-card { border:0;padding:0; }
+#bankSettingsModal .settings-quick-actions { margin:0; }
+#bankSettingsModal .settings-data-actions .enterprise-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#bankSettingsModal .active-session-list { max-height:none;overflow:visible; }
+#bankSettingsModal .active-session-item { min-width:0;padding:8px; }
+#bankSettingsModal .active-session-copy strong { font-size:14px;line-height:1.4;overflow-wrap:anywhere; }
+#bankSettingsModal .active-session-copy small,#bankSettingsModal .active-session-current { font-size:12px;line-height:1.4;overflow-wrap:anywhere; }
+#bankSettingsModal .mfa-account-views:has(#recoveryPanel[hidden]):has(#mfaDisable[hidden]) { display:none; }
+#bankSettingsModal .info-note { margin:0;font-size:13px;line-height:1.5; }
+#bankSettingsModal .mfa-setup .setup-step { min-width:0; }
+#bankSettingsModal .mfa-setup input { min-height:44px; }
+#bankSettingsModal .recovery-codes { grid-template-columns:repeat(4,minmax(0,1fr)); }
+#bankSettingsModal .recovery-codes code { min-width:0;font-size:12px;overflow-wrap:anywhere;padding:6px 4px; }
+#bankSettingsModal .automation-rule { display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr) auto;gap:6px; }
+#bankSettingsModal .automation-rule .rule-type-pill { grid-column:3;grid-row:2;justify-self:start; }
+#bankSettingsModal .automation-rule>button { grid-column:4;grid-row:1 / 3; }
+#bankSettingsModal .automation-rule-side { min-width:0; }
+#bankSettingsModal .automation-rule-side>span { display:none; }
+#bankSettingsModal .automation-rule-side>strong { white-space:normal;overflow-wrap:anywhere;font-size:13px;line-height:1.4; }
+#bankSettingsModal .rules-empty-state { padding:16px;gap:12px; }
+#bankSettingsModal .rules-example { padding:10px; }
+#bankSettingsModal .rules-example>div { flex-wrap:wrap; }
+#bankSettingsModal .settings-subview .personal-data-actions { margin-top:12px; }
+#bankSettingsModal .settings-subview .personal-data-portability { margin-top:14px; }
+#bankSettingsModal .settings-subview .toggle-setting { margin:0; }
+#bankSettingsModal>.mer-modal-footer { margin-top:12px; }
+
+html body #importDataModal:not(.tour-modal-host)[open] { width:min(1080px,calc(100vw - 32px));max-height:calc(100dvh - 32px);height:auto;overflow:visible;padding:22px; }
+#importDataModal .import-workspace { min-height:0;min-width:0;overflow:visible; }
+#importDataModal .import-review { display:block;overflow:visible;min-height:0; }
+#importDataModal .import-review[hidden] { display:none; }
+#importDataModal .import-table-wrap { max-height:none;min-height:0;overflow:visible;scrollbar-gutter:auto; }
+#importDataModal .import-table { min-width:0;table-layout:fixed; }
+#importDataModal .import-table th:first-child { width:70px; }
+#importDataModal .import-table th:nth-child(2) { width:150px; }
+#importDataModal .import-table th:nth-child(4) { width:115px; }
+#importDataModal .import-table th:nth-child(5) { width:120px; }
+#importDataModal .import-table :is(input,select) { min-width:0;font-size:13px; }
+#importDataModal .import-dropzone { margin:0;padding:18px; }
+#importDataModal .import-dropzone>strong { font-size:16px; }
+#importDataModal .import-dropzone>p { font-size:13px; }
+#importDataModal .import-summary { margin:0 0 8px;font-size:13px; }
+#importDataModal .import-pagination { margin:10px 0; }
+#importDataModal .import-pagination :is(button,span) { min-width:0;font-size:13px; }
+#importDataModal .import-commit-actions { margin-top:10px;padding-top:10px; }
+#importDataModal .settings-pane-heading { margin-bottom:12px;padding-right:28px; }
+#importDataModal .settings-pane-heading h2 { font-size:24px;line-height:1.3; }
+#importDataModal .bulk-editor { margin:0; }
+#importDataModal .bulk-override-confirmation { margin-top:12px; }
+@media(max-width:800px) {
+  html body #bankSettingsModal:not(.tour-modal-host)[open]:has([data-settings-panel="security"].active) { padding-block:12px; }
+  #bankSettingsModal [data-settings-panel="security"] .settings-pane-heading { margin-bottom:8px; }
+  #bankSettingsModal [data-settings-panel="security"] .settings-topic-picker { margin-bottom:8px; }
+  #bankSettingsModal .settings-topic-option { padding:6px; }
+  #bankSettingsModal .settings-topic-option span { font-size:12px; }
+  #bankSettingsModal .security-access-tabs { margin-bottom:10px; }
+  #bankSettingsModal .security-access-grid .security-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #bankSettingsModal .security-access-grid .security-form-grid label:first-child { grid-column:1 / -1; }
+  #bankSettingsModal .security-section-heading small { font-size:12px;line-height:1.4; }
+  #bankSettingsModal .personal-data-fields { gap:8px; }
+  #bankSettingsModal .personal-data-fields label { font-size:13px; }
+  #bankSettingsModal .settings-data-actions .demo-reset-card { margin-top:10px; }
+  #bankSettingsModal .recovery-codes { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #bankSettingsModal .active-session-item { grid-template-columns:minmax(0,1fr) auto;gap:4px; }
+  #bankSettingsModal .active-session-device { display:none; }
+  #bankSettingsModal .active-session-current { grid-column:auto;max-width:90px; }
+  #bankSettingsModal .rule-builder { display:grid;grid-template-columns:1fr;gap:8px;padding:10px; }
+  #bankSettingsModal .rule-builder-arrow { display:none; }
+  #bankSettingsModal .rule-builder-step { padding:6px; }
+  #bankSettingsModal .rule-result-fields { display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1fr);gap:8px; }
+  #bankSettingsModal .rule-builder-submit { width:100%;margin:0; }
+  #bankSettingsModal .rule-builder input,#bankSettingsModal .rule-builder select { font-size:16px;min-height:44px; }
+  :is(#bankSettingsModal,#importDataModal) .settings-subtabs button { padding:7px 5px;font-size:12px; }
+  html body #importDataModal:not(.tour-modal-host)[open] { width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:16px; }
+  #importDataModal .settings-pane-heading h2 { font-size:20px; }
+  #importDataModal .settings-pane-heading .overline { display:none; }
+  #importDataModal .import-table :is(thead) { display:none; }
+  #importDataModal .import-table,#importDataModal .import-table tbody { display:block; }
+  #importDataModal .import-table tr { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px; }
+  #importDataModal .import-table td { display:flex;flex-direction:column;gap:3px;padding:0;border:0;min-width:0; }
+  #importDataModal .import-table td::before { content:attr(data-label);font-size:11px;line-height:1.3;color:var(--muted); }
+  #importDataModal .import-table td:nth-child(3),#importDataModal .import-table td:nth-child(6) { grid-column:1 / -1; }
+  #importDataModal .import-table :is(input:not([type="checkbox"]),select) { min-height:40px;padding:5px 7px;font-size:16px;border-color:var(--line);background:var(--panel); }
+  #importDataModal .import-table input[type="checkbox"] { width:20px;height:20px;min-height:20px;margin:8px; }
+  #importDataModal .import-pagination button { min-height:44px;padding:7px; }
+  #importDataModal .import-commit-actions { display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px; }
+  #importDataModal .import-commit-actions button { min-width:0;padding:8px;font-size:12px;white-space:normal; }
+  #importDataModal .bulk-editor { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+  #importDataModal .bulk-editor>button { grid-column:1/-1; }
+}

@@ -2,14 +2,15 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),N=require('../natural-input-core.js');
 const source=fs.readFileSync(require.resolve('../natural-input-ui.js'),'utf8'),css=fs.readFileSync(require.resolve('../natural-input-ui.css'),'utf8');
 class Element{
-  constructor(tag,document){this.tagName=tag;this.document=document;this.children=[];this.attributes={};this.listeners=new Map();this.id='';this.className='';this.hidden=false;this.disabled=false;this.checked=false;this.value='';this.open=false;this.classList={toggle:(name,on)=>{const names=new Set(this.className.split(/\s+/));if(on)names.add(name);else names.delete(name);this.className=[...names].join(' ');}};}
+  constructor(tag,document){this.tagName=tag;this.document=document;this.children=[];this.attributes={};this.dataset={};this.listeners=new Map();this.id='';this.className='';this.hidden=false;this.disabled=false;this.checked=false;this.value='';this.open=false;this.classList={toggle:(name,on)=>{const names=new Set(this.className.split(/\s+/));if(on)names.add(name);else names.delete(name);this.className=[...names].join(' ');},add:(...names)=>names.forEach(name=>this.classList.toggle(name,true))};}
   setAttribute(name,value){this.attributes[name]=String(value);if(['id','type','value'].includes(name))this[name]=value;if(name==='class')this.className=value;if(name==='hidden')this.hidden=true;}
   getAttribute(name){return this.attributes[name]??null;}
-  append(...nodes){nodes.forEach(node=>{node.parentElement=this;this.children.push(node);});}
+  append(...nodes){nodes.forEach(node=>{if(node.parentElement)node.parentElement.children=node.parentElement.children.filter(child=>child!==node);node.parentElement=this;this.children.push(node);});}
+  prepend(...nodes){[...nodes].reverse().forEach(node=>{if(node.parentElement)node.parentElement.children=node.parentElement.children.filter(child=>child!==node);node.parentElement=this;this.children.unshift(node);});}
   insertBefore(node,target){node.parentElement=this;const index=this.children.indexOf(target);if(index<0)this.children.push(node);else this.children.splice(index,0,node);}
   set innerHTML(value){this._html=value;this.children=[];const stack=[this],voids=new Set(['input','br','hr','img','meta','link']);for(const match of value.matchAll(/<(\/?)([a-z][\w-]*)(\s+(?:[^>"']|"[^"]*"|'[^']*')*)?\s*(\/?)>/gi)){const[,closing,tag,raw='',self]=match;if(closing){if(stack.length>1)stack.pop();continue;}const node=new Element(tag,this.document);for(const item of raw.matchAll(/([\w:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g))node.setAttribute(item[1],item[2]??item[3]??item[4]??'');stack.at(-1).append(node);if(!voids.has(tag)&&!self)stack.push(node);}}
   get innerHTML(){return this._html||'';}
-  matches(selector){if(selector.startsWith('#'))return this.id===selector.slice(1);if(selector.startsWith('[')){const attrs=[...selector.matchAll(/\[([^=\]]+)(?:="([^"]*)")?\]/g)];return attrs.every(([,name,value])=>Object.hasOwn(this.attributes,name)&&(value===undefined||this.attributes[name]===value));}return this.tagName===selector;}
+  matches(selector){if(selector.startsWith('#'))return this.id===selector.slice(1);if(selector.startsWith('.'))return this.className.split(/\s+/).includes(selector.slice(1));if(selector.startsWith('[')){const attrs=[...selector.matchAll(/\[([^=\]]+)(?:="([^"]*)")?\]/g)];return attrs.every(([,name,value])=>Object.hasOwn(this.attributes,name)&&(value===undefined||this.attributes[name]===value));}return this.tagName===selector;}
   querySelectorAll(selector){const found=[];for(const child of this.children){if(child.matches(selector))found.push(child);found.push(...child.querySelectorAll(selector));}return found;}
   querySelector(selector){return this.querySelectorAll(selector)[0]||null;}
   addEventListener(type,callback){if(!this.listeners.has(type))this.listeners.set(type,[]);this.listeners.get(type).push(callback);}
@@ -37,6 +38,11 @@ async function main(){
     assert.equal(h.get('naturalInputText').getAttribute('type'),'text');
     assert.equal(h.get('naturalInputText').getAttribute('maxlength'),'600');
     assert.ok(h.get('naturalInputToggle').querySelector('svg'),'compact trigger uses vector icon, not a second full-width toolbar');
+    const actions=h.dialog.querySelector('.natural-input-actions');
+    assert.ok(actions.className.split(/\s+/).includes('modal-actions'),'sentence actions share the modal footer layout');
+    assert.deepEqual(actions.children.map(node=>node.id),['naturalInputBack','naturalInputLocal','naturalInputAI'],'Back moves into the footer before both fill actions');
+    assert.equal(h.get('naturalInputBack').dataset.footerLeft,'','Back retains the left footer position');
+    assert.equal(h.dialog.querySelectorAll('#naturalInputBack').length,1,'the existing Back control moves without duplication');
     await h.click('naturalInputToggle');h.text('Jučer sam potrošio 35,50 eura u Konzumu');await h.click('naturalInputAI');assert.equal(h.requests.length,0);assert.equal(h.applied.length,0);assert.match(h.get('naturalInputStatus').textContent,/potvrdite slanje/);
     assert.ok(h.dialog.className.includes('is-natural-input-open'),'progressive input replaces the full manual form instead of stacking');
     await h.click('naturalInputLocal');assert.equal(h.requests.length,0);assert.equal(h.applied[0].amount,35.5);assert.equal(h.applied[0].date,'2026-02-28');assert.equal(h.state.profile.transactions.length,0,'only draft fields are filled; finances never saved');assert.match(h.get('naturalInputStatus').textContent,/Lokalni prijedlog/);

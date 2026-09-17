@@ -18,7 +18,7 @@
     if(!panel)return;
     const toggleLabel=copy('Unesi rečenicom','Enter a sentence');
     el('naturalInputToggle').setAttribute('aria-label',toggleLabel);el('naturalInputToggle').setAttribute('title',toggleLabel);
-    el('naturalInputBack').textContent=copy('Natrag na obrazac','Back to form');
+    el('naturalInputBack').textContent=copy('Natrag','Back');
     el('naturalInputHint').textContent=copy('Opišite prihod ili trošak. Prijedlog provjerite u obrascu prije spremanja.','Describe income or an expense. Review the suggestion in the form before saving.');
     el('naturalSpeechNotice').textContent=copy('Mikrofon koristi prepoznavanje govora preglednika, koje može poslati glas svojem servisu.','The microphone uses your browser’s speech recognition, which may send audio to its service.');
     el('naturalInputLabel').textContent=copy('Opišite jednu transakciju','Describe one transaction');
@@ -87,6 +87,10 @@
     panel.innerHTML='<button type="button" class="natural-input-toggle" id="naturalInputToggle" aria-expanded="false" aria-controls="naturalInputBody"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4L12 3Z"></path><path d="m20 2 .6 1.4L22 4l-1.4.6L20 6l-.6-1.4L18 4l1.4-.6L20 2Z"></path></svg></button><div id="naturalInputBody" hidden><button type="button" class="natural-input-back" id="naturalInputBack"></button><p class="natural-input-hint" id="naturalInputHint"></p><label for="naturalInputText" id="naturalInputLabel"></label><div class="natural-sentence-row"><input type="text" id="naturalInputText" maxlength="600" autocomplete="off" enterkeyhint="done"><button type="button" class="secondary-button natural-mic" id="naturalMic" aria-pressed="false" aria-describedby="naturalSpeechNotice"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"></path></svg></button></div><p class="natural-privacy" id="naturalSpeechNotice"></p><label class="natural-consent"><input type="checkbox" id="naturalConsent"><span id="naturalConsentLabel"></span></label><p class="natural-privacy" id="naturalPrivacySummary"></p><div class="natural-input-actions"><button type="button" class="secondary-button" id="naturalInputLocal"></button><button type="button" class="primary-button" id="naturalInputAI"></button></div></div><p id="naturalInputStatus" class="natural-status" role="status" aria-live="polite" hidden></p>';
     dialog.insertBefore(panel,el('transactionForm'));
     el('naturalInputToggle').addEventListener('click',()=>{if(el('naturalInputBody').hidden){show();el('naturalInputText').focus();}else{stop();hideEditor();status('');}});
+    const actions=panel.querySelector('.natural-input-actions');
+    actions.classList.add('modal-actions');
+    actions.prepend(el('naturalInputBack'));
+    el('naturalInputBack').dataset.footerLeft='';
     el('naturalInputBack').addEventListener('click',()=>{stop();hideEditor();status('');el('naturalInputToggle').focus();});
     el('naturalInputAI').addEventListener('click',()=>parse('openai'));el('naturalInputLocal').addEventListener('click',()=>parse('local'));el('naturalMic').addEventListener('click',startSpeech);
     el('naturalInputText').addEventListener('input',()=>{if(busy)stop();status('');});

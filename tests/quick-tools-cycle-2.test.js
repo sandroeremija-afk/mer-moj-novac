@@ -95,7 +95,7 @@ function budgetHarness(){
   const nodes=new Map(),categories=(prefix,count)=>Array.from({length:count},(_,index)=>({id:`${prefix}-${index+1}`,limit:100,spent:20}));
   const profiles={personal:{categories:categories('personal',17)},business:{categories:categories('business',3)}};
   const context={
-    state:profiles.personal,MerCore:require('../core.js'),window:{},
+    state:profiles.personal,MerCore:require('../core.js'),window:{},renderListPagination:()=>{},
     getPlan:()=>({monthlyBudget:2000,safeRemaining:1000}),
     currency:value=>`${value} €`,t:key=>key,
     notificationFingerprint:JSON.stringify,isNotificationResolved:()=>false,

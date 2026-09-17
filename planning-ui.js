@@ -14,6 +14,36 @@
   let fireDialog, renewalsDialog, owner = null, editingRenewalId = null, renewalOriginal = null, fireDraft = null, lastReminderSignature = '';
   const fireSessions = new WeakMap();
   let firePresentation = '', renewalPresentation = '';
+  let firePanel = 'capital', projectionPanel = 'overview', renewalPanel = 'list';
+  function tabs(id, items, selected, attribute) {
+    return `<div class="planning-tabs" role="tablist" aria-label="${say('Prikaz','View')}">${items.map(([key,label]) => `<button type="button" id="${id}-tab-${key}" role="tab" aria-controls="${id}-panel-${key}" aria-selected="${key===selected}" tabindex="${key===selected?'0':'-1'}" ${attribute}="${key}">${label}</button>`).join('')}</div>`;
+  }
+  function selectPanel(container, id, key, attribute) {
+    container.querySelectorAll(`[${attribute}]`).forEach(button => {
+      const selected = button.dataset[attribute.slice(5).replace(/-([a-z])/g, (_, character) => character.toUpperCase())] === key;
+      button.setAttribute('aria-selected', String(selected)); button.setAttribute('tabindex', selected ? '0' : '-1');
+    });
+    container.querySelectorAll(`[data-panel-group="${id}"]`).forEach(panel => { panel.hidden = panel.id !== `${id}-panel-${key}`; });
+  }
+  function bindTabs(container, attribute, change) {
+    container._planningTabBindings ||= new Set();
+    if (container._planningTabBindings.has(attribute)) return;
+    container._planningTabBindings.add(attribute);
+    container.addEventListener('click', event => {
+      const button = event.target.closest(`[${attribute}]`);
+      if (button) change(button.dataset[attribute.slice(5).replace(/-([a-z])/g, (_, character) => character.toUpperCase())]);
+    });
+    container.addEventListener('keydown', event => {
+      const button = event.target.closest(`[${attribute}]`);
+      if (!button || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+      const buttons = Array.from(container.querySelectorAll(`[${attribute}]`)), current = buttons.indexOf(button);
+      const next = event.key==='Home' ? 0 : event.key==='End' ? buttons.length-1 : (current+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;
+      event.preventDefault(); buttons[next].click(); buttons[next].focus();
+    });
+  }
+  function panel(id, key, selected, content) {
+    return `<section id="${id}-panel-${key}" class="planning-panel" role="tabpanel" aria-labelledby="${id}-tab-${key}" data-panel-group="${id}" ${key===selected?'':'hidden'}>${content}</section>`;
+  }
   const sliderDefinitions = [
     {key:'netWorth', hr:'Uloživa neto imovina', en:'Investable net worth', min:0, max:1000000, step:100, numberStep:0.01, monetary:true},
     {key:'monthlyContribution', hr:'Mjesečno izdvajanje', en:'Monthly contribution', min:0, max:10000, step:25, numberStep:0.01, monetary:true},
@@ -74,8 +104,8 @@
       showToast(say('Pretpostavke su spremljene za ovaj profil.','Assumptions saved for this profile.'));
     });
   }
-  function fireInputs() {
-    return sliderDefinitions.map(item => {
+  function fireInputs(keys) {
+    return sliderDefinitions.filter(item => keys.includes(item.key)).map(item => {
       const value = fireDraft[item.key], label = say(item.hr, item.en), suffix = item.monetary ? options().currency : '%';
       return `<div class="planning-slider"><label for="fire-${item.key}">${label}</label><div class="planning-value-input"><input id="fire-${item.key}" data-fire-number="${item.key}" type="number" step="${item.numberStep || item.step}" value="${value}" min="${item.min}" max="${item.monetary ? 1000000000 : item.max}" aria-label="${label}"><span>${suffix}</span></div><input type="range" data-fire-slider="${item.key}" min="${item.min}" max="${Math.max(item.max, Number(value) || 0)}" step="any" value="${value}" aria-label="${label}"></div>`;
     }).join('');
@@ -98,7 +128,10 @@
     el('fireSavingsRateHelp').textContent = income > 0 ? say(`Mjesečni prihod profila: ${money(Math.round(income*100))}. Klizač mijenja mjesečno izdvajanje.`,`Profile monthly income: ${money(Math.round(income*100))}. The slider changes your monthly contribution.`) : say('Stopa štednje dostupna je kad profil ima mjesečni prihod. Mjesečno izdvajanje možete unijeti izravno.','The savings rate is available when this profile has monthly income. You can enter a monthly contribution directly.');
   }
   function renderFire() {
-    el('planningFire').innerHTML = `<p class="planning-intro">${say('Pomaknite klizače i usporedite put do financijske neovisnosti. Iznosi su izraženi u današnjoj kupovnoj moći.','Adjust the sliders to explore financial independence. Amounts are shown in today’s purchasing power.')}</p><div class="planning-fire-grid"><form class="planning-inputs" id="fireInputs">${savingsRateInput()}${fireInputs()}</form><div id="fireProjection" aria-live="polite"></div></div>`;
+    const sections = [['capital',say('Imovina','Capital')],['savings',say('Štednja','Savings')],['assumptions',say('Pretpostavke','Assumptions')],['projection',say('Projekcija','Projection')]];
+    el('planningFire').innerHTML = `${tabs('fire',sections,firePanel,'data-fire-view')}<form class="planning-inputs" id="fireInputs">${panel('fire','capital',firePanel,fireInputs(['netWorth','monthlyContribution']))}${panel('fire','savings',firePanel,savingsRateInput()+fireInputs(['monthlySpending']))}${panel('fire','assumptions',firePanel,fireInputs(['annualReturn','withdrawalRate','inflation']))}</form>${panel('fire','projection',firePanel,`<div id="fireProjection" aria-live="polite"></div>`)}`;
+    bindTabs(el('planningFire'),'data-fire-view',key=>{firePanel=key;selectPanel(el('planningFire'),'fire',key,'data-fire-view');});
+    bindTabs(el('planningFire'),'data-fire-projection',key=>{projectionPanel=key;selectPanel(el('fireProjection'),'fire-result',key,'data-fire-projection');});
     el('fireInputs').addEventListener('submit', event => event.preventDefault());
     el('fireInputs').addEventListener('input', event => {
       if (owner !== activeId()) return;
@@ -126,6 +159,7 @@
     renderProjection();
   }
   function renderProjection() {
+    const restoreFocus=root.MerPlanNavigation?.preserveFocus?.(fireDialog);
     const result = P.calculateFire(fireDraft, options());
     el('saveFirePlan').disabled = !result.valid;
     if (!result.valid) {el('fireProjection').innerHTML = `<p class="planning-error" role="alert">${say('Provjerite iznose i postotke. Troškovi moraju biti veći od nule.','Check amounts and percentages. Spending must be greater than zero.')}</p>`; return;}
@@ -135,7 +169,12 @@
     const x = month => 16 + month / stop * 548, y = amount => 188 - amount / max * 160;
     const line = points.map(point => `${x(point.month)},${y(point.balanceCents)}`).join(' ');
     const heading = result.reachedMonth === 0 ? say('Cilj je dosegnut uz ove pretpostavke','Target met under these assumptions') : result.estimatedDate ? new Intl.DateTimeFormat(english() ? 'en-IE' : 'hr-HR', {month:'long', year:'numeric', timeZone:'UTC'}).format(new Date(`${result.estimatedDate}T12:00:00Z`)) : say('Nije dosegnuto unutar 60 godina','Not reached within 60 years');
-    el('fireProjection').innerHTML = `<div class="planning-result"><span>${say('Procijenjeni mjesec neovisnosti','Estimated independence month')}</span><strong>${esc(heading)}</strong><p>${say('Potreban portfelj','Portfolio target')}: <b data-money>${money(result.targetCents)}</b></p><p>${say('Stopa izdvajanja','Contribution rate')}: <b>${result.savingRatePercent.toFixed(1)}%</b></p></div><div class="planning-chart" data-monetary><svg viewBox="0 0 580 224" role="img" aria-label="${say('Projekcija portfelja prema pretpostavkama','Portfolio projection under assumptions')}"><line x1="16" x2="564" y1="${y(result.targetCents)}" y2="${y(result.targetCents)}" class="fire-target"/><polyline points="${line}" class="fire-line"/>${points.filter(point => point.month % 60 === 0).map(point => `<circle cx="${x(point.month)}" cy="${y(point.balanceCents)}" r="4" tabindex="0"><title>${dateLabel(point.date)}: ${money(point.balanceCents)}</title></circle>`).join('')}<text x="16" y="213">${say('Danas','Today')}</text><text x="564" y="213" text-anchor="end">${Math.round(stop/12)} ${say('godina','years')}</text></svg><div class="planning-legend"><span>● ${say('Portfelj','Portfolio')}</span><span>┄ ${say('Cilj','Target')}</span></div></div><div class="planning-sensitivity"><strong>${say('Ako je prinos 2 postotna boda niži','If returns are 2 percentage points lower')}</strong><span>${result.downside.estimatedDate ? dateLabel(result.downside.estimatedDate) : say('Cilj nije dosegnut u 60 godina','Target not reached in 60 years')}</span></div><p class="planning-note">${say('Scenarij, ne obećanje datuma. Uplate rastu s inflacijom; prinos je stalan i kapitalizira se mjesečno. Porezi, naknade i tržišne oscilacije nisu uključeni. Stopa povlačenja je vaša pretpostavka, nije zajamčeno sigurna.','A scenario, not a promised date. Contributions keep pace with inflation; returns are constant and compound monthly. Taxes, fees and market swings are excluded. Your withdrawal assumption is not guaranteed safe.')}</p>`;
+    const overview = `<div class="planning-result"><span>${say('Procijenjeni mjesec neovisnosti','Estimated independence month')}</span><strong>${esc(heading)}</strong><p>${say('Potreban portfelj','Portfolio target')}: <b data-money>${money(result.targetCents)}</b></p><p>${say('Stopa izdvajanja','Contribution rate')}: <b>${result.savingRatePercent.toFixed(1)}%</b></p></div><div class="planning-sensitivity"><strong>${say('Ako je prinos 2 postotna boda niži','If returns are 2 percentage points lower')}</strong><span>${result.downside.estimatedDate ? dateLabel(result.downside.estimatedDate) : say('Cilj nije dosegnut u 60 godina','Target not reached in 60 years')}</span></div>`;
+    const chart = `<div class="planning-chart" data-monetary><svg viewBox="0 0 580 224" role="img" aria-label="${say('Projekcija portfelja prema pretpostavkama','Portfolio projection under assumptions')}"><line x1="16" x2="564" y1="${y(result.targetCents)}" y2="${y(result.targetCents)}" class="fire-target"/><polyline points="${line}" class="fire-line"/>${points.filter(point => point.month % 60 === 0).map(point => `<circle cx="${x(point.month)}" cy="${y(point.balanceCents)}" r="4" tabindex="0"><title>${dateLabel(point.date)}: ${money(point.balanceCents)}</title></circle>`).join('')}<text x="16" y="213">${say('Danas','Today')}</text><text x="564" y="213" text-anchor="end">${Math.round(stop/12)} ${say('godina','years')}</text></svg><div class="planning-legend"><span>● ${say('Portfelj','Portfolio')}</span><span>┄ ${say('Cilj','Target')}</span></div></div>`;
+    const model = `<p class="planning-note">${say('Iznosi su izraženi u današnjoj kupovnoj moći. Scenarij, ne obećanje datuma. Uplate rastu s inflacijom; prinos je stalan i kapitalizira se mjesečno. Porezi, naknade i tržišne oscilacije nisu uključeni. Stopa povlačenja je vaša pretpostavka, nije zajamčeno sigurna.','Amounts are shown in today’s purchasing power. A scenario, not a promised date. Contributions keep pace with inflation; returns are constant and compound monthly. Taxes, fees and market swings are excluded. Your withdrawal assumption is not guaranteed safe.')}</p>`;
+    const sections = [['overview',say('Sažetak','Summary')],['chart',say('Graf','Chart')],['model',say('O modelu','About the model')]];
+    el('fireProjection').innerHTML = tabs('fire-result',sections,projectionPanel,'data-fire-projection')+panel('fire-result','overview',projectionPanel,overview)+panel('fire-result','chart',projectionPanel,chart)+panel('fire-result','model',projectionPanel,model);
+    restoreFocus?.();
   }
   function renewalEditor(rule) {
     editingRenewalId = rule?.id || null;
@@ -147,18 +186,25 @@
     const schedule = P.renewalSchedule(profile(), options()), suggestions = P.detectAnnualRenewals(profile(), options());
     const editing = editingRenewalId ? schedule.find(item => item.id === editingRenewalId) : null;
     if (!el('renewalEditor')) {
-      el('planningRenewals').innerHTML = `<p id="renewalIntro" class="planning-intro"></p><div id="renewalList" class="planning-renewal-list"></div><div id="renewalSuggestions"></div><div id="renewalEditor"></div>`;
+      const sections=[['list',say('Podsjetnici','Reminders')],['editor',say('Dodaj / uredi','Add / edit')],['suggestions',say('Prijedlozi','Suggestions')]];
+      el('planningRenewals').innerHTML = `${tabs('renewals',sections,renewalPanel,'data-renewal-view')}${panel('renewals','list',renewalPanel,'<p id="renewalIntro" class="planning-intro"></p><div id="renewalList" class="planning-renewal-list"></div>')}${panel('renewals','suggestions',renewalPanel,'<div id="renewalSuggestions"></div>')}${panel('renewals','editor',renewalPanel,'<div id="renewalEditor"></div>')}`;
+      bindTabs(el('planningRenewals'),'data-renewal-view',showRenewalPanel);
       resetEditor = true;
     }
+    el('planningRenewals').querySelector('[data-renewal-view="list"]').textContent=say('Podsjetnici','Reminders');
+    el('planningRenewals').querySelector('[data-renewal-view="editor"]').textContent=say('Dodaj / uredi','Add / edit');
+    el('planningRenewals').querySelector('[data-renewal-view="suggestions"]').textContent=say('Prijedlozi','Suggestions');
     el('renewalIntro').textContent = say('Podsjetnik se pojavljuje 3 dana prije obnove. Izvezite ga u svoj kalendar za obavijest i dok je Mer zatvoren.','A reminder appears 3 days before renewal. Export to your calendar for alerts while Mer is closed.');
     el('renewalList').innerHTML = schedule.map(rule => `<article class="planning-renewal"><div><strong>${esc(rule.name)}</strong><small>${rule.cadence==='trial'?say('Istek probe','Trial expiry'):rule.cadence==='annual'?say('Godišnje','Annual'):say('Mjesečno','Monthly')} · ${dateLabel(rule.nextDate)}</small>${rule.priceHike?`<span class="planning-badge warning">${say('Poskupljenje','Price increase')} +${money(rule.increaseCents,rule.currency)}</span>`:''}${(rule.due||rule.expired)&&!rule.dismissed?`<span class="planning-badge warning">${rule.expired?say('Provjerite naplatu nakon isteka','Check charges after expiry'):say(`Obnova za ${rule.daysUntil} dana`,`Renews in ${rule.daysUntil} days`)}</span>`:''}</div><b data-money>${money(rule.amountCents,rule.currency)}</b><div class="planning-renewal-actions"><button type="button" class="secondary-button" data-calendar="${esc(rule.id)}" ${rule.expired?'disabled':''}>${say('Kalendar','Calendar')}</button><button type="button" class="secondary-button" data-edit-renewal="${esc(rule.id)}">${say('Uredi','Edit')}</button><button type="button" class="secondary-button" data-delete-renewal="${esc(rule.id)}">${say('Ukloni','Remove')}</button>${(rule.due||rule.expired)&&!rule.dismissed?`<button type="button" class="secondary-button" data-dismiss-renewal="${esc(rule.reminderKey)}">${say('Pregledano','Reviewed')}</button>`:''}</div></article>`).join('') || `<div class="planning-empty"><strong>${say('Nema skrivenih obnova','No renewals tracked yet')}</strong><p>${say('Dodajte datum isteka probe ili godišnje pretplate kako biste izbjegli nenadanu naplatu.','Add a trial expiry or annual renewal to avoid an unexpected charge.')}</p></div>`;
-    el('renewalSuggestions').innerHTML = suggestions.length ? `<details class="planning-suggestions"><summary>${say('Moguće godišnje pretplate','Possible annual subscriptions')} (${suggestions.length})</summary>${suggestions.map((item,index)=>`<div><span>${esc(item.name)} · ${money(Math.round(item.amount*100),item.currency)}</span><button class="secondary-button" type="button" data-adopt-renewal="${index}">${say('Prati obnovu','Track renewal')}</button></div>`).join('')}<p class="planning-note">${say('Zaključeno iz dvije godišnje naplate. Potvrdite datum prije spremanja.','Inferred from two annual charges. Confirm the date before saving.')}</p></details>` : '';
+    el('renewalSuggestions').innerHTML = suggestions.length ? `<p class="planning-intro">${say('Moguće godišnje pretplate. Zaključeno iz dvije godišnje naplate; potvrdite datum prije spremanja.','Possible annual subscriptions, inferred from two annual charges. Confirm the date before saving.')}</p><div id="renewalSuggestionList" class="planning-renewal-list">${suggestions.map((item,index)=>`<article class="planning-suggestion"><span>${esc(item.name)} · ${money(Math.round(item.amount*100),item.currency)}</span><button class="secondary-button" type="button" data-adopt-renewal="${index}">${say('Prati obnovu','Track renewal')}</button></article>`).join('')}</div>` : `<p class="planning-empty">${say('Nema novih prijedloga iz povijesti transakcija.','No new suggestions from your transaction history.')}</p>`;
+    paginateRenewals();
     if (resetEditor) { el('renewalEditor').innerHTML = renewalEditor(editing); bindRenewalForm(); }
+    showRenewalPanel(renewalPanel);
     el('planningRenewals').onclick = event => {
       if (owner !== activeId()) return;
       const target = event.target.closest('button'); if (!target) return;
       if (target.dataset.calendar) downloadCalendar(target.dataset.calendar);
-      if (target.dataset.editRenewal) {editingRenewalId=target.dataset.editRenewal;renderRenewals(true);el('renewalForm').querySelector('input').focus();}
+      if (target.dataset.editRenewal) {editingRenewalId=target.dataset.editRenewal;renderRenewals(true);showRenewalPanel('editor');el('renewalForm').querySelector('input').focus();}
       if (target.dataset.deleteRenewal) {
         const reset = editingRenewalId === target.dataset.deleteRenewal;
         if (reset) editingRenewalId = null;
@@ -166,8 +212,18 @@
         if (reset) renderRenewals(true);
       }
       if (target.dataset.dismissRenewal) saveMutation('renewal-dismiss', current => P.dismissReminder(current,target.dataset.dismissRenewal,options()));
-      if (target.dataset.adoptRenewal !== undefined) {el('renewalEditor').innerHTML=renewalEditor(suggestions[Number(target.dataset.adoptRenewal)]);bindRenewalForm();el('renewalForm').querySelector('input').focus();}
+      if (target.dataset.adoptRenewal !== undefined) {el('renewalEditor').innerHTML=renewalEditor(suggestions[Number(target.dataset.adoptRenewal)]);bindRenewalForm();showRenewalPanel('editor');el('renewalForm').querySelector('input').focus();}
     };
+  }
+  function showRenewalPanel(key) {
+    renewalPanel=key;selectPanel(el('planningRenewals'),'renewals',key,'data-renewal-view');
+    el('saveRenewalReminder').hidden=key!=='editor';
+  }
+  function paginateRenewals() {
+    ['renewalList','renewalSuggestionList'].forEach(id=>{
+      const container=el(id);
+      if(container)root.MerPagination?.attach(container,{pageSize:()=>root.innerWidth<=680||root.innerHeight<650?1:4,itemSelector:'article',scopeKey:`${activeId()}:${id}`,label:say('Podsjetnici','Reminders')});
+    });
   }
   function bindRenewalForm() {
     el('renewalForm').addEventListener('submit', event => {
@@ -176,9 +232,9 @@
       const input={id:editingRenewalId,name:form.get('name'),amount:Number(form.get('amount')),currency:form.get('currency'),cadence:form.get('cadence'),anchorDate:unchangedDate?renewalOriginal.anchorDate:form.get('anchorDate'),previousAmount:prior?.amount ?? renewalOriginal?.previousAmount ?? null};
       let result;saveMutation('renewal-save',current=>{result=P.saveRenewal(current,input,options());});
       if(!result?.valid){el('renewalError').hidden=false;el('renewalError').textContent=result?.reason==='duplicate'?say('Ova pretplata već postoji. Uredite postojeći podsjetnik.','This subscription is already tracked. Edit its reminder.'):say('Provjerite naziv, iznos i datum.','Check the name, amount and date.');return;}
-      editingRenewalId=null;renderRenewals(true);showToast(say('Podsjetnik je spremljen.','Reminder saved.'));
+      editingRenewalId=null;renderRenewals(true);showRenewalPanel('list');showToast(say('Podsjetnik je spremljen.','Reminder saved.'));
     });
-    el('renewalForm').querySelector('[data-renewal-reset]').addEventListener('click',()=>{editingRenewalId=null;el('renewalEditor').innerHTML=renewalEditor(null);bindRenewalForm();});
+    el('renewalForm').querySelector('[data-renewal-reset]').addEventListener('click',()=>{editingRenewalId=null;el('renewalEditor').innerHTML=renewalEditor(null);bindRenewalForm();showRenewalPanel('list');});
   }
   function downloadCalendar(ruleId) {
     const calendar=P.buildRenewalCalendar(profile(),{...options(),ruleId});if(!calendar.count)return;
@@ -212,7 +268,7 @@
     ensureDialogs();
     const dialog = which === 'renewals' ? renewalsDialog : fireDialog;
     close(dialog === fireDialog ? renewalsDialog : fireDialog);
-    if (owner !== activeId()) {editingRenewalId=null;renewalOriginal=null;}
+    if (owner !== activeId()) {editingRenewalId=null;renewalOriginal=null;renewalPanel='list';firePanel='capital';projectionPanel='overview';}
     owner=activeId();
     renderDialog(dialog);
     if (!dialog.open) (root.MerEnterpriseBridge?.openModal||(node=>node.showModal()))(dialog);
@@ -226,6 +282,7 @@
   }
   root.MerPlanningUI=Object.freeze({open,close,render,reminders:()=>P.dueReminders(profile(),options()),downloadCalendar});
   if(typeof reactiveStore!=='undefined')reactiveStore.subscribe(render);
+  root.addEventListener?.('resize',()=>{if(renewalsDialog?.open)paginateRenewals();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
   render();
 })(typeof window==='undefined'?globalThis:window);

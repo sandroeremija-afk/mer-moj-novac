@@ -9,7 +9,7 @@ const nodes=new Map();
 let opens=0,notices=[];
 const context=vm.createContext({state:{availableBalance:500,bills:0,savingsTarget:100,accountLabel:'personalAccount',goalBuckets:[{id:'g',name:'Rezerva',current:200,target:1000}],savingsEntries:[{id:'automatic',goalId:'g',amount:200,date:'2026-09-07',note:'Raspodjela',locked:true,sourceType:'enterprise-automation'},{id:'manual',goalId:'g',amount:20,date:'2026-09-07',note:'Uplata'}]},editingSavingsId:null,currentLang:'hr',
   $:selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'10',innerHTML:'',textContent:'',focus(){}});return nodes.get(selector);},$$:()=>[],
-  showToast:message=>notices.push(message),openModal:()=>opens++,updateSavingsCheck:()=>true,setTimeout:()=>0,escapeHtml:String,t:String,currency:value=>`${value} €`,locale:()=> 'hr-HR',Intl,Date});
+  bulkyListPageSize:()=>4,renderListPagination:()=>{},showToast:message=>notices.push(message),openModal:()=>opens++,updateSavingsCheck:()=>true,setTimeout:()=>0,escapeHtml:String,t:String,currency:value=>`${value} €`,locale:()=> 'hr-HR',Intl,Date});
 vm.runInContext(between('function openSavingsDeposit(', 'function savingsHistoryIndexFor('),context);
 vm.runInContext("openSavingsDeposit('automatic')",context);
 assert.equal(opens,0,'generated deposits cannot open the manual editor');

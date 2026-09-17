@@ -55,7 +55,7 @@ class Element {
   addEventListener(name, callback) {if(!this.listeners.has(name))this.listeners.set(name, []);this.listeners.get(name).push(callback);}
   dispatch(name, data = {}) {
     const event = {target:this, defaultPrevented:false, preventDefault(){this.defaultPrevented=true;}, ...data};
-    for (let node = this; node; node = name === 'input' || name === 'click' ? node.parentElement : null) {
+    for (let node = this; node; node = ['input','click','keydown'].includes(name) ? node.parentElement : null) {
       event.currentTarget = node;
       for (const callback of node.listeners.get(name) || []) callback(event);
       node[`on${name}`]?.(event);
@@ -76,12 +76,13 @@ function harness() {
     derived:{monthly:{income, expenses:income/2}}, enterprise:{renewals:[]}, transactions:[], goalBuckets:[]});
   const appState = {activeAccount:'personal', settings:{currency:'EUR', timezone:'Europe/Zagreb'},
     accounts:{personal:account('personal', 4000, 10000), business:account('business', 12000, 50000)}};
-  const updates = [], subscriptions = [], backCalls = [];
+  const updates = [], subscriptions = [], backCalls = [], pages = [];
   const reactiveStore = {
     subscribe:callback => subscriptions.push(callback),
     update(reason, change) {updates.push(reason);change(appState, appState.accounts[appState.activeAccount]);subscriptions.forEach(callback => callback());}
   };
   const window = {document, MerCore:Core, MerPlanningCore:Planning, dispatchEvent(){},
+    MerPagination:{attach(container,options){pages.push({container,options});}},
     MerRuntime:{bindDialogBackdropDismiss(dialog, callback){dialog.dismissBackdrop = callback;}},
     MerEnterpriseBridge:{openModal:dialog => dialog.showModal(), closeModal:dialog => dialog.close()},
     MerPlanNavigation:{back(dialog){backCalls.push(dialog.id);dialog.close();}}};
@@ -92,7 +93,7 @@ function harness() {
   const get = id => document.getElementById(id);
   const input = (id, value) => {const node=get(id);node.focus();node.value=String(value);node.dispatch('input');return node;};
   const switchProfile = id => {appState.activeAccount=id;subscriptions.forEach(callback => callback());};
-  return {window, document, appState, reactiveStore, updates, backCalls, get, input, switchProfile, ui:window.MerPlanningUI};
+  return {window, document, appState, reactiveStore, updates, backCalls, pages, get, input, switchProfile, ui:window.MerPlanningUI};
 }
 
 {
@@ -211,4 +212,41 @@ function harness() {
   assert.equal(h.appState.accounts.personal.enterprise.renewals.length, 0);
   assert.equal(h.appState.accounts.business.enterprise.renewals.length, 0, 'renewal edits stay in the active profile');
 }
-process.stdout.write('Planning modal cycle 1: independent dialogs, Back/Escape/backdrop, live FIRE controls, profile drafts and stable renewal forms passed.\n');
+{
+  const h=harness();h.ui.open('fire');
+  const container=h.get('planningFire'),field=h.input('fire-netWorth',123000);
+  for(const key of ['savings','assumptions','projection','capital']){
+    container.querySelector(`[data-fire-view="${key}"]`).click();
+    assert.equal(container.querySelectorAll('[data-panel-group="fire"]').filter(panel=>!panel.hidden).length,1,'FIRE shows exactly one complete view');
+    assert.equal(h.get(`fire-panel-${key}`).hidden,false);
+    assert.equal(h.get('fire-netWorth'),field,'switching steps keeps draft DOM identity');
+    assert.equal(field.value,'123000');
+  }
+  container.querySelector('[data-fire-view="projection"]').click();
+  for(const key of ['chart','model','overview']){
+    container.querySelector(`[data-fire-projection="${key}"]`).click();
+    assert.equal(h.get(`fire-result-panel-${key}`).hidden,false);
+    assert.equal(container.querySelectorAll('[data-panel-group="fire-result"]').filter(panel=>!panel.hidden).length,1);
+  }
+  const capital=container.querySelector('[data-fire-view="capital"]');
+  capital.dispatch('keydown',{key:'ArrowRight'});
+  assert.equal(h.get('fire-panel-savings').hidden,false,'keyboard tab navigation reaches the next compact view');
+  assert.equal(h.document.activeElement.dataset.fireView,'savings');
+  h.ui.render();assert.equal(h.get('fire-panel-savings').hidden,false,'reactive changes preserve selected view');
+}
+{
+  const h=harness();h.window.innerWidth=390;h.window.innerHeight=667;h.ui.open('renewals');
+  const container=h.get('planningRenewals'),form=h.get('renewalForm');
+  assert.equal(h.get('saveRenewalReminder').hidden,true,'list view does not submit an invisible editor');
+  container.querySelector('[data-renewal-view="editor"]').click();
+  assert.equal(h.get('saveRenewalReminder').hidden,false);
+  form.querySelector('[name="name"]').value='Unfinished service';
+  container.querySelector('[data-renewal-view="suggestions"]').click();
+  assert.equal(h.get('renewals-panel-suggestions').hidden,false);
+  container.querySelector('[data-renewal-view="editor"]').click();
+  assert.equal(h.get('renewalForm'),form);assert.equal(form.querySelector('[name="name"]').value,'Unfinished service');
+  assert.equal(h.pages.find(page=>page.container.id==='renewalList').options.pageSize(),1,'mobile reminder page is one full actionable card');
+  h.window.innerWidth=1440;h.window.innerHeight=900;
+  assert.equal(h.pages.find(page=>page.container.id==='renewalList').options.pageSize(),4,'desktop reminder page never exceeds four cards');
+}
+process.stdout.write('Planning modal cycle 1: compact tabs, keyboard access, responsive pagination, footer navigation, profile drafts and live calculations passed.\n');

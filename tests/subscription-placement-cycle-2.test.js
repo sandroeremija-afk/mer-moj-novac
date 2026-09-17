@@ -30,7 +30,7 @@ function harness(profiles = {personal:{profileId:'personal', transactions:[]}, b
   }
   ['subscriptionList','subscriptionCount','subscriptionTotal'].forEach(id=>{element().id=id;});
   const context = {
-    state:profiles.personal,
+    state:profiles.personal, bulkyListPageSize:()=>4, renderListPagination:()=>{},
     appState:{activeAccount:'personal', settings:{currency:'EUR'}},
     appReferenceDate:'2026-09-15', currentLang:'hr',
     MerAccounting:Accounting, MerEnterpriseCore:Enterprise, window:{MerEnterpriseCore:Enterprise}, document:{createElement:element},

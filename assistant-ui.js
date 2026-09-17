@@ -333,6 +333,7 @@
       entry.hidden = !modules.includes(selected);
       if (entry.hidden) entry.open = false;
     });
+    window.MerPagination?.attach(helpFaqPanel.querySelector('.faq-list'), { pageSize:1, itemSelector:'details', scopeKey:selected, label:currentLang==='en'?'Help questions':'Pitanja i odgovori' });
   }
 
   function selectHelpMode(mode = 'faq', { focus = false } = {}) {

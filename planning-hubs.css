@@ -11,7 +11,7 @@ html body .planning-hub-modal[open] { display:flex; flex-direction:column; gap:1
 .planning-hub-header h2 { margin:0; font-size:24px; font-weight:700; line-height:1.25; }
 .planning-hub-header .modal-close { position:static; flex:0 0 44px; width:44px; height:44px; }
 .planning-hub-context { margin:7px 0 0; font-size:14px; line-height:1.5; color:var(--muted); }
-.planning-hub-body { display:grid; gap:10px; min-width:0; overflow:hidden; }
+.planning-hub-body { display:grid; gap:10px; min-width:0; overflow:visible; }
 .planning-hub-entry { display:flex; align-items:center; gap:14px; width:100%; min-width:0; min-height:76px; padding:14px; border:1px solid var(--line); border-radius:12px; color:var(--ink); background:var(--panel); text-align:left; font:inherit; cursor:pointer; transition:background 160ms ease,border-color 160ms ease; }
 .planning-hub-entry:hover { border-color:#00a9e4; background:color-mix(in srgb,var(--panel) 95%,#00a9e4); }
 .planning-hub-entry:focus-visible { outline:3px solid #00a9e4; outline-offset:2px; }
@@ -41,9 +41,7 @@ html body .planning-hub-modal[open] { display:flex; flex-direction:column; gap:1
 }
 @media(max-height:590px) {
   html body .planning-hub-modal[open] { gap:10px; padding:14px; }
-  .planning-hub-context { display:none; }
   .planning-hub-entry { min-height:54px; padding:9px 11px; }
-  .planning-hub-entry small { display:none; }
   .planning-hub-footer { padding-top:8px; }
 }
 @media(prefers-reduced-motion:reduce) { .planning-hub-entry { transition:none; } }

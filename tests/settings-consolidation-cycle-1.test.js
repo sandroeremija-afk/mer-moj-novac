@@ -7,7 +7,7 @@ const source=fs.readFileSync(require.resolve('../popup-layout.js'),'utf8');
 
 // Execute the production DOM migration with node identity, values and real
 // listeners. This intentionally does not simulate CSS dimensions; browser
-// evaluation covers desktop fit and the mobile accessibility fallback.
+// evaluation covers desktop and mobile fit without inner scrolling.
 class Element {
   constructor(tag,document){
     this.tagName=tag.toLowerCase();this.ownerDocument=document;this.children=[];this.parentElement=null;
@@ -32,6 +32,8 @@ class Element {
   before(...nodes){const parent=this.parentElement;nodes.forEach(node=>{node.remove();node.parentElement=parent;parent.children.splice(parent.children.indexOf(this),0,node);});}
   after(...nodes){const parent=this.parentElement;let index=parent.children.indexOf(this)+1;nodes.forEach(node=>{node.remove();node.parentElement=parent;parent.children.splice(index++,0,node);});}
   contains(node){return this===node||this.children.some(child=>child.contains(node));}
+  closest(selector){return this.matches(selector)?this:this.parentElement?.closest(selector)||null;}
+  focus(){this.ownerDocument.activeElement=this;}
   matches(selector){return selector.split(',').some(part=>{
     const simple=part.trim(),tag=simple.match(/^[a-z][a-z-]*/i)?.[0];
     if(tag&&this.tagName!==tag.toLowerCase())return false;
@@ -45,7 +47,7 @@ class Element {
   querySelectorAll(selector){const nodes=[];const walk=node=>node.children.forEach(child=>{if(child.matches(selector))nodes.push(child);walk(child);});walk(this);return nodes;}
   querySelector(selector){return this.querySelectorAll(selector)[0]||null;}
   addEventListener(type,listener){if(!this.listeners.has(type))this.listeners.set(type,[]);this.listeners.get(type).push(listener);}
-  dispatch(type){const event={target:this,currentTarget:this,preventDefault(){}};(this.listeners.get(type)||[]).forEach(listener=>listener(event));}
+  dispatch(type,details={}){const event={target:this,currentTarget:this,preventDefault(){},...details};(this.listeners.get(type)||[]).forEach(listener=>listener(event));}
   click(){this.dispatch('click');}
   set innerHTML(html){
     this.textContent='';const stack=[this];
@@ -67,21 +69,28 @@ function harness(){
   const node=(tag,attrs={},parent=null)=>{const result=document.createElement(tag);for(const [key,value]of Object.entries(attrs))result.setAttribute(key,value);parent?.append(result);return result;};
   const dialog=node('dialog',{id:'bankSettingsModal',open:''},document.body);
   const body=node('div',{class:'settings-modal-body'},dialog);
-  const general=node('section',{'data-settings-panel':'general'},body),personal=node('section',{'data-settings-panel':'personal'},body),security=node('section',{'data-settings-panel':'security'},body);
-  node('select',{id:'settingsLanguage'},general);node('div',{id:'themeToggle'},general);node('div',{id:'settingsTourPreferences'},general);
+  const general=node('section',{'data-settings-panel':'general'},body),personal=node('section',{'data-settings-panel':'personal'},body),security=node('section',{'data-settings-panel':'security'},body),rules=node('section',{'data-settings-panel':'automation'},body);
+  const regional=node('div',{class:'settings-form-grid'},general),appearance=node('div',{id:'settingsTourPreferences'},general),privacy=node('label',{class:'toggle-setting'},general);
+  node('select',{id:'settingsLanguage'},regional);node('div',{id:'themeToggle'},appearance);node('input',{id:'hideBalances'},privacy);
   node('div',{class:'settings-pane-heading'},security);
   const personalForm=node('form',{id:'personalDataForm'},personal),firstName=node('input',{id:'personalFirstName'},personalForm);
+  node('p',{id:'personalDataNotice'},personal);node('p',{id:'personalDataStorage'},personalForm);node('p',{class:'personal-data-portability'},personal);
   firstName.value='Unsaved first name';
   const demo=node('div',{id:'demoResetCard'},general);
   const password=node('form',{id:'changePasswordForm'},security),passwordInput=node('input',{id:'currentPasswordInput'},password);
   passwordInput.value='Unsubmitted password';
   const mfa=node('div',{id:'settingsTourMfa'},security),setup=node('div',{id:'mfaSetup'},mfa),code=node('input',{id:'mfaVerificationCode'},setup);
-  code.value='123456';node('div',{id:'recoveryPanel',hidden:''},mfa);
+  code.value='123456';node('div',{id:'recoveryPanel',hidden:''},mfa);node('div',{id:'mfaDisable',hidden:''},mfa);
   const notice=node('p',{class:'info-note'},security);
   const sessions=node('div',{class:'active-sessions-card'},security);
   node('label',{class:'auto-lock-setting'},security);
   const enterprise=node('section',{class:'enterprise-security-actions'},security),originalGrid=node('div',{class:'enterprise-action-grid'},enterprise);
   const exportButton=node('button',{id:'exportSovereignty'},originalGrid),deleteButton=node('button',{id:'deleteSovereignty'},originalGrid);
+  node('p',{class:'rules-subtitle'},rules);const ruleForm=node('form',{id:'automationRuleForm'},rules);node('input',{id:'ruleKeyword'},ruleForm);
+  node('div',{id:'automationRuleList'},rules);node('nav',{id:'rulesPagination'},rules);
+  const importDialog=node('dialog',{id:'importDataModal'},document.body);node('div',{class:'import-dropzone'},importDialog);
+  const importReview=node('div',{id:'importReview',hidden:''},importDialog);
+  node('div',{class:'bulk-editor'},importReview);node('div',{id:'bulkOverrideConfirmation'},importReview);node('div',{id:'bulkOverrideUndoBar'},importReview);
   const calls={export:0,delete:0,password:0,personal:0},tabs=[];
   exportButton.addEventListener('click',()=>calls.export++);deleteButton.addEventListener('click',()=>calls.delete++);
   password.addEventListener('submit',()=>calls.password++);personalForm.addEventListener('submit',()=>calls.personal++);
@@ -131,7 +140,7 @@ test('deep links select Personal for data actions and the correct mobile access 
   assert.equal(app.passwordInput.value,'Unsubmitted password');assert.equal(app.code.value,'123456');
 });
 
-test('consolidated labels respond to language changes while measured fit preserves accessibility overflow fallback',()=>{
+test('consolidated labels respond to language changes while measured fit records layout regressions',()=>{
   const app=harness();
   assert.equal(app.document.getElementById('securityAccessTitle').textContent,'Lozinka i dvofaktorska autentifikacija');
   assert.equal(app.body.dataset.contentFits,'true');
@@ -140,6 +149,27 @@ test('consolidated labels respond to language changes while measured fit preserv
   assert.equal(app.document.getElementById('settingsDataTitle').textContent,'Data management');
   assert.equal(app.body.dataset.contentFits,'false');
   app.body.scrollHeight=500;app.events.resize();app.flush();assert.equal(app.body.dataset.contentFits,'true');
+});
+
+test('mounted subviews retain connected controls and disabled import steps cannot be reached by arrow keys',()=>{
+  const app=harness();
+  for(const id of ['changePasswordForm','settingsTourMfa','personalDataForm','personalDataStorage','mfaDisable','recoveryPanel','automationRuleForm','importReview','bulkOverrideConfirmation'])assert.equal(app.document.getElementById(id).isConnected,true,id);
+  const upload=app.document.getElementById('settings-import-upload-tab'),review=app.document.getElementById('settings-import-review-tab');
+  assert.equal(review.disabled,true);upload.dispatch('keydown',{key:'ArrowRight'});
+  assert.equal(upload.getAttribute('aria-selected'),'true');assert.equal(review.getAttribute('aria-selected'),'false');
+  app.window.MerImportLayout.refresh(true);assert.equal(review.disabled,false);assert.equal(review.getAttribute('aria-selected'),'true');
+  app.window.MerMfaRecoveryLayout.refresh(true);assert.equal(app.document.getElementById('settings-mfa-account-recovery').hidden,false);
+  app.window.MerMfaRecoveryLayout.refresh(false);assert.equal(app.document.getElementById('settings-mfa-account-manage').hidden,false);
+  assert.equal(app.code.value,'123456');
+});
+
+test('native validation reveals the original input and active outer settings tab',()=>{
+  const app=harness();
+  app.window.MerPopupLayout.revealTarget('exportSovereignty');
+  assert.equal(app.document.getElementById('settings-personal-details').hidden,true);
+  app.dialog.dispatch('invalid',{target:app.firstName});
+  assert.equal(app.tabs.at(-1),'personal');assert.equal(app.document.getElementById('settings-personal-details').hidden,false);
+  assert.equal(app.firstName.value,'Unsaved first name');
 });
 
 test('General language/theme command targets and the preferences tour cannot be rerouted to Security',()=>{

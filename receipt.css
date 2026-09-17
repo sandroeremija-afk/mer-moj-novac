@@ -26,3 +26,31 @@
 @keyframes receiptShimmer { to { background-position:-200% 0; } }
 @media(max-width:600px) { .receipt-dialog { width:calc(100vw - 16px); }.receipt-head { padding:15px 16px; }.receipt-head h2 { font-size:20px; }.receipt-body { padding:16px; }.receipt-footer { padding:12px 16px; }.receipt-footer button { flex:1 1 auto; }.receipt-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }.receipt-fields>label:first-child { grid-column:1/-1; }.receipt-line { grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px; }.receipt-line>label:first-child { grid-column:1/-1; }.receipt-line .icon-button { margin-top:18px; }.receipt-match { flex-wrap:wrap; }.receipt-match>strong { margin-left:30px; } }
 @media(prefers-reduced-motion:reduce) { .receipt-loading i { animation:none; }.receipt-dialog[open] { animation:none; } }
+
+/* Review steps and item pages keep all receipt fields within the dialog. */
+.receipt-dialog .receipt-body { overflow:visible; scrollbar-gutter:auto; }
+.receipt-dialog .mer-section-panel .receipt-intro { margin-bottom:10px; font-size:12px; line-height:1.45; }
+.receipt-dialog .mer-section-panel .receipt-fields { gap:4px 12px; }
+.receipt-dialog .mer-section-panel .receipt-fields label { margin-bottom:8px; }
+.receipt-dialog .mer-section-panel .receipt-match-head { margin-top:0; }
+.receipt-dialog .mer-section-panel .receipt-lines { margin:0; }
+.receipt-dialog #receiptMatches { gap:6px; margin:8px 0; }
+.receipt-dialog .receipt-match { padding:8px 10px; }
+.receipt-dialog .receipt-match small { line-height:1.3; }
+.receipt-dialog .receipt-approval { margin-top:8px; padding:8px; font-size:12px; line-height:1.4; }
+.receipt-dialog .receipt-stored { margin-top:8px; padding:12px; }
+.receipt-dialog .receipt-stored-lines li { padding-block:8px; }
+.receipt-dialog .receipt-drop { min-height:100px; padding:12px; }
+.receipt-dialog .receipt-drop img { max-height:24dvh; }
+.receipt-dialog .receipt-camera-preview { min-height:160px; }
+.receipt-dialog .receipt-camera-preview video { max-height:35dvh; }
+@media(max-width:600px) {
+  .receipt-dialog .receipt-head { padding:10px 14px; }
+  .receipt-dialog .receipt-body { padding:12px 14px; }
+  .receipt-dialog .receipt-head h2 { font-size:18px; }
+  .receipt-dialog .receipt-match { flex-wrap:nowrap; gap:7px; }
+  .receipt-dialog .receipt-match > strong { margin-left:0; font-size:12px; }
+  .receipt-dialog .receipt-match span { gap:2px; }
+  .receipt-dialog .receipt-note { font-size:11px; line-height:1.4; margin-block:7px; }
+  .receipt-dialog .receipt-intro { font-size:12px; line-height:1.4; margin-bottom:10px; }
+}

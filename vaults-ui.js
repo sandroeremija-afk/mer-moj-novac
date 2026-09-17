@@ -6,7 +6,7 @@
   const say=(hr,en)=>snapshot()?.language==='en'?en:hr;
   const money=value=>bridge()?.formatMoney(value)||String(value);
   let dialog,owner=null,ownerSession=null,page=0,search='',view='vaults',pickedGoal=null,paydayDraft=null;
-  const PAGE_SIZE=6;
+  const pageSize=()=>root.innerWidth<=640?1:4;
   const goals=()=>{const s=snapshot();return(s?.profile.goalBuckets||[]).filter(goal=>goal&&(!goal.profileId||goal.profileId===s.profileId));};
   function close(){if(dialog?.open)bridge().closeModal(dialog);}
   function showError(message){const output=el('vaultsError');if(output){output.textContent=message;output.hidden=!message;}}
@@ -33,6 +33,7 @@
     return `<article class="vaults-item"><div class="vaults-item-title"><span class="vaults-progress-ring" style="--vault-progress:${percent}%" aria-hidden="true"><span>${Math.round(percent)}%</span></span><div><h3>${esc(goal.name)}</h3><p class="vaults-muted">${esc(due)}${goal.primary?` · ${say('Glavni cilj','Primary goal')}`:''}</p></div><button type="button" class="icon-button" data-vault-edit="${esc(goal.id)}" aria-label="${esc(say('Uredi','Edit')+' '+goal.name)}"><svg aria-hidden="true"><use href="#icon-edit"></use></svg></button></div><div class="vaults-amounts"><strong data-money>${money(goal.current)}</strong><span>${say('od','of')} ${money(goal.target)}</span></div><div class="vaults-progress" role="progressbar" aria-label="${esc(goal.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(percent)}"><span style="width:${percent}%"></span></div><button type="button" class="secondary-button" data-vault-deposit="${esc(goal.id)}">${say('Dodaj uplatu','Add deposit')}</button></article>`;
   }
   function renderList(){
+    const PAGE_SIZE=pageSize();
     const filtered=goals().filter(goal=>String(goal.name).toLocaleLowerCase().includes(search.toLocaleLowerCase())),pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));page=Math.min(page,pages-1);
     el('vaultsBody').innerHTML=`<div class="vaults-list-toolbar"><label class="vaults-search"><span>${say('Pretraži trezore','Search vaults')}</span><input id="vaultsSearch" type="search" value="${esc(search)}" placeholder="${say('Naziv cilja štednje','Savings goal name')}"></label><button type="button" class="primary-button" id="vaultsNew">${say('Novi trezor','New vault')}</button></div><p class="vaults-muted">${say('Odvojene namjene, jedan pregled. Otvorite koliko god trezora trebate.','Separate purposes, one overview. Create as many vaults as you need.')}</p><div class="vaults-grid">${filtered.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE).map(goalMarkup).join('')||`<p class="vaults-empty">${say('Nema trezora za ovaj pojam.','No vaults match this search.')}</p>`}</div><nav class="vaults-pagination" aria-label="${say('Stranice trezora','Vault pages')}"><button type="button" class="secondary-button" id="vaultsPrev" ${page===0?'disabled':''}>${say('Prethodna','Previous')}</button><span aria-live="polite">${page+1} / ${pages} · ${filtered.length} ${say('trezora','vaults')}</span><button type="button" class="secondary-button" id="vaultsNext" ${page+1===pages?'disabled':''}>${say('Sljedeća','Next')}</button></nav>`;
     el('vaultsSearch').addEventListener('input',event=>{search=event.target.value;page=0;const cursor=event.target.selectionStart;renderList();el('vaultsSearch').focus({preventScroll:true});try{el('vaultsSearch').setSelectionRange(cursor,cursor);}catch{ /* Search controls may not support a text selection range. */ }});
@@ -66,5 +67,6 @@
     if(dialog.open)render();
   }
   root.MerVaultsUI=Object.freeze({open,refresh});
+  root.addEventListener('resize',()=>{if(dialog?.open&&view==='vaults')renderList();});
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
 })(typeof window!=='undefined'?window:globalThis);
