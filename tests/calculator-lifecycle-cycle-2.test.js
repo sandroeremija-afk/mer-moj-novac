@@ -57,6 +57,7 @@ function harness() {
     focus(){document.activeElement=this;}
     getBoundingClientRect(){return{left:650,right:694,top:10,bottom:54,width:44,height:44};}
     setRangeText(text,start,end){this.value=this.value.slice(0,start)+text+this.value.slice(end);this.selectionStart=this.selectionEnd=start+text.length;}
+    setSelectionRange(start,end){this.selectionStart=start;this.selectionEnd=end;}
   }
   document.body=new Element('body');
   document.createElement=tag=>new Element(tag);
@@ -118,16 +119,28 @@ test('benign theme, security and render notifications retain the expression and 
   assert.equal(app.input.value,'125,50 + 20');assert.equal(app.result.textContent,'145.5');
 });
 
-test('restored access starts empty and account or user changes clear prior calculations',()=>{
+test('restored access opens at zero and account or user changes clear prior calculations',()=>{
   const app=harness();app.open();app.calculate('1/0');assert.equal(app.result.classList.contains('is-error'),true);
   app.mutate(app.shell,'inert',()=>{app.shell.inert=true;});
   app.mutate(app.shell,'inert',()=>{app.shell.inert=false;});app.open();
-  assert.equal(app.dialog.open,true);assert.equal(app.input.value,'');assert.equal(app.result.textContent,'');assert.equal(app.result.classList.contains('is-error'),false);
+  assert.equal(app.dialog.open,true);assert.equal(app.input.value,'0');assert.equal(app.result.textContent,'0');assert.equal(app.result.classList.contains('is-error'),false);
   app.calculate();app.context.appState.activeAccount='business';app.context.window.MerQuickTools.render();
   assert.equal(app.dialog.open,false);assert.equal(app.input.value,'');assert.equal(app.result.textContent,'');
   app.open();app.calculate();app.session({userId:'user-b'});app.windowEvent('storage');
   assert.equal(app.dialog.open,false);assert.equal(app.input.value,'');assert.equal(app.result.textContent,'');
-  app.open();assert.equal(app.dialog.open,true);assert.equal(app.result.textContent,'');
+  app.open();assert.equal(app.dialog.open,true);assert.equal(app.input.value,'0');assert.equal(app.result.textContent,'0');
+});
+
+test('calculator opens, clears and reopens at zero without restoring an old expression',()=>{
+  const app=harness();app.open();
+  assert.equal(app.input.value,'0');assert.equal(app.result.textContent,'0');assert.equal(app.input.getAttribute('placeholder'),'0');
+  app.key('7');app.key('+');app.key('3');app.key('=');assert.equal(app.input.value,'7+3');assert.equal(app.result.textContent,'10');
+  app.key('C');assert.equal(app.input.value,'0');assert.equal(app.result.textContent,'0');
+  app.key('+');app.key('2');app.key('=');assert.equal(app.input.value,'0+2');assert.equal(app.result.textContent,'2');
+  app.dialog.querySelector('[data-close-calculator]').click();app.open();
+  assert.equal(app.input.value,'0');assert.equal(app.result.textContent,'0');
+  app.key(',');app.key('5');app.key('=');assert.equal(app.result.textContent,'0,5');
+  app.calculate('1/0');app.key('C');assert.equal(app.result.classList.contains('is-error'),false);assert.equal(app.result.textContent,'0');
 });
 
 test('pending submit and keypad events cannot preserve or recreate results after session loss',()=>{

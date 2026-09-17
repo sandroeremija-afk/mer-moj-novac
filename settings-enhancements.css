@@ -1,4 +1,4 @@
-/* Settings use mounted subviews and short pages, with no inner scroll owner. */
+/* Settings use complete preference pages; privileged flows keep their original forms. */
 html body #bankSettingsModal:not(.tour-modal-host)[open] {
   width:min(1040px,calc(100vw - 32px));max-width:1040px;
   height:fit-content;max-height:calc(100dvh - 32px);padding:24px;overflow:visible;
@@ -220,4 +220,118 @@ html body #importDataModal:not(.tour-modal-host)[open] { width:min(1080px,calc(1
   #importDataModal .import-commit-actions button { min-width:0;padding:8px;font-size:12px;white-space:normal; }
   #importDataModal .bulk-editor { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
   #importDataModal .bulk-editor>button { grid-column:1/-1; }
+}
+
+/* General and Personal are complete pages without secondary tabs. */
+#bankSettingsModal .settings-form-grid { margin-bottom:12px; }
+#bankSettingsModal .settings-quick-actions { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 12px; }
+#bankSettingsModal .settings-action-row { min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px; }
+#bankSettingsModal .personal-data-actions { gap:8px;justify-content:space-between; }
+#bankSettingsModal .personal-data-actions button { min-width:0;min-height:44px; }
+#bankSettingsModal .personal-data-intro { margin-bottom:12px; }
+#bankSettingsModal .settings-security-overview { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px; }
+#bankSettingsModal .settings-security-option { display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel); }
+#bankSettingsModal .settings-security-option h3 { margin:0 0 5px;font-size:15px;line-height:1.4; }
+#bankSettingsModal .settings-security-option p { margin:0;color:var(--muted);font-size:13px;line-height:1.45; }
+#bankSettingsModal .settings-security-option button { flex:0 0 auto;min-height:44px; }
+#bankSettingsModal .settings-security-option>div { min-width:0; }
+#bankSettingsModal [data-settings-panel="security"]>.info-note { font-size:12px;line-height:1.45;padding:10px; }
+#bankSettingsModal[data-settings-flow-open] { visibility:hidden; }
+#bankSettingsModal[data-settings-flow-open]::backdrop { background:transparent;backdrop-filter:none; }
+html body dialog.settings-security-flow[open] { display:flex;flex-direction:column;gap:0;width:min(660px,calc(100vw - 32px));height:fit-content;max-height:calc(100dvh - 32px);padding:24px;overflow:visible; }
+.settings-security-flow>h2 { margin:0 44px 16px 0;padding:0;font-size:24px;line-height:1.3; }
+.settings-security-flow .settings-flow-body { min-width:0;min-height:0;overflow:visible; }
+.settings-security-flow .settings-flow-footer { flex:0 0 auto;margin:16px 0 0;padding:12px 0 0;border-top:1px solid var(--line); }
+.settings-security-flow .settings-flow-body>form,.settings-security-flow .active-sessions-card { margin:0;padding:0;border:0; }
+.settings-security-flow .security-section-heading { margin:0 0 12px;gap:8px; }
+.settings-security-flow .security-section-heading strong { font-size:16px;line-height:1.4; }
+.settings-security-flow .security-section-heading small,.settings-security-flow .security-card p,.settings-security-flow .personal-data-storage,.settings-security-flow .personal-data-portability { font-size:13px;line-height:1.5;color:var(--muted); }
+.settings-security-flow .security-section-heading .security-icon { display:none; }
+.settings-security-flow .security-form-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+.settings-security-flow .security-form-grid>label:first-child { grid-column:1/-1; }
+.settings-security-flow :is(label,.security-form-grid label) { font-size:14px;line-height:1.4; }
+.settings-security-flow :is(input,select) { min-height:44px;font-size:16px; }
+.settings-security-flow .security-form-feedback:empty { display:none; }
+.settings-security-flow .security-subheading { display:flex;flex-direction:column;gap:10px;margin:0 0 12px; }
+.settings-security-flow .security-subheading strong { font-size:16px; }
+.settings-security-flow .security-subheading small { font-size:13px;line-height:1.4; }
+.settings-security-flow .mfa-method-selector { display:flex;width:100%; }
+.settings-security-flow .mfa-method-selector button { flex:1;min-height:44px;white-space:normal;font-size:13px; }
+.settings-security-flow .security-card { padding:10px;gap:10px; }
+.settings-security-flow .security-card>div { min-width:0; }
+.settings-security-flow .security-card>.security-icon { display:none; }
+.settings-security-flow .security-card strong { font-size:15px; }
+.settings-security-flow:has(#mfaSetup:not([hidden]),#mfaSmsVerify:not([hidden]),#recoveryPanel:not([hidden])) .security-card { display:none; }
+.settings-security-flow .mfa-setup,.settings-security-flow .recovery-panel,.settings-security-flow .mfa-disable { margin:10px 0 0;padding:12px; }
+.settings-security-flow .setup-step { margin-bottom:10px; }
+.settings-security-flow .setup-step strong { font-size:14px;line-height:1.4; }
+.settings-security-flow .mfa-setup code { font-size:16px;overflow-wrap:anywhere; }
+.settings-security-flow .recovery-codes { grid-template-columns:repeat(4,minmax(0,1fr));gap:6px; }
+.settings-security-flow .recovery-codes code { font-size:12px;padding:5px;overflow-wrap:anywhere; }
+#settings-mfa-flow[data-mfa-recovery-view="true"] :is(.security-subheading,#mfaDisable),
+#settings-mfa-flow[data-mfa-recovery-view="false"] #recoveryPanel { display:none; }
+.settings-security-flow #settingsRecoveryContinue { display:block;margin-top:10px; }
+.settings-security-flow #settingsRecoveryReturn { margin-top:8px; }
+.settings-security-flow .active-session-list { max-height:none;overflow:visible; }
+.settings-security-flow .active-session-copy strong { font-size:14px;line-height:1.4; }
+.settings-security-flow .active-session-copy small,.settings-security-flow .active-session-current { font-size:12px;line-height:1.4; }
+.settings-security-flow .auto-lock-setting { margin:0 0 16px;padding:12px; }
+.settings-security-flow .auto-lock-setting strong { font-size:15px;line-height:1.4; }
+.settings-security-flow .auto-lock-setting small { font-size:13px;line-height:1.45; }
+.settings-security-flow .enterprise-security-actions { padding:0;margin:0;border:0; }
+.settings-security-flow .enterprise-security-actions h3,.settings-security-flow .settings-data-actions h3 { margin:0 0 8px;font-size:16px; }
+.settings-security-flow .enterprise-security-actions>p,.settings-security-flow .settings-data-actions p { font-size:13px;line-height:1.45;margin:8px 0; }
+.settings-security-flow .enterprise-action-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+.settings-security-flow .enterprise-action-grid button { min-width:0;min-height:44px;white-space:normal; }
+.settings-security-flow .demo-reset-card { margin:12px 0 0;padding:12px;display:flex;flex-wrap:wrap;gap:10px; }
+.settings-security-flow .demo-reset-card[hidden] { display:none; }
+.settings-security-flow .demo-reset-icon { display:none; }
+.settings-security-flow .demo-reset-card>div { flex:1 1 100%; }
+.settings-security-flow .demo-reset-card strong { font-size:14px; }
+.settings-security-flow .demo-reset-card small { font-size:12px;line-height:1.4; }
+@media(max-width:800px) {
+  html body #bankSettingsModal:not(.tour-modal-host)[open] { padding:14px; }
+  #bankSettingsModal .settings-tabs { margin:8px 0; }
+  #bankSettingsModal .settings-pane-heading { margin-bottom:8px; }
+  #bankSettingsModal .settings-form-grid { gap:8px;margin-bottom:8px; }
+  #bankSettingsModal .settings-quick-actions { gap:8px;margin-bottom:8px; }
+  #bankSettingsModal .settings-action-row { display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px; }
+  #bankSettingsModal .settings-action-row>span { min-height:38px; }
+  #bankSettingsModal .settings-action-row .theme-segmented { width:100%;padding:2px;gap:2px; }
+  #bankSettingsModal.premium-settings .settings-action-row .theme-segmented button { min-width:0;padding-inline:2px;gap:2px;font-size:12px;line-height:1.4;white-space:nowrap;word-break:normal;overflow-wrap:normal; }
+  #bankSettingsModal .settings-action-row .theme-segmented button span { white-space:nowrap;word-break:normal;overflow-wrap:normal; }
+  #bankSettingsModal .settings-action-row .theme-segmented button svg { width:12px;height:12px;flex:0 0 12px; }
+  #bankSettingsModal.premium-settings .settings-action-row strong { font-size:13px;line-height:1.4; }
+  #bankSettingsModal.premium-settings [data-settings-panel="general"]>.toggle-setting { padding:8px; }
+  #bankSettingsModal.premium-settings [data-settings-panel="general"]>.toggle-setting strong { font-size:14px;line-height:1.4; }
+  #bankSettingsModal.premium-settings [data-settings-panel="general"]>.toggle-setting small { font-size:12px;line-height:1.4; }
+  #bankSettingsModal .settings-security-overview { gap:6px;margin-bottom:6px; }
+  #bankSettingsModal .settings-security-option { display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px; }
+  #bankSettingsModal [data-settings-panel="security"]>.info-note { padding:8px; }
+  #bankSettingsModal .settings-security-option>div { flex:1; }
+  #bankSettingsModal .settings-security-option h3 { font-size:14px;line-height:1.35; }
+  #bankSettingsModal .settings-security-option p { font-size:12px;line-height:1.4; }
+  #bankSettingsModal .settings-security-option button { padding:7px; }
+  #bankSettingsModal .personal-data-fields { gap:8px; }
+  #bankSettingsModal .personal-data-actions button { font-size:12px;padding:8px; }
+  #bankSettingsModal .personal-data-intro { font-size:12px;line-height:1.4;margin-bottom:10px; }
+  html body dialog.settings-security-flow[open] { width:calc(100vw - 20px);max-height:calc(100dvh - 20px);padding:16px; }
+  .settings-security-flow>h2 { margin-bottom:12px;font-size:21px; }
+  .settings-security-flow .security-form-grid { gap:8px; }
+  .settings-security-flow .security-card { display:flex;flex-wrap:wrap; }
+  .settings-security-flow .security-card>div { flex:1 1 100%; }
+  .settings-security-flow .active-session-item { grid-template-columns:minmax(0,1fr) auto;padding:8px;gap:8px; }
+  .settings-security-flow .active-session-device { display:none; }
+  .settings-security-flow .active-session-current { grid-column:auto;max-width:85px; }
+  .settings-security-flow .recovery-codes { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .settings-security-flow .settings-flow-footer { margin-top:12px;padding-top:10px; }
+}
+
+/* The mobile tour temporarily isolates its real appearance target; leaving the
+   tour restores the complete General page without remounting any control. */
+@media(max-width:1024px) {
+  #bankSettingsModal.tour-modal-host [data-settings-panel="general"] > :not(#settingsTourPreferences) { display:none; }
+  html body #bankSettingsModal.tour-modal-host:has([data-settings-panel="general"].active) .settings-modal-body { flex:0 0 auto;min-height:0;overflow:visible;padding:0;scrollbar-gutter:auto; }
+  #bankSettingsModal.tour-modal-host .settings-tabs { margin:0 36px 12px 0; }
+  #bankSettingsModal.tour-modal-host #settingsTourPreferences { margin:0; }
 }

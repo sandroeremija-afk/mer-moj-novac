@@ -230,7 +230,7 @@ async function main() {
     h.state.profile={transactions:[{date:'2026-05-01',amount:10,profileId:'business'}]};h.ui.open('activity',{timeframe:'custom-month'});
     assert.deepEqual(h.get('exportMonth').children.map(option=>option.value),['2026-05']);
   }
-  assert.match(css,/max-height:90dvh/);assert.match(css,/#izvozModal\.export-dialog[^}]*overflow:hidden/);assert.match(css,/\.export-body[^}]*overflow-y:auto;overflow-x:hidden/);
+  assert.match(css,/max-height:90dvh/);assert.match(css,/#izvozModal\.export-dialog[^}]*overflow:hidden/);assert.match(css,/\.export-body[^}]*overflow:visible/);assert.doesNotMatch(css,/\.export-body[^}]*overflow-y:(?:auto|scroll)/);
   assert.match(css,/\.export-footer[^}]*flex-shrink:0/);assert.match(css,/font-size:16px/);assert.match(css,/min-height:44px/);assert.match(css,/@media\(max-width:540px\)/);
   assert.match(css,/\.export-preview dl>div\{display:grid;grid-template-columns:minmax\(0,1fr\) max-content/);assert.match(css,/\.export-preview dd\{white-space:nowrap;overflow-wrap:normal/);
   process.stdout.write('Export modal cycle 2 passed: choices, context/date/format filters, explicit downloads, live state, async cancellation, errors, accessibility and responsive boundaries.\n');

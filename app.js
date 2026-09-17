@@ -340,9 +340,6 @@ function applyStaticTranslations() {
   $$('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.i18nAria)));
   $$('[data-i18n-placeholder]').forEach(el => el.setAttribute('placeholder', t(el.dataset.i18nPlaceholder)));
   $$('[data-lang]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.lang === currentLang)));
-  const chartMonth=new Intl.DateTimeFormat(locale(),{month:'long'}).format(new Date(`${appReferenceDate.slice(0,7)}-01T12:00:00`));
-  $('#chartTitle').textContent = currentLang === 'hr' ? `Tempo potrošnje u ${chartMonth}` : `${chartMonth} spending pace`;
-  $('#chartDesc').textContent = currentLang === 'hr' ? 'Kumulativna stvarna potrošnja uspoređena s planom.' : 'Cumulative actual spending compared with the plan.';
   document.title = currentLang === 'hr' ? 'mer Moj novac' : 'mer My money';
 }
 
@@ -401,7 +398,6 @@ function renderMonth() {
 function renderOverview() {
   const plan = getPlan();
   const percent = Math.round(plan.spentPercent);
-  const goalPercent = Math.round(MerCore.ratioPercent(state.savingsBalance,state.savingsGoal,100));
   $('#availableBalance').textContent = currency(state.availableBalance);
   $('#availableBalance').classList.toggle('negative-value',state.availableBalance<0);
   $('#availableBalance').classList.toggle('positive-value',state.availableBalance>0);
@@ -411,7 +407,6 @@ function renderOverview() {
   $('#savedValue').classList.toggle('negative-value',monthlySavings<0);
   $('#savedValue').classList.toggle('positive-value',monthlySavings>0);
   $('#tipSavings').textContent = currency(state.savingsTarget, true);
-  $('#chartSpent').textContent = currency(state.spent, true);
   $('#budgetPercent').textContent = t('budgetOf', { percent, budget:currency(plan.monthlyBudget, true) });
   $('#budgetProgress').style.width = `${Math.min(100, percent)}%`;
   $('#budgetProgressTrack').setAttribute('aria-valuenow', Math.min(100, percent));
@@ -429,13 +424,6 @@ function renderOverview() {
   const guard = $('#guardStatus');
   guard.classList.toggle('danger', plan.safeRemaining<0);
   $('strong', guard).textContent = t(plan.safeRemaining<0 ? 'overBudget' : 'withinBudget');
-  $('#goalCurrent').textContent = currency(state.savingsBalance, true);
-  $('#goalOf').textContent = t('goalOf', { target:currency(state.savingsGoal, true) });
-  $('#goalPercent').textContent = `${goalPercent}%`;
-  $('#goalProgress').style.width = `${goalPercent}%`;
-  $('#goalProgressTrack').setAttribute('aria-valuenow', goalPercent);
-  $('#goalDeposit').textContent = currency(state.savingsTarget, true);
-  $('#goalFinish').textContent = savingsFinishDate();
   $('#calcIncome').textContent = currency(plan.monthlyIncome, true);
   $('#calcBills').textContent = `−${currency(state.bills, true)}`;
   $('#calcSavings').textContent = `−${currency(state.savingsTarget, true)}`;
@@ -443,7 +431,29 @@ function renderOverview() {
   $('#calcBudget').textContent = currency(plan.spendablePool, true);
   $('#calcSpent').textContent = `−${currency(state.spent)}`;
   $('#calcSafe').textContent = currency(plan.safeRemaining);
-  renderSpendingPaceChart();
+  renderOverviewBreakdown();
+}
+
+function renderOverviewBreakdown() {
+  const host=$('#overviewVisualBreakdown');if(!host)return;
+  const totals=derivedTotals('monthly'), copy=insightDetailCopy[currentLang];
+  const categories=Object.entries(MerCore.categoryExpenseTotals(state.transactions,'monthly',appReferenceDate)).filter(([,value])=>value>0).sort((a,b)=>b[1]-a[1]);
+  const slices=categorySummarySlices(categories);
+  $('#overviewDetailsTitle').textContent=currentLang==='hr'?'Kamo odlazi novac':'Where your money goes';
+  host.innerHTML=`<div class="overview-visual-metrics">${expandedMetric(copy.income,currency(totals.income))}${expandedMetric(copy.expenses,currency(totals.expenses))}${expandedMetric(copy.net,currency(totals.net))}</div>${categoryDistributionMarkup(slices,totals.expenses,copy)}<p class="overview-visual-caption">${currentLang==='hr'?'Troškovi tekućeg mjeseca po kategorijama. Budući unosi nisu uključeni.':'This month’s expenses by category. Future entries are excluded.'}</p>`;
+}
+
+function categorySummarySlices(categories) {
+  const visible=categories.slice(0,5).map(([id,amount])=>({label:categoryName(id),amount}));
+  if(categories.length>5)visible.push({label:currentLang==='hr'?'Preostale kategorije':'Remaining categories',amount:MerCore.roundMoney(categories.slice(5).reduce((sum,[,amount])=>sum+amount,0))});
+  return visible;
+}
+
+function categoryDistributionMarkup(slices,total,copy) {
+  const colors=['#16574b','#00a9e4','#93c841','#f49727','#ff5259','#7b6eb4'];
+  const segments=MerCore.proportionalSegments(slices.map(item=>[item.label,item.amount]));
+  const gradient=segments.length?`conic-gradient(${segments.map((s,i)=>`${colors[i]} ${s.start}% ${s.end}%`).join(',')})`:'var(--line)';
+  return `<div class="expanded-donut-layout"><div class="expanded-donut" style="background:${gradient}" role="img" aria-label="${escapeHtml(`${copy.expenses}: ${currency(total)}`).replaceAll('"','&quot;')}"><span><strong>${currency(total)}</strong><small>${escapeHtml(copy.expenses)}</small></span></div><div class="expanded-ranked-list">${segments.map((s,i)=>`<div class="expanded-ranked-row"><span><i style="background:${colors[i]}"></i>${escapeHtml(s.entry[0])}</span><strong>${currency(s.value)} · ${number(s.end-s.start,0)}%</strong><div class="expanded-ranked-track"><i style="width:${s.end-s.start}%;background:${colors[i]}"></i></div></div>`).join('')||`<p class="notification-empty">${escapeHtml(copy.noData)}</p>`}</div></div>`;
 }
 
 function compactChartCurrency(value) {
@@ -674,6 +684,7 @@ function renderSavingsEntries() {
 }
 
 function renderUpcoming() {
+  if(!$('#upcomingList'))return;
   const items = [
     {name:'Netflix',due:t('dueTomorrow'),category:t('entertainment'),amount:15.49,style:'blue',icon:'N'},
     {name:currentLang==='hr'?'Električna energija':'Electricity',due:t('dueDate',{day:22}),category:t('utilities'),amount:64.20,style:'gold',icon:'<svg aria-hidden="true"><use href="#icon-bolt"></use></svg>'},
@@ -1238,10 +1249,8 @@ function renderInsightDetail(kind) {
     chart=expandedMonthChart(series,'expenses',copy);notes=historyNotes;
   }else if(kind==='category'){
     metrics=[{label:copy.expenses,value:currency(expenseTotal)},{label:copy.categories,value:categories.length},{label:copy.topCategory,value:categories[0]?categoryName(categories[0][0]):'—'}];
-    const segments=MerCore.proportionalSegments(categories).map((segment,index)=>({id:segment.entry[0],amount:segment.value,start:segment.start,end:segment.end,color:palette[index%palette.length]}));
-    const gradient=segments.length?`conic-gradient(${segments.map(segment=>`${segment.color} ${segment.start}% ${segment.end}%`).join(',')})`:'var(--line)';
-    chart=`<div class="expanded-donut-layout"><div class="expanded-donut" style="background:${gradient}"><span><strong>${currency(expenseTotal,true)}</strong><small>${escapeHtml(copy.expenses)}</small></span></div><div class="expanded-ranked-list">${segments.slice(0,6).map(segment=>{const share=segment.end-segment.start;return `<div class="expanded-ranked-row"><span><i style="background:${segment.color}"></i>${escapeHtml(categoryName(segment.id))}</span><strong>${currency(segment.amount,true)} · ${number(share,0)}%</strong><div class="expanded-ranked-track"><i style="width:${share}%;background:${segment.color}"></i></div></div>`;}).join('')||`<div class="notification-empty">${escapeHtml(copy.noData)}</div>`}</div></div>`;
-    notes=segments.slice(0,3).map(segment=>({label:categoryName(segment.id),value:`${currency(segment.amount)} · ${number(segment.end-segment.start,0)}% ${copy.ofExpenses}`}));
+    chart=categoryDistributionMarkup(categorySummarySlices(categories),expenseTotal,copy);
+    notes=[{label:copy.transactions,value:expenses.length},{label:copy.average,value:currency(expenses.length?totals.expenses/expenses.length:0)}];
   }else if(kind==='merchants'){
     const categoryDomain=MerCore.chartDomain(categories.map(([,amount])=>amount));
     metrics=[{label:copy.expenses,value:currency(expenseTotal)},{label:copy.categories,value:categories.length},{label:copy.topCategory,value:categories[0]?categoryName(categories[0][0]):'—'}];

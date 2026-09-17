@@ -2,20 +2,21 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
-const {topicForTarget,subsectionForTarget}=require('../popup-layout.js');
+const {topicForTarget,securityFlowForTarget}=require('../popup-layout.js');
 const {importPageSizeFor,paginateRules}=require('../settings-enhancements.js');
 
-test('settings deep links reveal the section containing the original control',()=>{
+test('settings deep links reveal the complete page or original security form',()=>{
   const routes=[
-    ['baseCurrency','general','regional'],['settingsLanguage','general','regional'],
-    ['themeToggle','general','appearance'],['settingsTourPreferences','general','appearance'],
-    ['layoutEditToggle','general','appearance'],['hideBalances','general','privacy'],
-    ['personalFirstName','personal','details'],['personalDataStorage','personal','storage'],
-    ['exportSovereignty','personal','management'],['deleteSovereignty','personal','management'],
-    ['resetDemoData','personal','management']
+    ['baseCurrency','general'],['settingsLanguage','general'],
+    ['themeToggle','general'],['settingsTourPreferences','general'],
+    ['layoutEditToggle','general'],['hideBalances','general'],
+    ['personalFirstName','personal'],['personalDataStorage','personal'],
+    ['exportSovereignty','personal'],['deleteSovereignty','personal'],
+    ['resetDemoData','personal']
   ];
-  for(const [id,topic,section] of routes){assert.equal(topicForTarget(id),topic,id);assert.equal(subsectionForTarget(id),section,id);}
+  for(const [id,topic] of routes)assert.equal(topicForTarget(id),topic,id);
   assert.equal(topicForTarget('recoveryCodes'),'access');assert.equal(topicForTarget('mfaDisableCode'),'access');
+  assert.equal(securityFlowForTarget('currentPasswordInput'),'password');assert.equal(securityFlowForTarget('mfaDisableCode'),'mfa');assert.equal(securityFlowForTarget('logoutOtherSessions'),'sessions');assert.equal(securityFlowForTarget('autoLockEnabled'),'device');
 });
 
 test('a 520-row import stays fully reachable on phone, compact desktop, and desktop pages',()=>{
@@ -31,16 +32,18 @@ test('a 520-row import stays fully reachable on phone, compact desktop, and desk
   assert.equal(rows.length,520);
 });
 
-test('settings navigation moves mounted forms and retains recovery and import controls',()=>{
+test('focused security dialogs move mounted forms and retain recovery and import controls',()=>{
   const popup=fs.readFileSync(require.resolve('../popup-layout.js'),'utf8');
   assert.match(popup,/nodes\.filter\(Boolean\)\.forEach\(node=>view\.append\(node\)\)/);
   assert.doesNotMatch(popup,/cloneNode|localStorage|\.reset\(/);
-  for(const id of ['personalDataForm','changePasswordForm','recoveryPanel','mfaDisable','bulkOverrideConfirmation','bulkOverrideUndoBar'])assert.ok(popup.includes(id),id);
+  for(const id of ['personalDataForm','changePasswordForm','settingsTourMfa','bulkOverrideConfirmation','bulkOverrideUndoBar'])assert.ok(popup.includes(id),id);
+  assert.match(popup,/mfaNodes=\[\.\.\.mfaSummary\.children\]/);
   assert.match(popup,/entry\.button\.tabIndex=active\?0:-1/);
   assert.match(popup,/dialog\.addEventListener\('invalid',event=>/);
   assert.match(popup,/views\.filter\(item=>!item\.button\.disabled\)/);
-  const connected=popup.indexOf('panel.append(access)'),lookup=popup.indexOf("document.getElementById('changePasswordForm').dataset");
-  assert.ok(connected>0&&lookup>connected,'mount the access card before document lookups for its moved controls');
+  assert.match(popup,/document\.body\.append\(flow\);nodes\.filter\(Boolean\)/);
+  assert.match(popup,/if\(!record\.flow\.open\)record\.flow\.showModal\(\)/);
+  assert.doesNotMatch(popup,/generalViews|personalViews|security-access-tabs|settings-topic-picker/);
   assert.match(popup,/\['ArrowLeft','ArrowRight','Home','End'\]/);
   const premium=fs.readFileSync(require.resolve('../premium.js'),'utf8');
   assert.match(premium,/itemSelector:'\.active-session-item'/);assert.match(premium,/itemSelector:'\.goal-bucket-card'/);

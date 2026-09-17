@@ -21,13 +21,15 @@ test('evaluation cycle 2: 375, 414 and 768 pixel layouts collapse Details and co
   assert.match(css, /\.overview-detail-grid \.line-chart svg \{ width:100%; max-width:100%; height:auto; \}/);
 });
 
-test('evaluation cycle 2: Dashboard Details keeps every chart and final action inside the scroll region', () => {
+test('evaluation cycle 2: Dashboard Details contains a single report instead of nested scroll cards', () => {
   const start = html.indexOf('id="overviewDetailsModal"');
   const end = html.indexOf('</dialog>', start);
   const modal = html.slice(start, end);
   assert.ok(start >= 0);
-  assert.match(modal, /class="detail-modal-grid overview-detail-grid"/);
-  assert.match(modal, /class="panel chart-panel"[\s\S]*class="line-chart"/);
-  assert.match(modal, /class="panel goal-panel"[\s\S]*data-open-savings/);
-  assert.match(modal, /class="panel upcoming-panel"[\s\S]*data-detail-route="activity"[^>]*data-clear-activity-filters/);
+  assert.match(modal, /id="overviewVisualBreakdown"/);
+  assert.match(modal, /data-close-modal/);
+  assert.doesNotMatch(modal, /detail-modal-grid|goal-panel|upcoming-panel/);
+  const refinements = fs.readFileSync(path.join(root, 'single-page-popups.css'), 'utf8');
+  assert.match(refinements, /@media\(max-width:640px\)/);
+  assert.match(refinements, /#overviewDetailsModal \.expanded-ranked-list[^}]*grid-template-columns:1fr 1fr/s);
 });

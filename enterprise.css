@@ -92,21 +92,42 @@
 .enterprise-dialog-head>h2,.receipt-head>div,.household-head>div { min-width:0; overflow-wrap:anywhere; }
 .enterprise-dialog-head .icon-button,.receipt-head .icon-button,.household-head .icon-button { flex-shrink:0; }
 .forecast-chart { min-width:0; }
-[data-forecast-panel][hidden]{display:none!important}
-.forecast-tabs{margin-bottom:14px}
-.forecast-section-title{margin:4px 0;font-size:16px;line-height:1.4}
-#intelligenceModal .forecast-ai{border:0;margin:0;padding:0}
-.forecast-ai>.enterprise-muted{margin:0 0 12px}
-.forecast-analysis-page{font-size:14px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:14px 0}
-.forecast-point-events{min-width:0;width:100%}
-.forecast-point-events p{font-size:12px;line-height:1.4;margin:0;overflow-wrap:anywhere}
-.forecast-chart .forecast-inspector{min-height:64px;padding:10px}
-.forecast-chart .forecast-inspector .mer-pagination{font-size:12px}
+#intelligenceModal{width:min(980px,calc(100vw - 32px))}
+#intelligenceModal #enterpriseForecast{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:14px;align-items:start}
+.cashflow-summary,.cashflow-visual{min-width:0;padding:14px;border:1px solid var(--enterprise-line);border-radius:12px;background:var(--enterprise-bg)}
+#intelligenceModal .enterprise-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0}
+#intelligenceModal .enterprise-metrics>div{grid-column:auto;padding:0;background:transparent;border:0;border-radius:0}
+#intelligenceModal .enterprise-metrics span{font-size:12px;line-height:1.35}
+#intelligenceModal .enterprise-metrics strong{font-size:18px;line-height:1.25;margin-top:5px}
+.cashflow-ai-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--enterprise-line)}
+.cashflow-ai-toolbar p{margin:0;font-size:12px;line-height:1.4;color:var(--enterprise-muted)}
+.cashflow-ai-toolbar button{min-height:44px;padding:8px 10px;white-space:nowrap}
+.forecast-analysis-page{font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0}
+#cashflowAnalysis:empty{display:none}
+#intelligenceModal .cashflow-summary .mer-pagination{padding-top:4px}
+#intelligenceModal .cashflow-summary .mer-pagination button{min-height:44px;padding:6px 8px;font-size:12px}
+#intelligenceModal .enterprise-skeleton{padding:8px 0 0;gap:4px}
+#intelligenceModal .enterprise-skeleton i{height:6px}
+#intelligenceModal .forecast-chart{margin:0}
+#intelligenceModal .forecast-chart .forecast-legend{font-size:11px;gap:12px;margin:4px 0}
+#intelligenceModal .forecast-chart .forecast-inspector{min-height:20px;padding:0;border:0;border-radius:0;background:transparent;display:block;font-size:12px;line-height:1.4;color:var(--enterprise-muted)}
+#intelligenceModal .forecast-inspector strong{font-size:12px;font-weight:500}
+#intelligenceModal .forecast-event-picker{display:block;margin:8px 0 0}
+.forecast-event-picker>span{display:block;font-size:12px;line-height:1.4;margin-bottom:4px;color:var(--enterprise-muted)}
+#intelligenceModal .forecast-event-picker select{height:44px;font-size:12px;padding:8px;min-width:0;max-width:100%}
+.forecast-model-note{font-size:12px;line-height:1.4;color:var(--enterprise-muted);margin:8px 0 0}
 #planTaxBody>p{font-size:14px;line-height:1.5;margin:12px 0}
 @media(max-width:600px){
-  .forecast-tabs{gap:2px;margin-bottom:10px}
-  .forecast-tabs button{padding:8px 3px}
-  #intelligenceModal .enterprise-metrics{margin:0;gap:10px}
+  html body #intelligenceModal[open]{padding:12px;gap:4px;max-height:calc(100dvh - 20px)}
+  #intelligenceModal .enterprise-dialog-head h2{padding-right:0;font-size:21px}
+  #intelligenceModal .enterprise-dialog-body{padding:0}
+  #intelligenceModal #enterpriseForecast{grid-template-columns:1fr;gap:8px}
+  #intelligenceModal .cashflow-summary,#intelligenceModal .cashflow-visual{padding:8px}
+  #intelligenceModal .enterprise-metrics{gap:8px}
+  #intelligenceModal .cashflow-ai-toolbar{margin-top:8px;padding-top:6px;gap:8px}
+  #intelligenceModal .forecast-analysis-page{font-size:12px;line-height:1.4;margin-top:6px}
+  #intelligenceModal .forecast-event-picker>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  #intelligenceModal .enterprise-footer{margin:4px 0 0;padding-top:8px}
   .enterprise-draft{gap:8px;padding:12px 0}
   .enterprise-draft>span{min-width:55%}
   .enterprise-draft button{min-height:44px}

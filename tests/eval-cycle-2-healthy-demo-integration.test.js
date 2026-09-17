@@ -14,7 +14,7 @@ const premium = read('premium.js');
 const html = read('index.html');
 const resetSource = premium.slice(premium.indexOf('function resetDemoWorkspace()'), premium.indexOf('function renderAutomationRules()'));
 const startupSource = app.slice(app.indexOf('const initialDemoProfiles ='), app.indexOf('const safeIdentifier='));
-const overviewSource = app.slice(app.indexOf('function renderOverview()'), app.indexOf('function compactChartCurrency('));
+const overviewSource = app.slice(app.indexOf('function renderOverview()'), app.indexOf('function renderOverviewBreakdown('));
 const alignHistorySource = app.slice(app.indexOf('function alignSavingsHistory('), app.indexOf('Object.values(appState.accounts).forEach(alignSavingsHistory);'));
 
 test('healthy demo module is loaded after its engine and before app startup in source and production manifests', () => {
@@ -150,7 +150,7 @@ test('Overview shows actual monthly deposits while live income still updates net
     state, MerCore, MerDiscovery:require('../discovery-core.js'), currentLang:'hr', getPlan:() => state.derived.financials,
     locale:() => 'hr-HR', appReferenceDate:'2026-09-04', activeMonth:8,
     $:select, currency:value => String(value), t:key => key,
-    savingsFinishDate:() => '2027-09-04', renderSpendingPaceChart:() => {}
+    savingsFinishDate:() => '2027-09-04', renderOverviewBreakdown:() => {}
   });
   render();
   assert.equal(elements.get('#savedValue').textContent, '450');

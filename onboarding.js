@@ -72,7 +72,7 @@
     if (ownedDialog !== dialog) {
       dialog.classList.add('tour-modal-host');
       if (step.surface === 'settings') window.MerSettings?.open(step.settingsTab);
-      else window.MerAssistantUi?.openHelp('assistant');
+      else window.MerAssistantUi?.openHelp(step.helpMode || 'assistant');
       ownedDialog = dialog;
       dialog.append(tour);
       dialog.addEventListener('close', handleOwnedDialogClose);
@@ -459,7 +459,7 @@
   $$('[data-settings-tab]').forEach(button => button.addEventListener('click', () => {
     if (tour.hidden || ownedDialog?.id !== 'bankSettingsModal') return;
     const tab = button.dataset.settingsTab;
-    if (tab === 'automation') { dismissTour();return; }
+    if (tab === 'automation' || (controller.snapshot().substepCount === 1 && tab !== 'general')) { dismissTour();return; }
     render(controller.selectSubstep(tab === 'general' ? 0 : 1));
   }));
   $('#settingsLanguage')?.addEventListener('change', () => {

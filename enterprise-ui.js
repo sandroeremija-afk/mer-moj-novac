@@ -65,7 +65,7 @@
   const commandDialog=makeDialog('commandPalette',copy('Što želite učiniti?','What would you like to do?'),`<input id="commandSearch" type="search" autocomplete="off" placeholder="Pretražite naredbe…" aria-label="Pretraži naredbe" role="combobox" aria-expanded="true" aria-controls="commandResults" aria-autocomplete="list"><div id="commandResults" role="listbox" aria-label="Naredbe"></div><footer class="command-hint">↑ ↓ ${copy('Odabir','Choose')} · Enter · Esc</footer>`,'command-dialog');
   function commands() {
     return [
-      ...[['overview','Pregled','Overview'],['budgets','Budžete','Budgets'],['savings','Štednju','Savings'],['activity','Aktivnost','Activity'],['insights','Uvide','Insights']].map(([id,hr,en])=>({label:copy(`Idi na ${hr}`,`Go to ${en}`),run:()=>showView(id)})),
+      ...[['overview','Pregled','Overview'],['budgets','Budžete','Budgets'],['savings','Štednju','Savings'],['activity','Aktivnost','Activity'],['insights','Uvide','Insights']].map(([id,hr,en])=>({label:copy(`Idi na ${hr}`,`Go to ${en}`),keywords:({overview:'Pregled',budgets:'Budžeti',savings:'Štednja',activity:'Aktivnost',insights:'Uvidi'})[id],run:()=>showView(id)})),
       {label:copy('Novi trošak','New expense'),run:()=>openTransaction()},
       {label:copy('Novi prihod','New income'),run:()=>openIncomeTransaction()},
       {label:copy('Mjesečni osvrt — Financial Wrapped','Monthly review — Financial Wrapped'),run:()=>window.MerEngagementUI?.openWrapped()},
@@ -73,9 +73,10 @@
       {label:copy('Izvoz — sve transakcije','Export — all transactions'),run:()=>window.MerExportUI?.open('activity',{timeframe:'all'})},
       {label:copy('Izvoz — budžeti','Export — budgets'),run:()=>document.querySelector('[data-export-budget]').click()},
       {label:copy('Izvoz — izvještaj uvida','Export — insights report'),run:()=>document.querySelector('[data-export-insights]').click()},
-      {label:copy('Lozinka — promjena lozinke','Password — change password'),run:()=>openSetting('security','currentPasswordInput')},
-      {label:copy('Jezik — Hrvatski / English','Language — Hrvatski / English'),run:()=>openSetting('general','settingsLanguage')},
-      {label:copy('2FA / MFA — dvostruka autentifikacija','2FA / MFA — two-factor authentication'),run:()=>openSetting('security','startMfa')},
+      {quick:'password',label:copy('Lozinka — promjena lozinke','Password — change password'),run:()=>openSetting('security','currentPasswordInput')},
+      {quick:'language',label:copy('Promjena jezika — Hrvatski / English','Change language — Hrvatski / English'),run:()=>openSetting('general','settingsLanguage')},
+      {quick:'mfa',label:copy('MFA / 2FA — dvostruka autentifikacija','MFA / 2FA — two-factor authentication'),run:()=>openSetting('security','startMfa')},
+      {quick:'transactions',label:copy('Sve transakcije','All transactions'),run:()=>{resetActivityFilters();showView('activity');}},
 {label:copy('Tema aplikacije — Svijetla / Tamna','App theme — Light / Dark'),run:()=>openSetting('general','themeToggle')},
       {label:copy('Skeniraj račun — OCR i povezivanje','Scan receipt — OCR and matching'),run:()=>window.MerReceiptUI?.open()},
       {label:copy('FIRE — financijska neovisnost','FIRE — financial independence'),run:()=>window.MerPlanningUI?.open('fire')},
@@ -97,7 +98,9 @@
   }
   function renderCommands() {
     const query=el('commandSearch').value;
-    const actions=commands().filter(command=>MerDiscovery.key(query).split(' ').every(token=>MerDiscovery.key(command.label).includes(token))).map(command=>({...command,group:copy('Naredbe i postavke','Actions and settings')}));
+    const available=commands(), empty=!query.trim();
+    const matches=empty?['password','mfa','transactions','language'].map(key=>available.find(command=>command.quick===key)).filter(Boolean):available.filter(command=>MerDiscovery.key(query).split(' ').every(token=>MerDiscovery.key(`${command.label} ${command.keywords||''}`).includes(token)));
+    const actions=matches.map(command=>({...command,group:copy('Naredbe i postavke','Actions and settings')}));
     const results=MerDiscovery.search(state,appState.activeAccount,query,{label:category=>category.name||t(category.nameKey||category.id)}).map(result=>{
       const transaction=result.kind==='transaction';
       const group=transaction?`${copy('Transakcije','Transactions')} · ${result.merchant} · ${formatIsoDate(result.date)}`:result.kind==='goal'?copy('Ciljevi i trezori','Goals and vaults'):copy('Kategorije i budžeti','Categories and budgets');
@@ -105,16 +108,14 @@
       const amount=appState.settings.hideBalances?'••••':MerCore.formatCurrency(result.amount,{locale:currentLang==='en'?'en-GB':'hr-HR',currency:/^[A-Z]{3}$/.test(result.currency||'')?result.currency:appState.settings.currency});
       return {label:result.label,group,detail:transaction?`${status} · ${amount}`:'',run:()=>runSearchResult(result)};
     });
-    visibleCommands=[...results,...actions];
+    const allResults=empty?actions:[...results,...actions];
+    visibleCommands=allResults.slice(0,window.innerWidth<=640?4:6);
     commandIndex=Math.max(0,Math.min(commandIndex,visibleCommands.length-1));
     let previousGroup='';
     el('commandResults').innerHTML=visibleCommands.length?visibleCommands.map((command,index)=>{const heading=command.group!==previousGroup?`<div class="command-group" role="presentation">${esc(command.group)}</div>`:'';previousGroup=command.group;return `${heading}<button type="button" role="option" id="commandOption${index}" aria-selected="${index===commandIndex}" data-command-index="${index}"><span>${esc(command.label)}${command.detail?`<small>${esc(command.detail)}</small>`:''}</span><span aria-hidden="true">↵</span></button>`;}).join(''):`<p class="enterprise-muted">${copy('Nema rezultata u aktivnom profilu.','No results in the active profile.')}</p>`;
-    const pager=window.MerPagination?.attach(el('commandResults'),{pageSize:4,itemSelector:'[data-command-index]',scopeKey:`${appState.activeAccount}:${query}`,onPage:result=>{
-      if(!result.items.some(item=>Number(item.dataset.commandIndex)===commandIndex))commandIndex=Number(result.items[0]?.dataset.commandIndex)||0;
-      el('commandResults').querySelectorAll('[data-command-index]').forEach(item=>item.setAttribute('aria-selected',String(Number(item.dataset.commandIndex)===commandIndex)));
-      if(result.items.length)el('commandSearch').setAttribute('aria-activedescendant',`commandOption${commandIndex}`);
-    }});
-    if(pager&&visibleCommands.length)pager.goTo(Math.floor(commandIndex/4)+1);
+    let count=el('commandResultHint');
+    if(!count){count=document.createElement('p');count.id='commandResultHint';count.className='command-result-hint';count.setAttribute('role','status');el('commandResults').after(count);}
+    count.textContent=allResults.length>visibleCommands.length?copy(`Prikazano ${visibleCommands.length} od ${allResults.length} rezultata. Precizirajte pretragu.`,`Showing ${visibleCommands.length} of ${allResults.length} results. Refine your search.`):empty?copy('Brzi pristup · počnite tipkati za sve ostale funkcije.','Quick access · type to find other features.'):'';
     if(visibleCommands.length)el('commandSearch').setAttribute('aria-activedescendant',`commandOption${commandIndex}`);else el('commandSearch').removeAttribute('aria-activedescendant');
   }
   function openCommands(){if(window.MerEnterpriseSecurity?.isLocked()||el('appShell').hidden)return;el('commandSearch').value='';commandIndex=0;renderCommands();openModal(commandDialog);el('commandSearch').focus();}
@@ -125,7 +126,7 @@
   el('commandResults').addEventListener('click',event=>{const item=event.target.closest('[data-command-index]');if(item)runCommand(Number(item.dataset.commandIndex));});
   el('commandSearch').addEventListener('keydown',event=>{
     if(event.key==='Enter'){event.preventDefault();runCommand(commandIndex);}
-    if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();const index=(commandIndex+(event.key==='ArrowDown'?1:-1)+visibleCommands.length)%Math.max(1,visibleCommands.length);commandIndex=index;renderCommands();window.MerPagination?.attach(el('commandResults')).goTo(Math.floor(index/4)+1);commandIndex=index;el('commandSearch').setAttribute('aria-activedescendant',`commandOption${index}`);el('commandResults').querySelectorAll('[data-command-index]').forEach(item=>item.setAttribute('aria-selected',String(Number(item.dataset.commandIndex)===index)));}
+    if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();commandIndex=(commandIndex+(event.key==='ArrowDown'?1:-1)+visibleCommands.length)%Math.max(1,visibleCommands.length);renderCommands();}
   });
   function toggleStealth(){appState.settings.hideBalances=!appState.settings.hideBalances;save('stealth-toggle');}
   document.addEventListener('keydown',event=>{
@@ -163,7 +164,7 @@
   const receiptAction=document.createElement('button');receiptAction.type='button';receiptAction.className='secondary-button transaction-receipt-action';receiptAction.id='transactionReceiptAction';receiptAction.hidden=true;el('transactionForm').prepend(receiptAction);
   el('transactionModal').addEventListener('toggle',()=>{const tx=state.transactions.find(item=>item.id===editingTransactionId);receiptAction.hidden=!tx;receiptAction.textContent=tx?.receipts?.length?copy(`Povezani računi (${tx.receipts.length})`,`Linked receipts (${tx.receipts.length})`):copy('Poveži fotografiju računa','Attach receipt photo');});
   receiptAction.addEventListener('click',()=>{const tx=state.transactions.find(item=>item.id===editingTransactionId);if(!tx)return;if(tx.receipts?.length)window.MerReceiptUI?.view(tx.id);else window.MerReceiptUI?.open({transactionId:tx.id});});
-  let projectionWidth=0, forecastView='overview', forecastOwner=null, analysisResult=null;
+  let projectionWidth=0, forecastOwner=null, analysisResult=null;
   // Tooltip/inspector height changes must not rebuild the chart or steal focus.
   const resizeProjection=()=>{const chart=el('enterpriseForecast').querySelector('.forecast-chart');if(intelligence.open&&chart&&Math.round(chart.clientWidth)!==projectionWidth)renderProjection();};
   new ResizeObserver(resizeProjection).observe(intelligence);
@@ -173,7 +174,7 @@
     const container=el('enterpriseForecast').querySelector('.forecast-chart');if(!container)return;
     projectionWidth=Math.round(container.clientWidth);
     const model=MerDiscovery.forecastChart(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency});
-    const width=Math.max(260,Math.round(container.clientWidth||680)),height=window.innerHeight<740?150:width<440?190:238,left=Math.min(width*.45,Math.max(82,...model.ticks.map(value=>money(value).length*6.7+16))),right=16,top=18,bottom=40,plotWidth=width-left-right,plotHeight=height-top-bottom;
+    const width=Math.max(260,Math.round(container.clientWidth||680)),height=window.innerWidth<600?110:window.innerHeight<740?180:218,left=Math.min(width*.45,Math.max(82,...model.ticks.map(value=>money(value).length*6.7+16))),right=16,top=14,bottom=32,plotWidth=width-left-right,plotHeight=height-top-bottom;
     const x=index=>left+index/30*plotWidth,y=value=>top+(model.maximum-value)/model.range*plotHeight;
     const path=model.series.map((point,index)=>`${index?'L':'M'}${x(index).toFixed(2)},${y(point.balanceCents).toFixed(2)}`).join(' ');
     const axisMoney=value=>MerCore.formatCurrency(value/100,{locale:currentLang==='en'?'en-GB':'hr-HR',currency:model.forecast.currency});
@@ -188,9 +189,8 @@
       if(index!==active){
         active=index;
         const heading=`<strong data-money>${esc(formatIsoDate(point.date))} · ${money(point.balanceCents)}</strong>`;
-        const text=`${heading}<div class="forecast-point-events">${point.events.map(item=>`<p>${item.kind==='income'?copy('Očekivani prihod','Expected income'):copy('Očekivani račun','Expected bill')}: ${esc(item.name)} · ${money(item.amountCents)}${item.source==='pattern'?copy(' (procjena obrasca)',' (pattern estimate)'):''}</p>`).join('')||`<p>${copy('Nema planiranih događaja.','No planned events.')}</p>`}</div>`;
+        const text=heading;
         container.querySelector('.forecast-inspector').innerHTML=text;tooltip.innerHTML=heading;
-        window.MerPagination?.attach(container.querySelector('.forecast-point-events'),{pageSize:1,itemSelector:'p',scopeKey:`${appState.activeAccount}:${point.date}`,label:copy('Događaji','Events')});
       }
       tooltip.hidden=false;guide.setAttribute('x1',x(index));guide.setAttribute('x2',x(index));guide.setAttribute('visibility','visible');dot.setAttribute('cx',x(index));dot.setAttribute('cy',y(point.balanceCents));dot.setAttribute('visibility','visible');
       tooltip.style.left=`${Math.max(8,Math.min(container.clientWidth-tooltip.offsetWidth-8,rect.left-outer.left+x(index)*scale-tooltip.offsetWidth/2))}px`;
@@ -202,32 +202,32 @@
     svg.onpointerleave=clear;container.onclick=inspect;container.onfocusin=inspect;
     container.onfocusout=event=>{if(!svg.contains(event.relatedTarget))clear();};
     container.onkeydown=event=>{const node=event.target.closest('[data-forecast-point]');if(!node)return;if(event.key==='Escape'&&!tooltip.hidden){event.preventDefault();event.stopPropagation();clear();return;}const index=Number(node.dataset.forecastPoint);const next=event.key==='ArrowRight'?Math.min(30,index+1):event.key==='ArrowLeft'?Math.max(0,index-1):event.key==='Home'?0:event.key==='End'?30:null;if(next===null)return;event.preventDefault();node.setAttribute('tabindex','-1');const target=container.querySelector(`[data-forecast-point="${next}"]`);target.setAttribute('tabindex','0');target.focus({preventScroll:true});inspectIndex(next);};
+    container.inspectForecastDay=inspectIndex;
   }
   function renderForecast(){
     const restoreFocus=window.MerPlanNavigation?.preserveFocus?.(intelligence);
     const f=forecast();
     const owner=appState.accounts[appState.activeAccount];
-    if(forecastOwner!==owner){forecastOwner=owner;forecastView='overview';analysisResult=null;}
-    const views=[['overview',copy('Sažetak','Summary')],['chart',copy('Graf','Chart')],['bills',copy('Računi','Bills')],['analysis',copy('AI uvid','AI insight')],['about',copy('O procjeni','About')]];
-    const section=(key,content)=>`<section id="forecast-panel-${key}" data-forecast-panel="${key}" role="tabpanel" aria-labelledby="forecast-tab-${key}" ${forecastView===key?'':'hidden'}>${content}</section>`;
-    el('enterpriseForecast').innerHTML=`<div class="enterprise-tabs forecast-tabs" role="tablist" aria-label="${copy('Prikaz novčanog toka','Cash flow view')}">${views.map(([key,label])=>`<button type="button" id="forecast-tab-${key}" role="tab" data-forecast-view="${key}" aria-controls="forecast-panel-${key}" aria-selected="${forecastView===key}" tabindex="${forecastView===key?'0':'-1'}">${label}</button>`).join('')}</div>${section('overview',metricsMarkup(f))}${section('chart','<div class="forecast-chart"></div>')}${section('bills',`<h3 class="forecast-section-title">${copy('Nadolazeći računi','Upcoming bills')} (${f.bills.length})</h3><div class="enterprise-list" id="forecastBills">${f.bills.map(b=>`<div class="forecast-bill"><span>${esc(b.name||b.merchant||copy('Planirani račun','Scheduled bill'))}<small>${esc(b.date)}</small></span><strong data-money>${money(b.amountCents)}</strong></div>`).join('')||`<p>${copy('Nema prepoznatih ponavljajućih računa.','No recurring bills detected.')}</p>`}</div>`)}${section('analysis',`<section class="forecast-ai"><p class="enterprise-muted">${copy('OpenAI dobiva samo zbirne iznose i anonimne obrasce, bez naziva trgovaca i osobnih podataka.','OpenAI receives aggregate amounts and anonymous patterns, not merchant or personal information.')}</p><button type="button" class="secondary-button" id="analyzeCashflow">${copy('Objasni prognozu uz OpenAI','Explain forecast with OpenAI')}</button><div id="cashflowAnalysis" aria-live="polite"></div></section>`)}${section('about',`<p class="enterprise-muted">${copy('Graf uključuje očekivane prihode; siguran iznos ih ne računa do knjiženja. Procjena nije jamstvo ni bankovno stanje.','Chart includes expected income; safe-to-spend excludes it until posted. An estimate, not a guarantee or bank balance.')}${f.confidence==='limited-history'?copy(' Nedovoljno povijesti za pouzdanu prognozu.',' Limited history for a reliable prediction.'):''}</p>${f.foreignCurrencyCount?`<p class="enterprise-muted">${copy(`Prognoza izostavlja ${f.foreignCurrencyCount} transakcija u drugim valutama; nema automatske konverzije.`,`Forecast excludes ${f.foreignCurrencyCount} transactions in other currencies; no automatic conversion.`)}</p>`:''}`)}`;
-    el('enterpriseForecast').onclick=event=>{const button=event.target.closest('[data-forecast-view]');if(button)showForecastView(button.dataset.forecastView);};
-    el('enterpriseForecast').onkeydown=event=>{const button=event.target.closest('[data-forecast-view]');if(!button||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...el('enterpriseForecast').querySelectorAll('[data-forecast-view]')],index=buttons.indexOf(button),next=event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;buttons[next].click();buttons[next].focus();};
-    window.MerPagination?.attach(el('forecastBills'),{pageSize:()=>window.innerWidth<600||window.innerHeight<700?2:4,itemSelector:'.forecast-bill',scopeKey:appState.activeAccount,label:copy('Računi','Bills')});
+    if(forecastOwner!==owner){forecastOwner=owner;analysisResult=null;}
+    const model=MerDiscovery.forecastChart(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency});
+    const events=model.series.flatMap((point,day)=>point.events.map((event,index)=>({day,index,date:point.date,...event})));
+    const eventLabel=event=>`${formatIsoDate(event.date)} · ${event.kind==='income'?copy('Prihod','Income'):copy('Račun','Bill')} · ${event.name} · ${appState.settings.hideBalances?copy('Iznos skriven','Amount hidden'):money(event.amountCents)}${event.source==='pattern'?copy(' (procjena)',' (estimate)'):''}`;
+    const limits=copy('Procjena, ne bankovno stanje. Očekivani prihodi raspoloživi su tek nakon knjiženja.','An estimate, not a bank balance. Expected income is available only after posting.')+(f.confidence==='limited-history'?copy(' Malo povijesnih podataka.',' Limited history.'):'')+(f.foreignCurrencyCount?copy(` Izostavljeno ${f.foreignCurrencyCount} zapisa u drugim valutama; nema konverzije.`,` ${f.foreignCurrencyCount} foreign-currency records excluded; no conversion.`):'');
+    el('enterpriseForecast').innerHTML=`<section class="cashflow-summary" aria-label="${copy('Sažetak i AI uvid','Summary and AI insight')}">${metricsMarkup(f)}<div class="cashflow-ai-toolbar"><p>${copy('OpenAI prima zbirne iznose, bez trgovaca i osobnih podataka.','OpenAI receives totals without merchants or personal data.')}</p><button type="button" class="secondary-button" id="analyzeCashflow">${copy('AI uvid','AI insight')}</button></div><div id="cashflowAnalysis" aria-live="polite"></div></section><section class="cashflow-visual" aria-label="${copy('Novčani tok i prognoza','Cash flow and forecast')}"><div class="forecast-chart"></div><label class="forecast-event-picker" for="forecastEventPicker"><span>${copy('Očekivani prihodi i računi','Expected income and bills')} · ${events.length}</span><select id="forecastEventPicker" ${events.length?'':'disabled'}><option value="">${events.length?copy('Odaberite događaj za detalje','Choose an event for details'):copy('Nema očekivanih događaja','No expected events')}</option>${events.map(event=>`<option value="${event.day}:${event.index}">${esc(eventLabel(event))}</option>`).join('')}</select></label><p class="forecast-model-note">${esc(limits)}</p></section>`;
     el('analyzeCashflow').addEventListener('click',()=>act(analyzeCashflow));
+    el('forecastEventPicker').addEventListener('change',event=>{
+      const selected=events.find(item=>`${item.day}:${item.index}`===event.target.value);
+      if(!selected)return;
+      event.target.title=eventLabel(selected);
+      el('enterpriseForecast').querySelector('.forecast-chart').inspectForecastDay?.(selected.day);
+    });
     if(analysisResult?.account===appState.activeAccount&&analysisResult.revision===reactiveStore.getRevision())renderAnalysis(analysisResult.message);
     renderProjection();
     requestAnimationFrame(resizeProjection);
     restoreFocus?.();
   }
-  function showForecastView(key){
-    forecastView=key;
-    el('enterpriseForecast').querySelectorAll('[data-forecast-view]').forEach(button=>{const selected=button.dataset.forecastView===key;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;});
-    el('enterpriseForecast').querySelectorAll('[data-forecast-panel]').forEach(panel=>{panel.hidden=panel.dataset.forecastPanel!==key;});
-    if(key==='chart')resizeProjection();
-  }
   function renderAnalysis(message){
-    const box=el('cashflowAnalysis'),chunks=String(message).match(/[\s\S]{1,220}(?:\s|$)|[\s\S]{1,220}/g)||[];
+    const box=el('cashflowAnalysis'),chunks=String(message).match(/[\s\S]{1,120}(?:\s|$)|[\s\S]{1,120}/gu)||[];
     box.innerHTML=chunks.map(chunk=>`<p class="forecast-analysis-page">${esc(chunk)}</p>`).join('');
     window.MerPagination?.attach(box,{pageSize:1,itemSelector:'.forecast-analysis-page',scopeKey:appState.activeAccount,label:copy('Objašnjenje prognoze','Forecast explanation')});
   }
@@ -236,7 +236,7 @@
     const box=el('cashflowAnalysis'),button=el('analyzeCashflow');button.disabled=true;box.setAttribute('aria-busy','true');box.innerHTML='<div class="enterprise-skeleton" role="status" aria-label="Učitavanje"><i></i><i></i><i></i></div>';
     const timer=setTimeout(()=>controller.abort(),25000);
     try{const response=await fetch('/api/cashflow',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({locale:currentLang,analysis:E.anonymizedForecast(forecast())}),signal:controller.signal});const result=await response.json();if(account!==appState.activeAccount||revision!==reactiveStore.getRevision()||!intelligence.open)return;const message=String(result.message||copy('AI trenutno nije dostupan. Lokalna prognoza ostaje dostupna.','AI unavailable. Your local forecast is still available.'));analysisResult={account,revision,message};renderAnalysis(message);}
-    catch{if(intelligence.open&&account===appState.activeAccount)box.textContent=copy('OpenAI nije dostupan. Provjerite vezu ili poslužiteljski API ključ. Lokalna procjena ostaje dostupna.','OpenAI is unavailable. Check connectivity or the server API key. The local estimate remains available.');}
+    catch{if(intelligence.open&&account===appState.activeAccount)renderAnalysis(copy('OpenAI nije dostupan. Provjerite vezu ili poslužiteljski API ključ. Lokalna procjena ostaje dostupna.','OpenAI is unavailable. Check connectivity or the server API key. The local estimate remains available.'));}
     finally{clearTimeout(timer);button.disabled=false;box.setAttribute('aria-busy','false');}
   }
   function openIntelligence(tab='forecast'){if(tab==='rules'){window.MerVaultsUI?.open('automation');return;}el('intelligenceProfile').textContent=state.accountName||appState.activeAccount;renderForecast();openModal(intelligence);}

@@ -333,7 +333,11 @@
       entry.hidden = !modules.includes(selected);
       if (entry.hidden) entry.open = false;
     });
-    window.MerPagination?.attach(helpFaqPanel.querySelector('.faq-list'), { pageSize:1, itemSelector:'details', scopeKey:selected, label:currentLang==='en'?'Help questions':'Pitanja i odgovori' });
+    // Every question in the chosen module is visible together, without page navigation.
+    helpFaqPanel.querySelectorAll('.faq-list details').forEach(entry => {
+      entry.removeAttribute('data-page-hidden');
+      entry.name = 'mer-module-faq';
+    });
   }
 
   function selectHelpMode(mode = 'faq', { focus = false } = {}) {

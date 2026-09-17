@@ -1,0 +1,125 @@
+/* Focused one-page reports: the same live metrics, without secondary tabs. */
+#commandPalette .command-result-hint { margin:8px 0; color:var(--muted); font-size:12px; line-height:1.4; }
+#commandPalette .command-hint { padding:8px 0; }
+#commandPalette #commandResults button { min-height:44px; padding:10px 12px; }
+#commandPalette #commandResults button small { display:block; font-size:12px; margin-top:3px; }
+#overviewDetailsModal { width:min(900px,calc(100vw - 32px)); }
+#overviewDetailsModal .overview-visual-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:18px 0; }
+#overviewDetailsModal .expanded-donut-layout { padding:18px; border:1px solid var(--line); border-radius:16px; background:var(--canvas); }
+.overview-visual-caption { color:var(--muted); font-size:13px; margin:12px 0 0; line-height:1.5; }
+#overviewDetailsModal .expanded-ranked-row > strong { white-space:nowrap; }
+#breakdownModal .calculation-list { display:grid; grid-template-columns:1fr 1fr; gap:8px 20px; margin:16px 0; overflow:visible; }
+#breakdownModal .calculation-list > div { padding:10px 0; min-width:0; gap:8px; font-size:14px; }
+#breakdownModal .calculation-list > .calculation-safe { grid-column:1 / -1; }
+#breakdownModal .calculation-list strong { white-space:nowrap; font-variant-numeric:tabular-nums; }
+#savingsStrategyModal .savings-strategy-body { display:grid; grid-template-columns:1fr; gap:14px; }
+#savingsStrategyModal .savings-strategy-body > .modal-intro { margin:0; }
+#savingsStrategyModal .savings-strategy-summary { margin:0; }
+#savingsStrategyModal .savings-strategy-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:0; }
+#savingsStrategyModal .savings-strategy-grid article { min-height:0; padding:14px; }
+#savingsStrategyModal .savings-strategy-grid strong { font-size:20px; line-height:1.35; }
+#savingsStrategyModal .savings-strategy-grid p { font-size:13px; line-height:1.5; margin:8px 0 0; }
+#savingsStrategyModal .recommendation-weekly { margin:0; padding:12px; }
+#savingsHistoryDetailModal .savings-detail-body { display:grid; grid-template-columns:1fr; gap:12px; }
+#savingsHistoryDetailModal .savings-chart-kpis { grid-template-columns:1fr 1fr; margin:0; }
+#savingsHistoryDetailModal .savings-chart-kpis > span { padding:10px; }
+#savingsHistoryDetailModal .savings-detail-body h3 { margin:0 0 8px; }
+#savingsHistoryDetailModal .savings-detail-months { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+#savingsHistoryDetailModal .savings-detail-months li { display:grid; gap:3px; padding:9px; border:1px solid var(--line); border-radius:9px; background:var(--canvas); font-size:12px; }
+#savingsHistoryDetailModal .savings-detail-months li strong { font-size:14px; }
+#savingsHistoryDetailModal .savings-detail-months li small { font-size:11px; color:var(--muted); }
+.savings-history-record-count { font-size:12px; line-height:1.45; color:var(--muted); margin:10px 0 0; }
+#insightChartModal[open] { display:flex; flex-direction:column; width:min(1000px,calc(100vw - 32px)); height:auto; overflow:hidden; }
+#insightChartModal .insight-expanded-metrics { flex:none; grid-template-columns:repeat(3,minmax(0,1fr)); margin:0 0 12px; }
+#insightChartModal .insight-expanded-metric strong, #overviewDetailsModal .insight-expanded-metric strong { font-size:clamp(16px,2vw,24px); overflow-wrap:anywhere; overflow:visible; white-space:normal; text-overflow:clip; }
+#insightChartModal .insight-expanded-metric span, #overviewDetailsModal .insight-expanded-metric span { white-space:normal; overflow:visible; font-size:12px; line-height:1.4; }
+#insightChartModal .insight-expanded-chart { flex:none; min-height:0; padding:14px; }
+#insightChartModal .expanded-donut-layout, #insightChartModal .expanded-savings-layout { min-height:0; grid-template-columns:190px minmax(0,1fr); gap:24px; }
+#insightChartModal .expanded-donut, #insightChartModal .expanded-savings-ring { width:190px; height:190px; min-width:0; min-height:0; }
+#insightChartModal .expanded-ranked-list { gap:9px; overflow:visible; }
+#insightChartModal .expanded-ranked-row { gap:4px 8px; }
+#insightChartModal .expanded-ranked-row > strong { font-size:12px; white-space:nowrap; }
+#insightChartModal .expanded-ranked-track { height:4px; }
+#insightChartModal .insight-expanded-breakdown { flex:none; grid-template-columns:repeat(3,minmax(0,1fr)); margin:10px 0 0; }
+#insightChartModal .insight-detail-note { padding:10px; min-width:0; }
+#insightChartModal .insight-detail-note strong { font-size:13px; white-space:normal; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; }
+#insightChartModal .expanded-month-chart { min-width:0; width:100%; height:210px; gap:6px; }
+#insightChartModal .expanded-month-column { min-width:0; }
+#helpFaqPanel .faq-list { display:grid; gap:10px; }
+#helpFaqPanel .faq-list details { margin:0; }
+#helpFaqPanel .faq-list summary { min-height:44px; padding:12px; line-height:1.4; }
+#helpFaqPanel .faq-list details p { font-size:14px; line-height:1.5; }
+@media(max-width:640px) {
+  #commandPalette #commandResults button { padding:9px 10px; }
+  #overviewDetailsModal > h2, #insightChartModal > h2 { font-size:21px; }
+  #overviewDetailsModal .overview-visual-metrics { gap:6px; margin:12px 0; }
+  #overviewDetailsModal .insight-expanded-metric, #insightChartModal .insight-expanded-metric { padding:8px; }
+  #overviewDetailsModal .insight-expanded-metric strong, #insightChartModal .insight-expanded-metric strong { font-size:15px; }
+  #overviewDetailsModal .expanded-donut-layout, #insightChartModal .expanded-donut-layout, #insightChartModal .expanded-savings-layout { grid-template-columns:1fr; gap:10px; justify-items:stretch; padding:0; }
+  #overviewDetailsModal .expanded-donut-layout { padding:10px; }
+  #overviewDetailsModal .expanded-donut, #insightChartModal .expanded-donut, #insightChartModal .expanded-savings-ring { width:110px; height:110px; min-width:0; min-height:0; justify-self:center; }
+  #overviewDetailsModal .expanded-donut strong, #insightChartModal .expanded-donut strong, #insightChartModal .expanded-savings-ring strong { font-size:16px; }
+  #overviewDetailsModal .expanded-donut::before, #insightChartModal .expanded-donut::before { inset:14px; }
+  #insightChartModal .expanded-donut { width:96px; height:96px; }
+  #insightChartModal .expanded-donut strong { font-size:13px; }
+  #insightChartModal .expanded-donut small { display:none; }
+  #insightChartModal .modal-close { top:8px; right:8px; }
+  #overviewDetailsModal .expanded-ranked-list, #insightChartModal .expanded-donut-layout .expanded-ranked-list, #insightChartModal .expanded-savings-layout .expanded-ranked-list { grid-template-columns:1fr 1fr; gap:9px; width:100%; }
+  #overviewDetailsModal .expanded-ranked-row, #insightChartModal .expanded-ranked-row { grid-template-columns:1fr; gap:3px; min-width:0; }
+  #overviewDetailsModal .expanded-ranked-row > span, #insightChartModal .expanded-ranked-row > span { font-size:12px; line-height:1.3; }
+  #overviewDetailsModal .expanded-ranked-row > strong, #insightChartModal .expanded-ranked-row > strong { font-size:11px; line-height:1.4; white-space:normal; }
+  #overviewDetailsModal .overview-visual-caption { font-size:12px; }
+  #breakdownModal .calculation-list { grid-template-columns:1fr; gap:0; margin:10px 0 0; }
+  #breakdownModal .calculation-list > div { padding:9px 0; font-size:13px; }
+  #breakdownModal .calculation-list strong { font-size:16px; }
+  #savingsStrategyModal .savings-strategy-header, #savingsStrategyModal .savings-strategy-footer { padding:12px 14px; }
+  html body #savingsStrategyModal.modal[open] { max-height:calc(100dvh - 20px); }
+  #savingsStrategyModal .savings-strategy-body { padding:8px 14px; gap:6px; grid-auto-rows:max-content; flex:0 0 auto; }
+  #savingsStrategyModal .savings-strategy-body > .modal-intro { display:none; }
+  #savingsStrategyModal .savings-strategy-summary { padding:10px; grid-template-columns:1fr; gap:0; }
+  #savingsStrategyModal .savings-strategy-summary .recommendation-icon { display:none; }
+  #savingsStrategyModal .savings-strategy-summary strong { font-size:22px; }
+  #savingsStrategyModal .savings-strategy-summary p { font-size:12px; line-height:1.4; margin:4px 0 0; }
+  #savingsStrategyModal .savings-strategy-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  #savingsStrategyModal .savings-strategy-grid article { padding:8px; }
+  #savingsStrategyModal .savings-strategy-grid article:last-child { grid-column:1 / -1; }
+  #savingsStrategyModal .savings-strategy-grid strong { font-size:17px; }
+  #savingsStrategyModal .savings-strategy-grid small, #savingsStrategyModal .savings-strategy-grid p { font-size:12px; line-height:1.35; margin:4px 0 0; }
+  #savingsStrategyModal .recommendation-weekly { padding:9px; }
+  #savingsView #savingsStrategyModal .weekly-review-copy p { font-size:12px; line-height:1.4; }
+  #savingsHistoryDetailModal .savings-detail-header, #savingsHistoryDetailModal .savings-detail-footer { padding:10px 12px; }
+  #savingsHistoryDetailModal .savings-detail-header h2 { font-size:20px; padding:0; }
+  #savingsHistoryDetailModal .savings-detail-body { padding:12px; gap:8px; }
+  #savingsHistoryDetailModal .chart-total-summary { flex-direction:row; align-items:center; gap:10px; }
+  #savingsHistoryDetailModal .chart-total-summary strong { font-size:21px; }
+  #savingsHistoryDetailModal .savings-chart-kpis strong { font-size:15px; }
+  #savingsHistoryDetailModal .savings-detail-months { grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+  #savingsHistoryDetailModal .savings-detail-months li { font-size:11px; padding:6px; }
+  #savingsHistoryDetailModal .savings-detail-months li strong { font-size:12px; }
+  #insightChartModal .insight-expanded-intro { font-size:12px; margin:6px 0 10px; line-height:1.4; }
+  #insightChartModal > .overline { display:none; }
+  #insightChartModal .insight-expanded-intro { margin:4px 0 6px; }
+  #insightChartModal .insight-expanded-chart > .expanded-ranked-list { grid-template-columns:1fr 1fr; }
+  #insightChartModal .insight-detail-note span { white-space:normal; text-overflow:clip; overflow:visible; }
+  #insightChartModal .insight-expanded-metrics { gap:6px; margin-bottom:8px; }
+  #insightChartModal .insight-expanded-metric span { font-size:11px; }
+  #insightChartModal .insight-expanded-chart { padding:10px; }
+  #insightChartModal .insight-expanded-breakdown { gap:6px; }
+  #insightChartModal .insight-detail-note { padding:6px; }
+  #insightChartModal .insight-detail-note span { font-size:11px; }
+  #insightChartModal .insight-detail-note strong { font-size:12px; }
+  #insightChartModal .expanded-month-chart { height:190px; gap:3px; }
+  #insightChartModal .expanded-month-column > small { font-size:9px; }
+  #insightChartModal .expanded-month-bars { height:170px; }
+  #helpAssistantModal .help-assistant-heading h2 { font-size:20px; }
+  #helpAssistantModal .help-assistant-heading + p { font-size:12px; }
+  #helpFaqPanel .faq-list { gap:6px; }
+  #helpFaqPanel .help-nav-grid { margin:8px 0; }
+  #helpFaqPanel .faq-list summary { padding:9px; font-size:13px; }
+  #helpFaqPanel .faq-list details p { font-size:13px; padding:0 9px 9px; margin:6px 0; }
+  #helpAssistantModal.tour-modal-host .help-assistant-body { overflow:hidden; }
+  #helpAssistantModal.tour-modal-host > .mer-generated-footer { display:none; }
+  #helpAssistantModal.tour-modal-host #helpFaqPanel .help-nav-grid { margin:4px 0; gap:4px; }
+  #helpAssistantModal.tour-modal-host #helpFaqPanel .faq-list { gap:4px; }
+  #helpAssistantModal.tour-modal-host #helpFaqPanel .faq-list details p { display:none; }
+}

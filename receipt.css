@@ -54,3 +54,25 @@
   .receipt-dialog .receipt-note { font-size:11px; line-height:1.4; margin-block:7px; }
   .receipt-dialog .receipt-intro { font-size:12px; line-height:1.4; margin-bottom:10px; }
 }
+
+/* Selecting a photo and consenting to OCR share one compact screen. */
+html body dialog.receipt-dialog[open]{padding:0;max-height:calc(100dvh - 20px)}
+.receipt-dialog .receipt-upload-body{padding:16px 20px}
+.receipt-upload-body .receipt-intro{margin-bottom:12px;line-height:1.45}
+.receipt-dialog .receipt-upload-body .receipt-drop{min-height:96px;gap:6px;padding:10px}
+.receipt-dialog .receipt-upload-body .receipt-drop img{max-height:120px}
+.receipt-upload-body .receipt-upload-actions{margin:10px 0 8px}
+.receipt-dialog .receipt-upload-body .receipt-ocr-note{margin:0 0 10px;font-size:12px;line-height:1.45}
+.receipt-dialog .receipt-upload-body .receipt-check{margin:0;font-size:12px;line-height:1.45}
+.receipt-upload-body .receipt-loading{gap:4px;margin-top:8px}
+.receipt-upload-body .receipt-loading i{height:6px}
+.receipt-upload-body .receipt-loading i:not(:first-of-type){display:none}
+.receipt-dialog .receipt-upload-body [data-receipt-error]{padding:8px;margin:8px 0 0;font-size:12px;line-height:1.4}
+@media(max-width:600px){
+  .receipt-dialog .receipt-upload-body{padding:12px 14px}
+  .receipt-dialog .receipt-head h2{padding-right:0}
+  .receipt-dialog .receipt-upload-body .receipt-drop img{max-height:88px}
+  .receipt-upload-body .receipt-upload-actions{gap:8px;margin:8px 0}
+  .receipt-upload-body .receipt-upload-actions button{flex:1;padding-inline:8px}
+  .receipt-dialog:has(.receipt-upload-body) .receipt-footer{padding:10px 14px}
+}

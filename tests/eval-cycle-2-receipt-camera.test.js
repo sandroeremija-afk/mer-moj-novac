@@ -27,7 +27,7 @@ function stream() {
   return {track,getTracks:()=>[track]};
 }
 function harness(options={}) {
-  const createdUrls=[],revokedUrls=[],draws=[],requests=[],cameraRequests=[],videos=[],canvases=[],observers=[];
+  const createdUrls=[],revokedUrls=[],draws=[],requests=[],cameraRequests=[],videos=[],canvases=[],observers=[],sectionCalls=[];
   const suppliedStream=stream();
   class Element extends Events {
     constructor(attributes='') {
@@ -69,12 +69,27 @@ function harness(options={}) {
   };
   class Image {constructor(){this.naturalWidth=1600;this.naturalHeight=900;}async decode(){if(options.imageDecode)await options.imageDecode;}}
   const window=new Events();Object.assign(window,{document,File,MerReceipts:R,MerCore,crypto:require('node:crypto').webcrypto,isSecureContext:options.secure!==false,MerEnterpriseBridge:{getState:()=>state,openModal:node=>node.showModal(),closeModal:node=>node.close()}});
+  if(options.sections)window.MerSections={attach:(...args)=>{sectionCalls.push(args);return {select(){}};}};
   window.MutationObserver=class {constructor(handler){this.handler=handler;observers.push(this);}observe(){this.active=true;}disconnect(){this.active=false;}};
   if(options.supported!==false)window.navigator={mediaDevices:{getUserMedia:constraints=>{cameraRequests.push(constraints);return options.getUserMedia?options.getUserMedia(constraints):Promise.resolve(suppliedStream);}}};
   vm.runInNewContext(source,{window,document,Image,Intl,URL:{createObjectURL(blob){createdUrls.push(blob);return 'blob:receipt-'+createdUrls.length;},revokeObjectURL(url){revokedUrls.push(url);}},AbortController,setTimeout,clearTimeout,btoa:value=>Buffer.from(value,'binary').toString('base64'),fetch:async(url,request)=>{requests.push({url,request});return {ok:true,json:async()=>({source:'openai',receipt:{merchant:'Synthetic shop',date:'2026-09-14',totalCents:1250,currency:'EUR',lines:[]}})};}});
   window.MerReceiptUI.open();
-  return {window,document,dialog,state,shell,observers,stream:suppliedStream,videos,canvases,draws,cameraRequests,requests,createdUrls,revokedUrls,node:selector=>dialog.querySelector(selector),click:selector=>dialog.querySelector(selector).click()};
+  return {window,document,dialog,state,shell,observers,sectionCalls,stream:suppliedStream,videos,canvases,draws,cameraRequests,requests,createdUrls,revokedUrls,node:selector=>dialog.querySelector(selector),click:selector=>dialog.querySelector(selector).click()};
 }
+
+test('initial scanner keeps photo controls, OCR explanation and explicit consent on one page',()=>{
+  for(const language of ['hr','en']){
+    const app=harness({language,sections:true}),html=app.dialog.innerHTML;
+    assert.equal(app.sectionCalls.length,0,'the shared section helper must not separate photo and consent controls');
+    assert.doesNotMatch(html,/role="tab|data-section-panel/);
+    assert.match(html,/id="receiptChoose"[\s\S]*id="receiptCamera"[\s\S]*<\/div>\s*<p class="receipt-note receipt-ocr-note" id="receiptOcrNote">/);
+    assert.match(html,/id="receiptConsent"[^>]*aria-describedby="receiptOcrNote"/);
+    assert.match(html,/OpenAI/);assert.equal(app.node('#receiptConsent').checked,false);
+    assert.equal(app.node('#receiptAnalyze').disabled,true);
+    assert.equal(app.cameraRequests.length,0);assert.equal(app.requests.length,0);
+    assert.match(html,/<footer[\s\S]*data-receipt-close/);
+  }
+});
 
 test('live rear camera starts only on request, with no microphone and a local footer back button',async()=>{
   const app=harness();assert.equal(app.cameraRequests.length,0);assert.equal(app.requests.length,0);

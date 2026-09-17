@@ -31,10 +31,10 @@ function controller(storage, userId, timer = clock()) {
   return MerOnboarding.createOnboardingController({ storage, userId, now:timer.now });
 }
 
-test('evaluation cycle 1: the guided tour uses the five requested senior-friendly steps', () => {
+test('evaluation cycle 1: the guided tour uses seven senior-friendly steps including Settings and Help', () => {
   assert.deepEqual(
     MerOnboarding.DEFAULT_STEPS.map(step => step.id),
-    ['overview', 'transaction', 'budgets', 'savings', 'insights']
+    ['overview', 'transaction', 'budgets', 'savings', 'insights', 'settings', 'help']
   );
   for (const step of MerOnboarding.DEFAULT_STEPS) {
     assert.equal(typeof step.titleKey, 'string');
@@ -57,7 +57,7 @@ test('evaluation cycle 1: a first login launches once, walks in order and persis
   assert.ok(view.record.launchedAt);
   assert.equal(firstSession.shouldAutoStart(), false, 'opening the tour immediately consumes the one-time auto launch');
 
-  for (const expected of ['transaction', 'budgets', 'savings', 'insights']) {
+  for (const expected of ['transaction', 'budgets', 'savings', 'insights', 'settings', 'help']) {
     timer.tick();
     view = firstSession.next();
     assert.equal(view.stepId, expected);
@@ -169,16 +169,16 @@ test('evaluation cycle 1: duplicate session callbacks leave an active tour inter
   assert.match(onboardingUi, /controller\s*=\s*controllerFor\(session\);\s*if \(!tour\.hidden && controller\.snapshot\(\)\.open\) return true;\s*const snapshot = controller\.start/);
 });
 
-test('evaluation cycle 1: legacy seven-step progress clamps safely without relaunch or completion loss', () => {
-  for (const position of [5, 6, 10]) {
+test('evaluation cycle 1: five-step and older seven-step progress preserve completion without relaunch', () => {
+  for (const position of [4, 5, 6, 10]) {
     const completedAt = '2026-09-08T12:00:00.000Z';
     const storage = new MemoryStorage({
       'mer-onboarding-v1:existing-user':JSON.stringify({ launchedAt:'2026-09-08T11:00:00.000Z', completedAt, currentStep:position, substepIndex:2 })
     });
     const current = controller(storage, 'existing-user');
     const snapshot = current.snapshot();
-    assert.equal(snapshot.stepId, 'insights');
-    assert.equal(snapshot.stepIndex, 4);
+    assert.equal(snapshot.stepId, position === 4 ? 'insights' : position === 5 ? 'settings' : 'help');
+    assert.equal(snapshot.stepIndex, Math.min(position, 6));
     assert.equal(snapshot.substepIndex, 0);
     assert.equal(snapshot.substepCount, 1);
     assert.equal(snapshot.complete, true);
@@ -186,6 +186,6 @@ test('evaluation cycle 1: legacy seven-step progress clamps safely without relau
     const restarted = current.start({ force:true });
     assert.equal(restarted.stepId, 'overview');
     assert.equal(restarted.record.completedAt, completedAt);
-    assert.equal(restarted.steps.length, 5);
+    assert.equal(restarted.steps.length, 7);
   }
 });

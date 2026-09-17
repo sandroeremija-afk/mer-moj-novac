@@ -89,6 +89,8 @@ test('Cycle 2: settings UI exposes MFA, review pagination, privacy, display pref
 
 test('Cycle 2: both Insights and Dashboard are re-rendered after premium state changes', () => {
   assert.match(script, /originalRenderAll\(\);renderPremium\(\)/);
-  assert.match(script, /#overviewView \.goal-panel h2/);
+  assert.match(script, /#savingsView \.savings-hero h2/);
+  assert.doesNotMatch(script, /#overviewView \.goal-panel h2/);
+  assert.match(html, /id="overviewVisualBreakdown"/);
   assert.match(html, /data-view-panel="insights"/);
 });

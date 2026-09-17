@@ -14,7 +14,7 @@ const ui = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 test('evaluation cycle 1: onboarding steps describe real spotlight targets in a deliberate order', () => {
   assert.deepEqual(
     MerOnboarding.DEFAULT_STEPS.map(step => step.id),
-    ['overview', 'transaction', 'budgets', 'savings', 'insights']
+    ['overview', 'transaction', 'budgets', 'savings', 'insights', 'settings', 'help']
   );
   MerOnboarding.DEFAULT_STEPS.forEach(step => {
     assert.equal(typeof step.target, 'string', `${step.id} has a target selector`);

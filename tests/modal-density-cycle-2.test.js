@@ -35,8 +35,8 @@ test('cycle 2: static tool bodies use reachable sections and pages without a bod
     assert.match(read(file),/MerSections\.attach/);
     assert.match(read(file),/MerPagination\?\.attach/);
   }
+  assert.match(read('planning-ui.js'),/role="tabpanel"/);
   for(const file of ['enterprise-ui.js','planning-ui.js']){
-    assert.match(read(file),/role="tabpanel"/);
     assert.match(read(file),/MerPagination\?\.attach/);
   }
   const savingsRule=rules(read('list-pagination.css')).find(rule=>rule.selector.includes('#savingsDetailsModal #savingsEntryList')&&/overflow\s*:\s*visible/.test(rule.declarations));

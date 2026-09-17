@@ -9,15 +9,17 @@ const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const assistantUi = fs.readFileSync(path.join(root, 'assistant-ui.js'), 'utf8');
 
-test('evaluation cycle 2: Dashboard Detalji uses a compact chart and fully wrapping bottom labels', () => {
+test('evaluation cycle 2: Dashboard Detalji uses one live category report and fully wrapping labels', () => {
   const start = html.indexOf('id="overviewDetailsModal"');
   const end = html.indexOf('</dialog>', start);
   const modal = html.slice(start, end);
-  assert.match(modal, /viewBox="0 0 660 172"/);
-  assert.match(app, /const y=value=>142-MerCore\.scaleChartValue\(value,domain,124\)/);
-  assert.match(css, /#overviewDetailsModal \{ width:min\(960px,calc\(100vw - 30px\)\); max-width:960px; \}/);
-  assert.match(css, /@media \(min-width:769px\) and \(max-height:800px\) \{[\s\S]*?#overviewDetailsModal \{ width:min\(900px/);
-  assert.match(css, /#overviewDetailsModal :is\([^}]+\) \{[^}]*text-overflow:clip;[^}]*white-space:normal;[^}]*overflow-wrap:anywhere;/);
+  assert.match(modal, /id="overviewVisualBreakdown"/);
+  assert.doesNotMatch(modal, /upcoming-panel|goal-panel|line-chart/);
+  assert.match(app, /function renderOverviewBreakdown\(\)/);
+  assert.match(app, /categorySummarySlices\(categories\)/);
+  const singlePage = fs.readFileSync(path.join(root, 'single-page-popups.css'), 'utf8');
+  assert.match(singlePage, /#overviewDetailsModal \{ width:min\(900px/);
+  assert.match(singlePage, /overflow-wrap:anywhere; overflow:visible; white-space:normal; text-overflow:clip/);
 });
 
 test('evaluation cycle 2: Budgets owns a 350px internal category scroll area and no bottom-right actions', () => {

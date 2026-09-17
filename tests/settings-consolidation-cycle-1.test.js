@@ -21,10 +21,14 @@ class Element {
   get textContent(){return this._text+this.children.map(node=>node.textContent).join('');}
   set textContent(value){this._text=String(value);this.children.forEach(node=>node.parentElement=null);this.children=[];}
   get hidden(){return this.hasAttribute('hidden');}set hidden(value){this.toggleAttribute('hidden',value);}
+  get open(){return this.hasAttribute('open');}
+  showModal(){this.setAttribute('open','');}
+  close(){this.removeAttribute('open');this.dispatch('close');}
   get isConnected(){return this===this.ownerDocument.body||Boolean(this.parentElement?.isConnected);}
   setAttribute(name,value){this.attrs.set(name,String(value));}
   getAttribute(name){return this.attrs.get(name)??null;}
   hasAttribute(name){return this.attrs.has(name);}
+  removeAttribute(name){this.attrs.delete(name);}
   toggleAttribute(name,force){if(force??!this.hasAttribute(name))this.setAttribute(name,'');else this.attrs.delete(name);}
   remove(){if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(node=>node!==this);this.parentElement=null;}
   append(...nodes){nodes.forEach(node=>{node.remove();node.parentElement=this;this.children.push(node);});}
@@ -35,7 +39,7 @@ class Element {
   closest(selector){return this.matches(selector)?this:this.parentElement?.closest(selector)||null;}
   focus(){this.ownerDocument.activeElement=this;}
   matches(selector){return selector.split(',').some(part=>{
-    const simple=part.trim(),tag=simple.match(/^[a-z][a-z-]*/i)?.[0];
+    const simple=part.trim(),tag=simple.match(/^[a-z][a-z0-9-]*/i)?.[0];
     if(tag&&this.tagName!==tag.toLowerCase())return false;
     for(const match of simple.matchAll(/#([\w-]+)|\.([\w-]+)|\[([\w-]+)(?:="([^"]*)")?\]/g)){
       if(match[1]&&this.id!==match[1])return false;
@@ -98,54 +102,53 @@ function harness(){
   const window={document,MerSettings:{selectTab:tab=>tabs.push(tab)},addEventListener:(name,handler)=>events[name]=handler};
   vm.runInNewContext(source,{window,requestAnimationFrame:callback=>{frames.push(callback);return frames.length;},MutationObserver:class{observe(){}}});
   const flush=()=>{while(frames.length)frames.shift()();};flush();
-  const topic=value=>{const radio=security.querySelector(`input[value="${value}"]`);assert.ok(radio);radio.checked=true;radio.dispatch('change');flush();};
-  return{window,document,dialog,body,personal,security,demo,personalForm,firstName,password,passwordInput,mfa,setup,code,notice,sessions,exportButton,deleteButton,calls,tabs,flush,topic,events};
+  return{window,document,dialog,body,general,personal,security,demo,personalForm,firstName,password,passwordInput,mfa,setup,code,notice,sessions,exportButton,deleteButton,calls,tabs,flush,events};
 }
 
-test('consolidation moves existing sovereignty actions and demo controls beside personal data without replacing handlers',()=>{
+test('personal data stays on one page and management actions retain their original handlers in a focused dialog',()=>{
   const app=harness();
   for(const button of [app.exportButton,app.deleteButton]){
-    assert.ok(app.personal.contains(button));assert.equal(app.security.contains(button),false);
+    assert.ok(app.document.getElementById('settings-data-flow').contains(button));assert.equal(app.security.contains(button),false);
     assert.equal(app.document.querySelectorAll(`#${button.id}`).length,1);
   }
-  assert.ok(app.personal.contains(app.demo));assert.ok(app.personal.contains(app.personalForm));
+  assert.ok(app.document.getElementById('settings-data-flow').contains(app.demo));assert.ok(app.personal.contains(app.personalForm));
+  assert.equal(app.personal.querySelector('[role="tablist"]'),null);assert.equal(app.general.querySelector('[role="tablist"]'),null);
   assert.equal(app.firstName.value,'Unsaved first name');
   app.exportButton.click();app.deleteButton.click();app.personalForm.dispatch('submit');
   assert.deepEqual(app.calls,{export:1,delete:1,password:0,personal:1});
 });
 
-test('security has three visible topic choices and one common password/MFA card retaining form and enrollment state',()=>{
-  const app=harness(),access=app.document.getElementById('securityAccessCard');
-  assert.deepEqual(app.security.querySelectorAll('input[name="settingsTopic"]').map(node=>node.value),['access','device','sessions']);
-  assert.equal(app.security.querySelector('input[value="data"]'),null);
-  assert.ok(access.contains(app.password));assert.ok(access.contains(app.mfa));assert.ok(access.contains(app.notice));
-  assert.equal(access.hasAttribute('data-topic-hidden'),false);
-  app.topic('sessions');assert.equal(access.hasAttribute('data-topic-hidden'),true);assert.equal(app.sessions.hasAttribute('data-topic-hidden'),false);
-  app.topic('device');app.topic('access');
+test('security exposes all four actions together and focused dialogs preserve form and enrollment state',()=>{
+  const app=harness();
+  assert.deepEqual(app.security.querySelectorAll('[data-security-option]').map(node=>node.dataset.securityOption),['password','mfa','device','sessions']);
+  assert.equal(app.security.querySelector('[role="tablist"]'),null);assert.equal(app.security.querySelector('input[name="settingsTopic"]'),null);
+  assert.ok(app.document.getElementById('settings-password-flow').contains(app.password));assert.ok(app.document.getElementById('settings-mfa-flow').contains(app.setup));assert.ok(app.security.contains(app.notice));
+  app.document.getElementById('settings-security-mfa').click();assert.equal(app.document.getElementById('settings-mfa-flow').open,true);assert.equal(app.dialog.open,true);
+  app.document.getElementById('settings-mfa-flow').querySelector('[data-settings-back]').click();app.flush();
+  assert.equal(app.dialog.hasAttribute('data-settings-flow-open'),false);assert.equal(app.document.activeElement.id,'settings-security-mfa');
   assert.equal(app.document.getElementById('changePasswordForm'),app.password);
   assert.equal(app.passwordInput.value,'Unsubmitted password');assert.equal(app.code.value,'123456');assert.equal(app.setup.hidden,false);
   app.password.dispatch('submit');assert.equal(app.calls.password,1);
 });
 
-test('deep links select Personal for data actions and the correct mobile access subview for password/MFA',()=>{
-  const app=harness(),access=app.document.getElementById('securityAccessCard');
+test('deep links select the flat page or matching security dialog while the tour anchor stays on the overview',()=>{
+  const app=harness();
   app.window.MerPopupLayout.revealTarget('exportSovereignty');assert.equal(app.tabs.at(-1),'personal');
   app.window.MerPopupLayout.revealTarget('personalAddress');assert.equal(app.tabs.at(-1),'personal');
   app.window.MerPopupLayout.revealTarget('#mfaVerificationCode');assert.equal(app.tabs.at(-1),'security');
-  assert.equal(access.dataset.accessView,'mfa');assert.equal(access.hasAttribute('data-topic-hidden'),false);
-  assert.equal(access.querySelector('button[data-access-view="mfa"]').getAttribute('aria-pressed'),'true');
-  app.window.MerPopupLayout.revealTarget('#currentPasswordInput');assert.equal(access.dataset.accessView,'password');
-  access.querySelector('button[data-access-view="mfa"]').click();assert.equal(access.dataset.accessView,'mfa');
-  app.dialog.dispatch('close');assert.equal(access.dataset.accessView,'password');assert.equal(access.hasAttribute('data-topic-hidden'),false);
+  assert.equal(app.document.getElementById('settings-mfa-flow').open,true);
+  app.window.MerPopupLayout.revealTarget('#currentPasswordInput');assert.equal(app.document.getElementById('settings-password-flow').open,true);assert.equal(app.document.getElementById('settings-mfa-flow').open,false);
+  app.window.MerPopupLayout.revealTarget('#settingsTourMfa');assert.equal(app.document.getElementById('settings-password-flow').open,false);assert.ok(app.security.contains(app.mfa));
+  app.document.getElementById('settings-security-mfa').click();app.dialog.close();assert.equal(app.document.getElementById('settings-mfa-flow').open,false);
   assert.equal(app.passwordInput.value,'Unsubmitted password');assert.equal(app.code.value,'123456');
 });
 
 test('consolidated labels respond to language changes while measured fit records layout regressions',()=>{
   const app=harness();
-  assert.equal(app.document.getElementById('securityAccessTitle').textContent,'Lozinka i dvofaktorska autentifikacija');
+  assert.equal(app.document.getElementById('settings-mfa-flow-title').textContent,'Dvostruka autentifikacija');
   assert.equal(app.body.dataset.contentFits,'true');
   app.document.documentElement.lang='en';app.body.scrollHeight=800;app.events.resize();app.flush();
-  assert.equal(app.document.getElementById('securityAccessTitle').textContent,'Password and two-factor authentication');
+  assert.equal(app.document.getElementById('settings-mfa-flow-title').textContent,'Two-factor authentication');
   assert.equal(app.document.getElementById('settingsDataTitle').textContent,'Data management');
   assert.equal(app.body.dataset.contentFits,'false');
   app.body.scrollHeight=500;app.events.resize();app.flush();assert.equal(app.body.dataset.contentFits,'true');
@@ -158,17 +161,17 @@ test('mounted subviews retain connected controls and disabled import steps canno
   assert.equal(review.disabled,true);upload.dispatch('keydown',{key:'ArrowRight'});
   assert.equal(upload.getAttribute('aria-selected'),'true');assert.equal(review.getAttribute('aria-selected'),'false');
   app.window.MerImportLayout.refresh(true);assert.equal(review.disabled,false);assert.equal(review.getAttribute('aria-selected'),'true');
-  app.window.MerMfaRecoveryLayout.refresh(true);assert.equal(app.document.getElementById('settings-mfa-account-recovery').hidden,false);
-  app.window.MerMfaRecoveryLayout.refresh(false);assert.equal(app.document.getElementById('settings-mfa-account-manage').hidden,false);
+  const mfaFlow=app.document.getElementById('settings-mfa-flow');
+  app.window.MerMfaRecoveryLayout.refresh(true);assert.equal(mfaFlow.dataset.mfaRecoveryView,'true');
+  app.document.getElementById('settingsRecoveryContinue').click();assert.equal(mfaFlow.dataset.mfaRecoveryView,'false');
+  app.document.getElementById('settingsRecoveryReturn').click();assert.equal(mfaFlow.dataset.mfaRecoveryView,'true');
   assert.equal(app.code.value,'123456');
 });
 
 test('native validation reveals the original input and active outer settings tab',()=>{
   const app=harness();
-  app.window.MerPopupLayout.revealTarget('exportSovereignty');
-  assert.equal(app.document.getElementById('settings-personal-details').hidden,true);
   app.dialog.dispatch('invalid',{target:app.firstName});
-  assert.equal(app.tabs.at(-1),'personal');assert.equal(app.document.getElementById('settings-personal-details').hidden,false);
+  assert.equal(app.tabs.at(-1),'personal');assert.equal(app.personalForm.closest('[hidden]'),null);
   assert.equal(app.firstName.value,'Unsaved first name');
 });
 

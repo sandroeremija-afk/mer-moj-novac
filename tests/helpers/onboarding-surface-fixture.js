@@ -1,14 +1,14 @@
 'use strict';
 
-// Explicit opt-in fixture for reusable dialog/substep safety tests. These two
-// extra surfaces are deliberately absent from the production five-step tour.
+// Explicit opt-in fixture for reusable dialog/substep safety tests. Production
+// has seven main steps; this variant exercises additional Settings substeps.
 const production = require('../../onboarding-core.js');
 const copy = (hrTitle, enTitle, hrDescription, enDescription) => Object.freeze({
   hr:Object.freeze({ title:hrTitle, description:hrDescription }),
   en:Object.freeze({ title:enTitle, description:enDescription })
 });
 const steps = Object.freeze([
-  ...production.DEFAULT_STEPS,
+  ...production.DEFAULT_STEPS.slice(0, 5),
   Object.freeze({
     id:'settings', surface:'settings', target:'#settingsTourPreferences', mobileTarget:'#settingsTourPreferences', settingsTab:'general', placement:'left', titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody',
     substeps:Object.freeze([

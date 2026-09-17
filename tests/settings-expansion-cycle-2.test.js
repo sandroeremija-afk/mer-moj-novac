@@ -16,22 +16,22 @@ test('personal-data UI states the local identity limit and uses named, bounded f
   assert.match(source('settings-enhancements.js'),/await flush\(\)/);
 });
 
-test('all security topics are exposed as native radio choices while existing deep links retain routing',() => {
+test('all security actions share one overview while existing deep links retain routing',() => {
   const popup = source('popup-layout.js');
-  assert.match(popup,/createElement\('fieldset'\)/);assert.match(popup,/type="radio" name="settingsTopic"/);
-  assert.doesNotMatch(popup,/<select id="settingsTopic"/);
-  assert.match(popup,/choice\.checked=choice\.value===selected/);
+  assert.match(popup,/settings-security-overview/);assert.match(popup,/\['password','Lozinka','Password'/);
+  assert.doesNotMatch(popup,/type="radio" name="settingsTopic"|security-access-tabs|generalViews|personalViews/);
+  assert.match(popup,/button\.dataset\.securityFlow=key/);
   assert.match(popup,/MerPopupLayout=Object\.freeze\(\{revealTarget\}\)/);
   assert.match(source('popup-layout.css'),/input:focus-visible/);
 });
 
-test('settings use mounted subviews without an inner scroller and three-row rule pages',() => {
+test('settings use complete pages without an inner scroller and three-row rule pages',() => {
   const css = source('settings-enhancements.css'), premium = source('premium.js'), html = source('index.html');
   assert.match(css,/height:fit-content;max-height:calc\(100dvh - 32px\)/);
   assert.match(css,/\.settings-modal-body\s*\{[^}]*overflow:visible/);
   assert.doesNotMatch(css,/\.settings-modal-body\s*\{[^}]*overflow-y:auto/);
   assert.match(css,/\.settings-personal-grid\s*\{[^}]*display:block/);
-  assert.match(css,/\.security-access-grid\s*\{[^}]*grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(css,/\.settings-security-overview\s*\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/#automationRuleList\s*\{[^}]*overflow:visible/);
   assert.match(html,/id="rulesPrevious"[^>]*aria-controls="automationRuleList"/);
   assert.match(html,/id="rulesNext"[^>]*aria-controls="automationRuleList"/);

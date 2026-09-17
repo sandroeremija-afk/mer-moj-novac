@@ -36,10 +36,8 @@ test('evaluation cycle 1: cross-module navigation clears modal, menu, tooltip, a
   assert.match(app, /function showView\(view\) \{\s*closeAllOverlays\(\);/s);
   assert.match(app, /\$\$\('\.modal\[open\]'\)\.forEach\(modal=>modal\.close\(\)\)/);
   assert.match(app, /closeCardMenus\(\);\s*closeNotifications\(\);\s*toggleAccountMenu\(false\)/s);
-  assert.match(html, /id="upcomingActionMenu"[^>]*role="menu"[^>]*hidden/);
-  assert.match(html, /id="upcomingActionMenu"[\s\S]*?data-detail-route="activity"[^>]*data-clear-activity-filters/);
-  assert.match(html, /id="emergencyGoalMenu"[^>]*role="menu"[^>]*hidden/);
-  assert.match(html, /id="emergencyGoalMenu"[\s\S]*?data-detail-route="savings"/);
+  assert.match(html, /id="overviewVisualBreakdown"/);
+  assert.doesNotMatch(html, /id="(?:upcomingActionMenu|emergencyGoalMenu)"/, 'old Details cards are replaced by the unified category report');
   assert.match(app, /\$\$\('\[data-card-menu\]'\)/);
   assert.doesNotMatch(app, /\[data-card-menu\][\s\S]{0,180}event\.stopPropagation\(\)/, 'the responsive menu positioner receives trigger clicks');
   assert.match(app, /document\.addEventListener\('click',event=>\{\s*const button=event\.target\.closest\?\.\('\[data-detail-route\]'\)[\s\S]*resetActivityFilters\(\{render:false\}\)[\s\S]*showView\(target\)/);

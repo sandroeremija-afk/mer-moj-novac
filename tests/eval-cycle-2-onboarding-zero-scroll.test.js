@@ -19,8 +19,8 @@ test('evaluation cycle 2: onboarding popovers use dynamic density with no intern
   assert.doesNotMatch(ui, /maxHeight:`\$\{layout\.popover\.height\}px`/);
 });
 
-test('evaluation cycle 2: compact actions and runtime progress match the audited five-step flow', () => {
-  assert.equal(MerOnboarding.DEFAULT_STEPS.length, 5);
+test('evaluation cycle 2: compact actions and runtime progress match the seven-step flow', () => {
+  assert.equal(MerOnboarding.DEFAULT_STEPS.length, 7);
   assert.match(ui, /stepNumber \/ controller\.steps\.length \* 100/);
   assert.match(ui, /`Korak \$\{stepNumber\} od \$\{controller\.steps\.length\}`/);
   assert.match(css, /\.onboarding-actions\s*\{[^}]*align-items:center;[^}]*flex-direction:row;/);
@@ -34,7 +34,10 @@ test('evaluation cycle 2: module transitions retain the backdrop and expose side
   assert.match(preview, /if \(step\.view && typeof showView === 'function'\) showView\(step\.view\)/);
   assert.match(preview, /if \(mobileViewport\(\) && step\.openSidebar\) openSidebar\(\)/);
   MerOnboarding.DEFAULT_STEPS.filter(step => step.view).forEach(step => assert.match(step.contextTarget, /^\.nav-item\[data-view="[a-z]+"\]$/));
-  MerOnboarding.DEFAULT_STEPS.filter(step => step.surface).forEach(step => assert.equal(step.contextTarget, undefined));
+  MerOnboarding.DEFAULT_STEPS.filter(step => step.surface).forEach(step => {
+    assert.equal(step.contextTarget, step.surface === 'settings' ? '#openSettings' : '#openHelpAssistant');
+    assert.doesNotMatch(step.contextTarget, /insights/);
+  });
 });
 
 test('evaluation cycle 2: full-height category cards retain a readable tooltip lane on phones', () => {

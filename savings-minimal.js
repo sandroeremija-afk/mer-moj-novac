@@ -107,10 +107,10 @@
     if (trendLabel) trendLabel.textContent = say('U odnosu na prethodni mjesec', 'Compared with the previous month');
     const months = detail.history.map((amount, index) => {
       const date = new Date(end); date.setUTCMonth(date.getUTCMonth() - (detail.history.length - 1 - index));
-      const label = new Intl.DateTimeFormat(s.language === 'en' ? 'en-GB' : 'hr-HR', { month:'long', year:'numeric', timeZone:'UTC' }).format(date);
+      const label = new Intl.DateTimeFormat(s.language === 'en' ? 'en-GB' : 'hr-HR', { month:'short', year:'numeric', timeZone:'UTC' }).format(date);
       return `<li><span>${esc(label)}</span><strong data-money>${money(amount)}</strong></li>`;
     }).join('');
-    el('savingsHistoryBreakdown').innerHTML = `<h3>${say('Mjesečne uplate', 'Monthly contributions')}</h3><ul class="savings-detail-months">${months || `<li>${say('Nema povijesti za prikaz.', 'No history to show.')}</li>`}</ul><h3>${say('Posljednje uplate', 'Recent deposits')}</h3>${entriesMarkup(detail.entries.slice(0, 5), detail.goals)}`;
+    el('savingsHistoryBreakdown').innerHTML = `<h3>${say('Mjesečne uplate', 'Monthly contributions')}</h3><ul class="savings-detail-months">${months || `<li>${say('Nema povijesti za prikaz.', 'No history to show.')}</li>`}</ul><p class="savings-history-record-count">${detail.entries.length} ${say('evidentiranih uplata u prikazanom razdoblju.', 'recorded deposits in this period.')}</p>`;
     footer(historyDialog, [{ id:'entries', label:say('Sve uplate', 'All deposits'), run:() => bridge().openModal(el('savingsDetailsModal')) }]);
   }
   function renderGoal() {

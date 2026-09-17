@@ -109,7 +109,7 @@
     field.value = selection.month;
     field.disabled = months.length === 0;
     el('exportMonthHint').textContent = months.length
-      ? say('Prethodni mjeseci sa zapisima ovog profila, od najnovijeg.', 'Previous months with this profile’s records, newest first.')
+      ? say('Mjeseci sa zapisima, od najnovijeg.', 'Months with records, newest first.')
       : say('Nema zapisa iz prethodnih mjeseci. Odaberite drugo razdoblje.', 'There are no records from previous months. Select another period.');
   }
   function localizedTitles() {
@@ -121,7 +121,7 @@
   function renderLabels(state) {
     el('exportTitle').textContent = localizedTitles()[selection.context];
     el('exportProfile').textContent = profileLabel(state);
-    el('exportDescription').textContent = say('Odaberite razdoblje i format. Datoteka sadrži samo podatke aktivnog profila.', 'Choose a period and format. The file includes only the active profile’s data.');
+    el('exportDescription').textContent = say('Datoteka sadrži samo podatke aktivnog profila.', 'The file includes only the active profile’s data.');
     el('exportBack').hidden = !selection.fromActivity;
     el('exportCancel').hidden = Boolean(selection.fromActivity);
     el('exportBackLabel').textContent = say('Natrag', 'Back');
