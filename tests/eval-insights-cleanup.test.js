@@ -10,14 +10,15 @@ const insightsStart = html.indexOf('id="insightsView"');
 const insightsEnd = html.indexOf('id="insightsDetailsModal"', insightsStart);
 const insights = html.slice(insightsStart, insightsEnd);
 
-test('evaluation cycle 1: Largest categories has no subscription action or leftover action gap', () => {
-  const merchantStart = insights.indexOf('class="panel insight-visual-card merchant-card');
+test('evaluation cycle 1: expense structure replaces category duplication without leftover subscription actions', () => {
+  const merchantStart = insights.lastIndexOf('<article ', insights.indexOf('data-insight-detail="expense-structure"'));
   const merchantEnd = insights.indexOf('</article>', merchantStart);
   const merchantCard = insights.slice(merchantStart, merchantEnd);
 
-  assert.ok(merchantStart >= 0, 'Largest categories card must exist');
-  assert.match(merchantCard, /id="topMerchantsList"/);
-  assert.match(merchantCard, /Najveće kategorije/);
+  assert.ok(merchantStart >= 0, 'Fixed versus flexible expense card must exist');
+  assert.match(merchantCard, /id="expenseStructureSummary"/);
+  assert.match(merchantCard, /Fiksni vs\. Fleksibilni troškovi/);
+  assert.doesNotMatch(merchantCard, /topMerchantsList|Najveće kategorije/);
   assert.doesNotMatch(merchantCard, /openSubscriptions|manageSubscriptions|Upravljaj pretplatama/);
   assert.doesNotMatch(app, /\$\('#openSubscriptions'\)\.addEventListener/);
 });

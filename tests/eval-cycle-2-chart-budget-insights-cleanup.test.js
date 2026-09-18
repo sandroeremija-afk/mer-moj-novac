@@ -37,7 +37,7 @@ test('evaluation cycle 2: each Insights analysis card has one clean h2 title', (
   const end = html.indexOf('id="insightsDetailsModal"', start);
   const cards = html.slice(start, end);
   assert.doesNotMatch(cards, /<p class="overline"/);
-  for (const key of ['categoryDonutTitle', 'incomeVsExpenses', 'topFiveMerchants']) {
+  for (const key of ['categoryDonutTitle', 'incomeVsExpenses', 'fixedVsVariableExpenses']) {
     assert.equal((cards.match(new RegExp(`<h2 data-i18n="${key}"`, 'g')) || []).length, 1);
   }
   assert.doesNotMatch(cards, /data-layout-card="savings-rate"/, 'the savings rate belongs to the top summary row');

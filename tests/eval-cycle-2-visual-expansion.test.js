@@ -36,7 +36,7 @@ test('evaluation cycle 2: Savings ring and Activity rows use explicit, centered 
 test('evaluation cycle 2: every Insights KPI and chart card expands through one reactive deep-dive modal', () => {
   const cards = html.match(/data-insight-detail="[^"]+"/g) || [];
   assert.equal(cards.length, 7);
-  for (const kind of ['net','income','expenses','category','cashflow','merchants','savings-rate']) {
+  for (const kind of ['net','income','expenses','category','cashflow','expense-structure','savings-rate']) {
     assert.match(html, new RegExp(`data-insight-detail="${kind}"`));
   }
   assert.match(html, /id="insightChartModal"/);
@@ -45,8 +45,9 @@ test('evaluation cycle 2: every Insights KPI and chart card expands through one 
   assert.match(html, /id="insightExpandedBreakdown"/);
   assert.match(app, /function renderInsightDetail\(kind\)/);
   assert.match(app, /MerAccounting\.monthSeries\(state\.transactions,appReferenceDate,12\)/);
-  assert.match(app, /const categoryDomain=MerCore\.chartDomain\(categories\.map\(\(\[,amount\]\)=>amount\)\)/);
-  assert.match(app, /kind==='merchants'[\s\S]*?categoryName\(id\)[\s\S]*?copy\.ofExpenses/);
+  assert.match(app, /kind==='net'[\s\S]*?MerInsights\.cumulativeSeries\(state,insightsTimeframe,appReferenceDate\)/);
+  assert.match(app, /kind==='expense-structure'[\s\S]*?MerInsights\.expenseStructure\(state,insightsTimeframe,appReferenceDate\)[\s\S]*?expenseStructureMarkup\(structure,true\)/);
+  assert.match(app, /if\(trend\)MerInsightCharts\.mount/);
   assert.doesNotMatch(app, /merchantTotal=/);
   assert.match(app, /function openInsightDetail\(kind\)/);
   assert.match(app, /if\(\$\('#insightChartModal'\)\?\.open&&activeInsightDetail\)renderInsightDetail\(activeInsightDetail\)/);

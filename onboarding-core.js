@@ -30,12 +30,16 @@
       copy:copy('Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.', 'Analytics and reports', 'Compare income and expenses by period. Choose a day, a month, a year or your full history.')
     },
     {
-      id:'settings', surface:'settings', settingsTab:'general', target:'#settingsTourPreferences', mobileTarget:'#settingsTourPreferences', contextTarget:'#openSettings', placement:'left', titleKey:'onboardingSettingsTitle', bodyKey:'onboardingSettingsBody',
-      copy:copy('Postavke po vašoj mjeri', 'U Općim postavkama birajte temu i raspored. U ostalim odjeljcima podesite jezik, privatnost i zaštitu računa.', 'Settings that suit you', 'Choose your theme and layout in General settings. Other sections let you adjust language, privacy and account security.')
+      id:'security', surface:'settings', settingsTab:'security', settingsFlow:'device', target:'#settings-device-flow .settings-flow-body', mobileTarget:'#settings-device-flow .settings-flow-body', contextTarget:'#openSettings', placement:'left', titleKey:'onboardingSecurityTitle', bodyKey:'onboardingSecurityBody',
+      copy:copy('Zaključavanje po vašem izboru', 'Po želji uključite zaključavanje nakon 10 minuta. Otključavate lozinkom ili postavljenim PIN-om. Vodič ne mijenja ovu postavku.', 'Locking is your choice', 'Enable locking after 10 minutes if you wish. Unlock with your password or configured PIN. This tour does not change the setting.')
     },
     {
-      id:'help', surface:'help', helpMode:'faq', target:'#helpAssistantModal .help-assistant-body', mobileTarget:'#helpAssistantModal .help-assistant-body', contextTarget:'#openHelpAssistant', placement:'left', titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
-      copy:copy('Pomoć i AI asistent', 'U čestim pitanjima pronađite upute za svaki dio aplikacije. Odaberite Pitaj AI za razgovor i objašnjenja svojih financija.', 'Help and AI assistant', 'Find guidance for each part of the app in the FAQs. Choose Ask AI to chat and get explanations about your finances.')
+      id:'privacy', surface:'settings', settingsTab:'general', target:'#bankSettingsModal label:has(#hideBalances)', mobileTarget:'#bankSettingsModal label:has(#hideBalances)', contextTarget:'#openSettings', placement:'left', titleKey:'onboardingPrivacyTitle', bodyKey:'onboardingPrivacyBody',
+      copy:copy('Sakrijte iznose jednim potezom', 'Privatni način zamagljuje novčane iznose. Uključite ga ovdje ili prečacem Ctrl / ⌘ + Shift + H. Vaši podaci ostaju nepromijenjeni.', 'Hide amounts in one step', 'Privacy mode blurs monetary amounts. Enable it here or press Ctrl / ⌘ + Shift + H. Your financial data stays unchanged.')
+    },
+    {
+      id:'personal', surface:'settings', settingsTab:'personal', target:'#personalDataForm', mobileTarget:'#personalDataForm', contextTarget:'#openSettings', placement:'left', titleKey:'onboardingPersonalTitle', bodyKey:'onboardingPersonalBody',
+      copy:copy('Vaši osobni podaci', 'U odjeljku Podaci uredite ime, prezime, OIB i adresu. Unos je neobavezan i sprema se u ovom pregledniku; nije provjera identiteta.', 'Your personal information', 'Edit your name, OIB and address in Personal data. These optional details are stored in this browser; this is not identity verification.')
     }
   ].map(step => Object.freeze(step)));
 

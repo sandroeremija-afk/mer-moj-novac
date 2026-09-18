@@ -1,7 +1,7 @@
 'use strict';
 
 // Explicit opt-in fixture for reusable dialog/substep safety tests. Production
-// has seven main steps; this variant exercises additional Settings substeps.
+// has eight main steps; this variant exercises additional Settings substeps.
 const production = require('../../onboarding-core.js');
 const copy = (hrTitle, enTitle, hrDescription, enDescription) => Object.freeze({
   hr:Object.freeze({ title:hrTitle, description:hrDescription }),

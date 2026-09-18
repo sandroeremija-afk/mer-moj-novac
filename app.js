@@ -424,13 +424,14 @@ function renderOverview() {
   const guard = $('#guardStatus');
   guard.classList.toggle('danger', plan.safeRemaining<0);
   $('strong', guard).textContent = t(plan.safeRemaining<0 ? 'overBudget' : 'withinBudget');
-  $('#calcIncome').textContent = currency(plan.monthlyIncome, true);
-  $('#calcBills').textContent = `−${currency(state.bills, true)}`;
-  $('#calcSavings').textContent = `−${currency(state.savingsTarget, true)}`;
+  $('#calcIncome').textContent = `+ ${currency(plan.monthlyIncome, true)}`;
+  $('#calcBills').textContent = `− ${currency(plan.bills, true)}`;
+  $('#calcSavings').textContent = `− ${currency(plan.savingsTarget, true)}`;
   $('#calcBuffer').textContent = `−${currency(plan.buffer, true)}`;
-  $('#calcBudget').textContent = currency(plan.spendablePool, true);
+  $('#calcBudget').textContent = `= ${currency(plan.safeRemaining, true)}`;
   $('#calcSpent').textContent = `−${currency(state.spent)}`;
-  $('#calcSafe').textContent = currency(plan.safeRemaining);
+  $('#calcSafe').textContent = `= ${currency(plan.safeDaily)}`;
+  const divisor=$('#calcDays');if(divisor)divisor.textContent=`${currency(plan.safeRemaining)} / ${t('daysRemaining',{days:plan.days})}`;
   renderOverviewBreakdown();
 }
 
@@ -1156,36 +1157,39 @@ function renderInsights() {
   const gaugePercent=totals.savingsRate===null?0:Math.max(0,Math.min(100,totals.savingsRate));$('#savingsGauge').style.setProperty('--gauge-value',`${gaugePercent*1.8}deg`);$('#savingsGauge').setAttribute('aria-label',`${t('savingsRate')}: ${totals.savingsRate===null?t('noIncomeRate'):`${number(totals.savingsRate,1)}%`}`);
   const series=MerAccounting.monthSeries(state.transactions,reference,6),seriesDomain=MerCore.chartDomain(series.flatMap(item=>[item.income,item.expenses]));
   $('#monthlyBarChart').innerHTML=series.map(item=>`<div class="month-bar-group"><div><span class="income-month-bar" style="height:${MerCore.scaleChartValue(item.income,seriesDomain,96,5)}px" title="${t('income')}: ${currency(item.income)}"></span><span class="expense-month-bar" style="height:${MerCore.scaleChartValue(item.expenses,seriesDomain,96,5)}px" title="${t('expense')}: ${currency(item.expenses)}"></span></div><small>${new Intl.DateTimeFormat(locale(),{month:'short'}).format(new Date(`${item.key}-01T12:00:00`))}</small></div>`).join('');$('#monthlyBarChart').setAttribute('aria-label',`${t('incomeVsExpenses')}: ${series.map(item=>`${insightMonthLabel(item.key)}, ${t('income')} ${currency(item.income)}, ${t('expense')} ${currency(item.expenses)}`).join('; ')}`);
-  const categoryLeaders=breakdown.slice(0,5),categoryLeaderDomain=MerCore.chartDomain(categoryLeaders.map(([,amount])=>amount));$('#topMerchantsList').innerHTML=categoryLeaders.length?categoryLeaders.map(([id,amount],index)=>`<div class="merchant-row"><b>${index+1}</b><span><strong>${escapeHtml(categoryName(id))}</strong><i><em style="width:${MerCore.scaleChartValue(amount,categoryLeaderDomain,100,2)}%"></em></i></span><small>${currency(amount,true)}</small></div>`).join(''):`<div class="notification-empty">${t('noExpensesPeriod')}</div>`;
+  $('#expenseStructureSummary').innerHTML=expenseStructureMarkup(MerInsights.expenseStructure(state,insightsTimeframe,reference),false);
   $$('[data-insight-detail]').forEach(card=>card.setAttribute('aria-label',`${card.querySelector('h2,.card-label span')?.textContent||t('reportDetails')} · ${currentLang==='hr'?'otvori detaljni prikaz':'open detailed view'}`));
   if($('#insightChartModal')?.open&&activeInsightDetail)renderInsightDetail(activeInsightDetail);
   renderIncomeCategories();
   renderSubscriptions();
 }
 
+Object.assign(translations.hr,{fixedVsVariableExpenses:'Fiksni vs. Fleksibilni troškovi',calculationStatement:'Izračun raspoloživog budžeta',statementIncome:'Ukupni mjesečni prihodi',statementBills:'Obvezni fiksni troškovi i režije',statementSavings:'Izdvajanje za ciljeve štednje',statementFlexible:'Preostali raspoloživi budžet',statementBuffer:'Umanjeno za sigurnosnu rezervu',statementDaily:'Dnevni limit za sigurno trošenje'});
+Object.assign(translations.en,{fixedVsVariableExpenses:'Fixed vs. flexible expenses',calculationStatement:'Available budget calculation',statementIncome:'Total monthly income',statementBills:'Fixed commitments and utilities',statementSavings:'Allocation to savings goals',statementFlexible:'Remaining flexible budget',statementBuffer:'Less safety reserve',statementDaily:'Daily safe spending limit'});
+
 const insightDetailCopy = {
   hr: {
     overline:'PROŠIRENI UVID',
     noData:'Još nema podataka za odabrano razdoblje.',
     income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto rezultat',transactions:'Broj transakcija',average:'Prosječna transakcija',categories:'Aktivne kategorije',topCategory:'Najveća kategorija',monthlyAverage:'Mjesečni prosjek',latestMonth:'Zadnji mjesec',bestMonth:'Najbolji mjesec',savingsRate:'Stopa štednje',period:'Odabrano razdoblje',ofExpenses:'udjela u troškovima',ofIncome:'od prihoda',
-    netView:{title:'Neto rezultat',intro:'Odnos prihoda i troškova kroz 12 mjeseci pokazuje koliko novca stvarno ostaje na raspolaganju.'},
+    netView:{title:'Kumulativni rast neto imovine',intro:'Kumulativno stanje zabilježenog novca, uključujući početno stanje. Neevidentirana imovina i dugovi nisu uključeni; prijenos u štednju nije trošak.'},
     incomeView:{title:'Trend prihoda',intro:'Prošireni pregled svih izvora prihoda, njihove učestalosti i kretanja kroz vrijeme.'},
     expensesView:{title:'Trend potrošnje',intro:'Detaljan pregled ukupne potrošnje i mjesečnog ritma odlaznih transakcija.'},
     categoryView:{title:'Potrošnja po kategoriji',intro:'Struktura troškova pokazuje gdje odlazi najveći dio budžeta i koliki je udio svake kategorije.'},
     cashflowView:{title:'Prihodi i troškovi',intro:'Usporedite mjesečne priljeve i odljeve te brzo prepoznajte promjene u novčanom toku.'},
-    merchantsView:{title:'Najveće kategorije',intro:'Rangirani pregled kategorija prema ukupnoj potrošnji u odabranom razdoblju.'},
+    structureView:{title:'Fiksni vs. Fleksibilni troškovi',intro:'Evidentirani troškovi u odabranom razdoblju. Pravila kategorije imaju prednost; ponavljajuće obveze i režije svrstavaju se u fiksne, ostalo u fleksibilne.'},
     savingsView:{title:'Stopa štednje',intro:'Pratite koliki dio prihoda ostaje nakon troškova i kako se stopa mijenja iz mjeseca u mjesec.'}
   },
   en: {
     overline:'EXPANDED INSIGHT',
     noData:'There is no data for the selected period yet.',
     income:'Total income',expenses:'Total expenses',net:'Net result',transactions:'Transaction count',average:'Average transaction',categories:'Active categories',topCategory:'Largest category',monthlyAverage:'Monthly average',latestMonth:'Latest month',bestMonth:'Best month',savingsRate:'Savings rate',period:'Selected period',ofExpenses:'of expenses',ofIncome:'of income',
-    netView:{title:'Net result',intro:'The 12-month income and expense relationship shows how much money is actually left available.'},
+    netView:{title:'Cumulative net wealth growth',intro:'Cumulative recorded cash, including the opening balance. Untracked assets and debts are excluded; savings transfers are not expenses.'},
     incomeView:{title:'Income trend',intro:'An expanded view of every income source, its frequency, and movement over time.'},
     expensesView:{title:'Spending trend',intro:'A detailed view of total spending and the monthly rhythm of outgoing transactions.'},
     categoryView:{title:'Spending by category',intro:'The spending mix shows where most of the budget goes and the share held by each category.'},
     cashflowView:{title:'Income and expenses',intro:'Compare monthly inflows and outflows and quickly identify changes in cash flow.'},
-    merchantsView:{title:'Largest categories',intro:'A ranked view of categories by total spend during the selected period.'},
+    structureView:{title:'Fixed vs. flexible expenses',intro:'Recorded expenses for the selected period. Category rules take priority; recurring commitments and utilities are fixed, other expenses are flexible.'},
     savingsView:{title:'Savings rate',intro:'Track how much income remains after expenses and how the rate changes from month to month.'}
   }
 };
@@ -1200,6 +1204,23 @@ function expandedMetric(label,value) {
 
 function expandedNotes(items) {
   return items.map(item=>`<div class="insight-detail-note"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(String(item.value))}</strong></div>`).join('');
+}
+
+function expenseStructureMarkup(structure,details=false) {
+  const en=currentLang==='en', fixed=en?'Fixed':'Fiksni',variable=en?'Flexible':'Fleksibilni';
+  const groups=[{key:'fixed',title:fixed,value:structure.fixed,share:structure.fixedShare},{key:'variable',title:variable,value:structure.variable,share:structure.variableShare}];
+  const meter=structure.total>0?`<div class="expense-structure-meter" aria-hidden="true" data-monetary>${groups.map(group=>`<i class="${group.key}" style="width:${group.share}%"></i>`).join('')}</div>`:'';
+  const summary=`<div class="expense-structure-values">${groups.map(group=>`<div><span><i class="${group.key}"></i>${group.title}</span><strong data-monetary>${currency(group.value)}</strong><small data-monetary>${number(group.share,1)}%</small></div>`).join('')}</div>`;
+  const correction=structure.hasCorrections?`<p class="expense-structure-note">${en?'Includes corrections. Meter proportions use non-negative totals; exact signed amounts are shown above.':'Uključene su korekcije. Omjeri koriste nenegativne zbrojeve; točni iznosi s predznakom prikazani su iznad.'}</p>`:'';
+  if(!details)return `${meter}${summary}${correction}<p class="expense-structure-note">${en?'Recurring commitments vs. day-to-day spending. Open for category details.':'Ponavljajuće obveze i svakodnevna potrošnja. Otvorite za detalje kategorija.'}</p>`;
+  const categories=groups.map(group=>{
+    const rows=structure.categories.filter(row=>row.behavior===group.key);
+    // Keep a bounded one-page overview without losing the value of any category.
+    const visible=rows.slice(0,3).map(row=>({label:categoryName(row.categoryId),amount:row.amount}));
+    if(rows.length>3)visible.push({label:en?'Other categories':'Ostale kategorije',amount:MerCore.roundMoney(rows.slice(3).reduce((sum,row)=>sum+row.amount,0))});
+    return `<section><h3>${group.title}</h3>${visible.map(row=>`<div class="expense-structure-category"><span>${escapeHtml(row.label)}</span><strong data-monetary>${currency(row.amount)}</strong></div>`).join('')||`<p>${en?'No expenses':'Nema troškova'}</p>`}</section>`;
+  }).join('');
+  return `${meter}${summary}<div class="expense-structure-categories">${categories}</div>${correction}`;
 }
 
 function expandedMonthChart(series,mode,copy) {
@@ -1224,14 +1245,14 @@ function renderInsightDetail(kind) {
   const byCategory=MerCore.categoryExpenseTotals(state.transactions,insightsTimeframe,appReferenceDate);
   const categories=Object.entries(byCategory).filter(([,amount])=>amount>0).sort((a,b)=>b[1]-a[1]);
   const expenseTotal=categories.reduce((sum,[,amount])=>sum+amount,0);
-  const palette=['#16574b','#00a9e4','#93c841','#f49727','#ff5259','#7b6eb4','#65c4b2'];
-  const viewKey={net:'netView',income:'incomeView',expenses:'expensesView',category:'categoryView',cashflow:'cashflowView',merchants:'merchantsView','savings-rate':'savingsView'}[kind]||'cashflowView';
+  const viewKey={net:'netView',income:'incomeView',expenses:'expensesView',category:'categoryView',cashflow:'cashflowView','expense-structure':'structureView','savings-rate':'savingsView'}[kind]||'cashflowView';
   const viewCopy=copy[viewKey];
   $('#insightChartOverline').textContent=copy.overline;
   $('#insightChartTitle').textContent=viewCopy.title;
   $('#insightChartIntro').textContent=viewCopy.intro;
 
-  let metrics=[];let chart='';let notes=[];
+  let metrics=[];let chart='';let notes=[];let trend=null;
+  modal.dataset.insightKind=kind;
   const latest=series.at(-1)||{key:appReferenceDate.slice(0,7),income:0,expenses:0};
   const best=series.reduce((chosen,item)=>(item.income-item.expenses)>(chosen.income-chosen.expenses)?item:chosen,series[0]||latest);
   const monthlyExpenseAverage=series.reduce((sum,item)=>sum+item.expenses,0)/Math.max(1,series.length);
@@ -1241,21 +1262,24 @@ function renderInsightDetail(kind) {
     {label:copy.bestMonth,value:`${insightMonthLabel(best.key,true)} · ${currency(best.income-best.expenses)}`}
   ];
 
-  if(kind==='income'){
+  if(kind==='net'){
+    trend=MerInsights.cumulativeSeries(state,insightsTimeframe,appReferenceDate);
+    metrics=[{label:currentLang==='en'?'Opening balance':'Početno stanje',value:currency(trend.openingBalance)},{label:copy.net,value:currency(totals.net)},{label:currentLang==='en'?'Closing balance':'Završno stanje',value:currency(trend.closingBalance)}];
+    trend={...trend,series:[{key:trend.startDate,balance:trend.openingBalance,opening:true,growth:{balance:null}},...trend.series]};
+  }else if(kind==='income'){
     metrics=[{label:copy.income,value:currency(totals.income)},{label:copy.average,value:currency(incomes.length?totals.income/incomes.length:0)},{label:copy.transactions,value:incomes.length}];
-    chart=expandedMonthChart(series,'income',copy);notes=historyNotes;
+    trend=MerInsights.transactionSeries(state,insightsTimeframe,appReferenceDate);
   }else if(kind==='expenses'){
     metrics=[{label:copy.expenses,value:currency(totals.expenses)},{label:copy.average,value:currency(expenses.length?totals.expenses/expenses.length:0)},{label:copy.transactions,value:expenses.length}];
-    chart=expandedMonthChart(series,'expenses',copy);notes=historyNotes;
+    trend=MerInsights.transactionSeries(state,insightsTimeframe,appReferenceDate);
   }else if(kind==='category'){
     metrics=[{label:copy.expenses,value:currency(expenseTotal)},{label:copy.categories,value:categories.length},{label:copy.topCategory,value:categories[0]?categoryName(categories[0][0]):'—'}];
     chart=categoryDistributionMarkup(categorySummarySlices(categories),expenseTotal,copy);
     notes=[{label:copy.transactions,value:expenses.length},{label:copy.average,value:currency(expenses.length?totals.expenses/expenses.length:0)}];
-  }else if(kind==='merchants'){
-    const categoryDomain=MerCore.chartDomain(categories.map(([,amount])=>amount));
-    metrics=[{label:copy.expenses,value:currency(expenseTotal)},{label:copy.categories,value:categories.length},{label:copy.topCategory,value:categories[0]?categoryName(categories[0][0]):'—'}];
-    chart=`<div class="expanded-ranked-list">${categories.slice(0,6).map(([id,amount],index)=>{const share=MerCore.ratioPercent(amount,expenseTotal,100);return `<div class="expanded-ranked-row"><span><i style="background:${palette[index%palette.length]}"></i>${escapeHtml(categoryName(id))}</span><strong>${currency(amount)} · ${number(share,0)}% ${escapeHtml(copy.ofExpenses)}</strong><div class="expanded-ranked-track"><i style="width:${MerCore.scaleChartValue(amount,categoryDomain,100,2)}%;background:${palette[index%palette.length]}"></i></div></div>`;}).join('')||`<div class="notification-empty">${escapeHtml(copy.noData)}</div>`}</div>`;
-    notes=categories.slice(0,3).map(([id,amount])=>({label:categoryName(id),value:`${currency(amount)} · ${number(MerCore.ratioPercent(amount,expenseTotal,100),0)}% ${copy.ofExpenses}`}));if(!notes.length)notes=historyNotes;
+  }else if(kind==='expense-structure'){
+    const structure=MerInsights.expenseStructure(state,insightsTimeframe,appReferenceDate);
+    metrics=[];
+    chart=expenseStructureMarkup(structure,true);
   }else if(kind==='savings-rate'){
     const rate=totals.savingsRate,monthlyRates=series.map(item=>({...item,rate:item.income>0?(item.income-item.expenses)/item.income*100:null}));
     const validRates=monthlyRates.filter(item=>item.rate!==null),rateMax=Math.max(...validRates.map(item=>Math.abs(item.rate)),1);
@@ -1270,6 +1294,7 @@ function renderInsightDetail(kind) {
   }
   $('#insightExpandedMetrics').innerHTML=metrics.map(item=>expandedMetric(item.label,item.value)).join('');
   $('#insightExpandedChart').innerHTML=chart;
+  if(trend)MerInsightCharts.mount($('#insightExpandedChart'),trend,{mode:kind==='net'?'balance':kind,locale:locale(),currency:appState.settings.currency||'EUR',privateMode:appState.settings.hideBalances});
   $('#insightExpandedBreakdown').innerHTML=expandedNotes(notes.slice(0,3));
 }
 

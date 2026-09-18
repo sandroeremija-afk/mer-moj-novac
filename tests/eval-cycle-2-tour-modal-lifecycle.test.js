@@ -16,7 +16,7 @@ const source = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 // responsive pixel geometry remains covered by the separate viewport tests.
 function harness({ width = 1440, height = 900, asynchronousClose = false, minimal = false } = {}) {
   // Native top-layer support remains tested with explicitly injected surfaces;
-  // production behavior is tested separately with the actual seven-step defaults.
+  // production behavior is tested separately with the actual eight-step defaults.
   const MerOnboardingCore = minimal ? ProductionOnboardingCore : CustomSurfaceCore;
   const nodes = new Map();
   const aliases = new Map();
@@ -82,14 +82,14 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
     scrollIntoView() {
       const host = this.closest('dialog');
       if (!host?.style.getPropertyValue('--tour-panel-top')) return;
-      const body = host.querySelector('.settings-modal-body, .help-assistant-body');
+      const body = host.querySelector('.settings-modal-body, .settings-flow-body, .help-assistant-body');
       if (!body || !body.contains(this)) return;
       const rect = body.getBoundingClientRect();
       this.rect = { ...this.rect, left:rect.left, right:rect.right, width:rect.width, top:rect.top, bottom:rect.top + this.rect.height };
       calls.push(['scroll-target', this.id]);
     }
     getBoundingClientRect() {
-      if (['settingsBody', 'helpBody'].includes(this.id)) {
+      if (['settingsBody', 'deviceBody', 'helpBody'].includes(this.id)) {
         const host = this.closest('dialog');
         const panelTop = Number.parseFloat(host.style.getPropertyValue('--tour-panel-top'));
         if (Number.isFinite(panelTop)) {
@@ -164,7 +164,7 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   const settingsBody = add('settingsBody', settings);
   aliases.set('#bankSettingsModal .settings-modal-body', settingsBody);
   aliases.set('.settings-modal-body', settingsBody);
-  for (const tab of ['general', 'security', 'automation']) {
+  for (const tab of ['general', 'security', 'personal', 'automation']) {
     const button = add(`settingsTab-${tab}`, settingsBody, 'BUTTON');
     button.dataset.settingsTab = tab;
   }
@@ -176,6 +176,23 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   add('currentPasswordInput', password, 'INPUT');
   const mfa = add('settingsTourMfa', settingsBody);
   add('startMfa', mfa, 'BUTTON');
+  const privacy = add('privacySetting', settingsBody, 'LABEL');
+  aliases.set('#bankSettingsModal label:has(#hideBalances)', privacy);
+  const hideBalances = add('hideBalances', privacy, 'INPUT');hideBalances.checked=false;
+  const personal = add('personalDataForm', settingsBody, 'FORM');
+  add('personalOib', personal, 'INPUT').value='';
+  add('personalAddress', personal, 'INPUT').value='Original draft address';
+  const device = add('settings-device-flow', document.body, 'DIALOG');
+  const deviceClose = add('deviceClose', device, 'BUTTON');
+  const deviceBody = add('deviceBody', device);
+  aliases.set('#settings-device-flow .settings-flow-body', deviceBody);
+  aliases.set('.settings-flow-body', deviceBody);
+  const lock = add('autoLockEnabled', deviceBody, 'INPUT');lock.checked=false;
+  add('configureVault',deviceBody,'BUTTON');
+  add('enterprisePinSetup',deviceBody,'BUTTON');
+  const deviceOpen=add('settings-security-device',settingsBody,'BUTTON');
+  deviceOpen.addEventListener('click',()=>{settings.setAttribute('data-settings-flow-open','true');device.showModal();});
+  device.addEventListener('close',()=>settings.removeAttribute('data-settings-flow-open'));
 
   const tour = add('onboardingTour');
   tour.hidden = true;
@@ -201,8 +218,10 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   const storage = new Map();
   const closeModal = modal => modal?.close();
   settingsClose.addEventListener('click', () => closeModal(settings));
+  settings.addEventListener('close', () => closeModal(device));
+  deviceClose.addEventListener('click', () => closeModal(device));
   helpClose.addEventListener('click', () => closeModal(help));
-  const selectTab = tab => { calls.push(['tab', tab]); preferences.hidden = tab !== 'general'; password.hidden = tab !== 'security'; mfa.hidden = tab !== 'security'; };
+  const selectTab = tab => { calls.push(['tab', tab]); preferences.hidden = tab !== 'general'; privacy.hidden = tab !== 'general'; personal.hidden = tab !== 'personal';password.hidden = tab !== 'security'; mfa.hidden = tab !== 'security'; };
   for (const button of document.querySelectorAll('[data-settings-tab]')) button.addEventListener('click', () => selectTab(button.dataset.settingsTab));
   const context = {
     document, HTMLElement:Element, MerOnboardingCore,
@@ -230,20 +249,20 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   const click = id => { nodes.get(id).click(); flush(); };
   const start = () => { assert.equal(context.window.MerOnboardingUi.restart(nodes.get('openSettings')), true); flush(); };
   const next = count => { for (let index = 0; index < (count || 1); index += 1) click('onboardingNext'); };
-  return { nodes, document, calls, context, navLinks, shell, settings, help, tour, spotlight, originalSibling, start, next, click, flush };
+  return { nodes, document, calls, context, navLinks, shell, settings, device, help, tour, spotlight, originalSibling, start, next, click, flush };
 }
 
-test('cycle 2: production journey highlights seven surfaces and their own navigation links', () => {
+test('cycle 2: production journey highlights eight surfaces and their own navigation links', () => {
   const env = harness({ minimal:true });
   env.start();
-  const targetIds = ['overviewFeature', 'sidebarTransaction', 'budgetsFeature', 'savingsFeature', 'insightsView', 'settingsTourPreferences', 'helpBody'];
+  const targetIds = ['overviewFeature', 'sidebarTransaction', 'budgetsFeature', 'savingsFeature', 'insightsView', 'deviceBody', 'privacySetting', 'personalDataForm'];
   for (const [index, step] of ProductionOnboardingCore.DEFAULT_STEPS.entries()) {
-    assert.equal(env.nodes.get('onboardingProgress').textContent, `Korak ${index + 1} od 7`);
+    assert.equal(env.nodes.get('onboardingProgress').textContent, `Korak ${index + 1} od 8`);
     assert.equal(env.nodes.get(targetIds[index]).classList.contains('tour-target-active'), true, step.id);
     assert.equal(env.document.querySelector(step.contextTarget).classList.contains('tour-context-active'), true, step.id);
     assert.equal(env.nodes.get('onboardingContextSpotlight').classList.contains('is-visible'), true);
     assert.equal(env.nodes.get('onboardingSubstep').hidden, true, 'no invisible filler steps remain');
-    assert.equal(env.tour.parentNode, step.surface === 'settings' ? env.settings : step.surface === 'help' ? env.help : env.document.body);
+    assert.equal(env.tour.parentNode, step.settingsFlow ? env.device : step.surface === 'settings' ? env.settings : env.document.body);
     assert.equal(env.settings.open, step.surface === 'settings');
     assert.equal(env.help.open, step.surface === 'help');
     assert.equal([...env.nodes.values()].filter(element => element.classList.contains('tour-context-active')).length, 1);
@@ -252,14 +271,17 @@ test('cycle 2: production journey highlights seven surfaces and their own naviga
       assert.equal(env.nodes.get('insightsView').classList.contains('tour-target-active'), false);
       assert.equal(env.tour.classList.contains('is-dashboard-scope'), false);
     }
-    assert.equal(env.nodes.get('onboardingNext').textContent, index === 6 ? 'Završi' : 'Dalje');
+    assert.equal(env.nodes.get('onboardingNext').textContent, index === 7 ? 'Završi' : 'Dalje');
     env.next();
   }
   assert.equal(env.tour.hidden, true);
   assert.equal(env.shell.inert, false);
   assert.equal(env.context.activeView, 'insights');
-  assert.ok(env.calls.some(call => call[0] === 'settings' && call[1] === 'general'));
-  assert.ok(env.calls.some(call => call[0] === 'help' && call[1] === 'faq'));
+  assert.ok(env.calls.some(call => call[0] === 'settings' && call[1] === 'security'));
+  assert.equal(env.calls.filter(call => call[0] === 'show' && call[1] === 'bankSettingsModal').length,1,'Settings stays mounted across all three security steps');
+  assert.equal(env.nodes.get('autoLockEnabled').checked,false,'tour must never enable auto-lock');
+  assert.equal(env.nodes.get('hideBalances').checked,false,'tour must never enable stealth mode');
+  assert.equal(env.nodes.get('personalAddress').value,'Original draft address','tour must preserve personal drafts');
   assert.equal(env.tour.parentNode, env.document.body);
   assert.equal(env.settings.open || env.help.open, false);
   assert.equal([...env.nodes.values()].some(element => element.classList.contains('tour-target-active') || element.classList.contains('tour-context-active')), false);
@@ -283,7 +305,7 @@ test('cycle 2: production phone tour opens the sidebar only for input and restor
     assert.equal(env.context.activeView, 'overview');
     assert.equal(env.settings.open || env.help.open, false);
     env.start();
-    assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 1 od 7');
+    assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 1 od 8');
   }
 });
 
@@ -294,7 +316,7 @@ test('cycle 2: production rapid module navigation keeps one visible overlay and 
   env.nodes.get('onboardingNext').click();
   env.nodes.get('onboardingPrevious').click();
   env.flush();
-  assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 2 od 7');
+  assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 2 od 8');
   assert.equal(env.tour.hidden, false);
   assert.equal(env.tour.parentNode, env.document.body);
   assert.equal([...env.nodes.values()].filter(element => element.classList.contains('tour-target-active')).length, 1);
@@ -302,36 +324,105 @@ test('cycle 2: production rapid module navigation keeps one visible overlay and 
   assert.equal(env.settings.open || env.help.open, false);
 });
 
-test('cycle 2: production Help and Settings support Back and close without stale highlights', () => {
+test('cycle 2: production device, privacy and personal settings support Back without stale native hosts', () => {
   for(const width of [375, 1440]){
-    const env=harness({minimal:true,width,asynchronousClose:true});env.start();env.next(6);
-    assert.equal(env.help.open,true);assert.equal(env.tour.parentNode,env.help);
+    const env=harness({minimal:true,width,asynchronousClose:true});env.start();env.next(7);
+    assert.equal(env.settings.open,true);assert.equal(env.tour.parentNode,env.settings);
+    assert.equal(env.nodes.get('personalDataForm').classList.contains('tour-target-active'),true);
     env.click('onboardingPrevious');
     assert.equal(env.settings.open,true);assert.equal(env.help.open,false);
-    assert.equal(env.nodes.get('settingsTourPreferences').classList.contains('tour-target-active'),true);
+    assert.equal(env.nodes.get('privacySetting').classList.contains('tour-target-active'),true);
     assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),true);
     assert.equal(env.nodes.get('openHelpAssistant').classList.contains('tour-context-active'),false);
     env.click('onboardingPrevious');
+    assert.equal(env.device.open,true);assert.equal(env.tour.parentNode,env.device);
+    assert.equal(env.nodes.get('deviceBody').classList.contains('tour-target-active'),true);
+    env.click('onboardingPrevious');
     assert.equal(env.settings.open,false);assert.equal(env.tour.parentNode,env.document.body);
     assert.equal(env.navLinks.insights.classList.contains('tour-context-active'),true);
-    env.next(2);env.click('helpClose');
+    env.next();env.click('deviceClose');
     assert.equal(env.tour.hidden,true);assert.equal(env.shell.inert,false);assert.equal(env.tour.parentNode,env.document.body);
     assert.equal([...env.nodes.values()].some(element=>element.classList.contains('tour-target-active')||element.classList.contains('tour-context-active')),false);
   }
 });
 
-test('cycle 2: production Settings and Help Escape dismisses both layers and resets the next manual replay',()=>{
-  for(const count of [5,6]){
+test('cycle 2: production Settings Escape dismisses both layers and resets the next manual replay',()=>{
+  for(const count of [5,6,7]){
     const env=harness({minimal:true,width:375});env.start();env.next(count);
     env.document.dispatch('keydown',{key:'Escape'});env.flush();
     assert.equal(env.tour.hidden,true);assert.equal(env.settings.open||env.help.open,false);assert.equal(env.shell.inert,false);
-    assert.equal(env.context.activeView,'overview');env.start();assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 1 od 7');
+    assert.equal(env.device.open,false);
+    assert.equal(env.context.activeView,'overview');env.start();assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 1 od 8');
   }
 });
 
 test('cycle 2: production Settings changing to an unrelated tab dismisses the single-purpose step safely',()=>{
-  const env=harness({minimal:true});env.start();env.next(5);env.click('settingsTab-security');
+  const env=harness({minimal:true});env.start();env.next(6);env.click('settingsTab-security');
   assert.equal(env.tour.hidden,true);assert.equal(env.settings.open,false);assert.equal(env.shell.inert,false);
+});
+
+test('cycle 2: native device-dialog close races do not dismiss a reopened security step',()=>{
+  const env=harness({minimal:true,width:375,asynchronousClose:true});env.start();env.next(5);
+  assert.equal(env.device.open,true);assert.equal(env.settings.open,true);
+  env.nodes.get('onboardingNext').click();
+  assert.equal(env.device.open,false);assert.equal(env.tour.parentNode,env.settings);
+  env.nodes.get('onboardingPrevious').click();
+  assert.equal(env.device.open,true);assert.equal(env.tour.parentNode,env.device);
+  env.flush();
+  assert.equal(env.tour.hidden,false);assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 6 od 8');
+  env.click('onboardingClose');
+  assert.equal(env.device.open||env.settings.open,false);
+  assert.equal(env.settings.hasAttribute('data-settings-flow-open'),false);
+  assert.equal(env.tour.parentNode,env.document.body);assert.equal(env.shell.inert,false);
+});
+
+test('cycle 2: each security step exposes real controls and traps keyboard focus in its own native host',()=>{
+  for(const [count,control] of [[5,'autoLockEnabled'],[6,'hideBalances'],[7,'personalOib']]){
+    const env=harness({minimal:true});env.start();env.next(count);
+    env.nodes.get(control).focus();
+    const tab=env.document.dispatch('keydown',{key:'Tab'});
+    assert.equal(tab.defaultPrevented,false,'real fields remain keyboard accessible');
+    assert.equal(tab.stopped,true,'a second modal trap must not run');
+    env.nodes.get('onboardingSkip').focus();
+    const wrap=env.document.dispatch('keydown',{key:'Tab'});
+    assert.equal(wrap.defaultPrevented,true);
+    assert.equal(env.document.activeElement.id,count===5?'deviceClose':'settingsClose');
+    env.click('onboardingSkip');
+    assert.equal(env.device.open||env.settings.open,false);
+  }
+});
+
+test('cycle 2: an explicit PIN or encryption action exits the guide before normal security flow opens',()=>{
+  for(const id of ['configureVault','enterprisePinSetup']){
+    const env=harness({minimal:true});env.start();env.next(5);
+    const event=env.document.dispatch('click',{target:env.nodes.get(id)});
+    assert.equal(event.defaultPrevented,false,'normal action handler is not cancelled');
+    assert.equal(event.stopped,undefined);
+    assert.equal(env.tour.hidden,true);assert.equal(env.shell.inert,false);
+    assert.equal(env.settings.open||env.device.open,false);
+    assert.equal(env.nodes.get('autoLockEnabled').checked,false);
+  }
+});
+
+test('cycle 2: all production security targets stay inside the mobile hosted lane without tooltip overlap',()=>{
+  for(const [width,height] of [[375,667],[414,736],[768,1024]]){
+    const env=harness({minimal:true,width,height});env.start();env.next(5);
+    for(const offset of [0,1,2]){
+      if(offset)env.next();
+      const host=offset===0?env.device:env.settings;
+      const top=Number.parseFloat(host.style.getPropertyValue('--tour-panel-top'));
+      const space=Number.parseFloat(host.style.getPropertyValue('--tour-panel-height'));
+      const popover=env.nodes.get('onboardingPopover');
+      assert.ok(top>=Number.parseFloat(popover.style.top)+popover.scrollHeight+12);
+      assert.ok(top+space<=height-12);
+      assert.equal(host.getAttribute('data-tour-step'),['security','privacy','personal'][offset]);
+    }
+    env.click('onboardingNext');
+    for(const host of [env.device,env.settings]){
+      assert.equal(host.getAttribute('data-tour-step'),null);
+      assert.equal(host.style.getPropertyValue('--tour-panel-height'),'');
+    }
+  }
 });
 
 test('cycle 2: an explicitly injected modal journey uses full Insights and clears obsolete nav highlighting', () => {

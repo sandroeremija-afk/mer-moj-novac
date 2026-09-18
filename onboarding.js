@@ -7,7 +7,8 @@
     onboardingBudgetsTitle:'Smjernice, ne zabrane', onboardingBudgetsBody:'Postavite mjesečni limit za svaku kategoriju i pratite potrošnju bojama.', onboardingBudgetsTip:'Žuto upozorenje pojavljuje se na 80%, a crveno na 100%.',
     onboardingSavingsTitle:'Ciljevi s jasnim sljedećim korakom', onboardingSavingsBody:'Ovdje pratite fond, ciljeve, rokove i zaokruživanje sitniša.', onboardingSavingsTip:'Zaokruživanje možete usmjeriti u jedan aktivni cilj.',
     onboardingInsightsTitle:'Pretvorite brojke u odluke', onboardingInsightsBody:'Usporedite prihode, troškove i štednju kroz odabrano razdoblje.', onboardingInsightsTip:'Odaberite dan, mjesec, godinu ili sveukupni prikaz.',
-    onboardingSettingsTip:'Podaci Osobnog i Poslovnog profila ostaju odvojeni.', onboardingHelpTip:'AI odgovor uvijek provjerite prije važne financijske odluke.'
+    onboardingSettingsTip:'Podaci Osobnog i Poslovnog profila ostaju odvojeni.', onboardingHelpTip:'AI odgovor uvijek provjerite prije važne financijske odluke.',
+    onboardingSecurityTip:'Automatsko zaključavanje je zadano isključeno. PIN nije obavezan.', onboardingPrivacyTip:'Isti prečac ponovno prikazuje iznose.', onboardingPersonalTip:'Spremanje je uvijek vaša odluka.'
   });
   Object.assign(translations.en, {
     helpAssistant:'Help & AI Assistant', helpAssistantHint:'Guide and money questions',
@@ -17,7 +18,8 @@
     onboardingBudgetsTitle:'Guardrails, not roadblocks', onboardingBudgetsBody:'Set monthly category limits and follow green, yellow and red spending thresholds.', onboardingBudgetsTip:'Warnings appear at 80% and 100% of a category limit.',
     onboardingSavingsTitle:'Goals with a clear next step', onboardingSavingsBody:'Your fund, goal buckets, deadlines and round-ups show exactly how close you are to each goal.', onboardingSavingsTip:'Round-ups can be routed to one active savings goal.',
     onboardingInsightsTitle:'Turn numbers into decisions', onboardingInsightsBody:'Insights connects net total, spending mix, merchants, monthly trends and savings rate.', onboardingInsightsTip:'Choose daily, monthly, year-to-date or all-time analysis.',
-    onboardingSettingsTip:'Personal and Business profile data stays separate.', onboardingHelpTip:'Always verify AI answers before important financial decisions.'
+    onboardingSettingsTip:'Personal and Business profile data stays separate.', onboardingHelpTip:'Always verify AI answers before important financial decisions.',
+    onboardingSecurityTip:'Automatic locking is off by default. A PIN is optional.', onboardingPrivacyTip:'Use the same shortcut to show amounts again.', onboardingPersonalTip:'Only save changes when you choose to.'
   });
   applyStaticTranslations();
 
@@ -43,13 +45,14 @@
   const tourHomeParent = tour.parentNode;
   const tourHomeNextSibling = tour.nextSibling;
   let ownedDialog = null;
+  let ownedSettingsParent = null;
   let effectiveStep = null;
 
   function handleOwnedDialogClose(event) {
     if (event.currentTarget === ownedDialog && !ownedDialog.open && !tour.hidden) dismissTour();
   }
 
-  function releaseOwnedDialog() {
+  function releaseOwnedDialog({ keepSettingsOpen = false } = {}) {
     const dialog = ownedDialog;
     if (!dialog) return;
     ownedDialog = null;
@@ -57,29 +60,43 @@
     // Leave the native top layer before closing it: never strand the guide in an inert dialog.
     tourHomeParent.insertBefore(tour, tourHomeNextSibling?.parentNode === tourHomeParent ? tourHomeNextSibling : null);
     dialog.classList.remove('tour-modal-host');
+    dialog.removeAttribute('data-tour-step');
     dialog.style.removeProperty('--tour-panel-top');
     dialog.style.removeProperty('--tour-panel-height');
     tour.classList.remove('is-hosted');
     popover.setAttribute('aria-modal', 'true');
-    if (dialog.open) closeModal(dialog);
-    if (dialog.id === 'bankSettingsModal') window.MerSettings?.selectTab('general');
+    if (dialog.open && !(keepSettingsOpen && dialog.id === 'bankSettingsModal')) closeModal(dialog);
+    if (!keepSettingsOpen) {
+      if (ownedSettingsParent?.open) closeModal(ownedSettingsParent);
+      ownedSettingsParent = null;
+      if (dialog.id === 'bankSettingsModal' || dialog.id.startsWith('settings-')) window.MerSettings?.selectTab('general');
+    }
   }
 
   function prepareSurface(step) {
-    const dialog = step.surface === 'settings' ? $('#bankSettingsModal') : step.surface === 'help' ? $('#helpAssistantModal') : null;
-    if (ownedDialog !== dialog) releaseOwnedDialog();
+    const settings = step.surface === 'settings' ? $('#bankSettingsModal') : null;
+    const dialog = settings ? (step.settingsFlow ? $(`#settings-${step.settingsFlow}-flow`) : settings) : step.surface === 'help' ? $('#helpAssistantModal') : null;
+    if (ownedDialog !== dialog) releaseOwnedDialog({ keepSettingsOpen:Boolean(settings) });
     if (!dialog) return;
     if (ownedDialog !== dialog) {
-      dialog.classList.add('tour-modal-host');
-      if (step.surface === 'settings') window.MerSettings?.open(step.settingsTab);
+      if (settings) {
+        if (!settings.open) window.MerSettings?.open(step.settingsTab);
+        else window.MerSettings?.selectTab(step.settingsTab);
+        ownedSettingsParent = settings;
+        if (step.settingsFlow && !dialog.open) $(`#settings-security-${step.settingsFlow}`)?.click();
+      }
       else window.MerAssistantUi?.openHelp(step.helpMode || 'assistant');
+      dialog.classList.add('tour-modal-host');
       ownedDialog = dialog;
       dialog.append(tour);
       dialog.addEventListener('close', handleOwnedDialogClose);
       tour.classList.add('is-hosted');
       popover.setAttribute('aria-modal', 'false');
     } else if (step.surface === 'settings') window.MerSettings?.selectTab(step.settingsTab);
-    if(step.surface==='settings')window.MerPopupLayout?.revealTarget(step.target);
+    dialog.setAttribute('data-tour-step', step.id);
+    // A device flow owns real security controls in a native child dialog. Calling
+    // revealTarget here would close that child and leave the guide in an inert host.
+    if(settings && !step.settingsFlow)window.MerPopupLayout?.revealTarget(step.target);
   }
 
   function focusTourNext() {
@@ -265,7 +282,7 @@
       targetRect = {left, top, right, bottom, width:right-left, height:bottom-top};
     }
     if (splitSurface) {
-      const body = ownedDialog.querySelector('.settings-modal-body, .help-assistant-body').getBoundingClientRect();
+      const body = (ownedDialog.querySelector('.settings-modal-body, .settings-flow-body, .help-assistant-body') || ownedDialog).getBoundingClientRect();
       const left = Math.max(targetRect.left, body.left), top = Math.max(targetRect.top, body.top);
       const right = Math.min(targetRect.right, body.right), bottom = Math.min(targetRect.bottom, body.bottom);
       targetRect = {left, top, right, bottom, width:Math.max(1,right-left), height:Math.max(1,bottom-top)};
@@ -358,6 +375,7 @@
     window.visualViewport?.addEventListener('resize', scheduleGeometry);
     window.visualViewport?.addEventListener('scroll', scheduleGeometry);
     document.addEventListener('keydown', handleTourKeydown, true);
+    document.addEventListener('click', handleSecurityAction, true);
   }
 
   function removeTourEvents() {
@@ -366,6 +384,17 @@
     window.visualViewport?.removeEventListener('resize', scheduleGeometry);
     window.visualViewport?.removeEventListener('scroll', scheduleGeometry);
     document.removeEventListener('keydown', handleTourKeydown, true);
+    document.removeEventListener('click', handleSecurityAction, true);
+  }
+
+  function handleSecurityAction(event) {
+    if (tour.hidden || effectiveStep?.id !== 'security') return;
+    const startsAnotherFlow = ['configureVault', 'enterprisePinSetup', 'lockNow'].some(id => $(`#${id}`)?.contains(event.target));
+    if (!startsAnotherFlow) return;
+    // An explicit action hands control back to the normal security workflow.
+    // Never leave a focus-trapping guide behind a newer native PIN/lock dialog.
+    controller?.dismiss();
+    closeTourSurface({ restoreView:false, focus:false });
   }
 
   function focusableInPopover() {
@@ -459,7 +488,11 @@
   $$('[data-settings-tab]').forEach(button => button.addEventListener('click', () => {
     if (tour.hidden || ownedDialog?.id !== 'bankSettingsModal') return;
     const tab = button.dataset.settingsTab;
-    if (tab === 'automation' || (controller.snapshot().substepCount === 1 && tab !== 'general')) { dismissTour();return; }
+    if (controller.snapshot().substepCount === 1) {
+      if (tab !== effectiveStep?.settingsTab) dismissTour();
+      return;
+    }
+    if (tab === 'automation') { dismissTour();return; }
     render(controller.selectSubstep(tab === 'general' ? 0 : 1));
   }));
   $('#settingsLanguage')?.addEventListener('change', () => {
