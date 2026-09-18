@@ -37,7 +37,8 @@ test('cycle 1: secondary content uses progressive disclosure while the large imp
     if (modal === 'budgetDetailsModal') {
       assert.match(html, /data-planning-hub="payments"/);
       assert.match(fs.readFileSync(path.join(__dirname, '..', 'planning-hubs.js'), 'utf8'), /action === 'scheduled'[\s\S]*getElementById\('budgetDetailsModal'\)/);
-    } else assert.match(html, new RegExp(`data-open-detail="${modal}"`));
+    } else if(modal==='overviewDetailsModal')assert.doesNotMatch(html,/data-open-detail="overviewDetailsModal"/);
+    else assert.match(html, new RegExp(`data-open-detail="${modal}"`));
   }
   assert.match(html, /id="insightsDetailsModal"/);
   assert.doesNotMatch(html, /data-open-detail="insightsDetailsModal"/, 'Insights no longer exposes the redundant report-details trigger');

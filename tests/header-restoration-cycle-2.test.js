@@ -45,7 +45,7 @@ test('cycle 2: all five modules retain visible direct header actions and origina
     assert.doesNotMatch(toolbar, /role="menuitem"|popover|module-toolbar/);
   }
   assert.match(heading('overview'), /data-open-assessment/);
-  assert.match(heading('overview'), /overviewDetailsModal/);
+  assert.doesNotMatch(heading('overview'), /overviewDetailsModal/, 'Removed redundant dashboard details action');
   assert.match(heading('budgets'), /data-planning-hub="payments"/);
   assert.match(heading('savings'), /savingsDetailsModal/);
   assert.match(heading('savings'), /data-planning-hub="savings"/);

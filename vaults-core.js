@@ -18,14 +18,38 @@
     return ['card','debit-card','credit-card','card-payment','pos'].includes(method)||tx?.isCardPayment===true||tx?.cardTransaction===true||Boolean(tx?.cardId);
   };
   function roundUpAmount(value,increment=1){
-    const amount=cents(value),unit=Number(increment)===5?500:100;
+    const amount=cents(value),unit=([1,2,5].includes(Number(increment))?Number(increment):1)*100;
     return amount>0&&Number.isSafeInteger(amount)?((unit-amount%unit)%unit)/100:0;
+  }
+  // Estimate the next twelve months from posted EUR card purchases in the last
+  // 90 days. This is a read-only scenario; existing transactions are never funded.
+  function roundUpProjection(profile,input={},reference,options={}){
+    const key=keyFor(profile,options),day=referenceDay(reference);
+    if(!profile||profile.profileId&&profile.profileId!==key||!day)return null;
+    const increment=[1,2,5].includes(Number(input.increment))?Number(input.increment):1;
+    const start=new Date(`${day}T12:00:00Z`);start.setUTCDate(start.getUTCDate()-89);
+    const startDate=start.toISOString().slice(0,10),latest=new Map();
+    list(profile.transactions).forEach(tx=>{if(scoped(tx,key)&&identity(tx))latest.set(fingerprint(tx),tx);});
+    const sample=[...latest.values()].filter(tx=>{
+      if(!cardTransaction(tx)||Core.transactionType(tx)!=='expense'||(tx.currency||'EUR')!=='EUR')return false;
+      const date=Core.transactionDate(tx),amount=cents(tx.amount);
+      return Boolean(date&&date>=startDate&&date<=day&&Core.isTransactionEffective(tx,day)&&tx.scheduled!==true&&!['scheduled','pending','cancelled','canceled','rejected'].includes(tx.status)&&amount>0&&Number.isSafeInteger(amount));
+    });
+    const historicalRoundUpCents=sample.reduce((total,tx)=>total+cents(roundUpAmount(tx.amount,increment)),0);
+    // Without an eligible sample, explicitly assume half a step per purchase.
+    const averageRoundUpCents=sample.length?historicalRoundUpCents/sample.length:increment*50;
+    const defaultFrequency=sample.length?Math.max(1,Math.round(sample.length/3)):30;
+    const transactionsPerMonth=Math.min(200,Math.max(0,Math.round(Number.isFinite(Number(input.transactionsPerMonth))?Number(input.transactionsPerMonth):defaultFrequency)));
+    const projectedCents=months=>Math.round((sample.length?historicalRoundUpCents:increment*50)*transactionsPerMonth*months/(sample.length||1));
+    const annualSavingsCents=projectedCents(12);
+    return {increment,currency:'EUR',sampleCount:sample.length,source:sample.length?'history':'assumption',startDate,endDate:day,transactionsPerMonth,averageRoundUpCents,annualSavingsCents,annualSavings:annualSavingsCents/100,
+      monthlyProjection:Array.from({length:12},(_,index)=>({month:index+1,savingsCents:projectedCents(index+1)}))};
   }
   function configureRoundUps(profile,input,reference,options={}){
     const key=keyFor(profile,options),day=referenceDay(reference);
     if(!profile||profile.profileId&&profile.profileId!==key||!day)return {valid:false,reason:'profile-or-date'};
     const goals=goalsFor(profile,key),goal=goals.find(item=>item.id===input?.goalId),increment=Number(input?.increment||1);
-    if(input?.enabled&&(!goal||goal.taxVault)||![1,5].includes(increment))return {valid:false,reason:'invalid-goal-or-increment'};
+    if(input?.enabled&&(!goal||goal.taxVault)||![1,2,5].includes(increment))return {valid:false,reason:'invalid-goal-or-increment'};
     profile.enterprise||={};
     const previous=profile.enterprise.roundUps;
     const config={enabled:input.enabled===true,goalId:goal?.id||previous?.goalId||null,increment,currency:'EUR',profileId:key,startDate:day,revision:(previous?.revision||0)+1,
@@ -74,5 +98,5 @@
     profile.savingsBalance=goals.reduce((total,goal)=>total+Math.max(0,cents(goal.current)),0)/100;
     return {changed,count:desired.length,totalCents:desired.reduce((sum,entry)=>sum+cents(entry.amount),0)};
   }
-  return Object.freeze({configureRoundUps,reconcileRoundUps,roundUpAmount,isCardTransaction:cardTransaction});
+  return Object.freeze({configureRoundUps,reconcileRoundUps,roundUpAmount,roundUpProjection,isCardTransaction:cardTransaction});
 });

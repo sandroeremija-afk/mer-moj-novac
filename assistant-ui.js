@@ -236,6 +236,11 @@
     const plan = snapshot?.budget || {};
     const topEntry = Object.entries(snapshot?.derived?.categorySpending || {}).sort((a,b) => b[1] - a[1])[0];
     const topCategory = profile?.categories?.find(category => category.id === topEntry?.[0]);
+    const anomalySummary = window.MerAnomalies?.detect(profile, appReferenceDate, {profileId,currency:appState.settings.currency || 'EUR',timezone:appState.settings.timezone});
+    const spendingAnomalies = window.MerAnomalies?.assistantContext(anomalySummary, item => {
+      const category = profile?.categories?.find(entry => entry.id === item.categoryId);
+      return category?.nameKey ? t(category.nameKey) : category?.name || t(item.categoryId) || item.category;
+    }) || [];
     return {
       currency:appState.settings.currency || 'EUR',
       totalIncome:totals.income,
@@ -247,11 +252,14 @@
       savingsTarget:profile?.savingsTarget,
       daysRemaining:plan.days,
       topCategory:topCategory?.name || topEntry?.[0] || '',
-      topCategorySpent:topEntry?.[1] || 0
+      topCategorySpent:topEntry?.[1] || 0,
+      spendingAnomalies
     };
   }
 
   function renderMessages() {
+    // This fresh local introduction never enters stored history or triggers a request.
+    const anomalyIntro = MerFinancialAssistant.anomalyIntroduction?.(financialContextFor(appState.activeAccount), currentLang, appState.settings.hideBalances) || '';
     assistantSurfaces.forEach(surface => {
       surface.send.setAttribute('aria-label', t('send'));
       surface.send.dataset.i18nAria = 'send';
@@ -271,6 +279,17 @@
         }
         list.append(item);
       });
+      if (anomalyIntro) {
+        const introduction = document.createElement('li');
+        introduction.className = 'assistant-message assistant assistant-anomaly-intro';
+        introduction.dataset.anomalyIntro = '';
+        const content = document.createElement('span');
+        content.textContent = anomalyIntro;
+        const source = document.createElement('small');
+        source.textContent = t('assistantLocal');
+        introduction.append(content, source);
+        list.append(introduction);
+      }
       requestAnimationFrame(() => { list.scrollTop=list.scrollHeight; });
     });
   }

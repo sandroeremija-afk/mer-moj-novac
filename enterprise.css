@@ -29,16 +29,9 @@
 #intelligenceProfile { margin:0; }
 .forecast-chart>div { display:flex; justify-content:space-between; font-size:11px; }
 .forecast-chart .forecast-gridline { stroke:var(--enterprise-line); stroke-width:1; }
-.forecast-chart .forecast-axis { fill:var(--enterprise-muted); font:11px system-ui,sans-serif; font-variant-numeric:tabular-nums; }
 .forecast-chart .forecast-event-node { stroke:var(--enterprise-bg); stroke-width:2; }
 .forecast-chart [data-forecast-point] { cursor:crosshair; outline:none; }
 .forecast-chart [data-forecast-point]:focus-visible .forecast-event-node { stroke:#102d25; stroke-width:4; }
-.forecast-chart .forecast-legend { justify-content:flex-start; flex-wrap:wrap; gap:16px; margin:6px 0 10px; color:var(--enterprise-muted); font-size:12px; }
-.forecast-legend span { display:flex; align-items:center; gap:6px; }
-.forecast-legend i { height:8px; width:8px; border-radius:50%; background:#c46b2c; }
-.forecast-legend i.income { background:#279465; }
-.forecast-chart .forecast-inspector { display:flex; flex-direction:column; justify-content:center; gap:4px; padding:12px; min-height:76px; border:1px solid var(--enterprise-line); background:var(--enterprise-bg); border-radius:10px; font-size:12px; line-height:1.5; color:var(--enterprise-muted); overflow-wrap:anywhere; }
-.forecast-inspector strong { font-size:14px; color:var(--enterprise-ink); }
 .enterprise-tools { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:0 0 16px; }
 .enterprise-tools button { min-width:0; min-height:44px; padding:8px; font-size:12px; white-space:normal; }
 .transaction-receipt-action { grid-column:1/-1; margin-bottom:12px; min-height:44px; }
@@ -93,40 +86,18 @@
 .enterprise-dialog-head .icon-button,.receipt-head .icon-button,.household-head .icon-button { flex-shrink:0; }
 .forecast-chart { min-width:0; }
 #intelligenceModal{width:min(980px,calc(100vw - 32px))}
-#intelligenceModal #enterpriseForecast{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:14px;align-items:start}
-.cashflow-summary,.cashflow-visual{min-width:0;padding:14px;border:1px solid var(--enterprise-line);border-radius:12px;background:var(--enterprise-bg)}
-#intelligenceModal .enterprise-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0}
-#intelligenceModal .enterprise-metrics>div{grid-column:auto;padding:0;background:transparent;border:0;border-radius:0}
-#intelligenceModal .enterprise-metrics span{font-size:12px;line-height:1.35}
-#intelligenceModal .enterprise-metrics strong{font-size:18px;line-height:1.25;margin-top:5px}
-.cashflow-ai-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--enterprise-line)}
-.cashflow-ai-toolbar p{margin:0;font-size:12px;line-height:1.4;color:var(--enterprise-muted)}
-.cashflow-ai-toolbar button{min-height:44px;padding:8px 10px;white-space:nowrap}
-.forecast-analysis-page{font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0 0}
-#cashflowAnalysis:empty{display:none}
-#intelligenceModal .cashflow-summary .mer-pagination{padding-top:4px}
-#intelligenceModal .cashflow-summary .mer-pagination button{min-height:44px;padding:6px 8px;font-size:12px}
-#intelligenceModal .enterprise-skeleton{padding:8px 0 0;gap:4px}
-#intelligenceModal .enterprise-skeleton i{height:6px}
+#intelligenceModal #enterpriseForecast{min-width:0}
+.cashflow-visual{min-width:0;padding:12px;border:1px solid var(--enterprise-line);border-radius:12px;background:var(--enterprise-bg)}
 #intelligenceModal .forecast-chart{margin:0}
-#intelligenceModal .forecast-chart .forecast-legend{font-size:11px;gap:12px;margin:4px 0}
-#intelligenceModal .forecast-chart .forecast-inspector{min-height:20px;padding:0;border:0;border-radius:0;background:transparent;display:block;font-size:12px;line-height:1.4;color:var(--enterprise-muted)}
-#intelligenceModal .forecast-inspector strong{font-size:12px;font-weight:500}
-#intelligenceModal .forecast-event-picker{display:block;margin:8px 0 0}
-.forecast-event-picker>span{display:block;font-size:12px;line-height:1.4;margin-bottom:4px;color:var(--enterprise-muted)}
-#intelligenceModal .forecast-event-picker select{height:44px;font-size:12px;padding:8px;min-width:0;max-width:100%}
-.forecast-model-note{font-size:12px;line-height:1.4;color:var(--enterprise-muted);margin:8px 0 0}
+#intelligenceModal .forecast-tooltip span:not([data-money]){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#intelligenceModal .enterprise-footer{justify-content:flex-start;margin-top:auto;flex-shrink:0}
+.forecast-accessible,#intelligenceModal .forecast-inspector{position:absolute;width:1px;height:1px;min-height:0;padding:0;margin:-1px;border:0;overflow:hidden;clip-path:inset(50%);white-space:normal}
 #planTaxBody>p{font-size:14px;line-height:1.5;margin:12px 0}
 @media(max-width:600px){
   html body #intelligenceModal[open]{padding:12px;gap:4px;max-height:calc(100dvh - 20px)}
   #intelligenceModal .enterprise-dialog-head h2{padding-right:0;font-size:21px}
   #intelligenceModal .enterprise-dialog-body{padding:0}
-  #intelligenceModal #enterpriseForecast{grid-template-columns:1fr;gap:8px}
-  #intelligenceModal .cashflow-summary,#intelligenceModal .cashflow-visual{padding:8px}
-  #intelligenceModal .enterprise-metrics{gap:8px}
-  #intelligenceModal .cashflow-ai-toolbar{margin-top:8px;padding-top:6px;gap:8px}
-  #intelligenceModal .forecast-analysis-page{font-size:12px;line-height:1.4;margin-top:6px}
-  #intelligenceModal .forecast-event-picker>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  #intelligenceModal .cashflow-visual{padding:8px}
   #intelligenceModal .enterprise-footer{margin:4px 0 0;padding-top:8px}
   .enterprise-draft{gap:8px;padding:12px 0}
   .enterprise-draft>span{min-width:55%}

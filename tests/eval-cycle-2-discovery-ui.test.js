@@ -7,6 +7,6 @@ assert.match(ui,/openTransaction\(result\.id\)/);assert.match(ui,/openBudgetEdit
 assert.match(ui,/result\.profileId!==appState\.activeAccount/);
 assert.match(ui,/forecastAreaFill/);assert.match(ui,/forecast-gridline/);assert.match(ui,/data-forecast-point/);
 assert.match(ui,/svg\.onpointermove=event=>inspectIndex/);assert.match(ui,/container\.onfocusin=inspect/);assert.match(ui,/container\.onclick=inspect/);
-assert.match(ui,/new ResizeObserver/);assert.match(css,/forecast-inspector/);assert.match(css,/forecast-axis/);
+assert.match(ui,/new ResizeObserver/);assert.match(css,/forecast-inspector/);assert.doesNotMatch(ui,/class="forecast-axis/);
 assert.match(ui,/appState\.settings\.hideBalances\?'••••'/);
 process.stdout.write('Discovery UI contracts: links, distinct icon, responsive SVG, pointer/focus/touch inspection and privacy passed.\n');

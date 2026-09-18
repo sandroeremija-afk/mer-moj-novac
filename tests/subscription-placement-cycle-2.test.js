@@ -115,7 +115,7 @@ test('English price alert heading and currency follow the current language', () 
 });
 
 test('forecast contains neither subscription radar nor duplicate payday editor; Activity keeps receipt scanning', () => {
-  const forecast=enterpriseSource.slice(enterpriseSource.indexOf('function renderForecast(){'),enterpriseSource.indexOf('async function analyzeCashflow'));
+  const forecast=enterpriseSource.slice(enterpriseSource.indexOf('function renderForecast(){'),enterpriseSource.indexOf('function openIntelligence('));
   assert.ok(forecast.includes('enterpriseForecast'),'forecast renderer is located');
   assert.doesNotMatch(forecast,/subscription-radar|subscriptionRadar|paydayRules|paydayRulesEditor|enterpriseRules/);
   assert.doesNotMatch(enterpriseSource,/id="enterpriseRules"|function renderRules\(/);

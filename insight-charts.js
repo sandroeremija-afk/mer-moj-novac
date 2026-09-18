@@ -69,14 +69,15 @@
     const baseline=isBalance?`<path class="insight-opening-baseline" d="M24,${points[0].y} H616"/>`:'';
     const scale=`<div class="insight-axis-labels" data-monetary><span>${esc(options.privateMode?labels.hidden:money(max,options))}</span><span>${esc(options.privateMode?labels.hidden:money(min,options))}</span></div>`;
     const end=points.at(-1);
-    return `${isBalance?growthSummary(data,options):''}<div class="interactive-insight-trend"><div class="insight-trend-readout" aria-live="polite" aria-atomic="true"><span class="trend-date"></span><strong class="trend-amount" data-monetary></strong><small class="trend-growth" data-monetary></small></div><div class="insight-plot-window">${scale}<svg class="insight-trend-svg" viewBox="0 0 640 196" preserveAspectRatio="none" aria-hidden="true" data-monetary>${grid}<path class="insight-trend-baseline" d="M24,${zero} H616"/>${baseline}${bars}<line class="insight-trend-cursor" x1="${end.x}" x2="${end.x}" y1="12" y2="180"/><circle class="insight-trend-node" cx="${end.x}" cy="${end.y}" r="5"/></svg></div><input class="insight-trend-selector" type="range" min="0" max="${points.length-1}" value="${points.length-1}" step="1" aria-label="${esc(labels.date)}"><div class="insight-trend-dates"><span>${esc(dateLabel(data.series[0],data,options))}</span><span>${esc(dateLabel(data.series.at(-1),data,options))}</span></div><p class="insight-trend-hint">${esc(labels.hint)}</p></div>${categoryMarkup(options.breakdown,options)}`;
+    return `${isBalance?growthSummary(data,options):''}<div class="interactive-insight-trend"><div class="insight-trend-readout" aria-live="polite" aria-atomic="true"><span class="trend-date"></span><strong class="trend-amount" data-monetary></strong><small class="trend-growth" data-monetary></small></div><div class="insight-plot-window" tabindex="0" role="group" aria-label="${esc(labels.date)}" aria-keyshortcuts="ArrowLeft ArrowRight Home End">${scale}<svg class="insight-trend-svg" viewBox="0 0 640 196" preserveAspectRatio="none" aria-hidden="true" data-monetary>${grid}<path class="insight-trend-baseline" d="M24,${zero} H616"/>${baseline}${bars}<line class="insight-trend-cursor" x1="${end.x}" x2="${end.x}" y1="12" y2="180"/><circle class="insight-trend-node" cx="${end.x}" cy="${end.y}" r="5"/></svg></div><div class="insight-trend-dates"><span>${esc(dateLabel(data.series[0],data,options))}</span><span>${esc(dateLabel(data.series.at(-1),data,options))}</span></div><p class="insight-trend-hint">${esc(labels.hint)}</p></div>${categoryMarkup(options.breakdown,options)}`;
   }
   function mount(host, data, options = {}) {
     host.innerHTML=chartMarkup(data,options);
     const wrapper=host.querySelector('.interactive-insight-trend');
     if(!wrapper)return;
     const mode=options.mode || 'balance',labels=copy(options), {points}=geometry(data,mode);
-    const svg=wrapper.querySelector('svg'),slider=wrapper.querySelector('input');
+    const svg=wrapper.querySelector('svg'),plot=wrapper.querySelector('.insight-plot-window');
+    let selectedIndex=points.length-1;
     const select=index=>{
       index=Math.max(0,Math.min(points.length-1,Math.round(index)));
       const point=data.series[index],position=points[index],growth=point.growth?.[mode];
@@ -84,11 +85,17 @@
       wrapper.querySelector('.trend-date').textContent=date;
       wrapper.querySelector('.trend-amount').textContent=amount;
       wrapper.querySelector('.trend-growth').textContent=options.privateMode?labels.hidden:typeof growth==='number'&&Number.isFinite(growth)?`${labels.change}: ${growth>0?'+':''}${new Intl.NumberFormat(options.locale || 'hr-HR',{maximumFractionDigits:2}).format(growth)}%`:labels.unavailable;
-      slider.value=String(index);slider.setAttribute('aria-valuetext',`${date}: ${amount}`);
+      selectedIndex=index;
+      plot.setAttribute('data-selected-index',String(index));
+      plot.setAttribute('aria-label',`${labels.date}: ${date}: ${amount}`);
       const cursor=wrapper.querySelector('.insight-trend-cursor'),node=wrapper.querySelector('.insight-trend-node');
       cursor.setAttribute('x1',position.x);cursor.setAttribute('x2',position.x);node.setAttribute('cx',position.x);node.setAttribute('cy',position.y);
     };
-    slider.addEventListener('input',()=>select(Number(slider.value)));
+    plot.addEventListener('keydown',event=>{
+      const next={ArrowLeft:selectedIndex-1,ArrowDown:selectedIndex-1,ArrowRight:selectedIndex+1,ArrowUp:selectedIndex+1,Home:0,End:points.length-1}[event.key];
+      if(next===undefined)return;
+      event.preventDefault();select(next);
+    });
     const scrub=event=>{const rect=svg.getBoundingClientRect();if(rect.width>0)select(((event.clientX-rect.left)/rect.width*640-24)/592*(points.length-1));};
     svg.addEventListener('pointermove',scrub);svg.addEventListener('pointerdown',scrub);
     select(points.length-1);

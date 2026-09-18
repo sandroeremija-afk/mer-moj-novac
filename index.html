@@ -40,6 +40,8 @@
   <link rel="stylesheet" href="planning-hubs.css">
   <link rel="stylesheet" href="quick-tools.css">
   <link rel="stylesheet" href="settings-enhancements.css">
+  <link rel="stylesheet" href="financial-polish.css">
+  <link rel="stylesheet" href="micro-savings-ui.css">
   <link id="exportPdfLibrary" rel="prefetch" as="script" href="assets/jspdf-4.2.1.min.js">
   <link id="exportPdfFont" rel="prefetch" as="fetch" href="assets/mer-export-font.ttf" crossorigin>
   <link rel="manifest" href="manifest.webmanifest">
@@ -96,12 +98,13 @@
 
       <div class="page">
         <section class="view active" id="overviewView" data-view-panel="overview">
-          <div class="page-heading actions-only-heading"><div class="heading-actions"><button type="button" class="secondary-button" data-open-detail="overviewDetailsModal"><svg aria-hidden="true"><use href="#icon-chart"></use></svg><span data-i18n="viewDetails">Detalji</span></button><button type="button" class="secondary-button" data-open-assessment><svg aria-hidden="true"><use href="#icon-sliders"></use></svg><span data-i18n="adjustPlan">Prilagodi plan</span></button><button type="button" class="primary-button" data-open-transaction><svg aria-hidden="true"><use href="#icon-plus"></use></svg><span data-i18n="addTransaction">Dodaj transakciju</span></button></div></div>
+          <div class="page-heading actions-only-heading"><div class="heading-actions"><button type="button" class="secondary-button" data-open-assessment><svg aria-hidden="true"><use href="#icon-sliders"></use></svg><span data-i18n="adjustPlan">Prilagodi plan</span></button><button type="button" class="primary-button" data-open-transaction><svg aria-hidden="true"><use href="#icon-plus"></use></svg><span data-i18n="addTransaction">Dodaj transakciju</span></button></div></div>
           <section class="summary-grid" data-layout-grid="overview-summary" aria-label="Financijski sažetak" data-i18n-aria="financialSummary">
             <article class="summary-card balance-card" data-layout-card="available-balance"><div class="card-label"><span data-i18n="availableBalance">Raspoloživo stanje</span><button type="button" class="info-button" aria-label="Informacije o stanju" data-i18n-aria="balanceInfo" data-tooltip-key="balanceTooltip">i</button></div><div class="summary-value" id="availableBalance">2.840,00 €</div><div class="delta positive"><svg aria-hidden="true"><use href="#icon-up"></use></svg><strong>8,4%</strong><span data-i18n="fromLastMonth">od prošlog mjeseca</span></div></article>
 <article class="summary-card" data-layout-card="monthly-spending"><div class="card-label"><span data-i18n="spentMonth">Potrošeno ovaj mjesec</span><span class="mini-icon coral"><svg aria-hidden="true"><use href="#icon-card"></use></svg></span></div><div class="summary-value" id="spentValue">820,00 €</div><div class="metric-note"><span id="budgetPercent">43% fleksibilnog budžeta od 1.900 €</span></div><div class="progress-track" role="progressbar" id="budgetProgressTrack" aria-label="Iskorištenost mjesečnog budžeta" data-i18n-aria="budgetUsage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="43"><span id="budgetProgress" style="width:43%"></span></div></article>
             <article class="summary-card" data-layout-card="monthly-savings"><div class="card-label"><span data-i18n="savedMonth">Ušteđeno ovaj mjesec</span><span class="mini-icon green"><svg aria-hidden="true"><use href="#icon-leaf"></use></svg></span></div><div class="summary-value" id="savedValue">450,00 €</div><div class="metric-note" data-i18n="savingsDepositsOnly">Evidentirane uplate u ciljeve štednje</div></article>
           </section>
+          <aside id="spendingAnomalyAlert" class="spending-anomaly-alert" aria-label="Mer AI" aria-live="polite" hidden></aside>
           <section class="dashboard-grid" data-layout-grid="overview-dashboard">
             <article class="panel safe-panel" data-layout-card="safe-to-spend">
               <div class="panel-heading"><div><p class="overline" data-i18n="spendingGuardrail">ZAŠTITA BUDŽETA</p><h2 data-i18n="safeToSpend">Sigurno za potrošiti</h2></div><button type="button" class="info-button" aria-label="Informacije o sigurnom iznosu" data-i18n-aria="safeInfo" data-tooltip-key="safeTooltip">i</button></div>
@@ -382,6 +385,7 @@
   <script src="runtime.js?v=20260827-modal-safeguard"></script>
   <script src="logo.js?v=20260824-header3"></script>
   <script src="core.js?v=20260901-branding-strategy-r1"></script>
+  <script src="anomaly-core.js"></script>
   <script src="insight-core.js"></script>
   <script src="insight-charts.js"></script>
   <script src="vaults-core.js"></script>
@@ -437,5 +441,7 @@
   <script src="planning-hubs.js"></script>
   <script src="quick-tools-ui.js"></script>
   <script src="zero-scroll.js"></script>
+  <script src="micro-savings-ui.js"></script>
+  <script src="anomaly-ui.js"></script>
 </body>
 </html>

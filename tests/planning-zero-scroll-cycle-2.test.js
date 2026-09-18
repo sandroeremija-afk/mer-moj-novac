@@ -1,56 +1,91 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync(require.resolve('../enterprise-ui.js'),'utf8');
+const discovery=require('../discovery-core.js');
+const esc=value=>String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 
-test('cash flow shows its summary, AI action, chart, events and model limits together',()=>{
+test('cash flow is a single chart with accessible model limits and no summary or option controls',()=>{
   let redraws=0,restores=0;
-  const owner={},inspected=[],restoredMessages=[],handlers={};
-  const chart={inspectForecastDay:day=>inspected.push(day)};
-  const container={innerHTML:'',querySelector:selector=>selector==='.forecast-chart'?chart:null};
-  const picker={title:'',addEventListener:(type,handler)=>{handlers[type]=handler;}};
-  const action={addEventListener:(type,handler)=>{handlers.analyze=handler;}};
-  const events=Array.from({length:12},(_,index)=>({name:`Bill <${index}>`,kind:index===0?'income':'expense',amountCents:(index+1)*100,source:index===1?'pattern':'scheduled'}));
+  const container={innerHTML:''};
   const context=vm.createContext({
-    el:id=>({enterpriseForecast:container,forecastEventPicker:picker,analyzeCashflow:action})[id],
-    window:{MerPlanNavigation:{preserveFocus:()=>()=>{restores++;}}},intelligence:{},
-    forecast:()=>({confidence:'limited-history',foreignCurrencyCount:3}),forecastOwner:owner,
-    appState:{activeAccount:'personal',accounts:{personal:owner},settings:{currency:'EUR'}},state:{},appReferenceDate:'2026-09-17',
-    MerDiscovery:{forecastChart:()=>({series:[{date:'2026-09-17',events:[]},{date:'2026-09-18',events}]})},
-    formatIsoDate:value=>value,money:value=>`${value/100} EUR`,copy:(_,en)=>en,esc:value=>String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;'),
-    metricsMarkup:()=>'<div class="enterprise-metrics">Real local metrics</div>',
-    analysisResult:{account:'personal',revision:2,message:'The real cached AI response.'},reactiveStore:{getRevision:()=>2},
-    renderAnalysis:message=>restoredMessages.push(message),renderProjection:()=>{redraws++;},requestAnimationFrame:callback=>callback(),resizeProjection:()=>{},analyzeCashflow(){},act:callback=>callback()
+    el:()=>container,window:{MerPlanNavigation:{preserveFocus:()=>()=>{restores++;}}},intelligence:{},
+    forecast:()=>({confidence:'limited-history',foreignCurrencyCount:3}),
+    copy:(_,en)=>en,esc,renderProjection:()=>{redraws++;},requestAnimationFrame:callback=>callback(),resizeProjection:()=>{}
   });
-  vm.runInContext(source.slice(source.indexOf('  function renderForecast('),source.indexOf('  function renderAnalysis(')),context);
+  vm.runInContext(source.slice(source.indexOf('  function renderForecast('),source.indexOf('  function openIntelligence(')),context);
   context.renderForecast();
-  assert.match(container.innerHTML,/cashflow-summary[\s\S]*enterprise-metrics[\s\S]*analyzeCashflow[\s\S]*cashflowAnalysis/);
-  assert.match(container.innerHTML,/cashflow-visual[\s\S]*forecast-chart[\s\S]*forecastEventPicker[\s\S]*forecast-model-note/);
-  assert.doesNotMatch(container.innerHTML,/role="tab|data-forecast-panel|\shidden/);
-  assert.equal([...container.innerHTML.matchAll(/<option /g)].length,13,'every projected event remains reachable in the compact selector');
+  assert.match(container.innerHTML,/cashflow-visual[\s\S]*forecast-chart/);
+  assert.doesNotMatch(container.innerHTML,/cashflow-summary|enterprise-metrics|analyzeCashflow|cashflowAnalysis|forecastEventPicker|<button|<select|<input/);
+  assert.match(container.innerHTML,/id="forecastModelNote" class="forecast-model-note forecast-accessible"/);
   assert.match(container.innerHTML,/Limited history/);assert.match(container.innerHTML,/3 foreign-currency records excluded; no conversion/);
-  assert.match(container.innerHTML,/available only after posting/);assert.match(container.innerHTML,/Bill &lt;11>/);
-  handlers.change({target:Object.assign(picker,{value:'1:11'})});
-  assert.deepEqual(inspected,[1]);assert.match(picker.title,/Bill <11> · 12 EUR/);
-  assert.deepEqual(restoredMessages,['The real cached AI response.']);
+  assert.match(container.innerHTML,/available only after posting/);
   assert.equal(redraws,1);assert.equal(restores,1);
-  context.appState.accounts.personal={};context.renderForecast();
-  assert.equal(context.analysisResult,null,'a replaced account does not retain the previous owner’s AI response');
-  context.appState.settings.hideBalances=true;context.renderForecast();
-  assert.match(container.innerHTML,/<option value="1:11">[^<]*Amount hidden<\/option>/);
-  handlers.change({target:Object.assign(picker,{value:'1:11'})});
-  assert.match(picker.title,/Amount hidden/);assert.doesNotMatch(picker.title,/12 EUR/);
+  assert.doesNotMatch(source,/function renderAnalysis|function analyzeCashflow|pendingAnalysis/,'the retired cash-flow AI action leaves no request or pagination lifecycle');
 });
 
-test('long AI explanations keep every character across accessible pages',()=>{
-  const box={innerHTML:''},attachments=[];
-  const context=vm.createContext({el:()=>box,esc:value=>value.replace(/&/g,'&amp;').replace(/</g,'&lt;'),appState:{activeAccount:'personal'},copy:(_,en)=>en,window:{MerPagination:{attach:(container,options)=>attachments.push({container,options})}}});
-  vm.runInContext(source.slice(source.indexOf('  function renderAnalysis('),source.indexOf('  async function analyzeCashflow(')),context);
-  const message=('Income arrives before your next scheduled payment. 💶 '.repeat(32))+'<script>unsafe</script>';
-  context.renderAnalysis(message);
-  const chunks=[...box.innerHTML.matchAll(/<p class="forecast-analysis-page">([\s\S]*?)<\/p>/g)].map(match=>match[1]);
-  assert.ok(chunks.length>4);assert.ok(chunks.every(chunk=>[...chunk].length<150));
-  assert.equal(chunks.join('').replace(/&lt;/g,'<').replace(/&amp;/g,'&'),message,'pagination never truncates generated explanation text');
-  assert.ok(!box.innerHTML.includes('<script>'));
-  assert.equal(attachments[0].options.pageSize,1);
-  assert.equal(attachments[0].options.scopeKey,'personal');
+function chartHarness(){
+  const tooltip={hidden:true,innerHTML:'',style:{},offsetWidth:210,offsetHeight:110};
+  const inspector={textContent:''};
+  const attributes=()=>({values:{},setAttribute(name,value){this.values[name]=value;}});
+  const guide=attributes(),dot=attributes(),points=[];
+  const svg={getBoundingClientRect:()=>({left:0,top:0,width:680}),contains:node=>points.includes(node)};
+  const chart={innerHTML:'',clientWidth:680,getBoundingClientRect:()=>({left:0,top:0}),querySelector:selector=>({svg,'.forecast-tooltip':tooltip,'.forecast-hover-line':guide,'.forecast-hover-dot':dot,'.forecast-inspector':inspector})[selector]||points[Number(/="(\d+)"/.exec(selector)?.[1])]};
+  const profile={profileId:'personal',financialOpeningBalance:1000,availableBalance:0,transactions:[
+    {id:'bill',date:'2026-09-19',amount:20,type:'expense',name:'Bill <unsafe>',profileId:'personal',currency:'EUR'},
+    {id:'income',date:'2026-09-19',amount:200,type:'income',name:'Salary',profileId:'personal',currency:'EUR'},
+    {id:'foreign',date:'2026-09-19',amount:9000,type:'expense',name:'Dollar bill',profileId:'personal',currency:'USD'},
+    {id:'other',date:'2026-09-19',amount:8000,type:'expense',name:'Business bill',profileId:'business',currency:'EUR'}
+  ],goalBuckets:[],savingsEntries:[],recurring:[],categories:[]};
+  const context=vm.createContext({el:()=>({querySelector:()=>chart}),window:{innerHeight:768,innerWidth:1366},
+    MerDiscovery:discovery,MerQuickToolsCore:require('../quick-tools-core.js'),state:profile,appReferenceDate:'2026-09-18',
+    appState:{activeAccount:'personal',settings:{currency:'EUR',hideBalances:false}},projectionWidth:0,
+    money:value=>`${(value/100).toFixed(2)} EUR`,copy:(_,en)=>en,formatIsoDate:value=>value,esc
+  });
+  for(let index=0;index<31;index++)points.push({
+    dataset:{forecastPoint:String(index)},closest(){return this;},setAttribute(){},focus(){chart.onfocusin({target:this});}
+  });
+  vm.runInContext(source.slice(source.indexOf('  function renderProjection('),source.indexOf('  function renderForecast(')),context);
+  context.renderProjection();
+  return {context,chart,tooltip,inspector,points,svg,profile,guide,dot};
+}
+
+test('forecast reveals the real scoped balance and event details only on hover, touch or focus',()=>{
+  const app=chartHarness(),snapshot=JSON.stringify(app.profile);
+  assert.doesNotMatch(app.chart.innerHTML,/<text|forecast-legend|forecast-axis/,'dates and monetary axis text are absent');
+  assert.match(app.chart.innerHTML,/forecast-tooltip" role="tooltip" hidden/);
+  assert.match(app.chart.innerHTML,/aria-describedby="forecastModelNote"/);
+  assert.equal((app.chart.innerHTML.match(/data-forecast-point=/g)||[]).length,31);
+  assert.equal(app.tooltip.hidden,true);assert.equal(app.inspector.textContent,'');
+  app.points[1].focus();
+  const model=discovery.forecastChart(app.profile,'2026-09-18',{profileId:'personal',currency:'EUR'});
+  assert.ok(app.tooltip.innerHTML.includes(`${(model.series[1].balanceCents/100).toFixed(2)} EUR`));
+  for(const text of ['2026-09-19','Bill &lt;unsafe>','20.00 EUR','Salary','200.00 EUR'])assert.ok(app.tooltip.innerHTML.includes(text));
+  assert.doesNotMatch(app.tooltip.innerHTML,/Dollar bill|Business bill/);
+  assert.equal(app.tooltip.hidden,false);assert.match(app.inspector.textContent,/Bill <unsafe>/);
+  app.svg.onpointerleave();assert.equal(app.tooltip.hidden,true);assert.equal(app.inspector.textContent,'');
+  app.svg.onpointerdown({clientX:16+(680-32)/30});assert.equal(app.tooltip.hidden,false);assert.match(app.tooltip.innerHTML,/2026-09-19/);
+  app.chart.onfocusout({relatedTarget:null});assert.equal(app.tooltip.hidden,true);
+  assert.equal(JSON.stringify(app.profile),snapshot,'opening and exploring the projection does not change financial data');
+});
+
+test('stealth mode masks forecast totals and event amounts in both tooltip and accessible labels',()=>{
+  const app=chartHarness();app.context.appState.settings.hideBalances=true;app.context.renderProjection();app.points[1].focus();
+  assert.match(app.tooltip.innerHTML,/Amount hidden/);assert.match(app.inspector.textContent,/Amount hidden/);
+  assert.doesNotMatch(app.chart.innerHTML,/\d\.\d{2} EUR/);assert.doesNotMatch(app.tooltip.innerHTML,/\d\.\d{2} EUR/);
+  assert.doesNotMatch(app.inspector.textContent,/\d\.\d{2} EUR/);
+  app.context.state={...app.profile,profileId:'business',financialOpeningBalance:500,transactions:[]};app.context.appState.activeAccount='business';
+  app.context.appState.settings.hideBalances=false;app.context.renderProjection();app.points[1].focus();
+  assert.doesNotMatch(app.tooltip.innerHTML,/Bill|Salary/);assert.match(app.tooltip.innerHTML,/500\.00 EUR/);
+});
+
+test('cash flow keeps only its bottom-left close action and a viewport-sized plot',()=>{
+  const css=fs.readFileSync(require.resolve('../enterprise.css'),'utf8');
+  assert.match(source,/intelligence\.querySelector\('\.enterprise-dialog-head \[data-enterprise-close\]'\)\.remove\(\)/);
+  assert.match(source,/intelligence\.querySelector\('\[data-enterprise-footer-close\]'\)\.setAttribute\('autofocus',''\)/,'opening the modal does not reveal a point tooltip automatically');
+  assert.match(css,/#intelligenceModal \.enterprise-footer\{justify-content:flex-start/);
+  assert.match(css,/\.forecast-accessible,#intelligenceModal \.forecast-inspector\{[^}]*position:absolute[^}]*clip-path:inset\(50%\)/);
+  const app=chartHarness();app.context.window.innerWidth=375;app.context.window.innerHeight=667;app.chart.clientWidth=291;app.context.renderProjection();
+  const height=Number(/style="height:(\d+)px"/.exec(app.chart.innerHTML)[1]);
+  assert.ok(height<=app.context.window.innerHeight-230);
+  assert.doesNotMatch(css,/cashflow-summary|cashflow-ai-toolbar|forecast-event-picker/);
 });

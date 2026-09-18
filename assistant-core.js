@@ -1,11 +1,11 @@
 (function exposeMerFinancialAssistant(root, factory) {
-  const api = factory();
+  const api = factory(typeof module === 'object' && module.exports ? require('./anomaly-core.js') : root.MerAnomalies);
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) {
     const client = api.createAssistantClient();
     root.MerFinancialAssistant = Object.freeze({ ...api, ask: client.ask });
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerAssistantCore() {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerAssistantCore(Anomalies) {
   const MAX_MESSAGE_LENGTH = 1000;
   const MAX_HISTORY = 12;
   const CONTEXT_KEYS = Object.freeze(['currency', 'totalIncome', 'totalExpenses', 'netTotal', 'safeToSpend', 'dailySafe', 'savingsBalance', 'savingsTarget', 'daysRemaining', 'topCategory', 'topCategorySpent']);
@@ -63,13 +63,33 @@
   }
 
   function sanitizeFinancialContext(context) {
-    const source = context && typeof context === 'object' ? context : {};
-    return Object.fromEntries(CONTEXT_KEYS.flatMap(key => {
+    const source = context && typeof context === 'object' && !Array.isArray(context) ? context : {};
+    const result = Object.fromEntries(CONTEXT_KEYS.flatMap(key => {
       if (!(key in source)) return [];
-      if (key === 'currency' || key === 'topCategory') return [[key, cleanText(source[key], 80)]];
-      const value = Number(source[key]);
-      return Number.isFinite(value) ? [[key, value]] : [];
+      if (key === 'currency') {
+        const value = typeof source[key] === 'string' ? source[key].trim().toUpperCase() : '';
+        return /^[A-Z]{3}$/.test(value) ? [[key,value]] : [];
+      }
+      if (key === 'topCategory') return typeof source[key] === 'string' ? [[key,cleanText(source[key],80).replace(/[\u0000-\u001f\u007f]/g,'')]] : [];
+      const value = source[key];
+      return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1e12 ? [[key, value]] : [];
     }));
+    const anomalies = Anomalies?.sanitizeAnomalies(source.spendingAnomalies, result.currency) || [];
+    if (anomalies.length) result.spendingAnomalies = anomalies;
+    return result;
+  }
+
+  function anomalyIntroduction(context, locale = 'hr', privateMode = false) {
+    const safe = sanitizeFinancialContext(context), anomaly = safe.spendingAnomalies?.[0];
+    if (!anomaly) return '';
+    const english = locale === 'en';
+    if (privateMode) return english
+      ? 'A spending pattern changed this week. Amounts are hidden; when you are ready, we can review it together.'
+      : 'Obrazac potrošnje promijenio se ovaj tjedan. Iznosi su skriveni; kad budete spremni, možemo ga zajedno pregledati.';
+    const percent = new Intl.NumberFormat(english ? 'en-IE' : 'hr-HR', {maximumFractionDigits:1}).format(anomaly.growthPercent);
+    return english
+      ? `${anomaly.category}: spending in the last 7 days is ${percent}% above the weekly average of the preceding 4 weeks (${amount(anomaly.current,safe.currency,'en')} vs. ${amount(anomaly.average,safe.currency,'en')}). It may be a one-off purchase. We can review the category together.`
+      : `${anomaly.category}: potrošnja u posljednjih 7 dana je ${percent}% iznad tjednog prosjeka prethodna 4 tjedna (${amount(anomaly.current,safe.currency,'hr')} prema ${amount(anomaly.average,safe.currency,'hr')}). Možda je riječ o jednokratnoj kupnji. Možemo zajedno pregledati kategoriju.`;
   }
 
   function amount(value, currency, locale) {
@@ -81,6 +101,10 @@
     const text = cleanText(message, MAX_MESSAGE_LENGTH).toLocaleLowerCase(locale === 'en' ? 'en' : 'hr');
     const english = locale === 'en';
     const currency = context.currency || 'EUR';
+    if (/anomal|odstup|porast|poveć|spike|unusual|increase|potrošnj|spending/.test(text)) {
+      const introduction = anomalyIntroduction(context, locale);
+      if (introduction) return `${english ? 'Local guidance: ' : 'Lokalni vodič: '}${introduction}`;
+    }
     if (/zaštit|sigurno|safe|budget protection/.test(text)) {
       return english
         ? `Local guidance: your current safe-to-spend amount is ${amount(context.safeToSpend, currency, 'en')}. It is monthly income minus monthly expenses; your daily pace is ${amount(context.dailySafe, currency, 'en')}.`
@@ -158,5 +182,5 @@
     return Object.freeze({ ask });
   }
 
-  return Object.freeze({ MAX_MESSAGE_LENGTH, MAX_HISTORY, CONTEXT_KEYS, ACTION_PAGES, sanitizeActions, prepareAction, sanitizeMessages, sanitizeFinancialContext, localReply, createAssistantClient, createFinancialAssistant:createAssistantClient });
+  return Object.freeze({ MAX_MESSAGE_LENGTH, MAX_HISTORY, CONTEXT_KEYS, ACTION_PAGES, sanitizeActions, prepareAction, sanitizeMessages, sanitizeFinancialContext, anomalyIntroduction, localReply, createAssistantClient, createFinancialAssistant:createAssistantClient });
 });

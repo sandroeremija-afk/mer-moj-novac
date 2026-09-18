@@ -106,13 +106,15 @@ test('evaluation cycle 1: future expenses cannot trigger round-ups before they b
   assert.equal(personal.goalBuckets[0].current, 0.51);
 });
 
-test('evaluation cycle 1: date eligibility is authoritative even when stored status is stale', () => {
+test('evaluation cycle 1: date eligibility advances app schedules and preserves bank pending status', () => {
   const future = { date:'2026-09-01T12:00:00', status:'posted' };
-  const due = { date:'2026-08-20T12:00:00', status:'pending' };
+  const due = { date:'2026-08-20T12:00:00', status:'pending', scheduled:true };
   assert.equal(MerCore.isTransactionEffective(future, '2026-08-20'), false);
   assert.equal(MerCore.transactionStatusAt(future, '2026-08-20'), 'scheduled');
   assert.equal(MerCore.isTransactionEffective(due, '2026-08-20'), true);
   assert.equal(MerCore.transactionStatusAt(due, '2026-08-20'), 'posted');
+  assert.equal(MerCore.transactionStatusAt({date:due.date,status:'pending'}, '2026-08-20'), 'pending');
+  assert.equal(MerCore.isTransactionEffective({date:due.date,status:'pending'}, '2026-08-20'), false);
   assert.equal(MerCore.transactionStatusAt({ date:'2026-02-30' }, '2026-08-20'), 'invalid');
   assert.equal(MerCore.transactionStatusAt(due, 'invalid-reference'), 'invalid');
   assert.equal(MerCore.isTransactionEffective(due, 'invalid-reference'), false);

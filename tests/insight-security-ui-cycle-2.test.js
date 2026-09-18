@@ -43,7 +43,7 @@ function mountHarness(series = data(), options = {}) {
   const wrapper={querySelector:node};
   const host={innerHTML:'',querySelector(selector){return selector==='.interactive-insight-trend' && this.innerHTML.includes('class="interactive-insight-trend"')?wrapper:null;}};
   Charts.mount(host,series,{locale:'hr-HR',currency:'EUR',...options});
-  return {host,node,nodes,select(index){node('input').value=String(index);node('input').listeners.input();}};
+  return {host,node,nodes,select(index){node('.insight-plot-window').listeners.keydown({key:'Home',preventDefault(){}});for(let i=0;i<index;i++)node('.insight-plot-window').listeners.keydown({key:'ArrowRight',preventDefault(){}});}};
 }
 
 test('top-metric charts use a unique cumulative line for net and dedicated income/expense bars',()=>{
@@ -55,26 +55,27 @@ test('top-metric charts use a unique cumulative line for net and dedicated incom
   assert.doesNotMatch(income,/insight-trend-bar expenses/);
   assert.doesNotMatch(expenses,/insight-trend-bar income/);
   for(const markup of [net,income,expenses]){
-    assert.match(markup,/type="range"[^>]*min="0"[^>]*max="2"/);
+    assert.doesNotMatch(markup,/type="range"|insight-trend-selector/);
+    assert.match(markup,/class="insight-plot-window" tabindex="0" role="group"/);
     assert.match(markup,/aria-live="polite"/);
     assert.doesNotMatch(markup,/NaN|Infinity|undefined/);
   }
 });
 
-test('hover, touch and accessible range selection show exact date, currency amount and interval growth',()=>{
+test('hover, touch and accessible keyboard selection show exact date, currency amount and interval growth',()=>{
   const h=mountHarness(data(),{mode:'balance'});
   assert.equal(h.node('.trend-amount').textContent,Core.formatCurrency(1500,{locale:'hr-HR',currency:'EUR'}));
   assert.match(h.node('.trend-date').textContent,/3\. rujna 2026/);
   assert.match(h.node('.trend-growth').textContent,/\+100%/);
   h.node('svg').listeners.pointermove({clientX:420});
-  assert.equal(h.node('input').value,'1');
+  assert.equal(h.node('.insight-plot-window').attributes['data-selected-index'],'1');
   assert.equal(h.node('.trend-amount').textContent,Core.formatCurrency(750,{locale:'hr-HR',currency:'EUR'}));
   assert.match(h.node('.trend-growth').textContent,/[-−]25%/);
   h.node('svg').listeners.pointerdown({clientX:124});
-  assert.equal(h.node('input').value,'0');
+  assert.equal(h.node('.insight-plot-window').attributes['data-selected-index'],'0');
   assert.match(h.node('.trend-growth').textContent,/Nema usporedive/);
-  h.select(2); // Native keyboard range changes dispatch the same input event.
-  assert.equal(h.node('input').attributes['aria-valuetext'],`${h.node('.trend-date').textContent}: ${h.node('.trend-amount').textContent}`);
+  h.select(2); // Keyboard focus stays on the plot itself, with no extra slider.
+  assert.equal(h.node('.insight-plot-window').attributes['aria-label'],`Odaberite datum na grafikonu: ${h.node('.trend-date').textContent}: ${h.node('.trend-amount').textContent}`);
   assert.equal(h.node('.insight-trend-cursor').attributes.x1,h.node('.insight-trend-node').attributes.cx);
   assert.equal(h.node('.insight-trend-cursor').attributes.x2,h.node('.insight-trend-node').attributes.cx);
 });
@@ -83,11 +84,11 @@ test('responsive pointer positions clamp at both chart edges and zero-width layo
   for(const width of [295,335,768,1150]){
     const h=mountHarness();
     h.node('svg').getBoundingClientRect=()=>({left:30,width});
-    h.node('svg').listeners.pointermove({clientX:30+width/2});assert.equal(h.node('input').value,'1');
-    h.node('svg').listeners.pointermove({clientX:0});assert.equal(h.node('input').value,'0');
-    h.node('svg').listeners.pointermove({clientX:30+width+100});assert.equal(h.node('input').value,'2');
+    h.node('svg').listeners.pointermove({clientX:30+width/2});assert.equal(h.node('.insight-plot-window').attributes['data-selected-index'],'1');
+    h.node('svg').listeners.pointermove({clientX:0});assert.equal(h.node('.insight-plot-window').attributes['data-selected-index'],'0');
+    h.node('svg').listeners.pointermove({clientX:30+width+100});assert.equal(h.node('.insight-plot-window').attributes['data-selected-index'],'2');
     h.node('svg').getBoundingClientRect=()=>({left:30,width:0});
-    h.node('svg').listeners.pointermove({clientX:30});assert.equal(h.node('input').value,'2');
+    h.node('svg').listeners.pointermove({clientX:30});assert.equal(h.node('.insight-plot-window').attributes['data-selected-index'],'2');
   }
 });
 
@@ -98,8 +99,8 @@ test('private chart readouts and assistive labels never disclose monetary values
       h.select(index);
       assert.equal(h.node('.trend-amount').textContent,'Iznosi su skriveni');
       assert.equal(h.node('.trend-growth').textContent,'Iznosi su skriveni');
-      assert.match(h.node('input').attributes['aria-valuetext'],/Iznosi su skriveni$/);
-      assert.doesNotMatch(h.node('input').attributes['aria-valuetext'],/€|%|1\.500|750/);
+      assert.match(h.node('.insight-plot-window').attributes['aria-label'],/Iznosi su skriveni$/);
+      assert.doesNotMatch(h.node('.insight-plot-window').attributes['aria-label'],/€|%|1\.500|750/);
     }
   }
 });

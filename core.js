@@ -119,7 +119,13 @@
     const date = transactionDate(transaction);
     if (!transaction || typeof transaction !== 'object' || !date) return 'invalid';
     if (transaction.offlineDraft === true || transaction.status === 'draft') return 'draft';
-    try { return date > isoDate(dateOnly(referenceValue)) ? 'scheduled' : 'posted'; } catch { return 'invalid'; }
+    try {
+      const reference = isoDate(dateOnly(referenceValue));
+      // A calendar rollover books app schedules, not unfinished or cancelled bank activity.
+      if (['cancelled','canceled','rejected','failed'].includes(transaction.status)) return transaction.status;
+      if (transaction.status === 'pending' && transaction.scheduled !== true) return 'pending';
+      return date > reference ? 'scheduled' : 'posted';
+    } catch { return 'invalid'; }
   }
 
   function updateTransactionSchedule(transaction, referenceValue = new Date()) {

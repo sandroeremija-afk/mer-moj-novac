@@ -377,7 +377,7 @@
     editingGoalId=id;const goal=id?state.goalBuckets.find(item=>item.id===id):null;$('#goalForm').reset();$('#goalModalTitle').textContent=t(goal?'editGoal':'newSavingsGoal');$('#goalNameInput').value=goal?.name||'';$('#goalTargetInput').value=goal?.target||'';$('#goalCurrentInput').value=goal?.current||0;$('#goalDueDateInput').value=goal?.dueDate||'';$('#goalPrimaryInput').checked=Boolean(goal?.primary);$('#deleteSavingsGoal').hidden=!goal;openModal($('#goalModal'));setTimeout(()=>$('#goalNameInput').focus(),50);
   }
 
-  function renderPremium() { applyPrivacy();renderGoals();if($('#bankSettingsModal').open)renderPremiumSettings();window.MerExportUI?.refresh();window.MerVaultsUI?.refresh();window.MerSavingsMinimal?.refresh(); }
+  function renderPremium() { applyPrivacy();renderGoals();if($('#bankSettingsModal').open)renderPremiumSettings();window.MerExportUI?.refresh();window.MerVaultsUI?.refresh();window.MerSavingsMinimal?.refresh();window.MerMicroSavings?.refresh();window.MerAnomalyUI?.refresh(); }
   const originalRenderAll=renderAll;
   renderAll=function renderAllWithPremium(){originalRenderAll();renderPremium();};
 

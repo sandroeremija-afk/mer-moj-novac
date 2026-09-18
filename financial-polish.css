@@ -1,0 +1,26 @@
+/* Financial cards own their borders; inner visualizations must not clip them. */
+#insightsView .advanced-insights-grid { align-items:stretch; padding:2px 2px 4px; gap:18px; overflow:visible; }
+#insightsView .advanced-insights-grid > .insight-visual-card { box-sizing:border-box; min-width:0; min-height:0; height:100%; padding:18px 18px 24px; border:1px solid var(--line); border-radius:16px; overflow:visible; }
+#insightsView .advanced-insights-grid .panel-heading { flex-shrink:0; margin-bottom:12px; }
+#insightsView .advanced-insights-grid .panel-heading h2 { white-space:normal; overflow-wrap:anywhere; }
+#insightsView .advanced-insights-grid .insight-caption { flex-shrink:0; margin-top:auto; padding-top:12px; line-height:1.5; }
+#insightsView .advanced-insights-grid .insight-caption span { white-space:normal; overflow:visible; text-overflow:clip; }
+#insightsView .advanced-insights-grid .donut-layout { flex:1; min-height:0; }
+#insightsView .advanced-insights-grid .expense-structure-note { padding-top:4px; }
+.spending-anomaly-alert { display:flex; align-items:center; justify-content:space-between; gap:16px; flex:none; margin:0 0 14px; padding:12px 16px; border:1px solid #dfc98e; border-radius:12px; background:#fbf7eb; color:#594715; }
+.spending-anomaly-alert[hidden] { display:none; }
+.spending-anomaly-alert > div { min-width:0; }
+.spending-anomaly-alert strong { display:block; font-size:14px; line-height:1.5; }
+.spending-anomaly-alert p { font-size:12px; line-height:1.5; margin:3px 0 0; overflow-wrap:anywhere; }
+.spending-anomaly-alert button { flex-shrink:0; min-height:44px; }
+[data-theme="dark"] .spending-anomaly-alert { background:#302b1d; border-color:#6d5b30; color:#ead8a7; }
+@media(min-width:1025px) and (max-height:800px) {
+  #insightsView .advanced-insights-grid { gap:14px; }
+  #insightsView .advanced-insights-grid > .insight-visual-card { padding:14px 14px 20px; }
+  #insightsView .advanced-insights-grid .donut-layout { gap:8px; }
+  #overviewView:has(.spending-anomaly-alert:not([hidden])) .dashboard-grid { flex-basis:clamp(280px,39dvh,360px); }
+}
+@media(max-width:600px) {
+  .spending-anomaly-alert { align-items:flex-start; flex-direction:column; gap:8px; padding:12px; }
+  #insightsView .advanced-insights-grid > .insight-visual-card { height:auto; padding:18px 18px 24px; }
+}

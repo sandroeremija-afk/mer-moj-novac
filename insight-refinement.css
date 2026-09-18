@@ -41,7 +41,7 @@
 .insight-trend-bar { stroke:none; }
 .insight-trend-cursor { stroke:var(--muted); stroke-dasharray:3 4; opacity:.5; }
 .insight-trend-node { fill:#00a9e4; stroke:var(--surface,#fff); stroke-width:2; vector-effect:non-scaling-stroke; }
-.insight-trend-selector { display:block; width:100%; min-height:44px; padding:0; margin:0; accent-color:#00a9e4; }
+.insight-plot-window:focus-visible { outline:2px solid #00a9e4; outline-offset:3px; border-radius:8px; }
 .insight-trend-dates { display:flex; justify-content:space-between; gap:18px; font-size:11px; color:var(--muted); }
 .insight-trend-dates span:last-child { text-align:right; }
 .insight-trend-hint { margin:7px 0 0; color:var(--muted); font-size:12px; line-height:1.4; }
