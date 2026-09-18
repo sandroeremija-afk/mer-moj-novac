@@ -28,6 +28,7 @@ suiteCss.push('single-page-popups.css');
 jsFiles.push('insight-core.js','insight-charts.js');
 jsFiles.push('anomaly-core.js','anomaly-ui.js');
 suiteCss.push('financial-polish.css');
+suiteCss.push('modal-space.css');
 suiteCss.push('insight-refinement.css','security-tour.css');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 

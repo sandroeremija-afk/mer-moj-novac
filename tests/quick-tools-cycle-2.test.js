@@ -33,7 +33,7 @@ function forecastControls(){
   const start=enterpriseSource.indexOf('    svg.onpointermove=event=>'),end=enterpriseSource.indexOf('\n  }\n  function renderForecast',start);
   assert.ok(start>=0&&end>start,'execute the real forecast pointer and keyboard bindings');
   const selections=[],tooltip={hidden:true},container={},points=[];
-  const context={container,tooltip,width:660,left:84,plotWidth:560,MerQuickToolsCore:core};
+  const context={container,tooltip,width:660,left:84,plotWidth:560,focusedIndex:null,MerQuickToolsCore:core,requestAnimationFrame(){},resizeProjection(){}};
   context.svg={getBoundingClientRect:()=>({left:100,width:330}),contains:node=>points.includes(node)};
   context.inspectIndex=index=>{selections.push(index);tooltip.hidden=false;};
   context.inspect=event=>{const point=event.target.closest('[data-forecast-point]');if(point)context.inspectIndex(Number(point.dataset.forecastPoint));};
@@ -51,6 +51,18 @@ function forecastControls(){
   }
   return {context,container,points,tooltip,selections,key};
 }
+
+test('forecast plot-height changes redraw once while floating content changes do not',()=>{
+  const start=enterpriseSource.indexOf('const resizeProjection='),end=enterpriseSource.indexOf('new ResizeObserver(resizeProjection)',start);
+  const svg={clientHeight:320},chart={clientWidth:680,querySelector:()=>svg};let renders=0;
+  const context={projectionWidth:680,projectionHeight:320,intelligence:{open:true},el:()=>({querySelector:()=>chart}),renderProjection(){renders++;context.projectionHeight=Math.round(svg.clientHeight);}};
+  vm.createContext(context);vm.runInContext(enterpriseSource.slice(start,end)+';globalThis.resize=resizeProjection;',context);
+  context.resize();assert.equal(renders,0);
+  svg.clientHeight=450;context.resize();assert.equal(renders,1,'taller dialogs expand the true drawing coordinates');
+  context.resize();assert.equal(renders,1,'the settled canvas does not schedule repeated redraws');
+  svg.clientHeight=449.8;context.resize();assert.equal(renders,1);
+  context.intelligence.open=false;svg.clientHeight=0;context.resize();assert.equal(renders,1);
+});
 
 test('forecast hover and keyboard navigation select the same days and dismiss only the active tooltip on Escape',()=>{
   const app=forecastControls();

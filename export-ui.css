@@ -1,12 +1,12 @@
 /* Compact export configuration keeps the selected period and actions on one page. */
 #izvozModal.export-dialog,#activityTransferModal.export-dialog{inset:0;width:min(640px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:90vh;max-height:90dvh;max-block-size:min(90dvh,calc(var(--ui-visual-height,100dvh) - 20px));margin:auto;padding:0;border:1px solid var(--line-strong);border-radius:18px;color:var(--ink);background:var(--panel);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.18)}
 #izvozModal.export-dialog::before,#activityTransferModal.export-dialog::before{display:none}
-#izvozModal.export-dialog[open],#activityTransferModal.export-dialog[open]{display:flex;flex-direction:column;gap:0}
+#izvozModal.export-dialog[open],#activityTransferModal.export-dialog[open]{display:flex;flex-direction:column;gap:0;height:fit-content;min-height:0}
 .export-dialog::backdrop{background:rgba(7,21,17,.48);backdrop-filter:blur(3px)}
 .export-header{display:flex;align-items:center;gap:12px;flex-shrink:0;padding:20px 24px;border-bottom:1px solid var(--line);min-width:0}
 .export-header>div{flex:1;min-width:0}.export-header h2{font-size:23px;line-height:1.25;margin:3px 0 0;letter-spacing:-.4px;overflow-wrap:anywhere}.export-profile{color:var(--muted);font-size:13px;line-height:1.4;overflow-wrap:anywhere}.export-header .icon-button{width:44px;height:44px;flex-shrink:0;font-size:26px}.export-header .export-back{flex-shrink:0;padding:8px 12px}
-#exportForm{display:flex;flex-direction:column;flex:1;min-height:0;min-width:0;margin:0;padding:0;overflow:hidden}
-.export-body{flex:1;min-height:0;min-width:0;padding:20px 24px;overflow:visible}
+#exportForm{display:flex;flex-direction:column;flex:0 0 auto;height:auto;min-height:0;min-width:0;margin:0;padding:0;overflow:hidden}
+.export-body{flex:0 0 auto;min-height:0;min-width:0;padding:20px 24px;overflow:visible}
 .export-intro{margin:0 0 20px;color:var(--muted);font-size:15px;line-height:1.65;overflow-wrap:anywhere}.export-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.export-fields label{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:15px;line-height:1.5;font-weight:600}.export-fields select,.export-fields input{width:100%;min-width:0;min-height:46px;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;background:var(--panel);color:var(--ink);font:inherit;font-size:16px;font-weight:400;line-height:1.4}.export-fields input:focus,.export-fields select:focus{border-color:var(--blue);outline:2px solid color-mix(in srgb,var(--blue) 25%,transparent);outline-offset:1px}
 .export-month-hint{font-size:12px;font-weight:400;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}.export-fields select:disabled{opacity:.65;cursor:not-allowed}
 .export-preview{margin-top:20px;padding:16px;background:var(--canvas);border:1px solid var(--line);border-radius:10px;overflow-wrap:anywhere}.export-preview h3{margin:0 0 8px;font-size:16px;line-height:1.5}.export-preview p{margin:4px 0;font-size:14px;line-height:1.55;color:var(--muted)}.export-preview dl{display:grid;gap:8px;margin:12px 0 0}.export-preview dl:empty{display:none}.export-preview dl>div{display:flex;justify-content:space-between;gap:18px;min-width:0}.export-preview dt{font-size:14px;line-height:1.5;color:var(--muted);min-width:0}.export-preview dd{font-size:14px;line-height:1.5;font-weight:700;margin:0;text-align:right;min-width:0;font-variant-numeric:tabular-nums}.export-notes{margin:12px 0 0;font-size:12px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}.export-notes:empty{display:none}.export-error{margin:14px 0 0;padding:10px 12px;border:1px solid var(--red);border-radius:8px;background:var(--red-soft);color:#9f2931;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
@@ -26,6 +26,8 @@
 #izvozModal #exportMonthField{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1fr);gap:4px 8px;align-items:center}
 #izvozModal #exportMonthField[hidden]{display:none}
 #izvozModal #exportMonthHint{grid-column:1/-1;margin:0}
+/* The choice cards follow their copy, not a fixed-height empty button frame. */
+#activityTransferModal.export-dialog .export-transfer-choices>button{min-height:44px}
 @media(max-width:640px){
   html body #izvozModal.export-dialog[open],html body #activityTransferModal.export-dialog[open]{max-height:calc(100dvh - 20px);max-block-size:calc(var(--ui-visual-height,100dvh) - 20px);padding:0}
   #izvozModal .export-header,#activityTransferModal .export-header{padding:10px 14px}

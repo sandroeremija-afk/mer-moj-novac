@@ -132,3 +132,28 @@
   #insightChartModal .insight-category-tracks { gap:2px; }
   #insightChartModal .insight-category-tracks i { height:3px; }
 }
+
+/* Detailed reports use their content height; canvas reports spend spare space on the plot. */
+html body dialog#insightChartModal[open]{display:flex;flex-direction:column;height:fit-content;block-size:fit-content;min-height:0;min-block-size:0;max-height:calc(100dvh - 32px);overflow:hidden}
+html body dialog#insightChartModal:is([data-insight-kind="net"],[data-insight-kind="income"],[data-insight-kind="expenses"],[data-insight-kind="cashflow"])[open]{height:min(780px,calc(100dvh - 32px));block-size:min(780px,calc(100dvh - 32px))}
+#insightChartModal>.overline,#insightChartModal>h2,#insightChartModal>.insight-expanded-intro,#insightChartModal>.insight-expanded-metrics,#insightChartModal>.insight-expanded-breakdown{flex:0 0 auto}
+#insightChartModal>#insightExpandedChart{min-height:0;flex:1 1 0;display:flex;flex-direction:column;gap:0}
+#insightChartModal .interactive-insight-trend{display:flex;flex-direction:column;flex:1 1 0;min-height:0}
+#insightChartModal .insight-growth-summary,#insightChartModal .insight-trend-readout,#insightChartModal .insight-trend-dates,#insightChartModal .insight-trend-hint{flex:0 0 auto}
+#insightChartModal .insight-plot-window{flex:1 1 0;min-height:60px}
+#insightChartModal .insight-plot-window>.insight-trend-svg{position:absolute;inset:0;width:100%;height:100%;min-height:0;max-height:none}
+#insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"])>#insightExpandedChart{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:22px}
+#insightChartModal[data-insight-kind="expense-structure"]>#insightExpandedChart{display:grid;gap:18px;flex:0 0 auto}
+#insightChartModal:is([data-insight-kind="category"],[data-insight-kind="savings-rate"])>#insightExpandedChart{flex:0 0 auto}
+#insightChartModal .expanded-month-chart{height:auto;min-height:0;flex:1 1 0;padding-top:16px}
+#insightChartModal .expanded-month-bars{height:auto;min-height:0;flex:1 1 0}
+html body dialog#insightChartModal>.mer-generated-footer{flex:0 0 auto;margin-top:12px;padding-top:12px}
+@media(max-width:640px){
+  html body dialog#insightChartModal[open]{max-height:calc(100dvh - 24px)}
+  html body dialog#insightChartModal:is([data-insight-kind="net"],[data-insight-kind="income"],[data-insight-kind="expenses"],[data-insight-kind="cashflow"])[open]{height:calc(100dvh - 24px);block-size:calc(100dvh - 24px)}
+  #insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"])>#insightExpandedChart{grid-template-columns:1fr;grid-template-rows:minmax(110px,1fr) auto;gap:10px}
+  #insightChartModal[data-insight-kind="expense-structure"]>#insightExpandedChart{gap:12px}
+  html body dialog#insightChartModal>.mer-generated-footer{margin-top:10px;padding-top:10px;padding-bottom:0}
+}
+html body dialog#insightChartModal:has(#insightExpandedChart>.notification-empty)[open]{height:fit-content;block-size:fit-content}
+#insightChartModal:has(#insightExpandedChart>.notification-empty)>#insightExpandedChart{flex:0 0 auto}

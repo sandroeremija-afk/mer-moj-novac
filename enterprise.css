@@ -126,3 +126,16 @@
   .enterprise-dialog-head:has(.plan-back:not([hidden]))>h2,.receipt-head:has(.plan-back)>div,.household-head:has(.plan-back)>div { grid-column:1/-1; grid-row:2; }
   .enterprise-dialog-head:has(.plan-back:not([hidden]))>.icon-button,.receipt-head:has(.plan-back)>.icon-button,.household-head:has(.plan-back)>.icon-button { grid-column:2; grid-row:1; }
 }
+
+/* The plot owns the available body height; the footer never pads a short canvas. */
+html body dialog#intelligenceModal[open]{height:min(760px,calc(100dvh - 32px));min-height:0;max-height:calc(100dvh - 32px);gap:12px}
+#intelligenceModal>.enterprise-dialog-body{display:flex;flex:1 1 0;min-height:0;padding:0}
+#intelligenceModal #enterpriseForecast,#intelligenceModal .cashflow-visual{display:flex;flex:1 1 0;min-height:0}
+#intelligenceModal .forecast-chart{display:flex;flex-direction:column;flex:1 1 0;min-height:0}
+#intelligenceModal .forecast-highlights{flex:0 0 auto}
+#intelligenceModal .forecast-chart>svg{flex:1 1 0;min-height:120px;max-height:none}
+#intelligenceModal>.enterprise-footer{margin-top:0;padding-top:12px}
+@media(max-width:600px){
+  html body dialog#intelligenceModal[open]{height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);gap:10px}
+  #intelligenceModal>.enterprise-footer{padding-top:8px;margin-top:0}
+}

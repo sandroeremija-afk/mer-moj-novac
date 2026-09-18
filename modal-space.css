@@ -1,0 +1,41 @@
+/* Static dialogs follow their content; chart dialogs own separate, bounded plot space.
+   Set both dimensions to override the legacy mobile logical block-size, not only height. */
+html body dialog:is(#transactionModal,#assessmentModal,#budgetModal,#savingsModal,#goalModal,#recurringModal,#incomeCategoryModal,#budgetTransferModal,#savingsStrategyModal,.savings-minimal-modal,#breakdownModal,#budgetCategoriesModal,#budgetDetailsModal,#savingsDetailsModal,.planning-hub-modal,.planning-dialog,#subscriptionsModal)[open]:not(.tour-modal-host) {
+  height:fit-content; block-size:fit-content; min-height:0; min-block-size:0;
+  max-height:min(90dvh,calc(var(--ui-visual-height,100dvh) - 20px));
+  max-block-size:min(90dvh,calc(var(--ui-visual-height,100dvh) - 20px));
+  overflow:hidden;
+}
+html body #savingsStrategyModal.modal[open]:not(.tour-modal-host) { height:fit-content; block-size:fit-content; }
+#savingsStrategyModal .savings-strategy-body {
+  flex:0 1 auto; align-content:start; grid-auto-rows:max-content;
+}
+#savingsStrategyModal .savings-strategy-grid { align-items:stretch; }
+#savingsStrategyModal .savings-strategy-grid article { display:flex; flex-direction:column; gap:8px; }
+#savingsStrategyModal .savings-strategy-grid article > p { margin:0; }
+/* FAQ content is intrinsic; the AI tab deliberately retains its bounded chat stream. */
+html body #helpAssistantModal[open]:not(.tour-modal-host):has(#helpFaqMode[aria-selected="true"]) {
+  height:fit-content; block-size:fit-content; min-height:0; min-block-size:0;
+}
+#helpAssistantModal:not(.tour-modal-host):has(#helpFaqMode[aria-selected="true"]) > .help-assistant-body { flex:0 1 auto; }
+html body #helpAssistantModal:not(.tour-modal-host):has(#helpFaqMode[aria-selected="true"]) > .mer-generated-footer { margin-top:16px; }
+html body :is(#budgetDetailsModal,#savingsDetailsModal) > .detail-modal-grid {
+  flex:0 1 auto; min-height:0; align-content:start;
+}
+html body #budgetCategoriesModal .budget-category-modal-list { flex:0 1 auto; min-height:0; }
+html body #budgetCategoriesModal .budget-manager-empty { min-height:100px; padding:20px; }
+html body dialog:is(#breakdownModal,#budgetCategoriesModal,#budgetDetailsModal,#savingsDetailsModal,.planning-dialog,#subscriptionsModal) > .mer-generated-footer {
+  margin-top:16px;
+}
+@media(min-width:641px) and (min-height:760px) {
+  #savingsStrategyModal .savings-strategy-body { padding:24px; gap:18px; }
+  #savingsStrategyModal .savings-strategy-grid article { padding:18px; }
+  #savingsStrategyModal .savings-strategy-grid p { line-height:1.6; }
+}
+@media(max-width:640px) {
+  html body #savingsStrategyModal.modal[open]:not(.tour-modal-host) {
+    inset:0; margin:auto; max-height:calc(var(--ui-visual-height,100dvh) - 20px); max-block-size:calc(var(--ui-visual-height,100dvh) - 20px);
+  }
+  #savingsStrategyModal .savings-strategy-grid article { gap:4px; }
+  html body dialog:is(#breakdownModal,#budgetCategoriesModal,#budgetDetailsModal,#savingsDetailsModal,.planning-dialog,#subscriptionsModal) > .mer-generated-footer { margin-top:10px; }
+}

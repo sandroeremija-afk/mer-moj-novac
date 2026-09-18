@@ -1,12 +1,14 @@
 /* Settings use complete preference pages; privileged flows keep their original forms. */
 html body #bankSettingsModal:not(.tour-modal-host)[open] {
   width:min(1040px,calc(100vw - 32px));max-width:1040px;
-  height:fit-content;max-height:calc(100dvh - 32px);padding:24px;overflow:visible;
+  height:fit-content;min-height:0;max-height:calc(100dvh - 32px);padding:24px;overflow:visible;
 }
 html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body {
   flex:0 0 auto;min-height:0;overflow:visible;padding:0;scrollbar-gutter:auto;
 }
 html body #bankSettingsModal:not(.tour-modal-host) .settings-modal-body[data-content-fits="true"] { overflow:visible; }
+/* Static preference pages should not inherit a full-height pane from the app shell. */
+#bankSettingsModal:not(.tour-modal-host) .settings-pane.active { flex:0 0 auto;height:auto;min-height:0; }
 #bankSettingsModal>.modal-intro { margin:6px 0 0;font-size:13px;line-height:1.45; }
 #bankSettingsModal .settings-tabs { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:10px 0;position:static; }
 #bankSettingsModal .settings-tabs button { min-width:0;min-height:44px;white-space:normal;text-wrap:balance; }
@@ -384,6 +386,7 @@ html body dialog#settings-mfa-flow[open] {
   #bankSettingsModal .settings-quick-actions { gap:8px;margin-bottom:8px; }
   #bankSettingsModal .settings-action-row { display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px; }
   #bankSettingsModal .settings-action-row>span { min-height:38px; }
+  #bankSettingsModal:not(.tour-modal-host) .settings-action-row>span { min-height:0; }
   #bankSettingsModal .settings-action-row .theme-segmented { width:100%;padding:2px;gap:2px; }
   #bankSettingsModal.premium-settings .settings-action-row .theme-segmented button { min-width:0;padding-inline:2px;gap:2px;font-size:12px;line-height:1.4;white-space:nowrap;word-break:normal;overflow-wrap:normal; }
   #bankSettingsModal .settings-action-row .theme-segmented button span { white-space:nowrap;word-break:normal;overflow-wrap:normal; }

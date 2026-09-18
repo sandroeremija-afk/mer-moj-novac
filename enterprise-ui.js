@@ -167,20 +167,24 @@
   const receiptAction=document.createElement('button');receiptAction.type='button';receiptAction.className='secondary-button transaction-receipt-action';receiptAction.id='transactionReceiptAction';receiptAction.hidden=true;el('transactionForm').prepend(receiptAction);
   el('transactionModal').addEventListener('toggle',()=>{const tx=state.transactions.find(item=>item.id===editingTransactionId);receiptAction.hidden=!tx;receiptAction.textContent=tx?.receipts?.length?copy(`Povezani računi (${tx.receipts.length})`,`Linked receipts (${tx.receipts.length})`):copy('Poveži fotografiju računa','Attach receipt photo');});
   receiptAction.addEventListener('click',()=>{const tx=state.transactions.find(item=>item.id===editingTransactionId);if(!tx)return;if(tx.receipts?.length)window.MerReceiptUI?.view(tx.id);else window.MerReceiptUI?.open({transactionId:tx.id});});
-  let projectionWidth=0;
-  // Tooltip/inspector height changes must not rebuild the chart or steal focus.
-  const resizeProjection=()=>{const chart=el('enterpriseForecast').querySelector('.forecast-chart');if(intelligence.open&&chart&&Math.round(chart.clientWidth)!==projectionWidth)renderProjection();};
+  let projectionWidth=0,projectionHeight=0;
+  // Floating tooltips do not affect layout; redraw only when the actual plot resizes.
+  const resizeProjection=()=>{const chart=el('enterpriseForecast').querySelector('.forecast-chart'),height=Math.round(chart?.querySelector?.('svg')?.clientHeight||0);if(intelligence.open&&chart&&(Math.round(chart.clientWidth)!==projectionWidth||height>0&&height!==projectionHeight))renderProjection();};
   new ResizeObserver(resizeProjection).observe(intelligence);
+  window.addEventListener('resize',resizeProjection);
   function forecast(){return E.forecastCashFlow(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency});}
   function renderProjection(){
     const container=el('enterpriseForecast').querySelector('.forecast-chart');if(!container)return;
+    const focusedPoint=document.activeElement?.closest?.('[data-forecast-point]');
+    const focusedIndex=focusedPoint&&container.contains(focusedPoint)&&focusedPoint.matches(':focus-visible')?Number(focusedPoint.dataset.forecastPoint):null;
     projectionWidth=Math.round(container.clientWidth);
     const model=MerDiscovery.forecastChart(state,appReferenceDate,{profileId:appState.activeAccount,currency:appState.settings.currency});
     const width=Math.max(260,Math.round(container.clientWidth||680)),narrow=width<540;
     const privateMode=Boolean(appState.settings.hideBalances),locale=copy('hr-HR','en-GB');
     const axisMoney=value=>privateMode?'••••':new Intl.NumberFormat(locale,{style:'currency',currency:model.forecast.currency,currencyDisplay:'narrowSymbol',notation:Math.abs(value)>=10000000?'compact':'standard',maximumFractionDigits:value===0?0:Math.abs(value)<10000?2:0}).format(value===0?0:value/100);
     const dateLabel=value=>new Intl.DateTimeFormat(locale,{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(`${value}T12:00:00Z`));
-    const height=Math.max(140,Math.min(330,window.innerHeight-230-(narrow?168:100))),left=Math.min(width*.38,Math.max(70,...model.ticks.map(value=>axisMoney(value).length*6.1+14))),right=18,top=20,bottom=38,plotWidth=width-left-right,plotHeight=height-top-bottom;
+    const height=Math.max(120,Math.round(container.querySelector('svg')?.clientHeight||window.innerHeight-210-(narrow?168:100))),left=Math.min(width*.38,Math.max(70,...model.ticks.map(value=>axisMoney(value).length*6.1+14))),right=18,top=20,bottom=38,plotWidth=width-left-right,plotHeight=height-top-bottom;
+    projectionHeight=height;
     const x=index=>left+index/30*plotWidth,y=value=>top+(model.maximum-value)/model.range*plotHeight;
     const path=model.series.map((point,index)=>`${index?'L':'M'}${x(index).toFixed(2)},${y(point.balanceCents).toFixed(2)}`).join(' ');
     const privateMoney=value=>appState.settings.hideBalances?copy('Iznos skriven','Amount hidden'):money(value);
@@ -214,6 +218,12 @@
     container.onfocusout=event=>{if(!svg.contains(event.relatedTarget))clear();};
     container.onkeydown=event=>{const node=event.target.closest('[data-forecast-point]');if(!node)return;if(event.key==='Escape'&&!tooltip.hidden){event.preventDefault();event.stopPropagation();clear();return;}const index=Number(node.dataset.forecastPoint);const next=event.key==='ArrowRight'?Math.min(30,index+1):event.key==='ArrowLeft'?Math.max(0,index-1):event.key==='Home'?0:event.key==='End'?30:null;if(next===null)return;event.preventDefault();node.setAttribute('tabindex','-1');const target=container.querySelector(`[data-forecast-point="${next}"]`);target.setAttribute('tabindex','0');target.focus({preventScroll:true});inspectIndex(next);};
     container.inspectForecastDay=inspectIndex;
+    if(Number.isInteger(focusedIndex)&&model.series[focusedIndex]){
+      const target=container.querySelector(`[data-forecast-point="${focusedIndex}"]`);
+      container.querySelector('[data-forecast-point="0"]').setAttribute('tabindex','-1');
+      target.setAttribute('tabindex','0');target.focus({preventScroll:true});inspectIndex(focusedIndex);
+    }
+    requestAnimationFrame(resizeProjection);
   }
   function renderForecast(){
     const restoreFocus=window.MerPlanNavigation?.preserveFocus?.(intelligence);

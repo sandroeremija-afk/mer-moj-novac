@@ -29,6 +29,10 @@
 
 /* Review steps and item pages keep all receipt fields within the dialog. */
 .receipt-dialog .receipt-body { overflow:visible; scrollbar-gutter:auto; }
+/* Upload/review pages have bounded content already; leave the live-camera frame alone. */
+html body dialog.receipt-dialog:not(:has(.receipt-camera-preview))[open] { height:fit-content;min-height:0; }
+.receipt-dialog:not(:has(.receipt-camera-preview)) .receipt-body,
+.receipt-dialog .receipt-form { flex:0 0 auto;height:auto;min-height:0; }
 .receipt-dialog .mer-section-panel .receipt-intro { margin-bottom:10px; font-size:12px; line-height:1.45; }
 .receipt-dialog .mer-section-panel .receipt-fields { gap:4px 12px; }
 .receipt-dialog .mer-section-panel .receipt-fields label { margin-bottom:8px; }
