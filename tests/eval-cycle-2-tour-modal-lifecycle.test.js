@@ -214,6 +214,9 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   aliases.set('#helpAssistantModal .help-assistant-body', helpBody);
   aliases.set('.help-assistant-body', helpBody);
   const conversation = add('helpTourConversation', helpBody);
+  const suggestions = add('helpAssistantSuggestions', conversation);
+  add('helpSampleSafe', suggestions, 'BUTTON');
+  add('helpSampleSavings', suggestions, 'BUTTON');
   add('helpAssistantInput', conversation, 'TEXTAREA');
   add('helpAssistantSend', conversation, 'BUTTON');
   const originalSibling = tour.nextSibling;
@@ -262,14 +265,14 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
 test('cycle 2: production journey highlights nine surfaces and their own navigation links', () => {
   const env = harness({ minimal:true });
   env.start();
-  const targetIds = ['overviewFeature', 'sidebarTransaction', 'budgetsFeature', 'savingsFeature', 'insightsView', 'deviceBody', 'privacySetting', 'personalDataForm', 'openHelpAssistant'];
+  const targetIds = ['overviewFeature', 'sidebarTransaction', 'budgetsFeature', 'savingsFeature', 'insightsView', 'deviceBody', 'privacySetting', 'personalDataForm', 'helpTourConversation'];
   for (const [index, step] of ProductionOnboardingCore.DEFAULT_STEPS.entries()) {
     assert.equal(env.nodes.get('onboardingProgress').textContent, `Korak ${index + 1} od 9`);
     assert.equal(env.nodes.get(targetIds[index]).classList.contains('tour-target-active'), true, step.id);
     if(step.contextTarget)assert.equal(env.document.querySelector(step.contextTarget).classList.contains('tour-context-active'), true, step.id);
     assert.equal(env.nodes.get('onboardingContextSpotlight').classList.contains('is-visible'), Boolean(step.contextTarget));
     assert.equal(env.nodes.get('onboardingSubstep').hidden, true, 'no invisible filler steps remain');
-    assert.equal(env.tour.parentNode, step.settingsFlow ? env.device : step.surface === 'settings' ? env.settings : env.document.body);
+    assert.equal(env.tour.parentNode, step.settingsFlow ? env.device : step.surface === 'settings' ? env.settings : step.surface === 'help' ? env.help : env.document.body);
     assert.equal(env.settings.open, step.surface === 'settings');
     assert.equal(env.help.open, step.surface === 'help');
     assert.equal([...env.nodes.values()].filter(element => element.classList.contains('tour-context-active')).length, step.contextTarget?1:0);
@@ -432,20 +435,29 @@ test('cycle 2: all production security targets stay inside the mobile hosted lan
   }
 });
 
-test('cycle 2: final Help step spotlights sidebar on desktop or FAB on phones without opening chat',()=>{
+test('cycle 2: final Help step opens the real chat surface with input and sample questions on every viewport',()=>{
   for(const width of [375,414,768,1440]){
     const env=harness({minimal:true,width,asynchronousClose:true});env.start();env.next(8);
-    const target=env.nodes.get(width<=768?'assistantFab':'openHelpAssistant');
+    const target=env.nodes.get('helpTourConversation');
     assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 9 od 9');
     assert.equal(env.nodes.get('onboardingTitle').textContent,'Pomoć & AI Asistent');
     assert.match(env.nodes.get('onboardingBody').textContent,/transakcije rečenicom.*financijski savjet.*Pitanja po modulu/);
     assert.equal(target.classList.contains('tour-target-active'),true);
-    assert.equal(env.tour.parentNode,env.document.body);
-    assert.equal(env.help.open||env.settings.open||env.device.open,false);
-    assert.equal(env.calls.filter(call=>call[0]==='help').length,0,'tour does not invoke AI or open a second popup');
+    assert.equal(env.tour.parentNode,env.help);
+    assert.equal(env.help.open,true);assert.equal(env.settings.open||env.device.open,false);
+    assert.deepEqual(env.calls.filter(call=>call[0]==='help'),[['help','assistant']],'tour opens the assistant mode once without sending a request');
+    for(const id of ['helpAssistantInput','helpSampleSafe','helpSampleSavings']) {
+      assert.equal(target.contains(env.nodes.get(id)),true);
+      assert.ok(env.nodes.get(id).getClientRects().length>0,`${id} is visible in the real target`);
+    }
+    assert.equal(env.nodes.get('openHelpAssistant').classList.contains('tour-target-active'),false);
+    assert.equal(env.nodes.get('assistantFab').classList.contains('tour-target-active'),false);
+    assert.equal(env.navLinks.insights.classList.contains('tour-context-active'),false);
+    assert.equal(env.nodes.get('insightsView').classList.contains('tour-target-active'),false);
     assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
     assert.equal(env.nodes.get('onboardingContextSpotlight').classList.contains('is-visible'),false);
     env.click('onboardingPrevious');
+    assert.equal(env.help.open,false);
     assert.equal(env.settings.open,true);assert.equal(env.nodes.get('personalDataForm').classList.contains('tour-target-active'),true);
     assert.equal(target.classList.contains('tour-target-active'),false);
     env.next();env.click('onboardingNext');
@@ -453,6 +465,7 @@ test('cycle 2: final Help step spotlights sidebar on desktop or FAB on phones wi
     assert.equal(target.classList.contains('tour-target-active'),false);
     assert.equal(env.help.open||env.settings.open||env.device.open,false);
     assert.equal(env.nodes.get('autoLockEnabled').checked,false);assert.equal(env.nodes.get('hideBalances').checked,false);
+    assert.equal(env.document.activeElement.id,'openSettings','finishing restores the initiating control');
   }
 });
 
@@ -464,28 +477,48 @@ test('cycle 2: final Help Escape restores normal interaction and does not reopen
   assert.equal(env.nodes.get('assistantFab').classList.contains('tour-target-active'),false);
 });
 
-test('cycle 2: resizing final Help retargets sidebar and FAB without restarting or moving focus',()=>{
+test('cycle 2: resizing final Help preserves the conversation host and input focus without reopening',()=>{
   const env=harness({minimal:true,width:1440});
-  const sidebar=env.nodes.get('openHelpAssistant'),fab=env.nodes.get('assistantFab');
-  sidebar.setAttribute('aria-describedby','original-help-hint');fab.setAttribute('aria-describedby','original-fab-hint');
+  const target=env.nodes.get('helpTourConversation');
+  target.setAttribute('aria-describedby','original-help-hint');
   env.start();env.next(8);
-  env.nodes.get('onboardingNext').focus();
-  const callsBefore=env.calls.length;
+  env.nodes.get('helpAssistantInput').focus();
+  const surfaceCalls=()=>env.calls.filter(call=>call[0]!=='scroll-target');
+  const callsBefore=surfaceCalls().length;
   for(const width of [375,1440,414,1920]){
     env.resize(width,768);
-    const target=width<=768?fab:sidebar,previous=width<=768?sidebar:fab;
     assert.equal(target.classList.contains('tour-target-active'),true);
-    assert.equal(previous.classList.contains('tour-target-active'),false);
     assert.equal(target.getAttribute('aria-describedby'),'onboardingBody');
-    assert.equal(previous.getAttribute('aria-describedby'),width<=768?'original-help-hint':'original-fab-hint');
     assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 9 od 9');
-    assert.equal(env.document.activeElement.id,'onboardingNext');
-    assert.equal(env.tour.hidden,false);assert.equal(env.tour.parentNode,env.document.body);
-    assert.equal(env.calls.length,callsBefore,'resize must not open/close surfaces, navigate or scroll');
+    assert.equal(env.document.activeElement.id,'helpAssistantInput');
+    assert.equal(env.tour.hidden,false);assert.equal(env.tour.parentNode,env.help);
+    assert.equal(surfaceCalls().length,callsBefore,'resize must not reopen surfaces or navigate');
   }
   env.click('onboardingNext');
-  assert.equal(sidebar.getAttribute('aria-describedby'),'original-help-hint');
-  assert.equal(fab.getAttribute('aria-describedby'),'original-fab-hint');
+  assert.equal(target.getAttribute('aria-describedby'),'original-help-hint');
+});
+
+test('cycle 2: the native Help close button exits production step 9 and restores focus and interaction',()=>{
+  for(const width of [375,1440]) {
+    const env=harness({minimal:true,width,asynchronousClose:true});env.start();env.next(8);
+    env.click('helpClose');
+    assert.equal(env.tour.hidden,true);assert.equal(env.help.open||env.settings.open,false);
+    assert.equal(env.tour.parentNode,env.document.body);assert.equal(env.shell.inert,false);
+    assert.equal(env.document.activeElement.id,'openSettings');
+    assert.equal(env.nodes.get('helpTourConversation').classList.contains('tour-target-active'),false);
+    assert.equal(env.navLinks.insights.classList.contains('tour-context-active'),false);
+    env.start();assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 1 od 9');
+  }
+});
+
+test('cycle 2: rapid Back and Next on production step 9 keeps the reopened Help host visible',()=>{
+  const env=harness({minimal:true,asynchronousClose:true});env.start();env.next(8);
+  env.nodes.get('onboardingPrevious').click();env.nodes.get('onboardingNext').click();env.flush();
+  assert.equal(env.help.open,true);assert.equal(env.settings.open,false);
+  assert.equal(env.tour.hidden,false);assert.equal(env.tour.parentNode,env.help);
+  assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 9 od 9');
+  assert.equal(env.nodes.get('helpTourConversation').classList.contains('tour-target-active'),true);
+  assert.equal(env.document.activeElement.id,'onboardingNext');
 });
 
 test('cycle 2: resizing a hosted security step preserves its native modal and real control state',()=>{

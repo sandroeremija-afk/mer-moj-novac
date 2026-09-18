@@ -49,9 +49,13 @@ function chartHarness(){
   return {context,chart,tooltip,inspector,points,svg,profile,guide,dot};
 }
 
-test('forecast reveals the real scoped balance and event details only on hover, touch or focus',()=>{
+test('forecast shows labeled axes and highlights while retaining scoped hover, touch and focus details',()=>{
   const app=chartHarness(),snapshot=JSON.stringify(app.profile);
-  assert.doesNotMatch(app.chart.innerHTML,/<text|forecast-legend|forecast-axis/,'dates and monetary axis text are absent');
+  assert.match(app.chart.innerHTML,/forecast-money-axis/);
+  assert.match(app.chart.innerHTML,/forecast-date-axis/);
+  assert.equal((app.chart.innerHTML.match(/data-forecast-highlight=/g)||[]).length,3);
+  assert.equal((app.chart.innerHTML.match(/data-forecast-marker=/g)||[]).length,3);
+  assert.match(app.chart.innerHTML,/Peak balance|Lowest balance|Month-end balance/);
   assert.match(app.chart.innerHTML,/forecast-tooltip" role="tooltip" hidden/);
   assert.match(app.chart.innerHTML,/aria-describedby="forecastModelNote"/);
   assert.equal((app.chart.innerHTML.match(/data-forecast-point=/g)||[]).length,31);
@@ -63,9 +67,19 @@ test('forecast reveals the real scoped balance and event details only on hover, 
   assert.doesNotMatch(app.tooltip.innerHTML,/Dollar bill|Business bill/);
   assert.equal(app.tooltip.hidden,false);assert.match(app.inspector.textContent,/Bill <unsafe>/);
   app.svg.onpointerleave();assert.equal(app.tooltip.hidden,true);assert.equal(app.inspector.textContent,'');
-  app.svg.onpointerdown({clientX:16+(680-32)/30});assert.equal(app.tooltip.hidden,false);assert.match(app.tooltip.innerHTML,/2026-09-19/);
+  const left=Number(/class="forecast-gridline"[^>]*x1="([^"]+)"/.exec(app.chart.innerHTML)[1]);
+  app.svg.onpointerdown({clientX:left+(680-left-18)/30});assert.equal(app.tooltip.hidden,false);assert.match(app.tooltip.innerHTML,/2026-09-19/);
   app.chart.onfocusout({relatedTarget:null});assert.equal(app.tooltip.hidden,true);
   assert.equal(JSON.stringify(app.profile),snapshot,'opening and exploring the projection does not change financial data');
+});
+
+test('zero cash-flow axis ticks omit decimal places in Croatian and English',()=>{
+  const app=chartHarness();
+  const labels=()=>[...app.chart.innerHTML.matchAll(/class="forecast-axis forecast-money-axis"[^>]*>([^<]*)<\/text>/g)].map(match=>match[1].replace(/\u00a0/g,' '));
+  assert.ok(labels().includes('€0'));
+  app.context.copy=(hr)=>hr;app.context.renderProjection();
+  assert.ok(labels().includes('0 €'));
+  assert.ok(!labels().includes('0,00 €'));
 });
 
 test('stealth mode masks forecast totals and event amounts in both tooltip and accessible labels',()=>{
@@ -86,6 +100,8 @@ test('cash flow keeps only its bottom-left close action and a viewport-sized plo
   assert.match(css,/\.forecast-accessible,#intelligenceModal \.forecast-inspector\{[^}]*position:absolute[^}]*clip-path:inset\(50%\)/);
   const app=chartHarness();app.context.window.innerWidth=375;app.context.window.innerHeight=667;app.chart.clientWidth=291;app.context.renderProjection();
   const height=Number(/style="height:(\d+)px"/.exec(app.chart.innerHTML)[1]);
-  assert.ok(height<=app.context.window.innerHeight-230);
+  assert.ok(height+168<=app.context.window.innerHeight-230,'compact callouts share the viewport budget with the plot');
+  assert.match(app.chart.innerHTML,/forecast-highlights is-narrow/);
+  assert.equal((app.chart.innerHTML.match(/forecast-date-axis/g)||[]).length,3,'mobile date ticks have breathing room');
   assert.doesNotMatch(css,/cashflow-summary|cashflow-ai-toolbar|forecast-event-picker/);
 });

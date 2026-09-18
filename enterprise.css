@@ -89,6 +89,23 @@
 #intelligenceModal #enterpriseForecast{min-width:0}
 .cashflow-visual{min-width:0;padding:12px;border:1px solid var(--enterprise-line);border-radius:12px;background:var(--enterprise-bg)}
 #intelligenceModal .forecast-chart{margin:0}
+#intelligenceModal .forecast-axis{fill:var(--enterprise-ink);font-family:inherit;font-size:11px;font-variant-numeric:tabular-nums}
+#intelligenceModal .forecast-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}
+#intelligenceModal .forecast-highlight{display:flex;flex-direction:column;justify-content:space-between;gap:6px;min-width:0;padding:10px 12px;border-radius:9px;background:#173f50;color:#fff}
+#intelligenceModal .forecast-highlight.peak{background:#17483d}
+#intelligenceModal .forecast-highlight.lowest{background:#62331f}
+#intelligenceModal .forecast-highlight>span{font-size:11px;font-weight:600;line-height:1.35;min-width:0}
+#intelligenceModal .forecast-highlight small{display:block;margin-top:2px;font-size:10px;font-weight:400;line-height:1.3;color:#fff}
+#intelligenceModal .forecast-highlight strong{font-size:17px;line-height:1.25;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#intelligenceModal .forecast-highlight-guide{stroke:#173f50;stroke-dasharray:3 4;stroke-opacity:.5;pointer-events:none}
+#intelligenceModal .forecast-highlight-node{fill:#173f50;stroke:var(--enterprise-bg);stroke-width:2;pointer-events:none}
+#intelligenceModal .forecast-highlight-node.peak{fill:#17483d}
+#intelligenceModal .forecast-highlight-node.lowest{fill:#62331f}
+#intelligenceModal .forecast-highlights.is-narrow{grid-template-columns:1fr;gap:6px;margin-bottom:14px}
+#intelligenceModal .forecast-highlights.is-narrow .forecast-highlight{flex-direction:row;align-items:center;gap:12px;padding:8px 10px}
+#intelligenceModal .forecast-highlights.is-narrow .forecast-highlight strong{font-size:14px;text-align:right}
+[data-theme="dark"] #intelligenceModal .forecast-axis{fill:#edf4ef}
+[data-theme="dark"] #intelligenceModal .forecast-highlight-guide{stroke:#c4e2ed}
 #intelligenceModal .forecast-tooltip span:not([data-money]){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #intelligenceModal .enterprise-footer{justify-content:flex-start;margin-top:auto;flex-shrink:0}
 .forecast-accessible,#intelligenceModal .forecast-inspector{position:absolute;width:1px;height:1px;min-height:0;padding:0;margin:-1px;border:0;overflow:hidden;clip-path:inset(50%);white-space:normal}

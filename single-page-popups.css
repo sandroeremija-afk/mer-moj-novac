@@ -123,3 +123,17 @@
   #helpAssistantModal.tour-modal-host #helpFaqPanel .faq-list { gap:4px; }
   #helpAssistantModal.tour-modal-host #helpFaqPanel .faq-list details p { display:none; }
 }
+
+/* Step 9 keeps the real question controls visible in the lane below the tour.
+   Override the regular phone chat's hidden suggestions only while Help hosts it. */
+@media(max-width:1024px) {
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] .help-assistant-body { flex:0 1 auto; overflow:hidden; }
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] #helpModalAiPanel { flex:0 1 auto; height:auto; min-height:0; gap:8px; overflow:hidden; }
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] #helpAssistantMessages { flex:0 1 auto; min-height:0; max-height:80px; padding:0; }
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] #helpTourConversation { flex:0 0 auto; gap:8px; }
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] .assistant-suggestions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; padding:0; margin:0; overflow:visible; white-space:normal; }
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] .assistant-suggestion { flex:none; min-width:0; width:100%; min-height:44px; padding:8px; border-radius:10px; font-size:13px; line-height:1.35; white-space:normal; overflow-wrap:anywhere; }
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] .assistant-suggestion:last-child { grid-column:1 / -1; }
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] .assistant-composer { min-height:0; padding:6px; }
+  #helpAssistantModal.tour-modal-host[data-tour-step="help"] #helpAssistantInput { box-sizing:border-box; height:64px; min-height:64px; max-height:64px; padding:8px 10px; font-size:16px; line-height:22px; }
+}

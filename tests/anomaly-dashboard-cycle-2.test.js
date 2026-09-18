@@ -122,13 +122,12 @@ test('the real premium renderAll wrapper refreshes the anomaly after the rest of
   context.window.MerExportUI={refresh:()=>order.push('export')};
   context.window.MerVaultsUI={refresh:()=>order.push('vaults')};
   context.window.MerSavingsMinimal={refresh:()=>order.push('savings')};
-  context.window.MerMicroSavings={refresh:()=>order.push('micro-savings')};
   const originalRefresh=context.window.MerAnomalyUI.refresh;
   context.window.MerAnomalyUI={refresh:()=>{order.push('anomaly');originalRefresh();}};
   vm.runInContext(code,context);
   context.state.transactions[1].amount=100;
   context.renderAll();
-  assert.deepEqual(order,['dashboard','privacy','goals','export','vaults','savings','micro-savings','anomaly']);
+  assert.deepEqual(order,['dashboard','privacy','goals','export','vaults','savings','anomaly']);
   assert.equal(host.hidden,true);
   context.state.transactions[1].amount=130;context.renderAll();
   assert.equal(host.hidden,false);

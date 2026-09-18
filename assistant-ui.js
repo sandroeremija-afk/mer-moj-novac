@@ -491,6 +491,8 @@
     if (event.key === 'Escape' && !assistantWidget.hidden) { event.preventDefault();closeAssistant(); }
   });
   modal.addEventListener('close', () => {
+    // Native close events are queued; a tour Back/Next may already reopen Help.
+    if (modal.open) return;
     activeRequest?.abort();
     activeRequest = null;
     setAssistantBusy(false);

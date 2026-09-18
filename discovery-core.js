@@ -53,5 +53,16 @@
     const ticks=[];for(let value=minimum;value<=maximum+step/100;value+=step)ticks.push(Math.round(value));
     return {forecast,series,events,minimum,maximum,ticks,range};
   }
-  return Object.freeze({key,search,monthGenitive,projectedIncome,forecastChart});
+  function forecastHighlights(model) {
+    const series=list(model?.series).map((point,index)=>({...point,index})).filter(point=>Number.isFinite(point.balanceCents));
+    if(!series.length)return [];
+    const reference=day(model?.forecast?.referenceDate||series[0].date),monthEndDate=new Date(`${reference}T12:00:00Z`);
+    if(!Number.isFinite(monthEndDate.getTime()))return [];
+    monthEndDate.setUTCMonth(monthEndDate.getUTCMonth()+1,0);
+    const peak=series.reduce((best,point)=>point.balanceCents>best.balanceCents?point:best);
+    const lowest=series.reduce((best,point)=>point.balanceCents<best.balanceCents?point:best);
+    const monthEnd=series.find(point=>point.date===monthEndDate.toISOString().slice(0,10));
+    return [{kind:'peak',...peak},{kind:'lowest',...lowest},...(monthEnd?[{kind:'month-end',...monthEnd}]:[])];
+  }
+  return Object.freeze({key,search,monthGenitive,projectedIncome,forecastChart,forecastHighlights});
 });

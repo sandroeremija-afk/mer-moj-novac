@@ -60,8 +60,10 @@ test('evaluation cycle 1: module features point at the requested high-value surf
   assert.equal(byId.privacy.target, '#bankSettingsModal label:has(#hideBalances)');
   assert.equal(byId.personal.settingsTab, 'personal');
   assert.equal(byId.personal.target, '#personalDataForm');
-  assert.equal(byId.help.target, '#openHelpAssistant');
-  assert.equal(byId.help.mobileTarget, '#assistantFab');
-  assert.equal(byId.help.surface, undefined, 'the final step highlights the trigger without opening a large chat modal');
+  assert.equal(byId.help.target, '#helpTourConversation');
+  assert.equal(byId.help.mobileTarget, '#helpTourConversation');
+  assert.equal(byId.help.surface, 'help', 'the final step opens the actual Help popup');
+  assert.equal(byId.help.helpMode, 'assistant', 'the popup starts with the input and sample questions visible');
+  assert.equal(byId.help.contextTarget, undefined, 'no sidebar navigation is highlighted behind Help');
   assert.doesNotMatch(JSON.stringify(MerOnboarding.DEFAULT_STEPS), /Financijsko zdravlje|Podjela računa|healthScore|splitBill|TRENUTAČNI MODUL/i);
 });

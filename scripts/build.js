@@ -26,8 +26,8 @@ suiteCss.push('ui-consistency.css','recommendation-refresh.css','popup-layout.cs
 suiteCss.push('list-pagination.css','zero-scroll.css');
 suiteCss.push('single-page-popups.css');
 jsFiles.push('insight-core.js','insight-charts.js');
-jsFiles.push('anomaly-core.js','anomaly-ui.js','micro-savings-ui.js');
-suiteCss.push('financial-polish.css','micro-savings-ui.css');
+jsFiles.push('anomaly-core.js','anomaly-ui.js');
+suiteCss.push('financial-polish.css');
 suiteCss.push('insight-refinement.css','security-tour.css');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
