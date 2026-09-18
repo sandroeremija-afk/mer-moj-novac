@@ -4,9 +4,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const MerOnboarding = require('../onboarding-core.js');
 
-test('evaluation cycle 1: the senior-friendly journey contains eight purposeful security-aware steps', () => {
+test('evaluation cycle 1: the senior-friendly journey contains nine purposeful security-and-help steps', () => {
   const ids = MerOnboarding.DEFAULT_STEPS.map(step => step.id);
-  assert.deepEqual(ids, ['overview', 'transaction', 'budgets', 'savings', 'insights', 'security', 'privacy', 'personal']);
+  assert.deepEqual(ids, ['overview', 'transaction', 'budgets', 'savings', 'insights', 'security', 'privacy', 'personal', 'help']);
   assert.equal(MerOnboarding.DEFAULT_STEPS[1].target, '#sidebar .sidebar-transaction-button[data-open-transaction]');
   assert.equal(MerOnboarding.DEFAULT_STEPS[1].openSidebar, true);
 });
@@ -20,7 +20,8 @@ test('evaluation cycle 1: every step exposes the requested Croatian copy and an 
     ['Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.'],
     ['Zaključavanje po vašem izboru', 'Po želji uključite zaključavanje nakon 10 minuta. Otključavate lozinkom ili postavljenim PIN-om. Vodič ne mijenja ovu postavku.'],
     ['Sakrijte iznose jednim potezom', 'Privatni način zamagljuje novčane iznose. Uključite ga ovdje ili prečacem Ctrl / ⌘ + Shift + H. Vaši podaci ostaju nepromijenjeni.'],
-    ['Vaši osobni podaci', 'U odjeljku Podaci uredite ime, prezime, OIB i adresu. Unos je neobavezan i sprema se u ovom pregledniku; nije provjera identiteta.']
+    ['Vaši osobni podaci', 'U odjeljku Podaci uredite ime, prezime, OIB i adresu. Unos je neobavezan i sprema se u ovom pregledniku; nije provjera identiteta.'],
+    ['Pomoć & AI Asistent', 'Zatražite unos transakcije rečenicom ili financijski savjet. Pitanja po modulu nude upute za aplikaciju. AI prijedloge provjerite prije spremanja.']
   ];
   MerOnboarding.DEFAULT_STEPS.forEach((step, index) => {
     assert.equal(step.copy.hr.title, expected[index][0]);
@@ -34,7 +35,7 @@ test('evaluation cycle 1: module steps carry a real sidebar context selector for
   for (const step of MerOnboarding.DEFAULT_STEPS.filter(step => step.view)) {
     assert.equal(step.contextTarget, `.nav-item[data-view="${step.view}"]`);
   }
-  assert.ok(MerOnboarding.DEFAULT_STEPS.every(step => !step.substeps), 'all eight steps have one clear purpose and no filler substeps');
+  assert.ok(MerOnboarding.DEFAULT_STEPS.every(step => !step.substeps), 'all nine steps have one clear purpose and no filler substeps');
 });
 
 test('evaluation cycle 1: module features point at the requested high-value surfaces', () => {
@@ -59,5 +60,8 @@ test('evaluation cycle 1: module features point at the requested high-value surf
   assert.equal(byId.privacy.target, '#bankSettingsModal label:has(#hideBalances)');
   assert.equal(byId.personal.settingsTab, 'personal');
   assert.equal(byId.personal.target, '#personalDataForm');
+  assert.equal(byId.help.target, '#openHelpAssistant');
+  assert.equal(byId.help.mobileTarget, '#assistantFab');
+  assert.equal(byId.help.surface, undefined, 'the final step highlights the trigger without opening a large chat modal');
   assert.doesNotMatch(JSON.stringify(MerOnboarding.DEFAULT_STEPS), /Financijsko zdravlje|Podjela računa|healthScore|splitBill|TRENUTAČNI MODUL/i);
 });

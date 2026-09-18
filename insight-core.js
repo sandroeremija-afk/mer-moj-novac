@@ -166,5 +166,75 @@
     return transactionSeries(profile, timeframe, referenceValue, options);
   }
 
-  return Object.freeze({ classifyExpense, expenseStructure, growthPercent, transactionSeries, cumulativeSeries });
+  function comparableRange(timeframe, reference) {
+    if (timeframe === 'all') return null;
+    const year = Number(reference.slice(0, 4)), month = Number(reference.slice(5, 7)), day = Number(reference.slice(8, 10));
+    const iso = date => Core.transactionDate({ date:date.toISOString() });
+    if (timeframe === 'daily') {
+      const previous = new Date(`${reference}T12:00:00Z`);
+      previous.setUTCDate(previous.getUTCDate() - 1);
+      const date = iso(previous);
+      return date ? { start:date, end:date } : null;
+    }
+    const previousYear = timeframe === 'ytd' || month === 1 ? year - 1 : year;
+    const previousMonth = timeframe === 'ytd' ? month : month === 1 ? 12 : month - 1;
+    const lastDay = new Date(Date.UTC(previousYear, previousMonth, 0)).getUTCDate();
+    const end = Core.transactionDate({ date:`${String(previousYear).padStart(4, '0')}-${String(previousMonth).padStart(2, '0')}-${String(Math.min(day, lastDay)).padStart(2, '0')}` });
+    return end ? { start:timeframe === 'ytd' ? `${end.slice(0, 4)}-01-01` : `${end.slice(0, 7)}-01`, end } : null;
+  }
+
+  // Period comparisons use equal elapsed calendar ranges, not a partial current
+  // month against an entire previous month. Corrections remain signed amounts.
+  function metricBreakdown(profile, kind = 'income', timeframe = 'monthly', referenceValue = new Date(), options = {}) {
+    const canonical = timeframeKey(timeframe), reference = referenceDay(referenceValue, options.timezone);
+    const metric = kind === 'net' ? 'net' : ['expense', 'expenses'].includes(kind) ? 'expenses' : 'income';
+    const id = profileKey(profile, options), mismatch = profile?.profileId && profile.profileId !== id;
+    const invalid = reason => ({ kind:metric, timeframe:canonical, current:0, previous:null, change:null, growth:null, currentStart:null, currentEnd:reference, previousStart:null, previousEnd:null, count:0, previousCount:0, categories:[], hasCorrections:false, shareDisclosure:'nonnegative-category-shares', valid:false, error:reason });
+    if (!reference || mismatch) return invalid(!reference ? 'invalid-reference' : 'profile-mismatch');
+    const all = records(profile, reference, options);
+    const start = periodStart(canonical, reference, all), prior = comparableRange(canonical, reference);
+    const currentRecords = [], previousRecords = [], grouped = new Map();
+    let current = 0, previous = 0, hasCorrections = false, safe = true;
+    const collect = (transaction, period) => {
+      const type = Core.transactionType(transaction);
+      if (metric !== 'net' && type !== (metric === 'income' ? 'income' : 'expense')) return;
+      const amount = cents(transaction.amount) * (metric === 'net' && type === 'expense' ? -1 : 1);
+      const categoryId = String(transaction.category || transaction.categoryId || (type === 'income' ? 'otherIncome' : 'other'));
+      const catalog = type === 'income' ? profile?.incomeCategories : profile?.categories;
+      const category = list(catalog).find(item => belongs(item, id) && String(item.id) === categoryId);
+      const key = `${type}:${categoryId}`;
+      if (!grouped.has(key)) grouped.set(key, { categoryId, category:categoryId, label:String(category?.name || category?.nameKey || categoryId), customLabel:Boolean(category?.name), type, currentCents:0, previousCents:0, count:0, previousCount:0 });
+      const row = grouped.get(key);
+      if (period === 'current') {
+        current += amount; row.currentCents += amount; row.count += 1; currentRecords.push(transaction);
+      } else {
+        previous += amount; row.previousCents += amount; row.previousCount += 1; previousRecords.push(transaction);
+      }
+      safe &&= [current, previous, row.currentCents, row.previousCents].every(Number.isSafeInteger);
+      hasCorrections ||= Number(transaction.amount) < 0;
+    };
+    for (const transaction of all) {
+      const date = Core.transactionDate(transaction);
+      if (date >= start && date <= reference) collect(transaction, 'current');
+      else if (prior && date >= prior.start && date <= prior.end) collect(transaction, 'previous');
+    }
+    if (!safe || !Number.isSafeInteger(current - previous) || [...grouped.values()].some(row => !Number.isSafeInteger(row.currentCents - row.previousCents))) return invalid('amount-overflow');
+    const positive = [...grouped.values()].reduce((sum, row) => sum + Math.max(0, row.currentCents), 0);
+    if (!Number.isSafeInteger(positive)) return invalid('amount-overflow');
+    const categories = [...grouped.values()].map(({ currentCents, previousCents, ...row }) => ({
+      ...row, amount:currentCents / 100, current:currentCents / 100,
+      previous:prior ? previousCents / 100 : null, change:prior ? (currentCents - previousCents) / 100 : null,
+      growth:prior ? growthPercent(currentCents, previousCents) : null,
+      share:positive ? money(Math.max(0, currentCents) / positive * 100) : 0
+    })).sort((left, right) => right.amount - left.amount || left.categoryId.localeCompare(right.categoryId) || left.type.localeCompare(right.type));
+    return {
+      kind:metric, timeframe:canonical, current:current / 100, previous:prior ? previous / 100 : null,
+      change:prior ? (current - previous) / 100 : null, growth:prior ? growthPercent(current, previous) : null,
+      currentStart:start, currentEnd:reference, previousStart:prior?.start || null, previousEnd:prior?.end || null,
+      count:currentRecords.length, previousCount:previousRecords.length, categories, hasCorrections,
+      shareDisclosure:categories.some(row => row.amount < 0) ? 'positive-category-shares-after-corrections' : 'nonnegative-category-shares', valid:true
+    };
+  }
+
+  return Object.freeze({ classifyExpense, expenseStructure, growthPercent, transactionSeries, cumulativeSeries, metricBreakdown });
 });

@@ -289,6 +289,93 @@ html body dialog.settings-security-flow[open] { display:flex;flex-direction:colu
 .settings-security-flow .demo-reset-card>div { flex:1 1 100%; }
 .settings-security-flow .demo-reset-card strong { font-size:14px; }
 .settings-security-flow .demo-reset-card small { font-size:12px;line-height:1.4; }
+
+/* MFA controls are moved, not cloned, into this dedicated native dialog.
+   Scope their layout here too: the former Settings-only rules no longer apply. */
+html body dialog#settings-mfa-flow[open] {
+  width:min(720px,calc(100vw - 32px));overflow:visible;
+}
+#settings-mfa-flow .settings-flow-body { display:grid;gap:12px;min-width:0; }
+#settings-mfa-flow .settings-flow-body>[hidden],
+#settings-mfa-flow [hidden] { display:none!important; }
+#settings-mfa-flow .security-subheading { align-items:stretch;gap:10px;margin:0; }
+#settings-mfa-flow .security-subheading>div:first-child>strong { display:none; }
+#settings-mfa-flow .security-subheading small { font-size:13px;line-height:1.5; }
+#settings-mfa-flow .mfa-method-selector {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;
+  padding:5px;background:#f2f6f7;border-color:#cad6db;min-width:0;
+}
+#settings-mfa-flow .mfa-method-selector button {
+  min-width:0;min-height:44px;padding:8px 10px;line-height:1.35;color:#42535c;
+}
+#settings-mfa-flow .mfa-method-selector button[aria-pressed="true"] {
+  color:#123c33;background:#fff;box-shadow:0 1px 5px #173c3114;outline:1px solid #c1d8ce;
+}
+#settings-mfa-flow :is(.security-card,.mfa-setup,.mfa-sms-setup,.recovery-panel,.mfa-disable) {
+  --ink:#18332b;--muted:#4a5d55;--line:#d9e3dd;--line-strong:#b6c7be;
+  --panel:#fff;--canvas:#f5f8f6;--dark-green:#1a4938;
+  min-width:0;margin:0;padding:16px;border:1px solid var(--line);border-radius:12px;
+  background:#fff;color:var(--ink);box-shadow:0 2px 7px #153b2d05;
+}
+#settings-mfa-flow .security-card {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;
+}
+#settings-mfa-flow .security-card>.security-icon { display:none; }
+#settings-mfa-flow .security-card>div { min-width:0; }
+#settings-mfa-flow .security-card>button { grid-column:auto;justify-self:end; }
+#settings-mfa-flow .security-card p { margin:6px 0 0;font-size:13px;line-height:1.5;color:#4a5d55; }
+#settings-mfa-flow:has(#mfaSetup:not([hidden]),#mfaSmsVerify:not([hidden]),#recoveryPanel:not([hidden])) .security-card { display:none; }
+#settings-mfa-flow .mfa-setup:not([hidden]) { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start; }
+#settings-mfa-flow .setup-step { grid-template-columns:28px minmax(0,1fr);gap:10px;min-width:0;margin:0; }
+#settings-mfa-flow .setup-step>span { width:28px;height:28px;background:#1a4938;color:#fff;font-size:13px; }
+#settings-mfa-flow .setup-step :is(div,label) { min-width:0;width:100%;gap:8px;margin:0; }
+#settings-mfa-flow .setup-step strong { font-size:14px;line-height:1.45; }
+#settings-mfa-flow .setup-step code {
+  width:100%;min-width:0;padding:10px;border:1px solid #d9e3dd;background:#f5f8f6;color:#18332b;
+  font:600 16px/1.5 ui-monospace,Consolas,monospace;letter-spacing:.06em;white-space:normal;overflow-wrap:anywhere;
+}
+#settings-mfa-flow #copyMfaSecret { min-height:44px;color:#075e78;font-size:13px; }
+#settings-mfa-flow #confirmMfa { grid-column:1/-1;justify-self:end;min-height:44px; }
+#settings-mfa-flow :is(.mfa-sms-setup,.mfa-sms-verify):not([hidden]) {
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,auto);align-items:end;gap:12px;
+}
+#settings-mfa-flow .mfa-sms-verify { grid-column:1/-1;padding-top:12px;border-top:1px solid #d9e3dd; }
+#settings-mfa-flow :is(.mfa-sms-setup,.mfa-disable) label { min-width:0;gap:6px;font-size:13px;line-height:1.4;color:#4a5d55; }
+#settings-mfa-flow :is(.mfa-setup,.mfa-sms-setup,.mfa-disable) input {
+  width:100%;min-width:0;min-height:44px;box-sizing:border-box;padding:8px 10px;
+  background:#fff;color:#18332b;border:1px solid #b6c7be;border-radius:8px;font-size:16px;
+}
+#settings-mfa-flow :is(#mfaVerificationCode,#mfaSmsCode) { font-variant-numeric:tabular-nums;letter-spacing:.12em; }
+#settings-mfa-flow input:focus-visible,#settings-mfa-flow button:focus-visible { outline:2px solid #0088b8;outline-offset:2px; }
+#settings-mfa-flow :is(.mfa-sms-setup,.mfa-disable) button { min-width:0;min-height:44px;white-space:normal;line-height:1.35; }
+#settings-mfa-flow :is(#mfaSmsDemoDelivery,#mfaDisableSmsDelivery) {
+  grid-column:1/-1;min-width:0;padding:9px 10px;border-radius:7px;background:#edf6f9;color:#254a58;
+  font-size:12px;line-height:1.5;overflow-wrap:anywhere;
+}
+#settings-mfa-flow :is(#mfaSmsDemoDelivery,#mfaDisableSmsDelivery):empty { display:none; }
+#settings-mfa-flow .recovery-panel>strong { font-size:16px;line-height:1.4; }
+#settings-mfa-flow .recovery-panel p { margin:7px 0 12px;font-size:13px;line-height:1.5;color:#4a5d55; }
+#settings-mfa-flow .recovery-codes { margin-bottom:12px; }
+#settings-mfa-flow .recovery-codes code { color:#18332b;background:#f5f8f6;font-size:13px;line-height:1.4; }
+#settings-mfa-flow .mfa-disable { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end; }
+#settings-mfa-flow .mfa-disable label { grid-column:1/-1; }
+#settings-mfa-flow #settingsRecoveryReturn { grid-column:1/-1;margin:0;justify-self:start; }
+#settings-mfa-flow .settings-flow-footer { margin-top:14px;padding-top:12px; }
+@media(max-width:600px) {
+  html body dialog#settings-mfa-flow[open] { width:calc(100vw - 20px);padding:16px;max-height:calc(100dvh - 20px); }
+  #settings-mfa-flow>h2 { font-size:21px;margin-bottom:10px; }
+  #settings-mfa-flow .settings-flow-body { gap:10px; }
+  #settings-mfa-flow :is(.security-card,.mfa-setup,.mfa-sms-setup,.recovery-panel,.mfa-disable) { padding:12px; }
+  #settings-mfa-flow .security-card { grid-template-columns:1fr;gap:10px; }
+  #settings-mfa-flow .security-card>button { justify-self:start; }
+  #settings-mfa-flow .mfa-setup:not([hidden]) { grid-template-columns:1fr;gap:12px; }
+  #settings-mfa-flow .setup-step strong { font-size:13px;line-height:1.4; }
+  #settings-mfa-flow .setup-step code { font-size:15px;padding:8px; }
+  #settings-mfa-flow :is(.mfa-sms-setup,.mfa-sms-verify):not([hidden]) { grid-template-columns:minmax(0,1fr) 120px;gap:10px; }
+  #settings-mfa-flow :is(.mfa-sms-setup,.mfa-disable) button { padding:8px;font-size:12px; }
+  #settings-mfa-flow .recovery-codes { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #settings-mfa-flow .settings-flow-footer { margin-top:10px;padding-top:10px; }
+}
 @media(max-width:800px) {
   html body #bankSettingsModal:not(.tour-modal-host)[open] { padding:14px; }
   #bankSettingsModal .settings-tabs { margin:8px 0; }

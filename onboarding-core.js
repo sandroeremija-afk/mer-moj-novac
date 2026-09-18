@@ -40,6 +40,10 @@
     {
       id:'personal', surface:'settings', settingsTab:'personal', target:'#personalDataForm', mobileTarget:'#personalDataForm', contextTarget:'#openSettings', placement:'left', titleKey:'onboardingPersonalTitle', bodyKey:'onboardingPersonalBody',
       copy:copy('Vaši osobni podaci', 'U odjeljku Podaci uredite ime, prezime, OIB i adresu. Unos je neobavezan i sprema se u ovom pregledniku; nije provjera identiteta.', 'Your personal information', 'Edit your name, OIB and address in Personal data. These optional details are stored in this browser; this is not identity verification.')
+    },
+    {
+      id:'help', target:'#openHelpAssistant', mobileTarget:'#assistantFab', placement:'right', titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
+      copy:copy('Pomoć & AI Asistent', 'Zatražite unos transakcije rečenicom ili financijski savjet. Pitanja po modulu nude upute za aplikaciju. AI prijedloge provjerite prije spremanja.', 'Help & AI Assistant', 'Ask to draft a transaction in plain language or get financial guidance. Module FAQs explain the app. Review AI suggestions before saving.')
     }
   ].map(step => Object.freeze(step)));
 

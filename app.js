@@ -1155,8 +1155,8 @@ function renderInsights() {
   donutTotal.textContent=donutDisplay;donutTotal.title=donutExact;donutTotal.dataset.fit=donutDisplay.length>10?'small':donutDisplay.length>8?'medium':'regular';$('#categoryDonutLegend').innerHTML=segments.slice(0,4).map(segment=>`<span><i style="background:${segment.color}"></i><b>${escapeHtml(categoryName(segment.id))}</b><small>${number(segment.end-segment.start,0)}%</small></span>`).join('')||`<small>${t('noExpensesPeriod')}</small>`;
   $('#categoryDonut').setAttribute('aria-label',`${t('categoryDonutTitle')}: ${segments.length?segments.map(segment=>`${categoryName(segment.id)} ${number(segment.end-segment.start,0)}%`).join(', '):t('noExpensesPeriod')}. ${t('totalExpenses')}: ${currency(expenseTotal)}`);
   const gaugePercent=totals.savingsRate===null?0:Math.max(0,Math.min(100,totals.savingsRate));$('#savingsGauge').style.setProperty('--gauge-value',`${gaugePercent*1.8}deg`);$('#savingsGauge').setAttribute('aria-label',`${t('savingsRate')}: ${totals.savingsRate===null?t('noIncomeRate'):`${number(totals.savingsRate,1)}%`}`);
-  const series=MerAccounting.monthSeries(state.transactions,reference,6),seriesDomain=MerCore.chartDomain(series.flatMap(item=>[item.income,item.expenses]));
-  $('#monthlyBarChart').innerHTML=series.map(item=>`<div class="month-bar-group"><div><span class="income-month-bar" style="height:${MerCore.scaleChartValue(item.income,seriesDomain,96,5)}px" title="${t('income')}: ${currency(item.income)}"></span><span class="expense-month-bar" style="height:${MerCore.scaleChartValue(item.expenses,seriesDomain,96,5)}px" title="${t('expense')}: ${currency(item.expenses)}"></span></div><small>${new Intl.DateTimeFormat(locale(),{month:'short'}).format(new Date(`${item.key}-01T12:00:00`))}</small></div>`).join('');$('#monthlyBarChart').setAttribute('aria-label',`${t('incomeVsExpenses')}: ${series.map(item=>`${insightMonthLabel(item.key)}, ${t('income')} ${currency(item.income)}, ${t('expense')} ${currency(item.expenses)}`).join('; ')}`);
+  const series=MerAccounting.monthSeries(state.transactions,reference,6);
+  $('#monthlyBarChart').innerHTML=MerInsightCharts.monthlyComparisonMarkup(series,{locale:locale(),currency:appState.settings.currency||'EUR',privateMode:appState.settings.hideBalances});$('#monthlyBarChart').setAttribute('aria-label',appState.settings.hideBalances?`${t('incomeVsExpenses')}: ${currentLang==='en'?'Amounts hidden':'Iznosi su skriveni'}`:`${t('incomeVsExpenses')}: ${series.map(item=>`${insightMonthLabel(item.key)}, ${t('income')} ${currency(item.income)}, ${t('expense')} ${currency(item.expenses)}`).join('; ')}`);
   $('#expenseStructureSummary').innerHTML=expenseStructureMarkup(MerInsights.expenseStructure(state,insightsTimeframe,reference),false);
   $$('[data-insight-detail]').forEach(card=>card.setAttribute('aria-label',`${card.querySelector('h2,.card-label span')?.textContent||t('reportDetails')} · ${currentLang==='hr'?'otvori detaljni prikaz':'open detailed view'}`));
   if($('#insightChartModal')?.open&&activeInsightDetail)renderInsightDetail(activeInsightDetail);
@@ -1251,7 +1251,7 @@ function renderInsightDetail(kind) {
   $('#insightChartTitle').textContent=viewCopy.title;
   $('#insightChartIntro').textContent=viewCopy.intro;
 
-  let metrics=[];let chart='';let notes=[];let trend=null;
+  let metrics=[];let chart='';let notes=[];let trend=null;let comparison=null;
   modal.dataset.insightKind=kind;
   const latest=series.at(-1)||{key:appReferenceDate.slice(0,7),income:0,expenses:0};
   const best=series.reduce((chosen,item)=>(item.income-item.expenses)>(chosen.income-chosen.expenses)?item:chosen,series[0]||latest);
@@ -1266,11 +1266,17 @@ function renderInsightDetail(kind) {
     trend=MerInsights.cumulativeSeries(state,insightsTimeframe,appReferenceDate);
     metrics=[{label:currentLang==='en'?'Opening balance':'Početno stanje',value:currency(trend.openingBalance)},{label:copy.net,value:currency(totals.net)},{label:currentLang==='en'?'Closing balance':'Završno stanje',value:currency(trend.closingBalance)}];
     trend={...trend,series:[{key:trend.startDate,balance:trend.openingBalance,opening:true,growth:{balance:null}},...trend.series]};
-  }else if(kind==='income'){
-    metrics=[{label:copy.income,value:currency(totals.income)},{label:copy.average,value:currency(incomes.length?totals.income/incomes.length:0)},{label:copy.transactions,value:incomes.length}];
-    trend=MerInsights.transactionSeries(state,insightsTimeframe,appReferenceDate);
-  }else if(kind==='expenses'){
-    metrics=[{label:copy.expenses,value:currency(totals.expenses)},{label:copy.average,value:currency(expenses.length?totals.expenses/expenses.length:0)},{label:copy.transactions,value:expenses.length}];
+  }else if(kind==='income'||kind==='expenses'){
+    comparison=MerInsights.metricBreakdown(state,kind,insightsTimeframe,appReferenceDate);
+    comparison={...comparison,categories:comparison.categories.map(row=>{
+      const translated=row.customLabel?row.label:t(row.label||row.categoryId);
+      return {...row,label:typeof translated==='string'?translated:row.label};
+    })};
+    const en=currentLang==='en',growth=comparison.growth===null?'—':`${comparison.growth>0?'+':''}${number(comparison.growth,2)}%`;
+    metrics=[{label:kind==='income'?copy.income:copy.expenses,value:currency(comparison.current)},{label:en?'Previous period':'Prethodno razdoblje',value:comparison.previous===null?'—':currency(comparison.previous)},{label:en?'Change':'Promjena',value:comparison.change===null?'—':`${comparison.change>0?'+':''}${currency(comparison.change)} · ${appState.settings.hideBalances?'••••':growth}`}];
+    const dayLabel=key=>MerInsightCharts.dateLabel({key},{granularity:'day'},{locale:locale()});
+    const range=(start,end)=>`${dayLabel(start)} – ${dayLabel(end)}`;
+    $('#insightChartIntro').textContent=comparison.previousStart?`${en?'Current':'Sada'}: ${range(comparison.currentStart,comparison.currentEnd)} · ${en?'Compared with':'Usporedba'}: ${range(comparison.previousStart,comparison.previousEnd)}`:(en?'All recorded periods. No comparable preceding period.':'Sva evidentirana razdoblja. Nema usporedivog prethodnog razdoblja.');
     trend=MerInsights.transactionSeries(state,insightsTimeframe,appReferenceDate);
   }else if(kind==='category'){
     metrics=[{label:copy.expenses,value:currency(expenseTotal)},{label:copy.categories,value:categories.length},{label:copy.topCategory,value:categories[0]?categoryName(categories[0][0]):'—'}];
@@ -1294,7 +1300,7 @@ function renderInsightDetail(kind) {
   }
   $('#insightExpandedMetrics').innerHTML=metrics.map(item=>expandedMetric(item.label,item.value)).join('');
   $('#insightExpandedChart').innerHTML=chart;
-  if(trend)MerInsightCharts.mount($('#insightExpandedChart'),trend,{mode:kind==='net'?'balance':kind,locale:locale(),currency:appState.settings.currency||'EUR',privateMode:appState.settings.hideBalances});
+  if(trend)MerInsightCharts.mount($('#insightExpandedChart'),trend,{mode:kind==='net'?'balance':kind,locale:locale(),currency:appState.settings.currency||'EUR',privateMode:appState.settings.hideBalances,breakdown:comparison});
   $('#insightExpandedBreakdown').innerHTML=expandedNotes(notes.slice(0,3));
 }
 

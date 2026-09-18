@@ -16,13 +16,14 @@ const source = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 // responsive pixel geometry remains covered by the separate viewport tests.
 function harness({ width = 1440, height = 900, asynchronousClose = false, minimal = false } = {}) {
   // Native top-layer support remains tested with explicitly injected surfaces;
-  // production behavior is tested separately with the actual eight-step defaults.
+  // production behavior is tested separately with the actual nine-step defaults.
   const MerOnboardingCore = minimal ? ProductionOnboardingCore : CustomSurfaceCore;
   const nodes = new Map();
   const aliases = new Map();
   const calls = [];
   const frames = new Map();
   const timers = new Map();
+  const windowListeners = new Map();
   let sequence = 0;
   let document;
   const classes = () => {
@@ -141,6 +142,7 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   add('menuToggle', main, 'BUTTON');
   add('openSettings', sidebar, 'BUTTON');
   add('openHelpAssistant', sidebar, 'BUTTON');
+  add('assistantFab', shell, 'BUTTON').rect={left:width-72,top:height-72,width:48,height:48,right:width-24,bottom:height-24};
   const sidebarAction = add('sidebarTransaction', sidebar, 'BUTTON');
   aliases.set('#sidebar .sidebar-transaction-button[data-open-transaction]', sidebarAction);
   const navLinks = {};
@@ -239,7 +241,7 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   context.window = {
     MerOnboardingCore, innerWidth:width, innerHeight:height,
     matchMedia:query => ({ matches:query.includes('prefers-reduced') || (query.includes('max-width') && width <= 768) }),
-    addEventListener() {}, removeEventListener() {},
+    addEventListener(type,listener) {if(!windowListeners.has(type))windowListeners.set(type,new Set());windowListeners.get(type).add(listener);}, removeEventListener(type,listener) {windowListeners.get(type)?.delete(listener);},
     MerAuthProvider:{ currentSession:() => ({ userId:'tour-eval-user' }) },
     MerSettings:{ open(tab) { calls.push(['settings', tab]); selectTab(tab); if (!settings.open) settings.showModal(); }, selectTab },
     MerAssistantUi:{ close() { calls.push(['assistant-close']); }, openHelp(mode) { calls.push(['help', mode]); if (!help.open) help.showModal(); }, ask() { throw new Error('The tour must never send an AI request'); } }
@@ -249,29 +251,34 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   const click = id => { nodes.get(id).click(); flush(); };
   const start = () => { assert.equal(context.window.MerOnboardingUi.restart(nodes.get('openSettings')), true); flush(); };
   const next = count => { for (let index = 0; index < (count || 1); index += 1) click('onboardingNext'); };
-  return { nodes, document, calls, context, navLinks, shell, settings, device, help, tour, spotlight, originalSibling, start, next, click, flush };
+  const resize = (nextWidth,nextHeight=height) => {
+    width=nextWidth;height=nextHeight;context.window.innerWidth=width;context.window.innerHeight=height;
+    nodes.get('assistantFab').rect={left:width-72,top:height-72,width:48,height:48,right:width-24,bottom:height-24};
+    [...windowListeners.get('resize')||[]].forEach(listener=>listener());flush();
+  };
+  return { nodes, document, calls, context, navLinks, shell, settings, device, help, tour, spotlight, originalSibling, start, next, click, flush, resize };
 }
 
-test('cycle 2: production journey highlights eight surfaces and their own navigation links', () => {
+test('cycle 2: production journey highlights nine surfaces and their own navigation links', () => {
   const env = harness({ minimal:true });
   env.start();
-  const targetIds = ['overviewFeature', 'sidebarTransaction', 'budgetsFeature', 'savingsFeature', 'insightsView', 'deviceBody', 'privacySetting', 'personalDataForm'];
+  const targetIds = ['overviewFeature', 'sidebarTransaction', 'budgetsFeature', 'savingsFeature', 'insightsView', 'deviceBody', 'privacySetting', 'personalDataForm', 'openHelpAssistant'];
   for (const [index, step] of ProductionOnboardingCore.DEFAULT_STEPS.entries()) {
-    assert.equal(env.nodes.get('onboardingProgress').textContent, `Korak ${index + 1} od 8`);
+    assert.equal(env.nodes.get('onboardingProgress').textContent, `Korak ${index + 1} od 9`);
     assert.equal(env.nodes.get(targetIds[index]).classList.contains('tour-target-active'), true, step.id);
-    assert.equal(env.document.querySelector(step.contextTarget).classList.contains('tour-context-active'), true, step.id);
-    assert.equal(env.nodes.get('onboardingContextSpotlight').classList.contains('is-visible'), true);
+    if(step.contextTarget)assert.equal(env.document.querySelector(step.contextTarget).classList.contains('tour-context-active'), true, step.id);
+    assert.equal(env.nodes.get('onboardingContextSpotlight').classList.contains('is-visible'), Boolean(step.contextTarget));
     assert.equal(env.nodes.get('onboardingSubstep').hidden, true, 'no invisible filler steps remain');
     assert.equal(env.tour.parentNode, step.settingsFlow ? env.device : step.surface === 'settings' ? env.settings : env.document.body);
     assert.equal(env.settings.open, step.surface === 'settings');
     assert.equal(env.help.open, step.surface === 'help');
-    assert.equal([...env.nodes.values()].filter(element => element.classList.contains('tour-context-active')).length, 1);
+    assert.equal([...env.nodes.values()].filter(element => element.classList.contains('tour-context-active')).length, step.contextTarget?1:0);
     if(step.surface){
       assert.equal(env.navLinks.insights.classList.contains('tour-context-active'), false);
       assert.equal(env.nodes.get('insightsView').classList.contains('tour-target-active'), false);
       assert.equal(env.tour.classList.contains('is-dashboard-scope'), false);
     }
-    assert.equal(env.nodes.get('onboardingNext').textContent, index === 7 ? 'Završi' : 'Dalje');
+    assert.equal(env.nodes.get('onboardingNext').textContent, index === 8 ? 'Završi' : 'Dalje');
     env.next();
   }
   assert.equal(env.tour.hidden, true);
@@ -305,7 +312,7 @@ test('cycle 2: production phone tour opens the sidebar only for input and restor
     assert.equal(env.context.activeView, 'overview');
     assert.equal(env.settings.open || env.help.open, false);
     env.start();
-    assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 1 od 8');
+    assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 1 od 9');
   }
 });
 
@@ -316,7 +323,7 @@ test('cycle 2: production rapid module navigation keeps one visible overlay and 
   env.nodes.get('onboardingNext').click();
   env.nodes.get('onboardingPrevious').click();
   env.flush();
-  assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 2 od 8');
+  assert.equal(env.nodes.get('onboardingProgress').textContent, 'Korak 2 od 9');
   assert.equal(env.tour.hidden, false);
   assert.equal(env.tour.parentNode, env.document.body);
   assert.equal([...env.nodes.values()].filter(element => element.classList.contains('tour-target-active')).length, 1);
@@ -352,7 +359,7 @@ test('cycle 2: production Settings Escape dismisses both layers and resets the n
     env.document.dispatch('keydown',{key:'Escape'});env.flush();
     assert.equal(env.tour.hidden,true);assert.equal(env.settings.open||env.help.open,false);assert.equal(env.shell.inert,false);
     assert.equal(env.device.open,false);
-    assert.equal(env.context.activeView,'overview');env.start();assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 1 od 8');
+    assert.equal(env.context.activeView,'overview');env.start();assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 1 od 9');
   }
 });
 
@@ -369,7 +376,7 @@ test('cycle 2: native device-dialog close races do not dismiss a reopened securi
   env.nodes.get('onboardingPrevious').click();
   assert.equal(env.device.open,true);assert.equal(env.tour.parentNode,env.device);
   env.flush();
-  assert.equal(env.tour.hidden,false);assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 6 od 8');
+  assert.equal(env.tour.hidden,false);assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 6 od 9');
   env.click('onboardingClose');
   assert.equal(env.device.open||env.settings.open,false);
   assert.equal(env.settings.hasAttribute('data-settings-flow-open'),false);
@@ -423,6 +430,76 @@ test('cycle 2: all production security targets stay inside the mobile hosted lan
       assert.equal(host.style.getPropertyValue('--tour-panel-height'),'');
     }
   }
+});
+
+test('cycle 2: final Help step spotlights sidebar on desktop or FAB on phones without opening chat',()=>{
+  for(const width of [375,414,768,1440]){
+    const env=harness({minimal:true,width,asynchronousClose:true});env.start();env.next(8);
+    const target=env.nodes.get(width<=768?'assistantFab':'openHelpAssistant');
+    assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 9 od 9');
+    assert.equal(env.nodes.get('onboardingTitle').textContent,'Pomoć & AI Asistent');
+    assert.match(env.nodes.get('onboardingBody').textContent,/transakcije rečenicom.*financijski savjet.*Pitanja po modulu/);
+    assert.equal(target.classList.contains('tour-target-active'),true);
+    assert.equal(env.tour.parentNode,env.document.body);
+    assert.equal(env.help.open||env.settings.open||env.device.open,false);
+    assert.equal(env.calls.filter(call=>call[0]==='help').length,0,'tour does not invoke AI or open a second popup');
+    assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
+    assert.equal(env.nodes.get('onboardingContextSpotlight').classList.contains('is-visible'),false);
+    env.click('onboardingPrevious');
+    assert.equal(env.settings.open,true);assert.equal(env.nodes.get('personalDataForm').classList.contains('tour-target-active'),true);
+    assert.equal(target.classList.contains('tour-target-active'),false);
+    env.next();env.click('onboardingNext');
+    assert.equal(env.tour.hidden,true);assert.equal(env.shell.inert,false);
+    assert.equal(target.classList.contains('tour-target-active'),false);
+    assert.equal(env.help.open||env.settings.open||env.device.open,false);
+    assert.equal(env.nodes.get('autoLockEnabled').checked,false);assert.equal(env.nodes.get('hideBalances').checked,false);
+  }
+});
+
+test('cycle 2: final Help Escape restores normal interaction and does not reopen assistant',()=>{
+  const env=harness({minimal:true,width:375});env.start();env.next(8);
+  env.document.dispatch('keydown',{key:'Escape'});env.flush();
+  assert.equal(env.tour.hidden,true);assert.equal(env.shell.inert,false);
+  assert.equal(env.context.activeView,'overview');assert.equal(env.help.open,false);
+  assert.equal(env.nodes.get('assistantFab').classList.contains('tour-target-active'),false);
+});
+
+test('cycle 2: resizing final Help retargets sidebar and FAB without restarting or moving focus',()=>{
+  const env=harness({minimal:true,width:1440});
+  const sidebar=env.nodes.get('openHelpAssistant'),fab=env.nodes.get('assistantFab');
+  sidebar.setAttribute('aria-describedby','original-help-hint');fab.setAttribute('aria-describedby','original-fab-hint');
+  env.start();env.next(8);
+  env.nodes.get('onboardingNext').focus();
+  const callsBefore=env.calls.length;
+  for(const width of [375,1440,414,1920]){
+    env.resize(width,768);
+    const target=width<=768?fab:sidebar,previous=width<=768?sidebar:fab;
+    assert.equal(target.classList.contains('tour-target-active'),true);
+    assert.equal(previous.classList.contains('tour-target-active'),false);
+    assert.equal(target.getAttribute('aria-describedby'),'onboardingBody');
+    assert.equal(previous.getAttribute('aria-describedby'),width<=768?'original-help-hint':'original-fab-hint');
+    assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 9 od 9');
+    assert.equal(env.document.activeElement.id,'onboardingNext');
+    assert.equal(env.tour.hidden,false);assert.equal(env.tour.parentNode,env.document.body);
+    assert.equal(env.calls.length,callsBefore,'resize must not open/close surfaces, navigate or scroll');
+  }
+  env.click('onboardingNext');
+  assert.equal(sidebar.getAttribute('aria-describedby'),'original-help-hint');
+  assert.equal(fab.getAttribute('aria-describedby'),'original-fab-hint');
+});
+
+test('cycle 2: resizing a hosted security step preserves its native modal and real control state',()=>{
+  const env=harness({minimal:true,width:1440});env.start();env.next(5);
+  const shows=env.calls.filter(call=>call[0]==='show').length;
+  for(const width of [375,1440,414]){
+    env.resize(width,768);
+    assert.equal(env.tour.parentNode,env.device);assert.equal(env.settings.open&&env.device.open,true);
+    assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 6 od 9');
+    assert.equal(env.nodes.get('deviceBody').classList.contains('tour-target-active'),true);
+    assert.equal(env.nodes.get('autoLockEnabled').checked,false);
+    assert.equal(env.calls.filter(call=>call[0]==='show').length,shows);
+  }
+  env.click('onboardingClose');assert.equal(env.settings.open||env.device.open,false);
 });
 
 test('cycle 2: an explicitly injected modal journey uses full Insights and clears obsolete nav highlighting', () => {

@@ -52,8 +52,15 @@ test('evaluation cycle 2: every application chart consumes shared dynamic scale 
   const app = fs.readFileSync(path.join(root,'app.js'),'utf8');
   assert.match(app,/renderSpendingPaceChart/);
   assert.match(app,/MerCore\.cumulativeSpendingSeries/);
-  assert.ok((app.match(/MerCore\.chartDomain/g)||[]).length >= 5);
-  assert.ok((app.match(/MerCore\.scaleChartValue/g)||[]).length >= 8);
+  assert.ok((app.match(/MerCore\.chartDomain/g)||[]).length >= 4);
+  assert.ok((app.match(/MerCore\.scaleChartValue/g)||[]).length >= 6);
+  assert.match(app,/MerInsightCharts\.monthlyComparisonMarkup/);
+  const Charts=require('../insight-charts.js');
+  const labelled=Charts.monthlyComparisonMarkup([{key:'2026-09',income:1e12,expenses:1},{key:'2026-08',income:-500,expenses:0}]);
+  const widths=[...labelled.matchAll(/width:([\d.e+-]+)%/g)].map(match=>Number(match[1]));
+  assert.equal(widths.length,4);
+  assert.equal(widths[0],100);
+  assert.ok(widths.every(width=>Number.isFinite(width)&&width>=0&&width<=100));
   assert.ok((app.match(/MerCore\.proportionalSegments/g)||[]).length >= 2);
   assert.doesNotMatch(app,/income\/(?:seriesMax|max)\*\d+/);
 });

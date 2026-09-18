@@ -38,12 +38,59 @@
 .insight-trend-line { fill:none; stroke:#00a9e4; stroke-width:3; vector-effect:non-scaling-stroke; stroke-linejoin:round; }
 .insight-trend-bar.income { fill:#398966; }
 .insight-trend-bar.expenses { fill:#dc7365; }
+.insight-trend-bar { stroke:none; }
 .insight-trend-cursor { stroke:var(--muted); stroke-dasharray:3 4; opacity:.5; }
 .insight-trend-node { fill:#00a9e4; stroke:var(--surface,#fff); stroke-width:2; vector-effect:non-scaling-stroke; }
 .insight-trend-selector { display:block; width:100%; min-height:44px; padding:0; margin:0; accent-color:#00a9e4; }
 .insight-trend-dates { display:flex; justify-content:space-between; gap:18px; font-size:11px; color:var(--muted); }
 .insight-trend-dates span:last-child { text-align:right; }
 .insight-trend-hint { margin:7px 0 0; color:var(--muted); font-size:12px; line-height:1.4; }
+/* Exact paired labels remain visible even in a narrow three-column dashboard. */
+#insightsView #monthlyBarChart { display:grid; grid-template-columns:1fr; align-content:center; gap:9px; padding:0; border:0; min-height:0; }
+.monthly-comparison-row { display:grid; grid-template-columns:64px minmax(0,1fr); gap:8px; align-items:center; min-width:0; }
+.monthly-comparison-row > small { color:var(--muted); font-size:11px; line-height:1.35; text-transform:none; }
+.monthly-value-lane { display:grid; grid-template-columns:minmax(12px,1fr) auto; gap:6px; align-items:center; min-width:0; }
+.monthly-value-lane strong { font-size:11px; font-variant-numeric:tabular-nums; line-height:1.45; white-space:normal; overflow-wrap:anywhere; text-align:right; }
+.monthly-value-track { height:5px; background:var(--canvas); border-radius:4px; }
+.monthly-value-track i { display:block; height:100%; border-radius:4px; background:#26805c; }
+.monthly-value-lane.expenses .monthly-value-track i { background:#ce6a60; }
+.monthly-value-lane.income strong { color:#267752; }
+.monthly-value-lane.expenses strong { color:#a24c43; }
+[data-theme="dark"] .monthly-value-lane.income strong { color:#7ed6ad; }
+[data-theme="dark"] .monthly-value-lane.expenses strong { color:#f0a89f; }
+.insight-growth-summary { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 20px; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+.insight-growth-summary > span { display:grid; gap:5px; color:var(--muted); font-size:12px; }
+.insight-growth-summary strong { font-size:20px; font-variant-numeric:tabular-nums; color:var(--ink); }
+.insight-plot-window { position:relative; }
+.insight-axis-labels { position:absolute; inset:0 auto 8px 0; display:flex; flex-direction:column; justify-content:space-between; font-size:10px; color:var(--muted); pointer-events:none; z-index:1; }
+.insight-axis-labels span { background:var(--canvas); border-radius:3px; padding:2px 4px; }
+.insight-grid-line { fill:none; stroke:var(--line); stroke-width:.7; stroke-dasharray:2 5; vector-effect:non-scaling-stroke; }
+.insight-opening-baseline { fill:none; stroke:var(--muted); stroke-width:1; stroke-dasharray:5 4; vector-effect:non-scaling-stroke; }
+.insight-trend-line { stroke:#26805c; stroke-width:2.6; }
+.insight-period-dot { fill:var(--surface,#fff); stroke:#26805c; stroke-width:1.5; vector-effect:non-scaling-stroke; }
+.insight-trend-node { fill:#26805c; }
+#insightChartModal .insight-trend-svg .insight-trend-area { stroke:none; }
+#insightChartModal:is([data-insight-kind="net"],[data-insight-kind="income"],[data-insight-kind="expenses"])[open] { padding:20px; }
+#insightChartModal:is([data-insight-kind="net"],[data-insight-kind="income"],[data-insight-kind="expenses"]) > .overline { display:none; }
+#insightChartModal:is([data-insight-kind="net"],[data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-expanded-intro { font-size:12px; margin:6px 0 10px; }
+#insightChartModal:is([data-insight-kind="net"],[data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-expanded-metric { padding:10px 12px; }
+#insightChartModal .insight-growth-summary > span { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+#insightChartModal .insight-growth-summary strong { font-size:18px; }
+[data-theme="dark"] .insight-trend-line,[data-theme="dark"] .insight-period-dot { stroke:#78d5ac; }
+.insight-category-breakdown { min-width:0; }
+.insight-category-breakdown h3 { font-size:14px; margin:0 0 4px; }
+.insight-category-breakdown > p { font-size:11px; line-height:1.4; color:var(--muted); margin:0 0 8px; }
+.insight-category-grid { display:grid; gap:10px; }
+.insight-category-row { display:grid; gap:4px; min-width:0; }
+.insight-category-row > span { font-size:12px; overflow-wrap:anywhere; }
+.insight-category-row strong { font-size:14px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.insight-category-row small { font-size:11px; color:var(--muted); overflow-wrap:anywhere; }
+.insight-category-tracks { display:grid; gap:3px; }
+.insight-category-tracks i { height:5px; display:block; background:#31966b; border-radius:3px; }
+.insight-category-tracks .previous { background:#a3aebb; }
+#insightChartModal[data-insight-kind="expenses"] .insight-category-tracks i:not(.previous) { background:#ce6a60; }
+#insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-expanded-chart { display:grid; grid-template-columns:minmax(0,1.8fr) minmax(0,1fr); gap:22px; }
+#insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-category-breakdown { padding-left:18px; border-left:1px solid var(--line); }
 @media(max-width:640px) {
   #breakdownModal .financial-statement { margin-top:10px; }
   .financial-statement > li { padding:10px 0; font-size:13px; gap:6px 10px; }
@@ -62,4 +109,26 @@
   .trend-date { font-size:12px; }
   .trend-growth { font-size:11px; }
   .insight-trend-hint { font-size:11px; }
+  .insight-growth-summary { gap:8px; margin-bottom:6px; padding-bottom:6px; }
+  .insight-growth-summary > span { font-size:11px; }
+  .insight-growth-summary strong { font-size:16px; }
+  #insightChartModal:is([data-insight-kind="net"],[data-insight-kind="income"],[data-insight-kind="expenses"])[open] { padding:14px; }
+  #insightChartModal:is([data-insight-kind="net"],[data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-expanded-metric { padding:7px; }
+  #insightChartModal .insight-growth-summary > span { gap:3px; display:grid; }
+  #insightChartModal .insight-growth-summary strong { font-size:15px; }
+  #insightChartModal[data-insight-kind="net"] .insight-trend-svg { height:100px; max-height:100px; }
+  #insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-expanded-chart { grid-template-columns:1fr; gap:10px; }
+  #insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-trend-svg { height:60px; max-height:60px; }
+  #insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-trend-readout { grid-template-columns:minmax(0,1fr) auto; min-height:32px; }
+  #insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .trend-amount { font-size:17px; }
+  #insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .trend-growth,
+  #insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-trend-hint { display:none; }
+  #insightChartModal:is([data-insight-kind="income"],[data-insight-kind="expenses"]) .insight-category-breakdown { padding:8px 0 0; border:0; border-top:1px solid var(--line); }
+  #insightChartModal .insight-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 14px; }
+  #insightChartModal .insight-category-row { gap:2px; }
+  #insightChartModal .insight-category-row strong { font-size:12px; }
+  #insightChartModal .insight-category-row small { font-size:10px; }
+  #insightChartModal .insight-category-breakdown > p { margin-bottom:5px; font-size:10px; }
+  #insightChartModal .insight-category-tracks { gap:2px; }
+  #insightChartModal .insight-category-tracks i { height:3px; }
 }

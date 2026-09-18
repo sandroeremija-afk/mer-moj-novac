@@ -31,10 +31,10 @@ function controller(storage, userId, timer = clock()) {
   return MerOnboarding.createOnboardingController({ storage, userId, now:timer.now });
 }
 
-test('evaluation cycle 1: the guided tour uses eight senior-friendly steps including security, privacy and personal data', () => {
+test('evaluation cycle 1: the guided tour uses nine senior-friendly steps including security, privacy, personal data and help', () => {
   assert.deepEqual(
     MerOnboarding.DEFAULT_STEPS.map(step => step.id),
-    ['overview', 'transaction', 'budgets', 'savings', 'insights', 'security', 'privacy', 'personal']
+    ['overview', 'transaction', 'budgets', 'savings', 'insights', 'security', 'privacy', 'personal', 'help']
   );
   for (const step of MerOnboarding.DEFAULT_STEPS) {
     assert.equal(typeof step.titleKey, 'string');
@@ -57,7 +57,7 @@ test('evaluation cycle 1: a first login launches once, walks in order and persis
   assert.ok(view.record.launchedAt);
   assert.equal(firstSession.shouldAutoStart(), false, 'opening the tour immediately consumes the one-time auto launch');
 
-  for (const expected of ['transaction', 'budgets', 'savings', 'insights', 'security', 'privacy', 'personal']) {
+  for (const expected of ['transaction', 'budgets', 'savings', 'insights', 'security', 'privacy', 'personal', 'help']) {
     timer.tick();
     view = firstSession.next();
     assert.equal(view.stepId, expected);
@@ -170,15 +170,15 @@ test('evaluation cycle 1: duplicate session callbacks leave an active tour inter
 });
 
 test('evaluation cycle 1: five-step and older seven-step progress preserve completion without relaunch', () => {
-  for (const position of [4, 5, 6, 10]) {
+  for (const position of [4, 5, 6, 7, 8, 10]) {
     const completedAt = '2026-09-08T12:00:00.000Z';
     const storage = new MemoryStorage({
       'mer-onboarding-v1:existing-user':JSON.stringify({ launchedAt:'2026-09-08T11:00:00.000Z', completedAt, currentStep:position, substepIndex:2 })
     });
     const current = controller(storage, 'existing-user');
     const snapshot = current.snapshot();
-    assert.equal(snapshot.stepId, position === 4 ? 'insights' : position === 5 ? 'security' : position === 6 ? 'privacy' : 'personal');
-    assert.equal(snapshot.stepIndex, Math.min(position, 7));
+    assert.equal(snapshot.stepId, position === 4 ? 'insights' : position === 5 ? 'security' : position === 6 ? 'privacy' : position === 7 ? 'personal' : 'help');
+    assert.equal(snapshot.stepIndex, Math.min(position, 8));
     assert.equal(snapshot.substepIndex, 0);
     assert.equal(snapshot.substepCount, 1);
     assert.equal(snapshot.complete, true);
@@ -186,6 +186,6 @@ test('evaluation cycle 1: five-step and older seven-step progress preserve compl
     const restarted = current.start({ force:true });
     assert.equal(restarted.stepId, 'overview');
     assert.equal(restarted.record.completedAt, completedAt);
-    assert.equal(restarted.steps.length, 8);
+    assert.equal(restarted.steps.length, 9);
   }
 });

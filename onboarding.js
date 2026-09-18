@@ -165,6 +165,26 @@
     return visibleTarget(step.mobileTarget) || $('#menuToggle') || appShell;
   }
 
+  function refreshResponsiveTarget() {
+    if (!effectiveStep) return;
+    const nextTarget = targetFor(effectiveStep);
+    if (!nextTarget || nextTarget === currentTarget) return;
+    resizeObserver?.disconnect();
+    if (currentTarget) {
+      currentTarget.classList.remove('tour-target-active');
+      if (previousDescription === null) currentTarget.removeAttribute('aria-describedby');
+      else currentTarget.setAttribute('aria-describedby', previousDescription);
+    }
+    currentTarget = nextTarget;
+    previousDescription = currentTarget.getAttribute('aria-describedby');
+    currentTarget.setAttribute('aria-describedby', 'onboardingBody');
+    currentTarget.classList.add('tour-target-active');
+    resizeObserver?.observe(currentTarget);
+    if (currentContextLink && currentContextLink !== currentTarget) resizeObserver?.observe(currentContextLink);
+    // Resize only moves the highlight: never reopen a dialog, change steps,
+    // steal keyboard focus or scroll the underlying page.
+  }
+
   function fitPopoverToViewport(viewport) {
     const availableHeight = Math.max(1, viewport.height - 24);
     popover.classList.toggle('is-keyboard-compact', Boolean(ownedDialog) && viewport.width <= 1024 && viewport.height < 500);
@@ -259,7 +279,9 @@
 
   function positionSpotlight() {
     geometryFrame = 0;
-    if (tour.hidden || !currentTarget?.isConnected) return;
+    if (tour.hidden) return;
+    refreshResponsiveTarget();
+    if (!currentTarget?.isConnected) return;
     const viewport = viewportBounds();
     let popoverSize = fitPopoverToViewport(viewport);
     const splitSurface = ownedDialog && viewport.width <= 1024;
