@@ -189,7 +189,7 @@ test('production top metric modal handlers select unique plots and honor the act
 
 test('fixed-versus-flexible detail is a ratio breakdown, not another category-donut or ranked merchant chart',()=>{
   const h=applicationFixture();h.context.renderInsightDetail('expense-structure');
-  assert.equal(h.node('#insightChartTitle').textContent,'Fiksni vs. Fleksibilni troškovi');
+  assert.equal(h.node('#insightChartTitle').textContent,'Fiksni i fleksibilni troškovi');
   const markup=h.chart.host.innerHTML;
   assert.match(markup,/class="expense-structure-meter"/);
   assert.match(markup,/width:66\.67%/);assert.match(markup,/width:33\.33%/);

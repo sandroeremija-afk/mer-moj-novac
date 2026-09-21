@@ -106,7 +106,7 @@
   const securityGrid=document.createElement('div');securityGrid.className='settings-security-overview';panel.querySelector('.settings-pane-heading').after(securityGrid);
   const securityCards=[
     ['password','Lozinka','Password','Promijenite lozinku računa.','Change your account password.'],
-    ['mfa','Dvostruka autentifikacija','Two-factor authentication','Authenticator aplikacija ili SMS.','Authenticator app or SMS.'],
+    ['mfa','Dvostruka autentifikacija','Two-factor authentication','Aplikacija za sigurnosne kodove ili SMS.','Authenticator app or SMS.'],
     ['device','Zaštita uređaja','Device protection','Zaključavanje, PIN i šifriranje.','Locking, PIN and encryption.'],
     ['sessions','Lokalne sesije','Local sessions','Pregledajte i odjavite sesije.','Review and sign out sessions.']
   ];

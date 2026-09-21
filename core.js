@@ -290,6 +290,24 @@
     return `${sign}${formatCurrency(Math.abs(signedAmount), {currency:transaction?.currency||'EUR', ...options, categoryBudgetLimit:false})}`;
   }
 
+  function formatTransactionSource(transaction, options = {}) {
+    // Translate only application-owned markers, never persisted data or bank/file names.
+    const source = String(typeof transaction === 'string' ? transaction : transaction?.source || '').trim();
+    const english = /^en(?:-|$)/i.test(options.locale || options.language || 'hr');
+    const labels = english
+      ? {manual:'Manual', auto:'Automatic', import:'Imported', 'round-up':'Round-up'}
+      : {manual:'Ručno', auto:'Automatski', import:'Uvezeno', 'round-up':'Zaokruživanje'};
+    const aliases = {manual:'manual', 'manual entry':'manual', 'ručno':'manual', rucno:'manual', 'ručni unos':'manual', auto:'auto', automatic:'auto', automatski:'auto', import:'import', imported:'import', uvoz:'import', uvezeno:'import', 'round-up':'round-up', 'round up':'round-up', roundup:'round-up', zaokruživanje:'round-up'};
+    const prefix = /^(auto|automatic|automatski|import|imported|uvoz|uvezeno)\s*:\s*(.+)$/i.exec(source);
+    if (prefix) {
+      const kind = aliases[prefix[1].toLowerCase()];
+      return `${english ? (kind === 'auto' ? 'Auto' : 'Import') : (kind === 'auto' ? 'Automatski' : 'Uvoz')}: ${prefix[2]}`;
+    }
+    const key = source.toLowerCase();
+    if (source) return Object.hasOwn(aliases, key) ? labels[aliases[key]] : source;
+    return Object.hasOwn(labels, transaction?.sourceType) ? labels[transaction.sourceType] : labels.manual;
+  }
+
   function ratioPercent(value, total, maximum = Infinity) {
     const safeValue = Math.max(0, financialAmount(value));
     const safeTotal = Math.max(0, financialAmount(total));
@@ -849,6 +867,7 @@
     roundMoney,
     formatCurrency,
     formatTransactionAmount,
+    formatTransactionSource,
     ratioPercent,
     stableTransactionHash,
     autoCategorizeBankTransaction,

@@ -15,7 +15,7 @@
     },
     {
       id:'transaction', view:'overview', target:'#sidebar .sidebar-transaction-button[data-open-transaction]', mobileTarget:'#sidebar .sidebar-transaction-button[data-open-transaction]', contextTarget:'.nav-item[data-view="overview"]', placement:'right', openSidebar:true, titleKey:'onboardingTransactionTitle', bodyKey:'onboardingTransactionBody',
-      copy:copy('Unos transakcija', 'Jednim klikom možete ručno unijeti novi trošak ili prihod, ili uvoziti izvod iz vaše banke.', 'Add transactions', 'Add a new expense or income in one click, or import a statement from your bank.')
+      copy:copy('Unos transakcija', 'Jednim klikom možete ručno unijeti novi trošak ili prihod ili uvesti bankovni izvod.', 'Add transactions', 'Add a new expense or income in one click, or import a statement from your bank.')
     },
     {
       id:'budgets', view:'budgets', target:'#budgetsView .table-panel', mobileTarget:'#budgetsView .table-panel', contextTarget:'.nav-item[data-view="budgets"]', placement:'top', titleKey:'onboardingBudgetsTitle', bodyKey:'onboardingBudgetsBody',
@@ -43,7 +43,7 @@
     },
     {
       id:'help', surface:'help', helpMode:'assistant', target:'#helpTourConversation', mobileTarget:'#helpTourConversation', placement:'left', titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
-      copy:copy('Pomoć & AI Asistent', 'Zatražite unos transakcije rečenicom ili financijski savjet. Pitanja po modulu nude upute za aplikaciju. AI prijedloge provjerite prije spremanja.', 'Help & AI Assistant', 'Ask to draft a transaction in plain language or get financial guidance. Module FAQs explain the app. Review AI suggestions before saving.')
+      copy:copy('Pomoć i AI asistent', 'Opišite transakciju rečenicom ili postavite pitanje o svojim financijama. Upute su dostupne za svaki modul. Provjerite AI prijedloge prije spremanja.', 'Help & AI Assistant', 'Ask to draft a transaction in plain language or get financial guidance. Module FAQs explain the app. Review AI suggestions before saving.')
     }
   ].map(step => Object.freeze(step)));
 

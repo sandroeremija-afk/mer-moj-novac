@@ -14,7 +14,7 @@
       email: 'E-mail',
       password: 'Lozinka',
       fullName: 'Ime i prezime',
-      passwordHint: 'Najmanje 10 znakova. Lozinka se pretvara u PBKDF2 hash.',
+      passwordHint: 'Najmanje 10 znakova. Lozinka se ne sprema u čitljivom obliku.',
       loginAction: 'Sigurna prijava',
       registerAction: 'Izradi račun',
       forgotPassword: 'Zaboravljena lozinka?',

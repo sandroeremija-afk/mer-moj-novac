@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs');
 const source=fs.readFileSync(require.resolve('../engagement-ui.js'),'utf8'),css=fs.readFileSync(require.resolve('../popup-layout.css'),'utf8');
 assert.doesNotMatch(source,/wrappedButton|Moj mjesec/);
 assert.match(source,/function openWrapped\(/);assert.match(source,/shouldAutoOpen/);
-assert.match(fs.readFileSync(require.resolve('../enterprise-ui.js'),'utf8'),/Mjesečni osvrt — Financial Wrapped/);
+assert.match(fs.readFileSync(require.resolve('../enterprise-ui.js'),'utf8'),/copy\('Mjesečni osvrt','Monthly review — Financial Wrapped'\)/);
 assert.match(css,/data-content-fits="true"/);assert.match(css,/active-session-list[^}]+overflow:visible/);
 assert.match(css,/#transactionModal\[data-content-fits="false"\][^}]+overflow-y:auto/);
 assert.match(css,/data-topic-hidden[^}]+display:none !important/);

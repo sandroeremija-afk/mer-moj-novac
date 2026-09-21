@@ -38,7 +38,7 @@ test('evaluation cycle 2: Budget and Activity controls route to export selection
   assert.match(budgets, /data-i18n="budgetDataActions">Izvoz budžeta<\/span>/);
   assert.doesNotMatch(html, /id="budgetDataModal"|id="budgetExportCsv"/);
   assert.doesNotMatch(premium, /exportBudgetPlanCsv\(|exportActiveProfileCsv\(|exportInsightsReportCsv\(/);
-  assert.match(html, /data-activity-transfer[\s\S]*?Uvoz \/ Izvoz/);
+  assert.match(html, /data-activity-transfer[\s\S]*?Uvoz \/ izvoz/);
   assert.match(premium, /\$\$\('\[data-activity-transfer\]'\)\.forEach\(button=>button\.addEventListener\('click',\(\)=>window\.MerExportUI\?\.openActivityTransfer\(\)\)\)/);
   assert.match(exportUI, /el\('activityTransferExport'\)\.addEventListener\('click', \(\) => open\('activity', \{ fromActivity:true \}\)\)/);
   assert.match(exportUI, /bridge\(\)\.openImport\(\)/);

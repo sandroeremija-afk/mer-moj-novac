@@ -64,7 +64,7 @@ test('cycle 2: data actions are contextual to Budget, Savings, Activity and Insi
   assert.match(budgets, /data-export-budget/);
   assert.doesNotMatch(budgets.slice(0, budgets.indexOf('<dialog')), /data-open-assessment/);
   assert.equal((activity.match(/data-activity-transfer/g) || []).length, 1);
-  assert.match(activity, /data-i18n="activityTransfer">Uvoz \/ Izvoz<\/span>/);
+  assert.match(activity, /data-i18n="activityTransfer">Uvoz \/ izvoz<\/span>/);
   assert.doesNotMatch(activity, /class="data-action-pair"|data-open-global-import|data-export-active/);
   assert.match(savings, /data-export-savings/);
   assert.match(insights, /data-export-insights/);

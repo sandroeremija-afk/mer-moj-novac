@@ -17,7 +17,7 @@ test('evaluation cycle 1: expense structure replaces category duplication withou
 
   assert.ok(merchantStart >= 0, 'Fixed versus flexible expense card must exist');
   assert.match(merchantCard, /id="expenseStructureSummary"/);
-  assert.match(merchantCard, /Fiksni vs\. Fleksibilni troškovi/);
+  assert.match(merchantCard, /Fiksni i fleksibilni troškovi/);
   assert.doesNotMatch(merchantCard, /topMerchantsList|Najveće kategorije/);
   assert.doesNotMatch(merchantCard, /openSubscriptions|manageSubscriptions|Upravljaj pretplatama/);
   assert.doesNotMatch(app, /\$\('#openSubscriptions'\)\.addEventListener/);

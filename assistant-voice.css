@@ -1,0 +1,21 @@
+.assistant-composer.assistant-voice-enabled{grid-template-columns:minmax(0,1fr) 44px auto;gap:6px}
+.assistant-mic-button{position:relative;display:grid;place-items:center;flex:none;width:44px;min-width:44px;height:44px;padding:10px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);color:var(--ink);cursor:pointer}
+.assistant-mic-button svg,.assistant-read-button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.assistant-mic-button:hover,.assistant-read-button:hover{background:var(--blue-soft);border-color:var(--blue)}
+.assistant-mic-button:focus-visible,.assistant-read-button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.assistant-mic-button:disabled{opacity:.5;cursor:not-allowed}
+.assistant-mic-button.is-listening{color:#a62132;background:#fff0f1;border-color:#d36270;animation:assistant-mic-pulse 1.6s ease-in-out infinite}
+.assistant-mic-stop{display:block;width:12px;height:12px;border-radius:2px;background:currentColor}
+.assistant-mic-button [hidden]{display:none}
+.assistant-voice-meta{flex:0 0 auto;min-width:0;margin:4px 12px 0}
+.assistant-voice-hint,.assistant-voice-status{margin:3px 0;font-size:11px;line-height:1.4;color:var(--muted);overflow-wrap:anywhere}
+.assistant-voice-status{font-size:12px;color:var(--ink);font-weight:500}
+.assistant-voice-status.is-error{color:var(--red,#ad2638)}
+.assistant-voice-status[hidden]{display:none}
+.assistant-read-button{display:inline-flex;align-items:center;justify-self:start;gap:6px;min-height:44px;max-width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--panel);font:inherit;font-size:12px;line-height:1.4;white-space:normal;text-align:left;cursor:pointer}
+.assistant-read-button[aria-pressed=true]{border-color:var(--blue);background:var(--blue-soft)}
+.assistant-read-button svg{flex:0 0 18px;width:18px;height:18px}
+[data-theme=dark] .assistant-mic-button.is-listening{color:#ffbac3;background:#48232b;border-color:#d87785}
+@keyframes assistant-mic-pulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,#d36270 18%,transparent)}}
+@media(max-width:767px){.assistant-composer.assistant-voice-enabled{grid-template-columns:minmax(0,1fr) 44px 44px}.assistant-voice-meta{margin-inline:10px}.assistant-composer.assistant-voice-enabled textarea{box-sizing:border-box;height:44px;min-height:44px;max-height:44px;font-size:16px;line-height:22px;padding:10px 5px;overflow-y:hidden}}
+@media(prefers-reduced-motion:reduce){.assistant-mic-button.is-listening{animation:none}}

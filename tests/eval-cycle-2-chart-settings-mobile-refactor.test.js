@@ -30,9 +30,9 @@ test('evaluation cycle 2: General owns display preferences and Settings has no g
 });
 
 test('evaluation cycle 2: Insights labels and donut metrics never rely on ellipsis', () => {
-  assert.match(app, /fixedVsVariableExpenses:'Fiksni vs\. Fleksibilni troškovi'/);
+  assert.match(app, /fixedVsVariableExpenses:'Fiksni i fleksibilni troškovi'/);
   assert.match(app, /fixedVsVariableExpenses:'Fixed vs\. flexible expenses'/);
-  assert.match(html, /data-i18n="fixedVsVariableExpenses">Fiksni vs\. Fleksibilni troškovi/);
+  assert.match(html, /data-i18n="fixedVsVariableExpenses">Fiksni i fleksibilni troškovi/);
   assert.doesNotMatch(html, /Najveći primatelji|NAJVEĆI PRIMATELJI/);
   assert.match(app, /donutDisplay=donutExact\.length>12\?compactChartCurrency\(expenseTotal\):donutExact/);
   assert.match(app, /donutTotal\.title=donutExact/);

@@ -10,7 +10,7 @@ const translations = {
   }
 };
 
-translations.hr.merRecommendation = 'MER Preporuka';
+translations.hr.merRecommendation = 'MER preporuka';
 translations.en.merRecommendation = 'MER Recommendation';
 
 Object.assign(translations.hr, {
@@ -88,6 +88,23 @@ Object.assign(translations.en,{addExpense:'Add expense',addExpenseSubmit:'Add ex
 
 Object.assign(translations.hr,{savingsDepositsOnly:'Evidentirane uplate u ciljeve štednje'});
 Object.assign(translations.en,{savingsDepositsOnly:'Recorded deposits into savings goals'});
+// Croatian display copy; stored labels, identifiers and the English option stay unchanged.
+Object.assign(translations.hr, {
+  freelance:'Honorarni i dodatni poslovi',
+  connectedBanksIntro:'Isprobajte povezivanje bankovnih računa u demonstracijskom načinu i odaberite profil za svaki račun.',
+  demoConsent:'Ovo je demonstracijska bankovna veza. Ne traži ni ne sprema bankovne lozinke.',
+  openBanking:'Otvoreno bankarstvo',
+  openBankingArchitecture:'Podrška za povezivanje putem PSD2',
+  demoResetUnavailable:'Vraćanje početnih podataka dostupno je samo u demo načinu.',
+  filters:'Filtri', clearFilters:'Očisti filtre',
+  topSpendingCategory:'Kategorija s najvećom potrošnjom',
+  savingsStrategyIntro:'Provjerite sigurnosnu rezervu i planirane mjesečne uplate aktivnog profila.',
+  strategyTargetBuffer:'Mjesečna sigurnosna rezerva',
+  strategyBufferBody:'Rezerva se računa iz odabranog postotka i mjesečnog prihoda.',
+  strategyContributionBody:'Redovite uplate olakšavaju praćenje cilja i planiranje svakodnevnih troškova.',
+  strategyDiversify:'Razmotrite raspodjelu viška',
+  confirmDemoResetBody:'Sve probne transakcije, pravila, ciljevi i bankovne veze u osobnom i poslovnom profilu bit će zamijenjeni početnim primjerima. Ovu radnju nije moguće poništiti.'
+});
 const categoryMeta = {
   food:{ icon:'H', iconId:'icon-utensils', className:'food' },
   transport:{ icon:'P', iconId:'icon-car', className:'transport' },
@@ -1092,7 +1109,7 @@ function renderActivity() {
     const header = !amountSort&&dateLabel!==lastDate ? `<div class="transaction-date">${dateLabel}</div>` : '';
     lastDate = dateLabel;
     const type=MerCore.transactionType(tx);const txCategory=type==='income'?state.incomeCategories.find(cat=>cat.id===tx.category):state.categories.find(cat=>cat.id===tx.category);const meta=type==='income'?incomeCategoryVisual(txCategory):(txCategory?categoryVisual(txCategory):categoryMeta.other);const displayCategory=type==='income'?incomeCategoryName(tx.category):categoryName(tx.category);
-    const sourceLabel=tx.source||t('manualSource');
+    const sourceLabel=MerCore.formatTransactionSource(tx,{locale:locale()});
     const isScheduled=!MerCore.isTransactionEffective(tx,appReferenceDate);
     const transactionClock=new Intl.DateTimeFormat(locale(),{hour:'2-digit',minute:'2-digit',timeZone:appState.settings.timezone||'Europe/Zagreb'}).format(new Date(tx.date));
     const activityDateLabel=amountSort?`${formatIsoDate(String(tx.date).slice(0,10))} · ${transactionClock}`:transactionClock;
@@ -1164,7 +1181,7 @@ function renderInsights() {
   renderSubscriptions();
 }
 
-Object.assign(translations.hr,{fixedVsVariableExpenses:'Fiksni vs. Fleksibilni troškovi',calculationStatement:'Izračun raspoloživog budžeta',statementIncome:'Ukupni mjesečni prihodi',statementBills:'Obvezni fiksni troškovi i režije',statementSavings:'Izdvajanje za ciljeve štednje',statementFlexible:'Preostali raspoloživi budžet',statementBuffer:'Umanjeno za sigurnosnu rezervu',statementDaily:'Dnevni limit za sigurno trošenje'});
+Object.assign(translations.hr,{fixedVsVariableExpenses:'Fiksni i fleksibilni troškovi',calculationStatement:'Izračun raspoloživog budžeta',statementIncome:'Ukupni mjesečni prihodi',statementBills:'Obvezni fiksni troškovi i režije',statementSavings:'Izdvajanje za ciljeve štednje',statementFlexible:'Preostali raspoloživi budžet',statementBuffer:'Umanjeno za sigurnosnu rezervu',statementDaily:'Dnevni limit za sigurno trošenje'});
 Object.assign(translations.en,{fixedVsVariableExpenses:'Fixed vs. flexible expenses',calculationStatement:'Available budget calculation',statementIncome:'Total monthly income',statementBills:'Fixed commitments and utilities',statementSavings:'Allocation to savings goals',statementFlexible:'Remaining flexible budget',statementBuffer:'Less safety reserve',statementDaily:'Daily safe spending limit'});
 
 const insightDetailCopy = {
@@ -1177,7 +1194,7 @@ const insightDetailCopy = {
     expensesView:{title:'Trend potrošnje',intro:'Detaljan pregled ukupne potrošnje i mjesečnog ritma odlaznih transakcija.'},
     categoryView:{title:'Potrošnja po kategoriji',intro:'Struktura troškova pokazuje gdje odlazi najveći dio budžeta i koliki je udio svake kategorije.'},
     cashflowView:{title:'Prihodi i troškovi',intro:'Usporedite mjesečne priljeve i odljeve te brzo prepoznajte promjene u novčanom toku.'},
-    structureView:{title:'Fiksni vs. Fleksibilni troškovi',intro:'Evidentirani troškovi u odabranom razdoblju. Pravila kategorije imaju prednost; ponavljajuće obveze i režije svrstavaju se u fiksne, ostalo u fleksibilne.'},
+    structureView:{title:'Fiksni i fleksibilni troškovi',intro:'Evidentirani troškovi u odabranom razdoblju. Pravila kategorije imaju prednost; ponavljajuće obveze i režije svrstavaju se u fiksne, ostalo u fleksibilne.'},
     savingsView:{title:'Stopa štednje',intro:'Pratite koliki dio prihoda ostaje nakon troškova i kako se stopa mijenja iz mjeseca u mjesec.'}
   },
   en: {

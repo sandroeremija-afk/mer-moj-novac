@@ -66,13 +66,13 @@ test('chat rendering uses fresh profile data without AI calls or retaining the l
   }
   const personal={profileId:'personal',categories:[{id:'food',name:'Hrana'}],transactions:[{id:'past',date:'2026-08-15',amount:400,category:'food',type:'expense',currency:'EUR'},{id:'now',date:'2026-09-18',amount:130,category:'food',type:'expense',currency:'EUR'}]};
   const business={profileId:'business',categories:[],transactions:[]};
-  let calls=0;
+  let calls=0, voiceRefreshes=0;
   const history=[{role:'assistant',content:'Welcome',source:'local'}], list=new Element();
-  const context={window:{MerAnomalies:Anomalies},MerFinancialAssistant:{...Assistant,ask:()=>{calls++;}},document:{createElement:()=>new Element()},appState:{activeAccount:'personal',settings:{currency:'EUR',timezone:'Europe/Zagreb',hideBalances:false}},appReferenceDate:'2026-09-18',currentLang:'hr',reactiveStore:{snapshot:profileId=>({profile:profileId==='personal'?personal:business})},assistantSurfaces:[{send:new Element(),messages:list}],profileHistory:()=>history,t:key=>key,requestAnimationFrame:fn=>fn()};
+  const context={window:{MerAnomalies:Anomalies},voice:{refresh:()=>{voiceRefreshes++;}},MerFinancialAssistant:{...Assistant,ask:()=>{calls++;}},document:{createElement:()=>new Element()},appState:{activeAccount:'personal',settings:{currency:'EUR',timezone:'Europe/Zagreb',hideBalances:false}},appReferenceDate:'2026-09-18',currentLang:'hr',reactiveStore:{snapshot:profileId=>({profile:profileId==='personal'?personal:business})},assistantSurfaces:[{send:new Element(),messages:list}],profileHistory:()=>history,t:key=>key,requestAnimationFrame:fn=>fn()};
   vm.createContext(context);vm.runInContext(code,context);
   context.renderMessages();assert.match(list.text,/Hrana/);assert.equal(calls,0);assert.equal(history.length,1);
   context.appState.settings.hideBalances=true;context.renderMessages();assert.doesNotMatch(list.text,/Hrana|130|100|€/);assert.match(list.text,/skriveni/);
   context.appState.activeAccount='business';context.renderMessages();assert.equal(list.text,'WelcomeassistantLocal');
   context.appState.activeAccount='personal';context.appState.settings.hideBalances=false;personal.transactions[1].amount=90;context.renderMessages();assert.doesNotMatch(list.text,/Hrana/);
-  assert.equal(calls,0);assert.equal(history.length,1);
+  assert.equal(calls,0);assert.equal(history.length,1);assert.equal(voiceRefreshes,4,'each profile-aware render refreshes the microphone owner guard');
 });

@@ -440,8 +440,8 @@ test('cycle 2: final Help step opens the real chat surface with input and sample
     const env=harness({minimal:true,width,asynchronousClose:true});env.start();env.next(8);
     const target=env.nodes.get('helpTourConversation');
     assert.equal(env.nodes.get('onboardingProgress').textContent,'Korak 9 od 9');
-    assert.equal(env.nodes.get('onboardingTitle').textContent,'Pomoć & AI Asistent');
-    assert.match(env.nodes.get('onboardingBody').textContent,/transakcije rečenicom.*financijski savjet.*Pitanja po modulu/);
+    assert.equal(env.nodes.get('onboardingTitle').textContent,'Pomoć i AI asistent');
+    assert.match(env.nodes.get('onboardingBody').textContent,/transakciju rečenicom.*pitanje o svojim financijama.*za svaki modul.*Provjerite AI prijedloge prije spremanja/);
     assert.equal(target.classList.contains('tour-target-active'),true);
     assert.equal(env.tour.parentNode,env.help);
     assert.equal(env.help.open,true);assert.equal(env.settings.open||env.device.open,false);

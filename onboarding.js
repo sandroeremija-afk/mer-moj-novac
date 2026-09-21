@@ -1,13 +1,13 @@
 (function initializeOnboarding() {
   Object.assign(translations.hr, {
-    helpAssistant:'Pomoć & AI Asistent', helpAssistantHint:'Vodič i financijska pitanja',
+    helpAssistant:'Pomoć i AI asistent', helpAssistantHint:'Vodič i financijska pitanja',
     onboardingTourCardTitle:'Interaktivni vodič', onboardingSettingsHint:'Ponovno prođite kroz najvažnije module i postavke.', restartOnboarding:'Pokreni vodič ponovno', onboardingSteps:'Koraci vodiča', skipTour:'Preskoči', onboardingBack:'Natrag', onboardingNext:'Dalje', finishTour:'Završi',
     onboardingTransactionTitle:'Zabilježite stvarno stanje', onboardingTransactionBody:'Gumb Dodaj transakciju uvijek je pri vrhu bočne navigacije. Njime unosite prihod ili trošak.', onboardingTransactionTip:'Upozorenje vas informira, ali ne zaustavlja unos. Svaki unos odmah osvježava sve iznose i grafikone.',
     onboardingOverviewTitle:'Zaštita budžeta u stvarnom vremenu', onboardingOverviewBody:'Ovdje vidite koliko danas možete sigurno potrošiti.', onboardingOverviewTip:'Novi prihod odmah povećava raspoloživi iznos.',
     onboardingBudgetsTitle:'Smjernice, ne zabrane', onboardingBudgetsBody:'Postavite mjesečni limit za svaku kategoriju i pratite potrošnju bojama.', onboardingBudgetsTip:'Žuto upozorenje pojavljuje se na 80%, a crveno na 100%.',
     onboardingSavingsTitle:'Ciljevi s jasnim sljedećim korakom', onboardingSavingsBody:'Ovdje pratite fond, ciljeve, rokove i zaokruživanje sitniša.', onboardingSavingsTip:'Zaokruživanje možete usmjeriti u jedan aktivni cilj.',
     onboardingInsightsTitle:'Pretvorite brojke u odluke', onboardingInsightsBody:'Usporedite prihode, troškove i štednju kroz odabrano razdoblje.', onboardingInsightsTip:'Odaberite dan, mjesec, godinu ili sveukupni prikaz.',
-    onboardingSettingsTip:'Podaci Osobnog i Poslovnog profila ostaju odvojeni.', onboardingHelpTip:'AI odgovor uvijek provjerite prije važne financijske odluke.',
+    onboardingSettingsTip:'Podaci osobnog i poslovnog profila ostaju odvojeni.', onboardingHelpTip:'AI odgovor uvijek provjerite prije važne financijske odluke.',
     onboardingSecurityTip:'Automatsko zaključavanje je zadano isključeno. PIN nije obavezan.', onboardingPrivacyTip:'Isti prečac ponovno prikazuje iznose.', onboardingPersonalTip:'Spremanje je uvijek vaša odluka.'
   });
   Object.assign(translations.en, {

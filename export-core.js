@@ -1,9 +1,10 @@
 (function exposeMerExportCore(root, factory) {
   'use strict';
-  const api = factory();
+  const core = typeof module === 'object' && module.exports ? require('./core.js') : root.MerCore;
+  const api = factory(core);
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.MerExportCore = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerExportCore() {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createMerExportCore(MerCore) {
   'use strict';
 
   const contexts = ['activity', 'budget', 'savings', 'insights'];
@@ -247,7 +248,7 @@
 
     if (context === 'activity') {
       report.summary.push({label:w.count, value:String(selected.length)});
-      report.sections.push({title:w.transactions, columns:[w.date,w.time,w.description,w.type,w.category,w.amount,w.currency,w.status,w.profile,w.source,w.id], rows:selected.map(entry => [entry.day,entry.time,String(entry.row.name || entry.row.title || entry.row.rawDescription || ''),w[entry.type],categoryLabel(categoryFor(entry),entry.type),decimal(entry.amount),entry.currency,w[entry.status],profileName,String(entry.row.source || w.manual),String(entry.row.id || '')])});
+      report.sections.push({title:w.transactions, columns:[w.date,w.time,w.description,w.type,w.category,w.amount,w.currency,w.status,w.profile,w.source,w.id], rows:selected.map(entry => [entry.day,entry.time,String(entry.row.name || entry.row.title || entry.row.rawDescription || ''),w[entry.type],categoryLabel(categoryFor(entry),entry.type),decimal(entry.amount),entry.currency,w[entry.status],profileName,MerCore.formatTransactionSource(entry.row,{language}),String(entry.row.id || '')])});
     } else if (context === 'budget') {
       const grouped = new Map(categoryLists.expense.filter(category => !category.profileId || category.profileId === profileId).map(category => [String(category.id), {limit:cents(category.limit) || 0, used:0, count:0}]));
       effective.filter(entry => entry.type === 'expense').forEach(entry => {

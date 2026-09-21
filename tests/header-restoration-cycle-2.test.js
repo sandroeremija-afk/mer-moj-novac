@@ -56,7 +56,7 @@ test('cycle 2: all five modules retain visible direct header actions and origina
 test('cycle 2: Activity has one transfer entry and Savings exposes its contextual export entry', () => {
   const activity = heading('activity');
   assert.equal((activity.match(/data-activity-transfer/g) || []).length, 1);
-  assert.match(activity, /Uvoz \/ Izvoz/);
+  assert.match(activity, /Uvoz \/ izvoz/);
   assert.doesNotMatch(activity, /data-open-global-import|data-export-active|data-action-pair/);
   assert.match(heading('savings'), /data-export-savings/);
 });

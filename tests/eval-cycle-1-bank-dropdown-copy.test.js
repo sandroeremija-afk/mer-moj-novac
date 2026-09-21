@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -32,8 +33,10 @@ test('evaluation cycle 1: standalone bank dialog retains status, sync, list, add
 });
 
 test('evaluation cycle 1: Activity uses the requested Croatian filter reset copy', () => {
-  assert.match(app, /clearFilters:'Očisti filtere'/);
-  assert.match(html, /id="clearActivityFilters"[^>]*data-i18n="clearFilters">Očisti filtere<\/button>/);
-  assert.doesNotMatch(app, /Očisti filtre/);
-  assert.doesNotMatch(html, /Očisti filtre/);
+  const context = {};
+  vm.runInNewContext(app.slice(0,app.indexOf('const categoryMeta'))+';this.copy=translations;',context);
+  assert.equal(context.copy.hr.clearFilters,'Očisti filtre');
+  assert.equal(context.copy.en.clearFilters,'Clear filters');
+  assert.match(html, /id="clearActivityFilters"[^>]*data-i18n="clearFilters">Očisti filtre<\/button>/);
+  assert.doesNotMatch(html, /Očisti filtere/);
 });

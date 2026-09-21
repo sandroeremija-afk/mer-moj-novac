@@ -193,7 +193,7 @@
     close(exportDialog);
     owner = ownerOf(state);
     el('activityTransferProfile').textContent = profileLabel(state);
-    el('activityTransferTitle').textContent = say('Uvoz / Izvoz', 'Import / Export');
+    el('activityTransferTitle').textContent = say('Uvoz / izvoz', 'Import / Export');
     el('activityTransferDescription').textContent = say('Dodajte bankovni izvod ili preuzmite transakcije ovog profila.', 'Add a bank statement or download this profile’s transactions.');
     el('activityTransferClose').setAttribute('aria-label', say('Zatvori', 'Close'));
     el('activityTransferImportTitle').textContent = say('Uvoz transakcija', 'Import transactions');

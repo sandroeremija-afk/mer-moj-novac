@@ -14,14 +14,14 @@ test('evaluation cycle 1: the senior-friendly journey contains nine purposeful s
 test('evaluation cycle 1: every step exposes the requested Croatian copy and an English equivalent', () => {
   const expected = [
     ['Glavni pregled', 'Ovdje u svakom trenutku vidite koliko novca imate na raspolaganju i brzi pregled mjesečne potrošnje.'],
-    ['Unos transakcija', 'Jednim klikom možete ručno unijeti novi trošak ili prihod, ili uvoziti izvod iz vaše banke.'],
+    ['Unos transakcija', 'Jednim klikom možete ručno unijeti novi trošak ili prihod ili uvesti bankovni izvod.'],
     ['Mjesečni budžeti', 'Postavite granice potrošnje po kategorijama (hrana, prijevoz, režije) kako biste lakše uštedjeli.'],
     ['Ciljevi štednje', 'Pratite napredak svojih fondova za hitne slučajeve i postavite automatska pravila zaokruživanja.'],
     ['Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.'],
     ['Zaključavanje po vašem izboru', 'Po želji uključite zaključavanje nakon 10 minuta. Otključavate lozinkom ili postavljenim PIN-om. Vodič ne mijenja ovu postavku.'],
     ['Sakrijte iznose jednim potezom', 'Privatni način zamagljuje novčane iznose. Uključite ga ovdje ili prečacem Ctrl / ⌘ + Shift + H. Vaši podaci ostaju nepromijenjeni.'],
     ['Vaši osobni podaci', 'U odjeljku Podaci uredite ime, prezime, OIB i adresu. Unos je neobavezan i sprema se u ovom pregledniku; nije provjera identiteta.'],
-    ['Pomoć & AI Asistent', 'Zatražite unos transakcije rečenicom ili financijski savjet. Pitanja po modulu nude upute za aplikaciju. AI prijedloge provjerite prije spremanja.']
+    ['Pomoć i AI asistent', 'Opišite transakciju rečenicom ili postavite pitanje o svojim financijama. Upute su dostupne za svaki modul. Provjerite AI prijedloge prije spremanja.']
   ];
   MerOnboarding.DEFAULT_STEPS.forEach((step, index) => {
     assert.equal(step.copy.hr.title, expected[index][0]);

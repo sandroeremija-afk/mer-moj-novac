@@ -43,6 +43,36 @@
 
   Object.assign(translations.hr,{personalDataTab:'Podaci',personalDataOverline:'OSOBNI PODACI',personalDataTitle:'Vaši osobni podaci',personalDataLocal:'Lokalni unos',personalDataNotice:'Neobavezni podaci za oba profila ovog korisnika, spremljeni samo u ovom pregledniku. Ne provodimo provjeru identiteta (KYC).',personalFirstName:'Ime',personalLastName:'Prezime',personalAddress:'Adresa',personalOibHint:'11 znamenki. Provjeravamo samo format unosa.',savePersonalData:'Spremi podatke',personalDataPortability:'Polje možete isprazniti i spremiti da biste uklonili podatak.',rulesPagination:'Stranice pravila',rulesPageLabel:'{start}–{end} od {total} · {page}/{pages}'});
   Object.assign(translations.en,{personalDataTab:'Personal data',personalDataOverline:'PERSONAL DATA',personalDataTitle:'Your personal data',personalDataLocal:'Local entry',personalDataNotice:'Optional details shared by both profiles of this user, stored only in this browser. We do not perform identity verification (KYC).',personalFirstName:'First name',personalLastName:'Last name',personalAddress:'Address',personalOibHint:'11 digits. We check the input format only.',savePersonalData:'Save details',personalDataPortability:'Clear a field and save to remove it.',rulesPagination:'Rule pages',rulesPageLabel:'{start}–{end} of {total} · {page}/{pages}'});
+  // Explain security controls in Croatian without changing their original forms or behavior.
+  Object.assign(translations.hr, {
+    activityTransfer:'Uvoz / izvoz', hideBalances:'Sakrij iznose / privatni način',
+    preferences:'POSTAVKE PRIKAZA',
+    dataPortabilityHint:'Izvoz ne uključuje tajni ključ za potvrdu prijave ni kodove za oporavak.',
+    authenticatorApps:'Aplikacije za sigurnosne kodove',
+    authenticatorApp:'Aplikacija za kodove',
+    mfaDescription:'Unesite jednokratni kod iz aplikacije Google Authenticator, Authy ili druge aplikacije koja podržava TOTP kodove.',
+    saveMfaSecret:'Spremite tajni ključ u aplikaciju za sigurnosne kodove',
+    recoveryCodesTitle:'Spremite kodove za oporavak',
+    disableCode:'Kod iz aplikacije ili kod za oporavak',
+    mfaReady:'Dodatna zaštita prijave je uključena. Spremite kodove za oporavak.',
+    unlockHint:'Unesite kod iz aplikacije za sigurnosne kodove ili neiskorišteni kod za oporavak.',
+    unlockError:'Kod nije valjan ili je kod za oporavak već iskorišten.',
+    currentPassword:'Trenutačna lozinka', invalidCurrentPassword:'Trenutačna lozinka nije ispravna.',
+    localMfaNotice:'Ovo je lokalni demonstracijski način: prijava, dodatna provjera identiteta i popis sesija vrijede samo u ovom profilu preglednika. Stvarna usluga zahtijeva provjeru na poslužitelju i sigurnu dostavu kodova.',
+    localSessionIp:'Lokalni demonstracijski način',
+    smsMfaDescription:'U demonstracijskom načinu jednokratni SMS kod prikazuje se u aplikaciji. Stvarna usluga zahtijeva pružatelja dostave SMS poruka.',
+    smsUnlockHint:'Unesite demonstracijski SMS kod ili neiskorišteni kod za oporavak.',
+    disableSmsCode:'SMS kod ili kod za oporavak',
+    smartRules:'AUTOMATSKA KATEGORIZACIJA',
+    currencyEUR:'EUR — euro', currencyUSD:'USD — američki dolar',
+    currencyGBP:'GBP — britanska funta', currencyCHF:'CHF — švicarski franak',
+    timezoneZagreb:'Zagreb (Hrvatska)', timezoneUtc:'UTC — svjetsko vrijeme', timezoneNewYork:'New York (SAD)'
+  });
+  Object.assign(translations.en, {
+    currencyEUR:'EUR — Euro', currencyUSD:'USD — US Dollar',
+    currencyGBP:'GBP — Pound Sterling', currencyCHF:'CHF — Swiss Franc',
+    timezoneZagreb:'Zagreb (Croatia)', timezoneUtc:'UTC — universal time', timezoneNewYork:'New York (USA)'
+  });
   let selectedSettingsTab = 'general';
   let personalDataUI = null;
   const rulesPages = new Map();
@@ -118,7 +148,20 @@
     $$('.input-suffix > span:last-child').forEach(element=>{element.textContent=currencySymbol();});
   }
 
+  function localizeSettingsOptionLabels() {
+    const options = {
+      baseCurrency:{EUR:'currencyEUR',USD:'currencyUSD',GBP:'currencyGBP',CHF:'currencyCHF'},
+      timezone:{'Europe/Zagreb':'timezoneZagreb',UTC:'timezoneUtc','America/New_York':'timezoneNewYork'}
+    };
+    Object.entries(options).forEach(([id, keys]) => {
+      [...($('#'+id)?.options || [])].forEach(option => {
+        if (Object.hasOwn(keys, option.value)) option.textContent=t(keys[option.value]);
+      });
+    });
+  }
+
   function renderPremiumSettings() {
+    localizeSettingsOptionLabels();
     $('#baseCurrency').value=appState.settings.currency;
     $('#dateFormat').value=appState.settings.dateFormat;
     $('#timezone').value=appState.settings.timezone;

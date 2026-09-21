@@ -143,7 +143,9 @@ test('cycle 1: Ctrl/Command Shift H remains functional and is blocked before log
 
 test('cycle 1: Settings checkbox renders the current global privacy state in both directions', () => {
   const render = premium.match(/function renderPremiumSettings\(\) \{([\s\S]*?)\n  \}/)?.[0];
+  const labels = premium.match(/function localizeSettingsOptionLabels\(\) \{([\s\S]*?)\n  \}/)?.[0];
   assert.ok(render);
+  assert.ok(labels);
   const nodes = new Map();
   const appState = {settings:{currency:'EUR', dateFormat:'locale', timezone:'Europe/Zagreb', hideBalances:false, autoLockEnabled:false}};
   const context = {
@@ -154,7 +156,7 @@ test('cycle 1: Settings checkbox renders the current global privacy state in bot
     renderMfa() {}, renderActiveSessions() {}, renderAutomationRules() {}, renderImportReview() {}
   };
   vm.createContext(context);
-  vm.runInContext(`${render};this.render=renderPremiumSettings;`, context);
+  vm.runInContext(`${labels};${render};this.render=renderPremiumSettings;`, context);
   for (const hidden of [false, true, false]) {
     appState.settings.hideBalances = hidden;
     context.render();

@@ -19,6 +19,7 @@ jsFiles.push('server/ai-http.js','server/provider-client.js');
 jsFiles.push('pagination.js','sections.js','zero-scroll.js');
 jsFiles.push('insight-core.js','insight-charts.js');
 jsFiles.push('anomaly-core.js','anomaly-ui.js');
+jsFiles.push('assistant-voice.js');
 
 for (const file of jsFiles) {
   const fullPath = path.join(root, file);

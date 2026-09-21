@@ -1,6 +1,6 @@
 (function initializeHelpAssistant() {
   Object.assign(translations.hr, {
-    helpCenter:'CENTAR ZA POMOĆ', helpAssistant:'Pomoć & AI Asistent', helpAssistantIntro:'Odaberite modul i pronađite odgovor bez napuštanja ovog prozora.', guideFaq:'Vodič & FAQ', aiAssistant:'AI ASISTENT', assistantWidgetTitle:'Vaš financijski suputnik', openAiAssistant:'Otvori AI financijskog asistenta', closeAiAssistant:'Zatvori AI asistenta', faqModuleFilters:'Odaberite modul za pomoć', helpModeTabs:'Način pomoći', helpModeFaq:'Pitanja po modulu', helpModeAi:'Pitaj AI', restartTourFromHelp:'Pokreni vodič ponovno', restartTourFromHelpHint:'Ponovno istaknite ključne kontrole korak po korak.',
+    helpCenter:'CENTAR ZA POMOĆ', helpAssistant:'Pomoć i AI asistent', helpAssistantIntro:'Odaberite modul i pronađite odgovor bez napuštanja ovog prozora.', guideFaq:'Vodič i česta pitanja', aiAssistant:'AI ASISTENT', assistantWidgetTitle:'Vaš financijski suputnik', openAiAssistant:'Otvori AI financijskog asistenta', closeAiAssistant:'Zatvori AI asistenta', faqModuleFilters:'Odaberite modul za pomoć', helpModeTabs:'Način pomoći', helpModeFaq:'Pitanja po modulu', helpModeAi:'Pitaj AI', restartTourFromHelp:'Pokreni vodič ponovno', restartTourFromHelpHint:'Ponovno istaknite ključne kontrole korak po korak.',
     helpOverviewHint:'Stanje i dnevni tempo', helpBudgetsHint:'Limiti i mjesečni plan', helpSavingsHint:'Ciljevi i zaokruživanja', helpActivityHint:'Transakcije i filtri', helpInsightsHint:'Trendovi i izvještaji',
     faqSafeQuestion:'Što je Zaštita budžeta?', faqPaceQuestion:'Kako se računa Dnevni tempo?', faqSafeAnswer:'Sigurno za potrošiti je mjesečni prihod umanjen za evidentirane mjesečne troškove. Dodatni prihod odmah povećava taj iznos.', faqPaceAnswer:'Preostali sigurni iznos dijeli se s brojem preostalih dana u tekućem mjesecu.',
     faqBudgetLimitQuestion:'Kako postaviti limit kategorije?', faqBudgetLimitAnswer:'U Budžetima otvorite kategoriju, unesite mjesečni limit i spremite. Sve povezane kartice odmah se preračunavaju.', faqBudgetWarningQuestion:'Blokira li prekoračenje unos troška?', faqBudgetWarningAnswer:'Ne. Žuto i crveno upozorenje signaliziraju 80% i 100%, ali stvarni trošak uvijek možete evidentirati.',
@@ -215,6 +215,15 @@
     { root:assistantWidget, messages:$('#assistantMessages'), form:widgetForm, input:$('#assistantInput'), send:$('#assistantSend'), status:$('#assistantStatus') },
     { root:helpUi.aiPanel, messages:helpUi.messages, form:helpUi.form, input:helpUi.input, send:helpUi.send, status:helpUi.status }
   ];
+  const voice = window.MerAssistantVoice?.create({
+    host:window, document,
+    getOwner:()=>window.MerAssistantActions?.owner?.() || '',
+    getLanguage:()=>currentLang
+  });
+  assistantSurfaces.forEach(surface=>{
+    surface.isVisible=()=>surface.root===assistantWidget?!assistantWidget.hidden:modal.open&&!helpUi.aiPanel.hidden;
+    voice?.attach(surface);
+  });
 
   function assistantSessionKey() {
     const session = window.MerAuthProvider?.currentSession?.();
@@ -258,6 +267,7 @@
   }
 
   function renderMessages() {
+    voice?.refresh();
     // This fresh local introduction never enters stored history or triggers a request.
     const anomalyIntro = MerFinancialAssistant.anomalyIntroduction?.(financialContextFor(appState.activeAccount), currentLang, appState.settings.hideBalances) || '';
     assistantSurfaces.forEach(surface => {
@@ -276,6 +286,7 @@
           source.textContent = t(message.source === 'remote' ? 'assistantRemote' : 'assistantLocal');
           item.append(source);
           (message.actions || []).forEach(action => item.append(renderActionCard(message, action)));
+          if(message.source==='remote'&&voice)item.append(voice.messageButton(message.content,surface));
         }
         list.append(item);
       });
@@ -337,6 +348,7 @@
       surface.status.classList.toggle('assistant-thinking', busy);
       surface.status.setAttribute('aria-busy', String(busy));
     });
+    voice?.refresh();
   }
 
   function selectFaqModule(moduleName = 'overview') {
@@ -361,6 +373,7 @@
 
   function selectHelpMode(mode = 'faq', { focus = false } = {}) {
     const selected = mode === 'assistant' ? 'assistant' : 'faq';
+    if(selected!=='assistant')voice?.stopAll();
     $$('[data-help-mode]').forEach(button => {
       const active = button.dataset.helpMode === selected;
       button.classList.toggle('active', active);
@@ -398,6 +411,7 @@
   }
 
   function closeAssistant({ focus = true } = {}) {
+    voice?.stopAll();
     activeRequest?.abort();
     activeRequest = null;
     setAssistantBusy(false);
@@ -416,6 +430,7 @@
     const requestProfileId = appState.activeAccount;
     const requestOwner = window.MerAssistantActions?.owner?.();
     if (!requestOwner) return;
+    voice?.stopAll();
     const history = profileHistory(requestProfileId);
     history.push({ id:`user-${Date.now()}`, role:'user', content:message, source:'local' });
     renderMessages();
@@ -452,6 +467,7 @@
   }
 
   function resetAssistantSession() {
+    voice?.stopAll({clearDrafts:true});
     activeRequest?.abort();
     activeRequest = null;
     histories.clear();
@@ -493,12 +509,14 @@
   modal.addEventListener('close', () => {
     // Native close events are queued; a tour Back/Next may already reopen Help.
     if (modal.open) return;
+    voice?.stopAll();
     activeRequest?.abort();
     activeRequest = null;
     setAssistantBusy(false);
     selectHelpMode('faq');
   });
   reactiveStore.subscribe(event => {
+    voice?.refresh();
     if (activeRequest && event.activeAccount !== activeRequest.profileId) {
       const request = activeRequest;
       activeRequest = null;

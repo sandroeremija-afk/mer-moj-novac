@@ -1,0 +1,109 @@
+/* Desktop pages share the bounded canvas; phones/tablets keep natural outer flow.
+   Only page content grows here. Dialogs and pagination state are not modified. */
+@media (min-width:1025px) {
+  #overviewView > .dashboard-grid,
+  #overviewView:has(.spending-anomaly-alert:not([hidden])) > .dashboard-grid {
+    flex:1 1 0;
+    min-height:0;
+    max-height:none;
+    align-content:stretch;
+  }
+
+  /* The four visible category rows own spare space, not an empty panel tail. */
+  #budgetsView #budgetTableWindow {
+    display:flex;
+    flex-direction:column;
+    flex:1 1 0;
+    min-height:0;
+    max-height:none;
+    overflow:visible;
+  }
+  #budgetsView #budgetTable {
+    flex:1 1 0;
+    min-height:0;
+    grid-auto-rows:minmax(0,1fr);
+    align-content:stretch;
+  }
+  #budgetsView #budgetTableWindow > .mer-pagination {
+    flex:0 0 auto;
+    margin-top:auto;
+    padding-top:10px;
+  }
+  #budgetsView > .table-panel > :is(.allocation-bar,.allocation-foot) {
+    flex:0 0 auto;
+  }
+
+  /* Date headings stay compact while transaction rows use the available height. */
+  #activityView #transactionList {
+    display:flex;
+    flex-direction:column;
+    flex:1 1 0;
+    min-height:0;
+    overflow:visible;
+  }
+  #activityView #transactionList > .transaction-date { flex:0 0 auto; }
+  #activityView #transactionList > .transaction-item { flex:1 1 0; }
+  #activityView #transactionList:empty { flex:0 0 auto; }
+  #activityView #activityEmpty:not([hidden]) {
+    display:grid;
+    flex:1 1 0;
+    min-height:0;
+    align-content:center;
+    justify-items:center;
+  }
+  #activityView #activityPagination { flex:0 0 auto; margin-top:auto; }
+
+  #insightsView > .advanced-insights-grid {
+    min-height:0;
+    max-height:none;
+    align-content:stretch;
+  }
+  #insightsView .advanced-insights-grid .donut-layout {
+    grid-template-rows:minmax(100px,1fr) auto;
+    align-content:stretch;
+    min-height:0;
+  }
+  #insightsView #categoryDonut {
+    width:auto;
+    height:100%;
+    max-width:100%;
+    max-height:190px;
+    aspect-ratio:1;
+  }
+  /* The renderer already compacts long amounts and selects a smaller fit tier.
+     Enlarge only its short/regular values relative to the actual donut width. */
+  #insightsView #donutTotal[data-fit="regular"] { font-size:clamp(12px,11.5cqi,22px); }
+  #insightsView #monthlyBarChart {
+    flex:1 1 0;
+    align-content:stretch;
+    grid-auto-rows:minmax(0,1fr);
+  }
+  #insightsView #monthlyBarChart .monthly-value-track { height:7px; }
+  #insightsView .expense-structure-card #expenseStructureSummary {
+    justify-content:space-evenly;
+  }
+
+  /* Savings already has a filling grid; let the chart shrink/grow inside its row. */
+  #savingsView > :is(.savings-history-card,.goal-buckets-panel) { min-height:0; }
+  #savingsView .savings-area-chart { flex:1 1 0; min-height:0; }
+  #savingsView #savingsHistorySvg { min-height:0; height:100%; }
+}
+
+/* Later tablet rules previously restored three wide tracks on phones while the
+   progress row still spanned them. Restore a real two-track mobile row. */
+@media (max-width:640px) {
+  #budgetsView #budgetTable .budget-row {
+    min-width:0;
+    grid-template-columns:minmax(0,1fr) 44px;
+    column-gap:10px;
+  }
+  #budgetsView #budgetTable .budget-category { min-width:0; }
+  #budgetsView #budgetTable .budget-category :is(strong,small) { overflow-wrap:anywhere; }
+  #budgetsView #budgetTable .budget-row-progress {
+    grid-column:1 / -1;
+    grid-row:2;
+    grid-template-columns:minmax(0,1fr) max-content;
+    min-width:0;
+  }
+  #budgetsView #budgetTable .edit-budget { grid-column:2; grid-row:1; }
+}

@@ -13,9 +13,9 @@ class Element {
 }
 
 function realHelp() {
-  const modal=new Element('dialog'),helpBody=new Element(),helpFaqPanel=new Element(),calls=[];
+  const modal=new Element('dialog'),helpBody=new Element(),helpFaqPanel=new Element(),calls=[],voiceCalls=[];
   modal.append(helpBody);helpBody.append(helpFaqPanel);
-  const context={document:{createElement:tag=>new Element(tag)},helpBody,helpFaqPanel,modal,assistantWidget:{hidden:true},t:key=>key,svgIcon:()=>new Element('svg'),$$:()=>[],renderMessages:()=>calls.push('render'),selectFaqModule:()=>calls.push('faq'),closeAssistant:()=>calls.push('close-widget'),setTimeout:()=>{throw new Error('Opening tour Help must not schedule a request');},openModal:dialog=>{dialog.open=true;calls.push('open-help');},activeRequest:{abort:()=>calls.push('abort')},setAssistantBusy:()=>calls.push('idle')};
+  const context={document:{createElement:tag=>new Element(tag)},voice:{stopAll:()=>voiceCalls.push('stop')},helpBody,helpFaqPanel,modal,assistantWidget:{hidden:true},t:key=>key,svgIcon:()=>new Element('svg'),$$:()=>[],renderMessages:()=>calls.push('render'),selectFaqModule:()=>calls.push('faq'),closeAssistant:()=>calls.push('close-widget'),setTimeout:()=>{throw new Error('Opening tour Help must not schedule a request');},openModal:dialog=>{dialog.open=true;calls.push('open-help');},activeRequest:{abort:()=>calls.push('abort')},setAssistantBusy:()=>calls.push('idle')};
   vm.createContext(context);
   const panelStart=source.indexOf('    const aiPanel = document.createElement(');
   const panelEnd=source.indexOf('    helpBody.append(aiPanel);',panelStart)+'    helpBody.append(aiPanel);'.length;
@@ -25,7 +25,7 @@ function realHelp() {
   const openStart=source.indexOf('  function openHelp('),openEnd=source.indexOf("  $('#openHelpAssistant').addEventListener",openStart);
   const closeStart=source.indexOf("  modal.addEventListener('close', () => {"),closeEnd=source.indexOf('  reactiveStore.subscribe(',closeStart);
   vm.runInContext([source.slice(modeStart,modeEnd),source.slice(openStart,openEnd),source.slice(closeStart,closeEnd)].join('\n'),context);
-  return {context,modal,helpBody,helpFaqPanel,calls};
+  return {context,modal,helpBody,helpFaqPanel,calls,voiceCalls};
 }
 
 test('step 9 opens the production Help mode containing real chat input and three localized sample questions',()=>{
@@ -44,14 +44,16 @@ test('step 9 opens the production Help mode containing real chat input and three
 });
 
 test('a queued native Help close event cannot reset reopened tour chat to FAQ or abort newer work',()=>{
-  const {context,modal,helpFaqPanel,calls}=realHelp();
+  const {context,modal,helpFaqPanel,calls,voiceCalls}=realHelp();
   context.openHelp('assistant');modal.open=false;context.openHelp('assistant');
   calls.length=0;modal.listeners.close();
   assert.equal(context.helpUi.aiPanel.hidden,false);assert.equal(helpFaqPanel.hidden,true);
   assert.deepEqual(calls,[]);assert.ok(context.activeRequest);
+  assert.deepEqual(voiceCalls,[],'a stale close event cannot stop microphone activity in reopened Help');
   modal.open=false;modal.listeners.close();
   assert.equal(context.helpUi.aiPanel.hidden,true);assert.equal(helpFaqPanel.hidden,false);
   assert.equal(context.activeRequest,null);assert.deepEqual(calls,['abort','idle']);
+  assert.deepEqual(voiceCalls,['stop','stop'],'real close and FAQ mode both stop private voice activity');
 });
 
 test('hosted phone Help overrides hidden prompts while keeping the real composer inside a compact tour lane',()=>{

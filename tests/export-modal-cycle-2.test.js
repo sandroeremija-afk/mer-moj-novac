@@ -80,7 +80,7 @@ function harness() {
 async function main() {
   {
     const h=harness();assert.equal(h.ui.openActivityTransfer(),true);
-    assert.equal(h.get('activityTransferTitle').textContent,'Uvoz / Izvoz');
+    assert.equal(h.get('activityTransferTitle').textContent,'Uvoz / izvoz');
     assert.equal(h.get('activityTransferImportTitle').textContent,'Uvoz transakcija');
     assert.equal(h.get('activityTransferExportTitle').textContent,'Izvoz transakcija');
     assert.equal(h.document.downloads.length,0);
