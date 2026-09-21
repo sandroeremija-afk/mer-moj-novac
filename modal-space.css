@@ -1,5 +1,7 @@
 /* Static dialogs follow their content; chart dialogs own separate, bounded plot space.
    Set both dimensions to override the legacy mobile logical block-size, not only height. */
+#bankSettingsModal .settings-label-with-info { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+#bankSettingsModal .settings-label-with-info .info-button { flex:0 0 20px; width:20px; height:20px; margin:0; }
 html body dialog:is(#transactionModal,#assessmentModal,#budgetModal,#savingsModal,#goalModal,#recurringModal,#incomeCategoryModal,#budgetTransferModal,#savingsStrategyModal,.savings-minimal-modal,#breakdownModal,#budgetCategoriesModal,#budgetDetailsModal,#savingsDetailsModal,.planning-hub-modal,.planning-dialog,#subscriptionsModal)[open]:not(.tour-modal-host) {
   height:fit-content; block-size:fit-content; min-height:0; min-block-size:0;
   max-height:min(90dvh,calc(var(--ui-visual-height,100dvh) - 20px));
@@ -33,6 +35,16 @@ html body dialog:is(#breakdownModal,#budgetCategoriesModal,#budgetDetailsModal,#
   #savingsStrategyModal .savings-strategy-grid p { line-height:1.6; }
 }
 @media(max-width:640px) {
+  html body dialog#bankSettingsModal[open]:not(.tour-modal-host) { inset:0; margin:auto; }
+  html body #bankSettingsModal:not(.tour-modal-host) > .mer-generated-footer { padding-block:0; margin-top:4px; }
+  /* Keep the full explanation and footer visible on short phones. The legacy
+     90dvh bottom sheet leaves unused room above this single-page summary. */
+  html body dialog#savingsHistoryDetailModal[open]:not(.tour-modal-host) {
+    inset:0; margin:auto;
+    max-height:calc(var(--ui-visual-height,100dvh) - 20px);
+    max-block-size:calc(var(--ui-visual-height,100dvh) - 20px);
+  }
+  #savingsHistoryDetailModal .savings-detail-body { gap:6px; }
   html body #savingsStrategyModal.modal[open]:not(.tour-modal-host) {
     inset:0; margin:auto; max-height:calc(var(--ui-visual-height,100dvh) - 20px); max-block-size:calc(var(--ui-visual-height,100dvh) - 20px);
   }

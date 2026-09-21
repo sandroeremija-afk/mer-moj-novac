@@ -173,7 +173,7 @@ function applicationFixture() {
 test('production top metric modal handlers select unique plots and honor the active timeframe',()=>{
   const h=applicationFixture();
   h.context.renderInsightDetail('net');
-  assert.match(h.node('#insightChartTitle').textContent,/Kumulativni rast/);
+  assert.equal(h.node('#insightChartTitle').textContent,'Kumulativno stanje novca');
   assert.match(h.node('#insightChartIntro').textContent,/Neevidentirana imovina i dugovi nisu uključeni/);
   assert.match(h.chart.host.innerHTML,/insight-trend-line/);
   assert.equal(h.chart.node('.trend-amount').textContent,Core.formatCurrency(2050,{locale:'hr-HR',currency:'EUR'}));

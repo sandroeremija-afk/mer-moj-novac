@@ -1,0 +1,185 @@
+/* Scale the page hierarchy together. Width AND height constrain growth, so a
+   wide but short laptop never inherits the density of a tall desktop. */
+@media (min-width:1025px) {
+  #appShell {
+    --fluid-step:clamp(0px,min(calc((100vw - 1366px) * .025),calc((100dvh - 768px) * .025)),16px);
+    --fluid-control:calc(44px + var(--fluid-step) * .75);
+  }
+  .page {
+    --fluid-gap:calc(16px + var(--fluid-step) * .75);
+    --fluid-pad:calc(20px + var(--fluid-step) * .75);
+    --fluid-label:calc(12px + var(--fluid-step) * .1875);
+    --fluid-body:calc(14px + var(--fluid-step) * .25);
+    --fluid-title:calc(18px + var(--fluid-step) * .375);
+    --fluid-metric:calc(28px + var(--fluid-step));
+    --fluid-summary-height:clamp(152px,calc(23dvh - 16px),320px);
+    max-width:1920px;
+    padding-inline:clamp(28px,2.2vw,56px);
+    padding-top:calc(16px + var(--fluid-step) * .75);
+    padding-bottom:calc(24px + var(--fluid-step) * .75);
+  }
+  .page > .view > .page-heading { margin-bottom:calc(10px + var(--fluid-step) * .5); }
+  #appShell .page > .view > .actions-only-heading .heading-actions { gap:calc(10px + var(--fluid-step) * .25); }
+  #appShell .page > .view > .actions-only-heading .heading-actions > button,
+  #insightsFilters > button,
+  #activityView > .activity-panel .activity-toolbar :is(input,select,button),
+  #activityPagination > button,
+  #budgetsView #budgetTableWindow > .mer-pagination button,
+  #savingsView > .goal-buckets-panel > .panel-heading > button {
+    min-height:var(--fluid-control);
+    font-size:calc(13px + var(--fluid-step) * .1875);
+    padding-inline:calc(14px + var(--fluid-step) * .375);
+  }
+  #appShell .page > .view > .actions-only-heading .heading-actions > button > svg {
+    flex-basis:calc(17px + var(--fluid-step) * .25);
+    width:calc(17px + var(--fluid-step) * .25);
+    height:calc(17px + var(--fluid-step) * .25);
+  }
+  /* Header controls live outside .page, but share its bounded control scale. */
+  #appShell .topbar .header-action-cluster { gap:calc(8px + var(--fluid-step) * .25); }
+  #appShell .topbar :is(.header-layout-toggle,.notification-button),
+  #appShell .topbar .top-actions > .icon-button,
+  #appShell .topbar .header-action-cluster > .enterprise-header-controls > .icon-button,
+  #appShell .topbar .header-action-cluster > .icon-button {
+    width:var(--fluid-control);
+    height:var(--fluid-control);
+    min-width:var(--fluid-control);
+    min-height:var(--fluid-control);
+    flex:0 0 var(--fluid-control);
+  }
+  #appShell .topbar .header-bank-button {
+    min-height:var(--fluid-control);
+    font-size:calc(13px + var(--fluid-step) * .1875);
+    padding-inline:calc(11px + var(--fluid-step) * .375);
+  }
+  #appShell .topbar :is(.header-layout-toggle,.notification-button,.header-bank-button) > svg,
+  #appShell .topbar .top-actions > .icon-button > svg,
+  #appShell .topbar .header-action-cluster > .enterprise-header-controls > .icon-button > svg,
+  #appShell .topbar .header-action-cluster > .icon-button > svg {
+    width:calc(18px + var(--fluid-step) * .25);
+    height:calc(18px + var(--fluid-step) * .25);
+  }
+
+  /* Summary rows receive a viewport share before the remaining lower row. */
+  :is(#overviewView,#budgetsView) > .summary-grid {
+    min-height:var(--fluid-summary-height);
+    gap:var(--fluid-gap);
+    margin-bottom:var(--fluid-gap);
+  }
+  :is(#overviewView,#budgetsView) > .summary-grid > .summary-card,
+  #insightsView > .insights-kpis > .summary-card {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:calc(8px + var(--fluid-step) * .25);
+    min-width:0;
+    padding:var(--fluid-pad);
+  }
+  :is(#overviewView,#budgetsView) > .summary-grid .summary-value,
+  #insightsView > .insights-kpis .summary-value {
+    font-size:var(--fluid-metric);
+    line-height:1.15;
+    margin:0;
+    overflow-wrap:anywhere;
+  }
+  :is(#overviewView,#budgetsView) > .summary-grid .card-label,
+  #insightsView > .insights-kpis .card-label { font-size:var(--fluid-body); }
+  :is(#overviewView,#budgetsView) > .summary-grid :is(.metric-note,.delta),
+  #insightsView > .insights-kpis .metric-note {
+    font-size:var(--fluid-label);
+    line-height:1.4;
+    margin:0;
+  }
+  :is(#overviewView,#budgetsView) > .summary-grid .progress-track { margin:0; flex-shrink:0; }
+
+  #overviewView > .dashboard-grid { gap:var(--fluid-gap); }
+  #overviewView > .dashboard-grid > :is(.safe-panel,.budget-panel) { padding:var(--fluid-pad); }
+  #overviewView > .dashboard-grid .panel-heading h2,
+  #budgetsView > .table-panel > .panel-heading h2 { font-size:var(--fluid-title); }
+  #overviewView > .dashboard-grid :is(.overline,.safe-footer,.link-button),
+  #overviewView .safe-copy :is(p,span),
+  #overviewView .budget-item-title span,
+  #overviewView .budget-percent { font-size:var(--fluid-label); }
+  #overviewView .safe-ring {
+    width:calc(142px + var(--fluid-step) * 5);
+    height:calc(142px + var(--fluid-step) * 5);
+  }
+  #overviewView .safe-ring strong { font-size:calc(28px + var(--fluid-step) * .75); }
+  #overviewView .safe-ring span { font-size:var(--fluid-label); }
+  #overviewView .safe-copy > strong { font-size:calc(30px + var(--fluid-step)); }
+  #overviewView .budget-item-title strong { font-size:var(--fluid-body); }
+  #overviewView .budget-list { gap:var(--fluid-gap); margin-top:var(--fluid-gap); }
+  #overviewView .budget-bar { height:calc(6px + var(--fluid-step) * .125); }
+
+  #budgetsView > .table-panel,
+  #activityView > .activity-panel { padding:var(--fluid-pad); }
+  #budgetsView #budgetTable .budget-category strong,
+  #activityView #transactionList .transaction-copy > strong { font-size:var(--fluid-body); }
+  #budgetsView #budgetTable :is(.budget-category small,.budget-row-value,.budget-percent),
+  #budgetsView > .table-panel :is(.allocation-foot,.status-pill),
+  #activityView #transactionList :is(.transaction-meta,.transaction-meta small,.transaction-category),
+  #activityView .activity-result-summary,
+  #budgetsView #budgetTableWindow > .mer-pagination span { font-size:var(--fluid-label); }
+  #activityView #transactionList .transaction-amount { font-size:calc(16px + var(--fluid-step) * .375); }
+  #activityView #transactionList > .transaction-date { font-size:calc(10px + var(--fluid-step) * .1875); }
+
+  #savingsView {
+    grid-template-rows:auto clamp(218px,calc(30dvh + var(--fluid-step) * 3),480px) minmax(0,1fr);
+    gap:var(--fluid-gap);
+  }
+  #savingsView > .page-heading { margin-bottom:0; }
+  #savingsView > .savings-layout { gap:var(--fluid-gap); }
+  #savingsView .savings-hero,
+  #savingsView #savingsRecommendationCard,
+  #savingsView > .savings-history-card,
+  #savingsView > .goal-buckets-panel { padding:var(--fluid-pad); }
+  #savingsView .savings-hero,
+  #savingsView #savingsRecommendationCard { gap:var(--fluid-gap); }
+  #savingsView .savings-hero-head h2,
+  #savingsView #savingsRecommendationCard .recommendation-title h2,
+  #savingsView .savings-history-heading h2,
+  #savingsView .goal-buckets-panel > .panel-heading h2 { font-size:var(--fluid-title); }
+  #savingsView .savings-number strong { font-size:calc(30px + var(--fluid-step)); }
+  #savingsView #savingsRecommendationCard .recommendation-stat strong,
+  #savingsView .savings-history-total strong,
+  #savingsView .goal-bucket-values strong { font-size:var(--fluid-metric); }
+  #savingsView .savings-number > span,
+  #savingsView #savingsRecommendationCard .recommendation-stat span,
+  #savingsView .goal-bucket-title strong { font-size:var(--fluid-body); }
+  #savingsView :is(.savings-summary-link,.savings-history-total small,.goal-bucket-title small,.goal-bucket-values > span,.savings-chart-axis) {
+    font-size:var(--fluid-label);
+  }
+  #savingsView .goal-bucket-grid { gap:var(--fluid-gap); }
+  #savingsView .goal-bucket-card { gap:var(--fluid-gap); padding:var(--fluid-pad); }
+  #savingsView .rich-goal-card .goal-bucket-head { grid-template-columns:calc(64px + var(--fluid-step) * 2) minmax(0,1fr); }
+  #savingsView .goal-progress-ring {
+    width:calc(64px + var(--fluid-step) * 2);
+    height:calc(64px + var(--fluid-step) * 2);
+    flex-basis:calc(64px + var(--fluid-step) * 2);
+  }
+  #savingsView .goal-progress-ring span { font-size:calc(16px + var(--fluid-step) * .375); }
+  /* One visible goal, including the last pagination page, uses both columns.
+     Hidden records stay hidden and do not participate in this count. */
+  #savingsView #goalBucketGrid:not(:has(> .goal-bucket-card:not([data-page-hidden="true"]):not([hidden]) ~ .goal-bucket-card:not([data-page-hidden="true"]):not([hidden]))) {
+    grid-template-columns:minmax(0,1fr);
+  }
+
+  #insightsView:not([hidden]) {
+    grid-template-rows:auto minmax(var(--fluid-summary-height),auto) minmax(0,1fr);
+    gap:var(--fluid-gap);
+  }
+  #insightsView > .page-heading { margin-bottom:0; }
+  #insightsView > .insights-kpis { gap:var(--fluid-gap); }
+  #insightsView > .advanced-insights-grid { gap:var(--fluid-gap); }
+  #insightsView > .advanced-insights-grid > .insight-visual-card { padding:var(--fluid-pad); }
+  #insightsView > .advanced-insights-grid .panel-heading h2 { font-size:var(--fluid-title); }
+  #insightsView .insights-rate-summary .savings-gauge { width:min(100%,calc(120px + var(--fluid-step) * 5)); }
+  #insightsView .insights-rate-summary .savings-gauge strong { font-size:clamp(13px,12cqi,28px); }
+  #insightsView #categoryDonut { max-height:calc(190px + var(--fluid-step) * 4); }
+  #insightsView #donutTotal[data-fit="regular"] { font-size:clamp(12px,11.5cqi,30px); }
+  #insightsView > .advanced-insights-grid :is(.donut-legend b,.donut-legend small,.monthly-comparison-row > small,.monthly-value-lane strong),
+  #insightsView .advanced-insights-grid .insight-caption :is(strong,span),
+  #insightsView .expense-structure-note { font-size:var(--fluid-label); }
+  #insightsView .expense-structure-values :is(span,small) { font-size:var(--fluid-body); }
+  #insightsView .expense-structure-values strong { font-size:var(--fluid-metric); }
+}

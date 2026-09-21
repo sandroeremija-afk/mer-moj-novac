@@ -8,7 +8,12 @@
   const finite = value => Number.isFinite(Number(value)) ? Number(value) : 0;
   function copy(options) {
     const en = String(options.locale || '').startsWith('en');
-    return en ? {change:'Change from previous interval',unavailable:'No comparable previous value',hidden:'Amounts hidden',date:'Select chart date',hint:'Hover, tap or use the arrow keys to explore.',empty:'No transactions in this period.'} : {change:'Promjena prema prethodnom razdoblju',unavailable:'Nema usporedive prethodne vrijednosti',hidden:'Iznosi su skriveni',date:'Odaberite datum na grafikonu',hint:'Pomaknite pokazivač, dodirnite graf ili koristite strelice.',empty:'Nema transakcija u ovom razdoblju.'};
+    const explanation = (options.mode || 'balance') === 'balance'
+      ? (en ? 'Opening balance + recorded income − expenses; not total net worth.' : 'Početno stanje + evidentirani prihodi − troškovi; nije ukupna imovina.')
+      : options.mode === 'income'
+        ? (en ? 'Recorded income per interval; future entries are excluded.' : 'Evidentirani prihodi po intervalima, bez budućih unosa.')
+        : (en ? 'Recorded expenses per interval; future entries are excluded.' : 'Evidentirani troškovi po intervalima, bez budućih unosa.');
+    return en ? {change:'Change from previous interval',unavailable:'No percentage: the previous amount is missing or zero',hidden:'Amounts hidden',date:'Select chart date',hint:`${explanation} Hover, tap or use the arrow keys to explore.`,empty:'No recorded transactions in this period. Future entries are not included yet.'} : {change:'Promjena prema prethodnoj točki grafikona',unavailable:'Nema usporedive vrijednosti: prethodni iznos nedostaje ili je 0',hidden:'Iznosi su skriveni',date:'Odaberite datum na grafikonu',hint:`${explanation} Dodirnite graf ili koristite strelice za detalje.`,empty:'Nema transakcija u odabranom razdoblju. Budući unosi još nisu uključeni.'};
   }
   function money(value, options) {
     const n = finite(value);
@@ -43,7 +48,7 @@
   function percent(value,options){return value===null||!Number.isFinite(value)?'—':`${value>0?'+':''}${new Intl.NumberFormat(options.locale||'hr-HR',{maximumFractionDigits:2}).format(value)}%`;}
   function growthSummary(data,options){
     const en=String(options.locale||'').startsWith('en'),first=finite(data.openingBalance??data.series[0]?.balance),last=finite(data.closingBalance??data.series.at(-1)?.balance),change=Math.round((last-first)*100)/100,growth=first===0?null:change/Math.abs(first)*100;
-    return `<div class="insight-growth-summary"><span>${en?'Net balance change':'Promjena neto stanja'}<strong data-monetary>${esc(options.privateMode?copy(options).hidden:signedMoney(change,options))}</strong></span><span>${en?'Growth from opening balance':'Rast od početnog stanja'}<strong data-monetary>${esc(options.privateMode?copy(options).hidden:percent(growth,options))}</strong></span></div>`;
+    return `<div class="insight-growth-summary"><span title="${en?'Closing balance minus opening balance.':'Završno stanje umanjeno za početno stanje.'}">${en?'Net balance change':'Promjena neto stanja'}<strong data-monetary>${esc(options.privateMode?copy(options).hidden:signedMoney(change,options))}</strong></span><span title="${en?'Balance change divided by the absolute opening balance × 100. No percentage when the opening balance is zero.':'Promjena stanja podijeljena s apsolutnim početnim stanjem × 100. Ako je početno stanje 0, postotak se ne računa.'}">${en?'Change from opening balance':'Promjena od početnog stanja'}<strong data-monetary>${esc(options.privateMode?copy(options).hidden:percent(growth,options))}</strong></span></div>`;
   }
   function categoryMarkup(breakdown,options={}){
     if(!breakdown)return '';
@@ -51,7 +56,7 @@
     if(all.length>3){const rest=all.slice(3),sum=key=>Math.round(rest.reduce((n,row)=>n+finite(row[key]),0)*100)/100;rows.push({label:en?'Other categories':'Ostale kategorije',current:sum('current'),previous:breakdown.previous===null?null:sum('previous')});}
     const max=Math.max(1,...rows.flatMap(row=>[Math.abs(finite(row.current)),Math.abs(finite(row.previous))]));
     const formatted=n=>options.privateMode?hidden:money(n,options);
-    return `<section class="insight-category-breakdown"><h3>${en?'By category':'Po kategorijama'}</h3><p>${en?'Current / previous comparable period':'Sada / prethodno usporedivo razdoblje'}</p><div class="insight-category-grid">${rows.map(row=>`<div class="insight-category-row"><span>${esc(row.label)}</span><strong data-monetary>${esc(formatted(row.current))}</strong><div class="insight-category-tracks" aria-hidden="true" data-monetary><i style="width:${Math.abs(finite(row.current))/max*100}%"></i><i class="previous" style="width:${Math.abs(finite(row.previous))/max*100}%"></i></div><small data-monetary>${en?'Previously':'Prethodno'}: ${row.previous===null?'—':esc(formatted(row.previous))}</small></div>`).join('')||`<p>${esc(copy(options).empty)}</p>`}</div></section>`;
+    return `<section class="insight-category-breakdown"><h3>${en?'By category':'Po kategorijama'}</h3><p>${breakdown.previous===null?(en?'All recorded history; no previous period for comparison.':'Sva evidentirana povijest; nema prethodnog razdoblja za usporedbu.'):(en?'Current period to date versus the same elapsed portion of the previous period.':'Tekuće razdoblje do danas i jednako protekli dio prethodnog razdoblja.')}</p><div class="insight-category-grid">${rows.map(row=>`<div class="insight-category-row"><span>${esc(row.label)}</span><strong data-monetary>${esc(formatted(row.current))}</strong><div class="insight-category-tracks" aria-hidden="true" data-monetary><i style="width:${Math.abs(finite(row.current))/max*100}%"></i><i class="previous" style="width:${Math.abs(finite(row.previous))/max*100}%"></i></div><small data-monetary>${en?'Previously':'Prethodno'}: ${row.previous===null?'—':esc(formatted(row.previous))}</small></div>`).join('')||`<p>${esc(copy(options).empty)}</p>`}</div></section>`;
   }
   function monthlyComparisonMarkup(series,options={}){
     const en=String(options.locale||'').startsWith('en'),rows=Array.isArray(series)?series:[],max=Math.max(1,...rows.flatMap(row=>[Math.abs(finite(row.income)),Math.abs(finite(row.expenses))]));

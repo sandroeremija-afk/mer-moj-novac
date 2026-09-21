@@ -105,6 +105,67 @@ Object.assign(translations.hr, {
   strategyDiversify:'Razmotrite raspodjelu viška',
   confirmDemoResetBody:'Sve probne transakcije, pravila, ciljevi i bankovne veze u osobnom i poslovnom profilu bit će zamijenjeni početnim primjerima. Ovu radnju nije moguće poništiti.'
 });
+// Explanations mirror the live financial engine; these are not bank guarantees.
+Object.assign(translations.hr, {
+  balanceTooltip:'Početno stanje plus evidentirani prihodi minus troškovi i stanje štednje. To je izračun aplikacije, a ne provjera stanja u banci.',
+  safeTooltip:'Od prihoda ovog mjeseca oduzimaju se osnovne obveze, planirana štednja, rezerva i evidentirani troškovi. Negativan iznos znači manjak u planu; ne blokira plaćanja.',
+  commitmentsProtected:'Izračun odvaja obveze, cilj štednje i rezervu iz plana. Ne rezervira novac u banci niti sprječava prekoračenje.',
+  protectedCommitments:'Obveze, štednja i rezerva uključeni su u plan',
+  targetProtected:'Mjesečni cilj štednje oduzima se pri izračunu budžeta za potrošnju. Sam plan ne prenosi novac.',
+  breathingRoom:'Odabrani postotak planiranog prihoda oduzima se kao rezerva iz budžeta za potrošnju.',
+  transactionIntro:'Unos uspoređujemo s ukupnim i kategorijskim budžetom. Upozorenje na prekoračenje ne sprječava spremanje stvarnog troška.',
+  billsRemain:'Provjerite jesu li osnovne obveze ažurirane u mjesečnom planu.',
+  depositIntro:'Evidentirana uplata povećava stanje cilja i smanjuje raspoloživi iznos u aplikaciji. Ne računa se kao trošak i ne šalje nalog banci.',
+  netTooltip:'Prihodi minus troškovi u odabranom razdoblju. Ovo nije vrijednost ukupne imovine niti stanje svih računa.',
+  incomeMinusExpenses:'Prihodi minus troškovi odabranog razdoblja.',
+  savingsRateTooltip:'(Prihodi − troškovi) ÷ prihodi × 100 za odabrano razdoblje. To nije zbroj uplata u ciljeve štednje; bez pozitivnog prihoda stopa se ne računa.',
+  savingsRateContext:'Prihodi nakon troškova; nije zbroj uplata u štednju.',
+  noIncomeBody:'Dodajte prihod za izračun stope štednje. Neto iznos već uključuje evidentirane troškove.',
+  savingsStrategyIntro:'Usporedite stanje štednje s osnovnim mjesečnim obvezama te provjerite rezervu i uplatu iz plana.',
+  strategyCoverageBody:'Štednja podijeljena s osnovnim mjesečnim obvezama. Bez realno unesenih obveza omjer nije mjerodavan.',
+  strategyBufferBody:'Planirani prihod × postotak rezerve. Smanjuje budžet, ali ne prenosi novac.',
+  strategyContributionBody:'Iznos iz vašeg plana, a ne izvršena uplata. Ne pokreće bankovni prijenos.',
+  strategyRecommendationTitle:'Raspon pokrivenosti',
+  strategyRecommendationBody:'Raspon pokrivenosti nije procjena rizika ni preporuka za ulaganje.',
+  strategyBuildReserve:'Manje od 3 mjeseca', strategyMaintainPace:'Od 3 do 6 mjeseci', strategyDiversify:'Više od 6 mjeseci',
+  healthyReserve:'Štednja u odnosu na obveze',
+  reserveRecommendation:'Pokrivenost uspoređuje ukupnu štednju s osnovnim mjesečnim obvezama iz plana. Provjerite jesu li obveze potpune i štednja dostupna.',
+  thisYear:'PRIKAZANI MJESECI',
+  savingsTrendNoBaseline:'Prethodni mjesec bio je 0; +100% je oznaka prve pozitivne uplate, ne usporediv postotni rast.',
+  onTrackSave:'Planirana mjesečna uplata u štednju',
+  savingsDepositsOnly:'Uplate umanjene za povlačenja, najmanje nula',
+  roundUpsHint:'Razlika do odabranog višekratnika evidentira se u cilju. To nije bankovni prijenos.'
+});
+Object.assign(translations.en, {
+  balanceTooltip:'Opening balance plus recorded income minus expenses and savings balances. This is the app calculation, not a verified bank balance.',
+  safeTooltip:'This month’s income minus essential commitments, planned savings, the buffer and recorded expenses. A negative amount means a plan shortfall; it does not block payments.',
+  commitmentsProtected:'The calculation sets aside planned commitments, savings and a buffer. It does not reserve bank funds or prevent overspending.',
+  protectedCommitments:'Commitments, savings and buffer are included in the plan',
+  targetProtected:'The monthly savings target is deducted when calculating the spending budget. The plan itself does not transfer money.',
+  breathingRoom:'The selected percentage of planned income is deducted as a buffer from the spending budget.',
+  transactionIntro:'The entry is compared with total and category budgets. An over-budget warning does not prevent saving a real expense.',
+  billsRemain:'Check that essential commitments are up to date in your monthly plan.',
+  depositIntro:'A recorded contribution increases the goal balance and reduces the available amount in the app. It is not an expense or a bank transfer.',
+  netTooltip:'Income minus expenses in the selected period. This is not total net worth or the balance of all accounts.',
+  incomeMinusExpenses:'Income minus expenses in the selected period.',
+  savingsRateTooltip:'(Income − expenses) ÷ income × 100 for the selected period. This is not total goal contributions; no rate is calculated without positive income.',
+  savingsRateContext:'Income left after expenses, not total savings contributions.',
+  noIncomeBody:'Add income to calculate a savings rate. The net amount already includes recorded expenses.',
+  savingsStrategyIntro:'Compare savings balances with essential monthly commitments and review the buffer and contribution in your plan.',
+  strategyCoverageBody:'Savings divided by essential monthly commitments. The ratio is not meaningful without realistic commitments.',
+  strategyBufferBody:'Planned income × buffer percentage. Reduces the budget but does not transfer money.',
+  strategyContributionBody:'An amount from your plan, not a completed contribution. It does not initiate bank transfers.',
+  strategyRecommendationTitle:'Coverage range',
+  strategyRecommendationBody:'The coverage range is not a risk assessment or investment recommendation.',
+  strategyBuildReserve:'Less than 3 months', strategyMaintainPace:'3 to 6 months', strategyDiversify:'More than 6 months',
+  healthyReserve:'Savings compared with commitments',
+  reserveRecommendation:'Coverage compares total savings with essential monthly commitments in your plan. Check that commitments are complete and savings are accessible.',
+  thisYear:'DISPLAYED MONTHS',
+  savingsTrendNoBaseline:'The previous month was 0; +100% marks the first positive contribution, not a comparable percentage increase.',
+  onTrackSave:'Planned monthly savings contribution',
+  savingsDepositsOnly:'Contributions less withdrawals, minimum zero',
+  roundUpsHint:'The difference to the selected multiple is recorded in the goal. This is not a bank transfer.'
+});
 const categoryMeta = {
   food:{ icon:'H', iconId:'icon-utensils', className:'food' },
   transport:{ icon:'P', iconId:'icon-car', className:'transport' },
@@ -691,7 +752,7 @@ function renderSavingsView() {
   const series=renderSavingsHistoryChart(),best=series.reduce((winner,point)=>point.amount>winner.amount?point:winner,series[0]);
   $('#savingsBestMonth').textContent=`${best.label} · ${currency(best.amount,true)}`;
   const current=history.at(-1)||0,previous=history.at(-2)||0,delta=previous>0?(current-previous)/previous*100:current>0?100:0,rounded=Math.round(Math.abs(delta));
-  const trendBadge=$('#savingsTrendBadge');trendBadge.textContent=`${delta>0?'+':delta<0?'−':''}${rounded}%`;trendBadge.className=`savings-trend-pill ${delta>0?'positive':delta<0?'negative':'neutral'}`;trendBadge.title=delta>0?t('savingsTrendUp'):delta<0?t('savingsTrendDown'):t('savingsTrendFlat');trendBadge.setAttribute('aria-label',`${trendBadge.textContent} · ${trendBadge.title}`);
+  const trendBadge=$('#savingsTrendBadge');trendBadge.textContent=`${delta>0?'+':delta<0?'−':''}${rounded}%`;trendBadge.className=`savings-trend-pill ${delta>0?'positive':delta<0?'negative':'neutral'}`;trendBadge.title=previous===0&&current>0?t('savingsTrendNoBaseline'):delta>0?t('savingsTrendUp'):delta<0?t('savingsTrendDown'):t('savingsTrendFlat');trendBadge.setAttribute('aria-label',`${trendBadge.textContent} · ${trendBadge.title}`);
 }
 
 function renderSavingsEntries() {
@@ -1181,33 +1242,33 @@ function renderInsights() {
   renderSubscriptions();
 }
 
-Object.assign(translations.hr,{fixedVsVariableExpenses:'Fiksni i fleksibilni troškovi',calculationStatement:'Izračun raspoloživog budžeta',statementIncome:'Ukupni mjesečni prihodi',statementBills:'Obvezni fiksni troškovi i režije',statementSavings:'Izdvajanje za ciljeve štednje',statementFlexible:'Preostali raspoloživi budžet',statementBuffer:'Umanjeno za sigurnosnu rezervu',statementDaily:'Dnevni limit za sigurno trošenje'});
-Object.assign(translations.en,{fixedVsVariableExpenses:'Fixed vs. flexible expenses',calculationStatement:'Available budget calculation',statementIncome:'Total monthly income',statementBills:'Fixed commitments and utilities',statementSavings:'Allocation to savings goals',statementFlexible:'Remaining flexible budget',statementBuffer:'Less safety reserve',statementDaily:'Daily safe spending limit'});
+Object.assign(translations.hr,{fixedVsVariableExpenses:'Fiksni i fleksibilni troškovi',calculationStatement:'Izračun raspoloživog budžeta',statementIncome:'Evidentirani mjesečni prihodi',statementBills:'Osnovne obveze iz mjesečnog plana',statementSavings:'Planirani mjesečni cilj štednje',statementFlexible:'Preostali raspoloživi budžet',statementBuffer:'Umanjeno za sigurnosnu rezervu',statementDaily:'Dnevni orijentacijski iznos'});
+Object.assign(translations.en,{fixedVsVariableExpenses:'Fixed vs. flexible expenses',calculationStatement:'Available budget calculation',statementIncome:'Recorded monthly income',statementBills:'Essential commitments in the monthly plan',statementSavings:'Planned monthly savings target',statementFlexible:'Remaining flexible budget',statementBuffer:'Less safety reserve',statementDaily:'Indicative daily amount'});
 
 const insightDetailCopy = {
   hr: {
     overline:'PROŠIRENI UVID',
     noData:'Još nema podataka za odabrano razdoblje.',
     income:'Ukupni prihodi',expenses:'Ukupni troškovi',net:'Neto rezultat',transactions:'Broj transakcija',average:'Prosječna transakcija',categories:'Aktivne kategorije',topCategory:'Najveća kategorija',monthlyAverage:'Mjesečni prosjek',latestMonth:'Zadnji mjesec',bestMonth:'Najbolji mjesec',savingsRate:'Stopa štednje',period:'Odabrano razdoblje',ofExpenses:'udjela u troškovima',ofIncome:'od prihoda',
-    netView:{title:'Kumulativni rast neto imovine',intro:'Kumulativno stanje zabilježenog novca, uključujući početno stanje. Neevidentirana imovina i dugovi nisu uključeni; prijenos u štednju nije trošak.'},
+    netView:{title:'Kumulativno stanje novca',intro:'Kumulativno stanje zabilježenog novca, uključujući početno stanje. Neevidentirana imovina i dugovi nisu uključeni; prijenos u štednju nije trošak.'},
     incomeView:{title:'Trend prihoda',intro:'Prošireni pregled svih izvora prihoda, njihove učestalosti i kretanja kroz vrijeme.'},
     expensesView:{title:'Trend potrošnje',intro:'Detaljan pregled ukupne potrošnje i mjesečnog ritma odlaznih transakcija.'},
-    categoryView:{title:'Potrošnja po kategoriji',intro:'Struktura troškova pokazuje gdje odlazi najveći dio budžeta i koliki je udio svake kategorije.'},
-    cashflowView:{title:'Prihodi i troškovi',intro:'Usporedite mjesečne priljeve i odljeve te brzo prepoznajte promjene u novčanom toku.'},
-    structureView:{title:'Fiksni i fleksibilni troškovi',intro:'Evidentirani troškovi u odabranom razdoblju. Pravila kategorije imaju prednost; ponavljajuće obveze i režije svrstavaju se u fiksne, ostalo u fleksibilne.'},
-    savingsView:{title:'Stopa štednje',intro:'Pratite koliki dio prihoda ostaje nakon troškova i kako se stopa mijenja iz mjeseca u mjesec.'}
+    categoryView:{title:'Potrošnja po kategoriji',intro:'Troškovi po kategorijama u odabranom razdoblju. Postotak je udio u ukupnim troškovima, ne iskorištenost kategorijskog limita.'},
+    cashflowView:{title:'Prihodi i troškovi',intro:'Graf prikazuje posljednjih 12 mjeseci, a sažetak na vrhu odabrano razdoblje. Tekući mjesec uključuje samo dosad evidentirane transakcije.'},
+    structureView:{title:'Fiksni i fleksibilni troškovi',intro:'Oznaka transakcije ima prednost, zatim oznaka kategorije. Bez njih koriste se ponavljanja i prepoznati nazivi, a ostalo je fleksibilno.'},
+    savingsView:{title:'Stopa štednje',intro:'Sažetak vrijedi za odabrano razdoblje, graf za zadnjih 6 mjeseci, a mjesečni prosjek za posljednjih 12 mjeseci. Stopa = (prihodi − troškovi) ÷ prihodi × 100; mjeseci bez prihoda ne ulaze u prosjek.'}
   },
   en: {
     overline:'EXPANDED INSIGHT',
     noData:'There is no data for the selected period yet.',
     income:'Total income',expenses:'Total expenses',net:'Net result',transactions:'Transaction count',average:'Average transaction',categories:'Active categories',topCategory:'Largest category',monthlyAverage:'Monthly average',latestMonth:'Latest month',bestMonth:'Best month',savingsRate:'Savings rate',period:'Selected period',ofExpenses:'of expenses',ofIncome:'of income',
-    netView:{title:'Cumulative net wealth growth',intro:'Cumulative recorded cash, including the opening balance. Untracked assets and debts are excluded; savings transfers are not expenses.'},
+    netView:{title:'Recorded cash balance trend',intro:'Cumulative recorded cash, including the opening balance. Untracked assets and debts are excluded; savings transfers are not expenses.'},
     incomeView:{title:'Income trend',intro:'An expanded view of every income source, its frequency, and movement over time.'},
     expensesView:{title:'Spending trend',intro:'A detailed view of total spending and the monthly rhythm of outgoing transactions.'},
-    categoryView:{title:'Spending by category',intro:'The spending mix shows where most of the budget goes and the share held by each category.'},
-    cashflowView:{title:'Income and expenses',intro:'Compare monthly inflows and outflows and quickly identify changes in cash flow.'},
-    structureView:{title:'Fixed vs. flexible expenses',intro:'Recorded expenses for the selected period. Category rules take priority; recurring commitments and utilities are fixed, other expenses are flexible.'},
-    savingsView:{title:'Savings rate',intro:'Track how much income remains after expenses and how the rate changes from month to month.'}
+    categoryView:{title:'Spending by category',intro:'Category expenses in the selected period. Each percentage is a share of total expenses, not usage of a category limit.'},
+    cashflowView:{title:'Income and expenses',intro:'The chart covers the last 12 months; the summary above uses the selected period. The current month includes only transactions recorded so far.'},
+    structureView:{title:'Fixed vs. flexible expenses',intro:'Transaction labels take priority, followed by category labels. Otherwise recurring entries and recognized names are used; the remainder is flexible.'},
+    savingsView:{title:'Savings rate',intro:'The summary uses the selected period, the chart the last 6 months, and the monthly average the last 12 months. Rate = (income − expenses) ÷ income × 100; months without income are excluded from the average.'}
   }
 };
 
@@ -1229,7 +1290,7 @@ function expenseStructureMarkup(structure,details=false) {
   const meter=structure.total>0?`<div class="expense-structure-meter" aria-hidden="true" data-monetary>${groups.map(group=>`<i class="${group.key}" style="width:${group.share}%"></i>`).join('')}</div>`:'';
   const summary=`<div class="expense-structure-values">${groups.map(group=>`<div><span><i class="${group.key}"></i>${group.title}</span><strong data-monetary>${currency(group.value)}</strong><small data-monetary>${number(group.share,1)}%</small></div>`).join('')}</div>`;
   const correction=structure.hasCorrections?`<p class="expense-structure-note">${en?'Includes corrections. Meter proportions use non-negative totals; exact signed amounts are shown above.':'Uključene su korekcije. Omjeri koriste nenegativne zbrojeve; točni iznosi s predznakom prikazani su iznad.'}</p>`:'';
-  if(!details)return `${meter}${summary}${correction}<p class="expense-structure-note">${en?'Recurring commitments vs. day-to-day spending. Open for category details.':'Ponavljajuće obveze i svakodnevna potrošnja. Otvorite za detalje kategorija.'}</p>`;
+  if(!details)return `${meter}${summary}${correction}<p class="expense-structure-note">${en?'Classified by labels and rules, not by unchanging amounts. Open for details.':'Podjela prema oznakama i pravilima, ne prema nepromjenjivosti iznosa. Otvorite za detalje.'}</p>`;
   const categories=groups.map(group=>{
     const rows=structure.categories.filter(row=>row.behavior===group.key);
     // Keep a bounded one-page overview without losing the value of any category.

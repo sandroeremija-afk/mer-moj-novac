@@ -33,6 +33,28 @@
     assistantDisclaimer:'Messages and active-profile aggregate amounts are sent to OpenAI. AI guidance is informational; financial entries are saved only after your review.',
     assistantWidgetDisclaimer:'Messages and active-profile aggregate amounts are sent to OpenAI. Review prepared entries before saving.'
   });
+  Object.assign(translations.hr, {
+    faqSafeAnswer:'Od evidentiranih prihoda ovog mjeseca oduzimaju se osnovne obveze, cilj štednje, rezerva i evidentirani troškovi. Rezerva je odabrani postotak planiranog prihoda; izračun ne blokira plaćanja niti rezervira novac u banci.',
+    faqPaceAnswer:'Preostali iznos iz Zaštite budžeta dijeli se s brojem dana do kraja mjeseca, uključujući danas. To je orijentacija za potrošnju; negativan rezultat znači manjak u planu.',
+    faqBudgetWarningAnswer:'Ne: žuto upozorenje počinje na 80% limita, a crveno na 100% ili više. Stvarni trošak možete spremiti i kada prelazi limit.',
+    faqRoundupAnswer:'Za nove knjižene kartične troškove u eurima razlika do odabranog višekratnika 1, 2 ili 5 € evidentira se u cilju. To je virtualno izdvajanje, ne prijenos novca iz banke.',
+    faqSavingsRateAnswer:'Stopa je (prihodi − troškovi) ÷ prihodi × 100 za odabrano razdoblje, a ne zbroj uplata u štednju. Može biti negativna; bez pozitivnog prihoda ne računa se.',
+    faqBalancePrivacyAnswer:'U postavkama uključite Sakrij iznose / privatni način kako biste prikrili iznose na zaslonu. To ne briše podatke i nije zamjena za zaključavanje ili šifriranje.',
+    faqEmergencyFundAnswer:'Pokrivenost uspoređuje štednju s osnovnim mjesečnim obvezama iz plana; za obveze manje od 1 izračun koristi 1. Provjerite jesu li obveze realno unesene i štednja dostupna za hitne troškove.',
+    faqImportedSourceAnswer:'U Aktivnosti oznaka Ručno znači ručni unos, a Automatski: naziv banke označava sinkronizirani unos. Oznaka Uvoz označava podatke iz datoteke; provjerite iznos, datum i kategoriju.',
+    faqNetTotalAnswer:'Neto ukupno je prihod minus troškovi odabranog razdoblja, pa je bez prihoda negativan ako ima troškova. Nije vrijednost vaše ukupne imovine.'
+  });
+  Object.assign(translations.en, {
+    faqSafeAnswer:'Recorded income this month minus essential commitments, the savings target, the buffer and recorded expenses. The buffer is the selected percentage of planned income; this calculation does not block payments or reserve bank funds.',
+    faqPaceAnswer:'The Budget Protection remainder is divided by the days left in this month, including today. This is a spending guide; a negative result means a plan shortfall.',
+    faqBudgetWarningAnswer:'No: yellow starts at 80% of the limit and red at 100% or more. You can save a real expense even if it exceeds a limit.',
+    faqRoundupAnswer:'For new posted euro card expenses, the difference to the selected multiple of €1, €2 or €5 is recorded in the goal. This is a virtual allocation, not a bank transfer.',
+    faqSavingsRateAnswer:'The rate is (income − expenses) ÷ income × 100 for the selected period, not total savings contributions. It can be negative; no rate is calculated without positive income.',
+    faqBalancePrivacyAnswer:'Enable Hide balances / privacy mode in settings to mask amounts on screen. This does not delete data and is not a replacement for locking or encryption.',
+    faqEmergencyFundAnswer:'Coverage compares savings with planned essential monthly commitments; commitments below 1 use 1 in the calculation. Check that commitments are realistic and savings are accessible for emergencies.',
+    faqImportedSourceAnswer:'In Activity, Manual indicates a manual entry and Auto: bank name indicates a synced entry. Import indicates file data; review the amount, date and category.',
+    faqNetTotalAnswer:'Net Total is income minus expenses in the selected period, so expenses without income produce a negative result. It is not your total net worth.'
+  });
   applyStaticTranslations();
 
   const modal = $('#helpAssistantModal');

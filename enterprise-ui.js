@@ -188,7 +188,7 @@
     const x=index=>left+index/30*plotWidth,y=value=>top+(model.maximum-value)/model.range*plotHeight;
     const path=model.series.map((point,index)=>`${index?'L':'M'}${x(index).toFixed(2)},${y(point.balanceCents).toFixed(2)}`).join(' ');
     const privateMoney=value=>appState.settings.hideBalances?copy('Iznos skriven','Amount hidden'):money(value);
-    const pointLabel=point=>`${formatIsoDate(point.date)} · ${privateMoney(point.balanceCents)}${point.events.length?' · '+point.events.map(event=>`${event.name}: ${privateMoney(event.amountCents)}`).join(', '):''}`;
+    const pointLabel=point=>`${formatIsoDate(point.date)} · ${copy('Procijenjeno stanje','Estimated balance')}: ${privateMoney(point.balanceCents)}${point.events.length?' · '+point.events.map(event=>`${event.name}: ${privateMoney(event.amountCents)}`).join(', '):''}`;
     const highlights=MerDiscovery.forecastHighlights(model),highlightLabels={peak:copy('Najviše stanje','Peak balance'),lowest:copy('Najniže stanje','Lowest balance'),'month-end':copy('Kraj mjeseca','Month-end balance')};
     const callouts=`<div class="forecast-highlights${narrow?' is-narrow':''}" aria-label="${copy('Ključne točke prognoze','Forecast highlights')}">${highlights.map(point=>`<div class="forecast-highlight ${point.kind}" data-forecast-highlight="${point.kind}"><span>${esc(highlightLabels[point.kind])}<small>${esc(formatIsoDate(point.date))}</small></span><strong data-money>${esc(privateMode?'••••':money(point.balanceCents))}</strong></div>`).join('')}</div>`;
     const axes=model.ticks.map(value=>`<line class="forecast-gridline" aria-hidden="true" x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}"/><text class="forecast-axis forecast-money-axis" x="${left-10}" y="${y(value)+4}" text-anchor="end" data-money>${esc(axisMoney(value))}</text>`).join('')+(narrow?[0,15,30]:[0,7,14,21,30]).map(index=>`<text class="forecast-axis forecast-date-axis" x="${x(index)}" y="${height-10}" text-anchor="${index===0?'start':index===30?'end':'middle'}">${esc(dateLabel(model.series[index].date))}</text>`).join('');
@@ -201,7 +201,7 @@
       const rect=svg.getBoundingClientRect(),outer=container.getBoundingClientRect(),scale=rect.width/width;
       if(index!==active){
         active=index;
-        const heading=`<strong>${esc(formatIsoDate(point.date))}</strong><span data-money>${esc(privateMoney(point.balanceCents))}</span>`;
+        const heading=`<strong>${esc(formatIsoDate(point.date))}</strong><span data-money>${copy('Procijenjeno stanje','Estimated balance')}: ${esc(privateMoney(point.balanceCents))}</span>`;
         const events=point.events.slice(0,2).map(event=>`<span>${esc(event.name)} · ${esc(privateMoney(event.amountCents))}</span>`).join('');
         container.querySelector('.forecast-inspector').textContent=pointLabel(point);
         tooltip.innerHTML=heading+events+(point.events.length>2?`<span>${copy(`Još ${point.events.length-2} događaja`,`${point.events.length-2} more events`)}</span>`:'');
@@ -228,7 +228,7 @@
   function renderForecast(){
     const restoreFocus=window.MerPlanNavigation?.preserveFocus?.(intelligence);
     const f=forecast();
-    const limits=copy('Procjena, ne bankovno stanje. Očekivani prihodi raspoloživi su tek nakon knjiženja.','An estimate, not a bank balance. Expected income is available only after posting.')+(f.confidence==='limited-history'?copy(' Malo povijesnih podataka.',' Limited history.'):'')+(f.foreignCurrencyCount?copy(` Izostavljeno ${f.foreignCurrencyCount} zapisa u drugim valutama; nema konverzije.`,` ${f.foreignCurrencyCount} foreign-currency records excluded; no conversion.`):'');
+    const limits=copy('Procjena za 30 dana: današnji raspoloživi iznos, već umanjen za štednju, plus očekivani prihodi minus planirani i prepoznati ponavljajući troškovi. Nije bankovno stanje ni obećanje; očekivani prihodi raspoloživi su tek nakon knjiženja.','A 30-day estimate: today’s available amount, already reduced by savings, plus expected income minus scheduled and inferred recurring expenses. Not a bank balance or a promise; expected income is available only after posting.')+(f.confidence==='limited-history'?copy(' Malo povijesnih podataka.',' Limited history.'):'')+(f.foreignCurrencyCount?copy(` Izostavljeno ${f.foreignCurrencyCount} zapisa u drugim valutama; nema konverzije.`,` ${f.foreignCurrencyCount} foreign-currency records excluded; no conversion.`):'');
     el('enterpriseForecast').innerHTML=`<section class="cashflow-visual" aria-label="${copy('Novčani tok i prognoza','Cash flow and forecast')}"><div class="forecast-chart"></div><p id="forecastModelNote" class="forecast-model-note forecast-accessible">${esc(limits)}</p></section>`;
     renderProjection();
     requestAnimationFrame(resizeProjection);

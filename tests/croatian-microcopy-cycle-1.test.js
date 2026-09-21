@@ -136,7 +136,7 @@ test('Settings currency/timezone labels follow the language without changing tec
 test('security overview and static Croatian fallbacks avoid mixed-language labels',()=>{
   const popup=fs.readFileSync(require.resolve('../popup-layout.js'),'utf8');
   const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
-  assert.match(popup,/Aplikacija za sigurnosne kodove ili SMS\./);
+  assert.match(popup,/Kod iz aplikacije ili demonstracija SMS provjere\./);
   assert.doesNotMatch(popup,/Authenticator aplikacija ili SMS/);
   assert.match(html,/value="USD">USD — američki dolar/);
   assert.match(html,/data-i18n="helpAssistant">Pomoć i AI asistent/);

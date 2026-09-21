@@ -45,11 +45,11 @@
     return `<section id="${id}-panel-${key}" class="planning-panel" role="tabpanel" aria-labelledby="${id}-tab-${key}" data-panel-group="${id}" ${key===selected?'':'hidden'}>${content}</section>`;
   }
   const sliderDefinitions = [
-    {key:'netWorth', hr:'Uloživa neto imovina', en:'Investable net worth', min:0, max:1000000, step:100, numberStep:0.01, monetary:true},
+    {key:'netWorth', hr:'Iznos raspoloživ za ulaganje', en:'Investable net worth', min:0, max:1000000, step:100, numberStep:0.01, monetary:true},
     {key:'monthlyContribution', hr:'Mjesečno izdvajanje', en:'Monthly contribution', min:0, max:10000, step:25, numberStep:0.01, monetary:true},
     {key:'monthlySpending', hr:'Mjesečni troškovi u mirovini', en:'Monthly retirement spending', min:0.01, max:10000, step:25, numberStep:0.01, monetary:true},
     {key:'annualReturn', hr:'Pretpostavljeni godišnji prinos', en:'Assumed annual return', min:-10, max:15, step:0.1},
-    {key:'withdrawalRate', hr:'Godišnja stopa povlačenja', en:'Annual withdrawal assumption', min:1, max:10, step:0.1},
+    {key:'withdrawalRate', hr:'Godišnji udio za povlačenje', en:'Annual withdrawal assumption', min:1, max:10, step:0.1},
     {key:'inflation', hr:'Pretpostavljena inflacija', en:'Assumed inflation', min:-2, max:10, step:0.1}
   ];
   function close(node) {
@@ -111,7 +111,7 @@
     }).join('');
   }
   function savingsRateInput() {
-    return `<div class="planning-slider planning-savings-rate"><label for="fire-savingsRate">${say('Stopa štednje od prihoda','Savings rate of income')}</label><output id="fireSavingsRateValue" for="fire-savingsRate"></output><input id="fire-savingsRate" data-fire-savings-rate type="range" min="0" max="100" step="0.1" value="0" aria-describedby="fireSavingsRateHelp"><small id="fireSavingsRateHelp"></small></div>`;
+    return `<div class="planning-slider planning-savings-rate"><label for="fire-savingsRate">${say('Udio prihoda za mjesečnu uplatu','Income share for monthly contributions')}</label><output id="fireSavingsRateValue" for="fire-savingsRate"></output><input id="fire-savingsRate" data-fire-savings-rate type="range" min="0" max="100" step="0.1" value="0" aria-describedby="fireSavingsRateHelp"><small id="fireSavingsRateHelp"></small></div>`;
   }
   function syncFireInputs() {
     sliderDefinitions.forEach(({key}) => {
@@ -124,8 +124,8 @@
     const income = monthlyIncome(), contribution = Number(fireDraft.monthlyContribution) || 0, rate = income > 0 ? contribution / income * 100 : 0;
     el('fire-savingsRate').disabled = income <= 0;
     if (document.activeElement !== el('fire-savingsRate')) el('fire-savingsRate').value = String(Math.min(100, Math.max(0, rate)));
-    el('fireSavingsRateValue').textContent = income > 0 ? `${rate.toFixed(1)}%` : '—';
-    el('fireSavingsRateHelp').textContent = income > 0 ? say(`Mjesečni prihod profila: ${money(Math.round(income*100))}. Klizač mijenja mjesečno izdvajanje.`,`Profile monthly income: ${money(Math.round(income*100))}. The slider changes your monthly contribution.`) : say('Stopa štednje dostupna je kad profil ima mjesečni prihod. Mjesečno izdvajanje možete unijeti izravno.','The savings rate is available when this profile has monthly income. You can enter a monthly contribution directly.');
+    el('fireSavingsRateValue').textContent = income > 0 ? `${rate.toLocaleString(english() ? 'en-IE' : 'hr-HR', {minimumFractionDigits:1, maximumFractionDigits:1})}%` : '—';
+    el('fireSavingsRateHelp').textContent = income > 0 ? say(`Udio se računa od mjesečnog prihoda profila: ${money(Math.round(income*100))}. Klizač mijenja pretpostavljenu uplatu, ne prihod ni bankovni nalog.`,`The share uses profile monthly income: ${money(Math.round(income*100))}. The slider changes the assumed contribution, not income or a bank transfer.`) : say('Stopa štednje dostupna je kad profil ima mjesečni prihod. Mjesečno izdvajanje možete unijeti izravno.','The savings rate is available when this profile has monthly income. You can enter a monthly contribution directly.');
   }
   function renderFire() {
     const sections = [['capital',say('Imovina','Capital')],['savings',say('Štednja','Savings')],['assumptions',say('Pretpostavke','Assumptions')],['projection',say('Projekcija','Projection')]];
@@ -169,9 +169,9 @@
     const x = month => 16 + month / stop * 548, y = amount => 188 - amount / max * 160;
     const line = points.map(point => `${x(point.month)},${y(point.balanceCents)}`).join(' ');
     const heading = result.reachedMonth === 0 ? say('Cilj je dosegnut uz ove pretpostavke','Target met under these assumptions') : result.estimatedDate ? new Intl.DateTimeFormat(english() ? 'en-IE' : 'hr-HR', {month:'long', year:'numeric', timeZone:'UTC'}).format(new Date(`${result.estimatedDate}T12:00:00Z`)) : say('Nije dosegnuto unutar 60 godina','Not reached within 60 years');
-    const overview = `<div class="planning-result"><span>${say('Procijenjeni mjesec neovisnosti','Estimated independence month')}</span><strong>${esc(heading)}</strong><p>${say('Potreban portfelj','Portfolio target')}: <b data-money>${money(result.targetCents)}</b></p><p>${say('Stopa izdvajanja','Contribution rate')}: <b>${result.savingRatePercent.toFixed(1)}%</b></p></div><div class="planning-sensitivity"><strong>${say('Ako je prinos 2 postotna boda niži','If returns are 2 percentage points lower')}</strong><span>${result.downside.estimatedDate ? dateLabel(result.downside.estimatedDate) : say('Cilj nije dosegnut u 60 godina','Target not reached in 60 years')}</span></div>`;
+    const overview = `<div class="planning-result"><span>${say('Procijenjeni mjesec dosezanja cilja','Estimated month to reach the target')}</span><strong>${esc(heading)}</strong><p>${say('Ciljni iznos ulaganja','Investment target')}: <b data-money>${money(result.targetCents)}</b></p><p>${say('Uplate ÷ (uplate + troškovi)','Contributions ÷ (contributions + spending)')}: <b>${result.savingRatePercent.toLocaleString(english() ? 'en-IE' : 'hr-HR', {minimumFractionDigits:1, maximumFractionDigits:1})}%</b></p></div><div class="planning-sensitivity"><strong>${say('Godišnji prinos niži do 2 postotna boda','Annual return up to 2 percentage points lower')}</strong><span>${result.downside.estimatedDate ? dateLabel(result.downside.estimatedDate) : say('Cilj nije dosegnut u 60 godina','Target not reached in 60 years')}</span></div>`;
     const chart = `<div class="planning-chart" data-monetary><svg viewBox="0 0 580 224" role="img" aria-label="${say('Projekcija portfelja prema pretpostavkama','Portfolio projection under assumptions')}"><line x1="16" x2="564" y1="${y(result.targetCents)}" y2="${y(result.targetCents)}" class="fire-target"/><polyline points="${line}" class="fire-line"/>${points.filter(point => point.month % 60 === 0).map(point => `<circle cx="${x(point.month)}" cy="${y(point.balanceCents)}" r="4" tabindex="0"><title>${dateLabel(point.date)}: ${money(point.balanceCents)}</title></circle>`).join('')}<text x="16" y="213">${say('Danas','Today')}</text><text x="564" y="213" text-anchor="end">${Math.round(stop/12)} ${say('godina','years')}</text></svg><div class="planning-legend"><span>● ${say('Portfelj','Portfolio')}</span><span>┄ ${say('Cilj','Target')}</span></div></div>`;
-    const model = `<p class="planning-note">${say('Iznosi su izraženi u današnjoj kupovnoj moći. Scenarij, ne obećanje datuma. Uplate rastu s inflacijom; prinos je stalan i kapitalizira se mjesečno. Porezi, naknade i tržišne oscilacije nisu uključeni. Stopa povlačenja je vaša pretpostavka, nije zajamčeno sigurna.','Amounts are shown in today’s purchasing power. A scenario, not a promised date. Contributions keep pace with inflation; returns are constant and compound monthly. Taxes, fees and market swings are excluded. Your withdrawal assumption is not guaranteed safe.')}</p>`;
+    const model = `<p class="planning-note">${say('Cilj = mjesečni troškovi × 12 ÷ godišnja stopa povlačenja; prinos se obračunava mjesečno u današnjoj kupovnoj moći. Stalne stope i uplate usklađene s inflacijom su pretpostavke, ne obećanje; porezi, naknade i tržišne promjene nisu uključeni.','Target = monthly spending × 12 ÷ annual withdrawal rate; returns compound monthly in today’s purchasing power. Constant rates and inflation-adjusted contributions are assumptions, not a promise; taxes, fees and market swings are excluded.')}</p>`;
     const sections = [['overview',say('Sažetak','Summary')],['chart',say('Graf','Chart')],['model',say('O modelu','About the model')]];
     el('fireProjection').innerHTML = tabs('fire-result',sections,projectionPanel,'data-fire-projection')+panel('fire-result','overview',projectionPanel,overview)+panel('fire-result','chart',projectionPanel,chart)+panel('fire-result','model',projectionPanel,model);
     restoreFocus?.();

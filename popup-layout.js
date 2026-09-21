@@ -105,10 +105,10 @@
   createFlow('sessions','Lokalne sesije','Local sessions',[panel.querySelector('.active-sessions-card')]);
   const securityGrid=document.createElement('div');securityGrid.className='settings-security-overview';panel.querySelector('.settings-pane-heading').after(securityGrid);
   const securityCards=[
-    ['password','Lozinka','Password','Promijenite lozinku računa.','Change your account password.'],
-    ['mfa','Dvostruka autentifikacija','Two-factor authentication','Aplikacija za sigurnosne kodove ili SMS.','Authenticator app or SMS.'],
-    ['device','Zaštita uređaja','Device protection','Zaključavanje, PIN i šifriranje.','Locking, PIN and encryption.'],
-    ['sessions','Lokalne sesije','Local sessions','Pregledajte i odjavite sesije.','Review and sign out sessions.']
+    ['password','Lozinka','Password','Lozinka za račun u ovom pregledniku.','Password for the account in this browser.'],
+    ['mfa','Dvostruka autentifikacija','Two-factor authentication','Kod iz aplikacije ili demonstracija SMS provjere.','Authenticator code or demonstration SMS verification.'],
+    ['device','Zaštita uređaja','Device protection','Uključite zaključavanje ili šifriranje lokalnih podataka.','Opt into locking or local-data encryption.'],
+    ['sessions','Lokalne sesije','Local sessions','Pregled prijava u karticama ovog preglednika.','Signed-in tabs in this browser.']
   ];
   securityCards.forEach(([key,hr,en,hintHr,hintEn])=>{
     const card=key==='mfa'?mfaSummary:document.createElement('section');card.className='settings-security-option';card.dataset.securityOption=key;
@@ -136,14 +136,14 @@
   root.MerPopupLayout=Object.freeze({revealTarget});
   function labels() {
     const english=document.documentElement.lang==='en';
-    const texts={settingsDataTitle:english?'Data management':'Upravljanje podacima',settingsDataHint:english?'Download a copy or delete this browser’s local account. Connected bank accounts are not deleted.':'Preuzmite kopiju ili izbrišite lokalni račun ovog preglednika. Bankovni računi ne brišu se.',settingsDataManage:english?'Privacy and data':'Privatnost i podaci',settingsRecoveryContinue:english?'Continue to 2FA management':'Nastavi na upravljanje 2FA',settingsRecoveryReturn:english?'View recovery codes':'Prikaži recovery kodove'};
+    const texts={settingsDataTitle:english?'Data management':'Upravljanje podacima',settingsDataHint:english?'Download a copy or delete this browser’s local account. This does not close accounts held by your bank.':'Preuzmite kopiju ili izbrišite lokalni račun ovog preglednika. Time se ne zatvaraju računi kod vaše banke.',settingsDataManage:english?'Privacy and data':'Privatnost i podaci',settingsRecoveryContinue:english?'Continue to 2FA management':'Nastavi na upravljanje 2FA',settingsRecoveryReturn:english?'View recovery codes':'Prikaži kodove za oporavak'};
     Object.entries(texts).forEach(([id,value])=>{const node=document.getElementById(id);if(node.textContent!==value)node.textContent=value;});
     const setText=(node,text)=>{if(node&&node.textContent!==text)node.textContent=text;};
     flowLabels.forEach(({flow,hr,en,card,cardHr,cardEn,hintHr,hintEn})=>{
       setText(flow.querySelector('h2'),english?en:hr);setText(flow.querySelector('[data-settings-back]'),english?'Back':'Natrag');flow.querySelector('.modal-close').setAttribute('aria-label',english?'Close':'Zatvori');
       if(card){setText(card.querySelector('h3'),english?cardEn:cardHr);setText(card.querySelector('p'),english?hintEn:hintHr);setText(card.querySelector('button'),english?'Manage':'Uredi');}
     });
-    setText(dialog.querySelector('[data-i18n="hideBalances"]'),english?'Privacy mode':'Privatni način');setText(document.getElementById('hideBalancesHint'),english?'Hide amounts. Shortcut: Ctrl / ⌘ + Shift + H.':'Sakrijte iznose. Prečac: Ctrl / ⌘ + Shift + H.');
+    setText(dialog.querySelector('[data-i18n="hideBalances"]'),english?'Privacy mode':'Privatni način');setText(document.getElementById('hideBalancesHint'),english?'Blurs amounts, not encryption. Shortcut: Ctrl / ⌘ + Shift + H.':'Zamagljuje iznose, ne šifrira podatke. Prečac: Ctrl / ⌘ + Shift + H.');
     subviews.forEach(({views,navigation})=>{navigation.setAttribute('aria-label',english?'Section':'Odjeljak');views.forEach(entry=>{const text=english?entry.en:entry.hr;if(entry.button.textContent!==text)entry.button.textContent=text;});});
   }
   // Existing forms and controls stay mounted: topic changes never discard a draft or MFA setup.
