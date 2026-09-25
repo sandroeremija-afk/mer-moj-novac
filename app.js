@@ -12,6 +12,8 @@ const translations = {
 
 translations.hr.merRecommendation = 'MER preporuka';
 translations.en.merRecommendation = 'MER Recommendation';
+Object.assign(translations.hr,{aggregateSavingsOverline:'SVI CILJEVI OVOG PROFILA',aggregateSavingsTitle:'Sažetak štednje',aggregateSavingsBalance:'Stanje svih ciljeva',aggregateSavingsRemaining:'Preostalo po ciljevima',aggregateSavingsActive:'Aktivni ciljevi',aggregateSavingsProgress:'Ukupni napredak ciljeva',aggregateSavingsNote:'Višak na jednom cilju ne umanjuje preostale iznose drugih ciljeva.'});
+Object.assign(translations.en,{aggregateSavingsOverline:'ALL GOALS IN THIS PROFILE',aggregateSavingsTitle:'Savings summary',aggregateSavingsBalance:'Balance across all goals',aggregateSavingsRemaining:'Remaining across goals',aggregateSavingsActive:'Active goals',aggregateSavingsProgress:'Combined goal progress',aggregateSavingsNote:'A surplus in one goal does not reduce the remaining amounts in other goals.'});
 
 Object.assign(translations.hr, {
   businessAccount:'Poslovni račun', darkMode:'Tamni način', lightMode:'Svijetli način', switchAccount:'PROMIJENI RAČUN', settings:'POSTAVKE', exportCsv:'Izvezi mjesečni CSV', notificationCenter:'Centar obavijesti',
@@ -654,14 +656,6 @@ function openBudgetCategoryManager({reset=false}={}) {
   setTimeout(()=>$('#budgetCategorySearch').focus(),50);
 }
 
-function savingsFinishDate() {
-  const remaining = Math.max(0, state.savingsGoal - state.savingsBalance);
-  const months = state.savingsTarget > 0 ? Math.ceil(remaining / state.savingsTarget) : 0;
-  const finish = new Date(`${appReferenceDate.slice(0,7)}-01T12:00:00`);
-  finish.setMonth(finish.getMonth()+months);
-  return new Intl.DateTimeFormat(locale(), { month:'long', year:'numeric' }).format(finish);
-}
-
 function savingsHistorySeries(values) {
   const history=(Array.isArray(values)?values:[]).map(value=>Math.max(0,Number(value)||0));
   const safeHistory=history.length?history:[0];
@@ -730,15 +724,6 @@ function renderSavingsHistoryChart() {
 }
 
 function renderSavingsView() {
-  const pct = Math.round(MerCore.ratioPercent(state.savingsBalance,state.savingsGoal,100));
-  $('#savingsHeroCurrent').textContent = currency(state.savingsBalance, true);
-  $('#savingsHeroTarget').textContent = t('goalTargetOf',{target:currency(state.savingsGoal,true)});
-  $('#savingsHeroProgress').style.width = `${pct}%`;
-  $('#savingsHeroTrack')?.setAttribute('aria-valuenow',String(pct));
-  $('#savingsHeroTrack')?.setAttribute('aria-valuetext',`${pct}% · ${currency(state.savingsBalance,true)} ${t('goalTargetOf',{target:currency(state.savingsGoal,true)})}`);
-  $('#stillNeeded').textContent = currency(Math.max(0,state.savingsGoal-state.savingsBalance),true);
-  $('#savingsMonthly').textContent = currency(state.savingsTarget,true);
-  $('#savingsFinish').textContent = savingsFinishDate();
   const coverage=state.savingsBalance/Math.max(1,state.bills),plan=getPlan();
   $('#coverageMonths').textContent = t('months',{value:number(coverage,1)});
   $('#strategyCoverageValue').textContent=t('months',{value:number(coverage,1)});

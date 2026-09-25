@@ -23,19 +23,21 @@ function savingsMarkup() {
   return html.slice(start, end);
 }
 
-test('evaluation cycle 1: Savings preserves a predictable hero, unified recommendation, and goals hierarchy', () => {
+test('evaluation cycle 1: Savings leads with history and keeps aggregate and goals below', () => {
   const savings = savingsMarkup();
   const layout = savings.indexOf('class="savings-layout"');
-  const hero = savings.indexOf('class="panel savings-hero savings-top-card"', layout);
-  const recommendation = savings.indexOf('class="panel recommendation-panel savings-insight-card unified-recommendation-card"', hero);
+  const history = savings.indexOf('class="panel contribution-panel savings-history-card savings-top-card"', layout);
+  const recommendation = savings.indexOf('class="panel recommendation-panel savings-insight-card unified-recommendation-card"', history);
+  const aggregate = savings.indexOf('class="panel savings-hero savings-aggregate-card"', recommendation);
   const goals = savings.indexOf('class="panel goal-buckets-panel"', recommendation);
   const layoutEnd = savings.indexOf('</section>', layout);
   const topLayout = savings.slice(layout, layoutEnd);
   const unifiedEnd = savings.indexOf('</aside>', recommendation);
   const unified = savings.slice(recommendation, unifiedEnd);
 
-  assert.ok(layout >= 0 && hero > layout && recommendation > hero, 'hero and unified recommendation are direct Savings peers');
-  assert.equal((topLayout.match(/class="[^"]*\bpanel\b/g) || []).length, 2, 'top layout owns exactly two cards');
+  assert.ok(layout >= 0 && history > layout && recommendation > history, 'history and recommendation are direct Savings peers');
+  assert.ok(aggregate > layoutEnd && goals > aggregate, 'aggregate and individual goals follow the top chart row');
+  assert.equal((topLayout.match(/<(?:article|aside)\b[^>]*class="[^"]*\bpanel\b/g) || []).length, 2, 'top layout owns exactly two cards');
   assert.equal((savings.match(/\bsavings-insight-card\b/g) || []).length, 1, 'Savings owns exactly one unified recommendation card');
   assert.match(unified, /id="savingsRecommendationCard"/);
   assert.ok(goals > recommendation, 'goal targets remain a separate lower panel');

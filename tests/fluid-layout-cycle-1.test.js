@@ -38,12 +38,20 @@ test('all four desktop targets enlarge the whole hierarchy without unbounded con
   assert.match(css, /--fluid-metric:calc\(28px \+ var\(--fluid-step\)\)/);
 });
 
-test('summary, savings hero, and insights rows grow before their remaining-space rows', () => {
+test('summary, promoted savings chart, and insights rows retain proportional space', () => {
   assert.match(css, /:is\(#overviewView,#budgetsView\) > \.summary-grid \{[^}]*min-height:var\(--fluid-summary-height\)/);
-  assert.match(css, /#savingsView \{[^}]*grid-template-rows:auto clamp\(218px,calc\(30dvh \+ var\(--fluid-step\) \* 3\),480px\) minmax\(0,1fr\)/);
+  assert.match(css, /#savingsView \{[^}]*grid-template-rows:auto minmax\(280px,1\.2fr\) minmax\(290px,1fr\)/);
+  assert.match(css, /#savingsView > \.savings-aggregate-card \{[^}]*grid-column:1;[^}]*grid-row:3/);
+  assert.match(css, /#savingsView > \.savings-layout > \.savings-history-card \{[^}]*height:100%/);
   assert.match(css, /#insightsView:not\(\[hidden\]\) \{[^}]*grid-template-rows:auto minmax\(var\(--fluid-summary-height\),auto\) minmax\(0,1fr\)/);
   assert.match(css, /#activityView #transactionList \.transaction-amount[^}]*var\(--fluid-step\)/);
   assert.match(css, /#budgetsView #budgetTable \.budget-category strong/);
+});
+
+test('budget rows reserve comfortable space and shrink tracks without squeezing amounts', () => {
+  assert.match(css, /#budgetsView > \.summary-grid \{[^}]*min-height:clamp\(124px,16dvh,224px\)/);
+  assert.match(css, /#budgetsView #budgetTable \.budget-row \{[^}]*grid-template-columns:minmax\(0,1\.2fr\) minmax\(0,1\.4fr\) max-content 44px;[^}]*min-height:64px;[^}]*padding-block:calc\(12px \+ var\(--fluid-step\) \* \.5\)/);
+  assert.match(css, /#budgetsView #budgetTable \.budget-row-progress \{[^}]*grid-template-columns:minmax\(0,1fr\) max-content/);
 });
 
 test('a single visible savings goal fills its row without unhiding paginated goals', () => {

@@ -40,7 +40,9 @@ test('evaluation cycle 2: Savings merges the weekly insight into one equal-heigh
   const recommendationEnd = savings.indexOf('</aside>', recommendationStart);
   const recommendation = savings.slice(recommendationStart, recommendationEnd);
 
-  assert.equal((topLayout.match(/class="[^"]*\bpanel\b/g) || []).length, 2);
+  assert.equal((topLayout.match(/<(?:article|aside) class="panel\b/g) || []).length, 2);
+  assert.match(topLayout, /class="panel contribution-panel savings-history-card savings-top-card"/);
+  assert.doesNotMatch(topLayout, /savings-aggregate-card/);
   assert.equal((savings.match(/id="savingsRecommendationCard"/g) || []).length, 1);
   assert.match(recommendation, /recommendation-badge[\s\S]*?recommendation-stat[\s\S]*?recommendation-weekly[\s\S]*?id="tipSavings"[\s\S]*?recommendation-action/);
   assert.doesNotMatch(savings, /\bsavings-side-stack\b|\bweekly-review-card\b|id="openPlan"/);

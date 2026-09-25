@@ -91,6 +91,8 @@
     margin:0;
   }
   :is(#overviewView,#budgetsView) > .summary-grid .progress-track { margin:0; flex-shrink:0; }
+  #budgetsView > .summary-grid { min-height:clamp(124px,16dvh,224px); }
+  #budgetsView > .summary-grid > .summary-card { padding-block:calc(16px + var(--fluid-step) * .5); }
 
   #overviewView > .dashboard-grid { gap:var(--fluid-gap); }
   #overviewView > .dashboard-grid > :is(.safe-panel,.budget-panel) { padding:var(--fluid-pad); }
@@ -113,6 +115,19 @@
 
   #budgetsView > .table-panel,
   #activityView > .activity-panel { padding:var(--fluid-pad); }
+  #budgetsView #budgetTableWindow { margin-top:10px; }
+  #budgetsView #budgetTable .budget-row {
+    grid-template-columns:minmax(0,1.2fr) minmax(0,1.4fr) max-content 44px;
+    gap:clamp(12px,1.2vw,24px);
+    min-height:64px;
+    padding-block:calc(12px + var(--fluid-step) * .5);
+  }
+  #budgetsView #budgetTable .budget-category { min-width:0; }
+  #budgetsView #budgetTable .budget-category strong { overflow-wrap:anywhere; }
+  #budgetsView #budgetTable .budget-row-progress { min-width:0; grid-template-columns:minmax(0,1fr) max-content; }
+  #budgetsView #budgetTable .budget-row-value { white-space:nowrap; }
+  #budgetsView > .table-panel > .allocation-bar { margin-top:8px; }
+  #budgetsView > .table-panel > .allocation-foot { margin-top:6px; }
   #budgetsView #budgetTable .budget-category strong,
   #activityView #transactionList .transaction-copy > strong { font-size:var(--fluid-body); }
   #budgetsView #budgetTable :is(.budget-category small,.budget-row-value,.budget-percent),
@@ -124,17 +139,22 @@
   #activityView #transactionList > .transaction-date { font-size:calc(10px + var(--fluid-step) * .1875); }
 
   #savingsView {
-    grid-template-rows:auto clamp(218px,calc(30dvh + var(--fluid-step) * 3),480px) minmax(0,1fr);
+    grid-template-columns:minmax(320px,.85fr) minmax(0,1.5fr);
+    grid-template-rows:auto minmax(280px,1.2fr) minmax(290px,1fr);
     gap:var(--fluid-gap);
   }
   #savingsView > .page-heading { margin-bottom:0; }
   #savingsView > .savings-layout { gap:var(--fluid-gap); }
+  #savingsView > .savings-layout > .savings-history-card { min-height:0; height:100%; }
+  #savingsView > .savings-aggregate-card { grid-column:1; grid-row:3; min-height:0; height:100%; }
   #savingsView .savings-hero,
   #savingsView #savingsRecommendationCard,
-  #savingsView > .savings-history-card,
+  #savingsView .savings-history-card,
   #savingsView > .goal-buckets-panel { padding:var(--fluid-pad); }
   #savingsView .savings-hero,
   #savingsView #savingsRecommendationCard { gap:var(--fluid-gap); }
+  #savingsView .savings-aggregate-card { gap:10px; }
+  #savingsView .savings-aggregate-card .savings-number { flex-direction:column; }
   #savingsView .savings-hero-head h2,
   #savingsView #savingsRecommendationCard .recommendation-title h2,
   #savingsView .savings-history-heading h2,
@@ -150,7 +170,7 @@
     font-size:var(--fluid-label);
   }
   #savingsView .goal-bucket-grid { gap:var(--fluid-gap); }
-  #savingsView .goal-bucket-card { gap:var(--fluid-gap); padding:var(--fluid-pad); }
+  #savingsView .goal-bucket-card { gap:calc(8px + var(--fluid-step) * .5); padding:calc(12px + var(--fluid-step) * .5); }
   #savingsView .rich-goal-card .goal-bucket-head { grid-template-columns:calc(64px + var(--fluid-step) * 2) minmax(0,1fr); }
   #savingsView .goal-progress-ring {
     width:calc(64px + var(--fluid-step) * 2);
@@ -158,6 +178,17 @@
     flex-basis:calc(64px + var(--fluid-step) * 2);
   }
   #savingsView .goal-progress-ring span { font-size:calc(16px + var(--fluid-step) * .375); }
+  @media (max-width:1200px) {
+    #overviewView > .dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    #overviewView .safe-content { flex-direction:column; gap:8px; padding-block:8px; }
+    #overviewView .safe-ring { width:110px; height:110px; }
+    #overviewView .safe-ring strong { font-size:22px; }
+    #overviewView .safe-copy { text-align:center; }
+    #savingsView .goal-bucket-card { padding:10px; gap:6px; }
+    #savingsView .rich-goal-card .goal-bucket-head { grid-template-columns:52px minmax(0,1fr); }
+    #savingsView .goal-progress-ring { width:52px; height:52px; flex-basis:52px; }
+    #savingsView .goal-bucket-values strong { font-size:24px; }
+  }
   /* One visible goal, including the last pagination page, uses both columns.
      Hidden records stay hidden and do not participate in this count. */
   #savingsView #goalBucketGrid:not(:has(> .goal-bucket-card:not([data-page-hidden="true"]):not([hidden]) ~ .goal-bucket-card:not([data-page-hidden="true"]):not([hidden]))) {

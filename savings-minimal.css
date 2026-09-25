@@ -20,6 +20,17 @@ body.layout-editing #savingsView [data-savings-summary] { cursor:grab; }
 #savingsView .savings-hero { display:flex; flex-direction:column; justify-content:center; gap:18px; padding:24px; }
 #savingsView .savings-hero-head { align-items:center; }
 #savingsView .savings-hero-head h2 { font-size:18px; line-height:1.4; }
+#savingsView .savings-aggregate-card { gap:10px; justify-content:space-between; }
+#savingsView .savings-aggregate-card .savings-hero-head { display:block; }
+#savingsView .savings-aggregate-balance { display:grid; gap:4px; }
+#savingsView .savings-aggregate-balance > small,
+#savingsView .savings-aggregate-facts small { color:var(--muted); font-size:12px; line-height:1.4; }
+#savingsView .savings-aggregate-card .savings-number { gap:4px 10px; }
+#savingsView .savings-aggregate-card .savings-number > span { font-size:12px; }
+#savingsView .savings-aggregate-facts { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:12px; }
+#savingsView .savings-aggregate-facts > div { display:grid; gap:4px; min-width:0; }
+#savingsView .savings-aggregate-facts strong { font-size:16px; line-height:1.35; overflow-wrap:anywhere; }
+#savingsView .savings-aggregate-note { margin:0; color:var(--muted); font-size:12px; line-height:1.4; }
 #savingsView .savings-number { margin:0; display:flex; align-items:baseline; flex-wrap:wrap; gap:10px; }
 #savingsView .savings-number strong { font-size:28px; line-height:1.25; }
 #savingsView .savings-number > span { font-size:14px; line-height:1.5; }
@@ -63,6 +74,11 @@ body.layout-editing #savingsView [data-savings-summary] { cursor:grab; }
 #savingsView .goal-bucket-values strong { font-size:20px; line-height:1.3; overflow-wrap:anywhere; }
 #savingsView .goal-bucket-values > span { font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
 #savingsView .goal-linear-track { height:5px; flex:none; }
+
+@media (max-width:1024px) {
+  #savingsView .savings-history-card { min-height:340px; padding:20px; }
+  #savingsView > .savings-aggregate-card { margin-block:12px; }
+}
 
 dialog.savings-minimal-modal[open] { display:flex; flex-direction:column; width:min(740px,calc(100vw - 32px)); max-width:none; max-height:90dvh; padding:0; box-sizing:border-box; overflow:hidden; background:var(--panel); color:var(--ink); border:1px solid var(--line); }
 .savings-detail-header,.savings-detail-footer { display:flex; align-items:center; gap:16px; padding:20px 24px; flex:0 0 auto; }

@@ -3,6 +3,18 @@
   const finite = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
   const cents = value => Math.round(finite(value) * 100);
   const belongsTo = (item, profileId) => item && (!item.profileId || item.profileId === profileId);
+  function savingsAggregate(snapshot) {
+    const goals = (Array.isArray(snapshot?.profile?.goalBuckets) ? snapshot.profile.goalBuckets : []).filter(goal => belongsTo(goal, snapshot?.profileId));
+    let current = 0, target = 0, remaining = 0, activeGoals = 0;
+    goals.forEach(goal => {
+      const saved = cents(goal.current), planned = cents(goal.target), deficit = Math.max(0, planned - saved);
+      current += saved; target += planned; remaining += deficit;
+      if (deficit > 0) activeGoals += 1;
+    });
+    // Each goal keeps its own purpose: excess in one cannot fund another implicitly.
+    const percent = target > 0 ? (target - remaining) / target * 100 : 0;
+    return { current:current / 100, target:target / 100, remaining:remaining / 100, activeGoals, goalCount:goals.length, percent };
+  }
   function savingsDetail(snapshot, goalId = null) {
     const profile = snapshot?.profile || {}, profileId = snapshot?.profileId;
     const goals = (Array.isArray(profile.goalBuckets) ? profile.goalBuckets : []).filter(goal => belongsTo(goal, profileId));
@@ -21,7 +33,7 @@
   function sameOwner(snapshot, owner) {
     return Boolean(snapshot && owner && snapshot.authenticated !== false && snapshot.profileId === owner.profileId && snapshot.sessionId === owner.sessionId);
   }
-  const api = { savingsDetail, sameOwner };
+  const api = { savingsAggregate, savingsDetail, sameOwner };
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (!root.document) return;
   const doc = root.document, el = id => doc.getElementById(id), bridge = () => root.MerVaultsBridge;
@@ -164,15 +176,25 @@
     };
     card.addEventListener('click', activate); card.addEventListener('keydown', activate);
   }
+  function renderAggregate(s) {
+    const aggregate = savingsAggregate(s), percent = Math.round(aggregate.percent);
+    el('savingsHeroCurrent').textContent = money(aggregate.current);
+    el('savingsHeroTarget').textContent = `${say('Ukupni cilj', 'Combined target')}: ${money(aggregate.target)}`;
+    el('savingsAggregateRemaining').textContent = money(aggregate.remaining);
+    el('savingsAggregateActiveGoals').textContent = String(aggregate.activeGoals);
+    el('savingsHeroProgress').style.width = `${percent}%`;
+    el('savingsHeroTrack').setAttribute('aria-valuenow', String(percent));
+    el('savingsHeroTrack').setAttribute('aria-valuetext', `${percent}%`);
+  }
   function refresh() {
     if (!bridge()) return;
-    ensureDialogs(); const s = snapshot(), detail = savingsDetail(s), primary = detail.goals.find(goal => goal.primary) || detail.goals[0];
+    ensureDialogs(); const s = snapshot(), detail = savingsDetail(s);
+    renderAggregate(s);
     makeClickable(doc.querySelector('#savingsView .savings-history-card'), 'history', null, say('Povijest štednje — prikaži detalje', 'Savings history — view details'));
     el('contributionChart')?.setAttribute('tabindex', '0');
     makeClickable(el('savingsRecommendationCard'), 'strategy', null, say('MER preporuka — pregledaj strategiju', 'MER Recommendation — review strategy'));
     const coverageLabel = doc.querySelector('#savingsRecommendationCard .recommendation-stat span');
     if (coverageLabel) { coverageLabel.removeAttribute('data-i18n'); coverageLabel.textContent = say('Pokrivenost', 'Coverage'); }
-    if (primary) makeClickable(doc.querySelector('#savingsView .savings-hero'), 'goal', primary.id, `${primary.name} — ${say('detalji cilja', 'goal details')}`);
     doc.querySelectorAll('#goalBucketGrid .goal-bucket-card').forEach(card => {
       const goalId = card.querySelector('[data-edit-goal]')?.dataset.editGoal;
       const goal = detail.goals.find(item => item.id === goalId);

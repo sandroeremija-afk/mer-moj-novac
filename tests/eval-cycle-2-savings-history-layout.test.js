@@ -19,10 +19,12 @@ const modal = html.slice(modalStart, modalEnd);
 
 test('evaluation cycle 2: Savings history chart is embedded once in the live module grid', () => {
   assert.equal((html.match(/id="contributionChart"/g) || []).length, 1);
-  assert.match(savings, /class="panel contribution-panel savings-history-card"[\s\S]*?id="contributionChart"[\s\S]*?id="chartTotalSaved"/);
+  assert.match(savings, /class="panel contribution-panel savings-history-card savings-top-card"[\s\S]*?id="contributionChart"[\s\S]*?id="chartTotalSaved"/);
   assert.doesNotMatch(modal, /contributionChart|chartTotalSaved|yearSaved/);
-  assert.match(css, /#savingsView > \.savings-history-card\s*\{[^}]*grid-column:1[^}]*grid-row:3/);
-  assert.match(css, /#savingsView > \.goal-buckets-panel\s*\{[^}]*grid-column:2[^}]*grid-row:3/);
+  const topRow = savings.match(/<section class="savings-layout">([\s\S]*?)<\/section>/)?.[1];
+  assert.match(topRow, /savings-history-card savings-top-card[\s\S]*id="contributionChart"[\s\S]*id="savingsRecommendationCard"/);
+  assert.doesNotMatch(topRow,/savings-aggregate-card|goal-buckets-panel/);
+  assert.match(savings, /<\/section>\s*<article class="panel savings-hero savings-aggregate-card"/);
 });
 
 test('evaluation cycle 2: Sve uplate trigger opens a list-only profile-labelled deposit dialog', () => {

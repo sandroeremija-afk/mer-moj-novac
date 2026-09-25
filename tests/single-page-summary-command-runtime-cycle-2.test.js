@@ -123,7 +123,7 @@ test('cold-start translations and the category summary do not depend on removed 
   assert.doesNotThrow(() => h.render());
 });
 
-test('premium goal rendering survives removed Overview cards and still updates all Savings controls', () => {
+test('premium goal rendering updates individual goals without replacing the aggregate summary', () => {
   const ids = new Set(Array.from(html.matchAll(/\bid="([^"]+)"/g), match => `#${match[1]}`));
   const nodes = new Map();
   const select = selector => {
@@ -133,13 +133,16 @@ test('premium goal rendering survives removed Overview cards and still updates a
   };
   const goal={id:'emergency',name:'Emergency fund',primary:true,target:1000,current:250,dueDate:'2027-01-01'};
   const context = vm.createContext({MerCore,MerAccounting,document:textDocument,state:{goalBuckets:[goal]},appReferenceDate:reference,$:select,$$:()=>[],currency:value=>String(value),t:(key,values)=>`${key}:${JSON.stringify(values||{})}`,preferredDate:value=>value,paginatePremiumLists(){}});
+  select('#savingsHeroCurrent').textContent='All goals';
+  select('#savingsHeroProgress').style.width='75%';
+  select('#savingsHeroTrack').setAttribute('aria-valuenow','75');
   vm.runInContext(escapeSource+between(premium,'  function primaryGoal(','  function openGoalEditor('),context);
   assert.doesNotThrow(() => context.renderGoals());
-  assert.equal(nodes.get('#savingsHeroCurrent').textContent,'250');
-  assert.equal(nodes.get('#savingsHeroProgress').style.width,'25%');
-  assert.equal(nodes.get('#savingsHeroTrack').attributes['aria-valuenow'],'25');
-  assert.equal(nodes.get('#stillNeeded').textContent,'750');
+  assert.equal(nodes.get('#savingsHeroCurrent').textContent,'All goals');
+  assert.equal(nodes.get('#savingsHeroProgress').style.width,'75%');
+  assert.equal(nodes.get('#savingsHeroTrack').attributes['aria-valuenow'],'75');
   assert.match(nodes.get('#goalBucketGrid').innerHTML,/Emergency fund/);
+  assert.match(nodes.get('#goalBucketGrid').innerHTML,/aria-valuenow="25"/);
 });
 
 function commandHarness({width=1440, language='en'}={}) {

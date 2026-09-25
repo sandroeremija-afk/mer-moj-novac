@@ -5,7 +5,7 @@ const source=read('savings-minimal.js'),css=read('savings-minimal.css');
 test('Summary cards are keyboard accessible and never intercept layout drags',()=>{
   assert.match(source,/setAttribute\('role', 'button'\)/);assert.match(source,/setAttribute\('aria-haspopup', 'dialog'\)/);
   assert.match(source,/\['Enter', ' '\]\.includes\(event.key\)/);assert.match(source,/classList.contains\('layout-editing'\)/);
-  assert.match(source,/'#savingsView \.savings-hero'\), 'goal', primary.id/);
+  assert.match(source,/renderAggregate\(s\)/);assert.doesNotMatch(source,/'#savingsView \.savings-hero'\), 'goal'/);
   assert.match(source,/'#goalBucketGrid \.goal-bucket-card'/);assert.match(source,/card.contains\(selection.anchorNode\)/);
 });
 test('Details preserve shared node IDs and bridge back to real edit, deposit and automation forms',()=>{

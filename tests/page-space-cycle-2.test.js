@@ -40,11 +40,11 @@ test('phone budget rows use two shrinkable tracks rather than clipping the inher
   assert.match(declarations('#budgetsView #budgetTable .edit-budget'), /grid-column:2; grid-row:1/);
 });
 
-test('overview fills remaining canvas with and without a spending alert', () => {
+test('overview lower cards stay bounded with and without a spending alert', () => {
   for (const selector of ['#overviewView > .dashboard-grid', '#overviewView:has(.spending-anomaly-alert:not([hidden])) > .dashboard-grid']) {
     const rule = declarations(selector);
-    assert.match(rule, /flex:1 1 0/);
-    assert.match(rule, /max-height:none/);
+    assert.match(rule, /flex:0 1 clamp\(340px,calc\(360px \+ var\(--fluid-step,0px\) \* 6\),456px\)/);
+    assert.match(rule, /max-height:456px/);
     assert.match(rule, /min-height:0/);
   }
 });
@@ -52,7 +52,8 @@ test('overview fills remaining canvas with and without a spending alert', () => 
 test('budget page stretches only the visible rows and retains a nonshrinking pager and allocation footer', () => {
   assert.match(declarations('#budgetsView #budgetTableWindow'), /flex-direction:column/);
   assert.match(declarations('#budgetsView #budgetTableWindow'), /flex:1 1 0/);
-  assert.match(declarations('#budgetsView #budgetTable'), /grid-auto-rows:minmax\(0,1fr\)/);
+  assert.match(declarations('#budgetsView #budgetTable'), /grid-auto-rows:minmax\(64px,1fr\)/);
+  assert.match(declarations('#budgetsView #budgetTable'), /min-height:min-content/);
   const pager = declarations('#budgetsView #budgetTableWindow > .mer-pagination');
   assert.match(pager, /flex:0 0 auto/);
   assert.match(pager, /margin-top:auto/);

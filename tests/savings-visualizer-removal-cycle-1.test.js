@@ -12,7 +12,7 @@ test('removed visualizer is absent from page, renderer, build and validation ent
   for(const file of ['micro-savings-ui.js','micro-savings-ui.css'])assert.equal(fs.existsSync(path.join(__dirname,'..',file)),false,file);
   assert.equal(Vaults.roundUpProjection,undefined);
   const html=read('index.html'),layout=html.match(/<section class="savings-layout">([\s\S]*?)<\/section>/)?.[1];
-  assert.ok(layout);assert.match(layout,/class="panel savings-hero savings-top-card"/);assert.match(layout,/id="savingsRecommendationCard"/);
+  assert.ok(layout);assert.match(layout,/class="panel contribution-panel savings-history-card savings-top-card"/);assert.match(layout,/id="savingsRecommendationCard"/);
   assert.equal((layout.match(/<(?:article|aside)\b/g)||[]).length,2);
   assert.match(read('styles.css'),/#savingsView \.savings-top-card\s*\{\s*grid-column:span 2;/);
   assert.match(read('premium.js'),/MerVaultsUI\?\.refresh\(\)/);

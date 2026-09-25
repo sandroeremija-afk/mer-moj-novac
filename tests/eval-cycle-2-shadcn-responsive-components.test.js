@@ -42,7 +42,8 @@ test('evaluation cycle 2: charts reflow, scroll only where useful, and preserve 
   assert.match(css, /\.expanded-month-chart \{ min-inline-size:0 !important; inline-size:100%/);
   assert.match(app, /rateMax=Math\.max\(\.\.\.validRates\.map\(item=>Math\.abs\(item\.rate\)\),1\)/);
   assert.match(app, /Math\.abs\(item\.rate\)\/rateMax\*100/);
-  assert.match(premium, /milestones\[1\]\.textContent=currency\(primary\.target\/2,true\)/);
+  assert.match(premium, /MerCore\.validateSavingsGoal\(goal\),percent=Math\.round\(result\.percent\|\|0\)/);
+  assert.doesNotMatch(html, /class="savings-milestones"/, 'primary-goal milestones are not duplicated in the aggregate summary');
 });
 
 test('evaluation cycle 2: dropdown menus are collision-aware and fully keyboard operable', () => {
@@ -76,7 +77,7 @@ test('evaluation cycle 2: responsive charts and savings rings expose dynamic acc
   assert.match(html, /id="categoryDonut" role="img" aria-label="Potrošnja po kategoriji"/);
   assert.match(html, /id="monthlyBarChart" role="img"/);
   assert.match(html, /id="savingsGauge" role="img"/);
-  assert.match(html, /id="savingsHeroTrack" role="progressbar"[^>]*aria-valuenow="62"/);
+  assert.match(html, /id="savingsHeroTrack" role="progressbar"[^>]*data-i18n-aria="aggregateSavingsProgress"[^>]*aria-valuenow="0"/);
   assert.match(app, /categoryDonut'\)\.setAttribute\('aria-label'/);
   assert.match(app, /monthlyBarChart'\)\.setAttribute\('aria-label'/);
   assert.match(app, /contributionChart'\)\.setAttribute\('aria-label'/);
