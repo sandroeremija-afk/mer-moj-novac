@@ -33,6 +33,7 @@ suiteCss.push('page-space.css','assistant-voice.css');
 suiteCss.push('fluid-layout.css');
 jsFiles.splice(jsFiles.indexOf('assistant-ui.js'),0,'assistant-voice.js');
 suiteCss.push('insight-refinement.css','security-tour.css');
+suiteCss.push('layout-density.css');
 const cssDescendantToken = '__MER_CSS_DESCENDANT__';
 
 const compactCss = source => source

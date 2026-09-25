@@ -13,7 +13,8 @@ test('removed visualizer is absent from page, renderer, build and validation ent
   assert.equal(Vaults.roundUpProjection,undefined);
   const html=read('index.html'),layout=html.match(/<section class="savings-layout">([\s\S]*?)<\/section>/)?.[1];
   assert.ok(layout);assert.match(layout,/class="panel contribution-panel savings-history-card savings-top-card"/);assert.match(layout,/id="savingsRecommendationCard"/);
-  assert.equal((layout.match(/<(?:article|aside)\b/g)||[]).length,2);
+  assert.equal((layout.match(/<(?:article|aside)\b/g)||[]).length,3);
+  assert.match(layout,/savings-context-column[\s\S]*savingsRecommendationCard[\s\S]*savings-aggregate-card/);
   assert.match(read('styles.css'),/#savingsView \.savings-top-card\s*\{\s*grid-column:span 2;/);
   assert.match(read('premium.js'),/MerVaultsUI\?\.refresh\(\)/);
   assert.match(read('premium.js'),/MerAnomalyUI\?\.refresh\(\)/);

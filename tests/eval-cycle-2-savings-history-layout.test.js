@@ -23,8 +23,9 @@ test('evaluation cycle 2: Savings history chart is embedded once in the live mod
   assert.doesNotMatch(modal, /contributionChart|chartTotalSaved|yearSaved/);
   const topRow = savings.match(/<section class="savings-layout">([\s\S]*?)<\/section>/)?.[1];
   assert.match(topRow, /savings-history-card savings-top-card[\s\S]*id="contributionChart"[\s\S]*id="savingsRecommendationCard"/);
-  assert.doesNotMatch(topRow,/savings-aggregate-card|goal-buckets-panel/);
-  assert.match(savings, /<\/section>\s*<article class="panel savings-hero savings-aggregate-card"/);
+  assert.match(topRow,/savings-context-column[\s\S]*savingsRecommendationCard[\s\S]*savings-aggregate-card/);
+  assert.doesNotMatch(topRow,/goal-buckets-panel/);
+  assert.match(savings, /<\/section>\s*<article class="panel goal-buckets-panel"/);
 });
 
 test('evaluation cycle 2: Sve uplate trigger opens a list-only profile-labelled deposit dialog', () => {

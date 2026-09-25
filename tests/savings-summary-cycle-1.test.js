@@ -50,7 +50,8 @@ test('history moves intact to the top row and aggregate replaces only the duplic
   assert.ok(layout);
   assert.match(layout,/class="panel contribution-panel savings-history-card savings-top-card"/);
   assert.ok(layout.indexOf('id="contributionChart"') < layout.indexOf('id="savingsRecommendationCard"'));
-  assert.doesNotMatch(layout,/savings-hero/);
+  assert.match(layout,/savings-context-column[\s\S]*savingsRecommendationCard[\s\S]*savings-hero savings-aggregate-card/);
+  assert.doesNotMatch(layout,/savings-hero savings-top-card/);
   assert.equal((html.match(/id="contributionChart"/g)||[]).length,1);
   assert.match(layout,/data-layout-card="savings-history"/);
   assert.match(html,/<article class="panel savings-hero savings-aggregate-card"[\s\S]*id="savingsAggregateActiveGoals"/);

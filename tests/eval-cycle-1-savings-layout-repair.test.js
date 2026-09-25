@@ -23,7 +23,7 @@ function savingsMarkup() {
   return html.slice(start, end);
 }
 
-test('evaluation cycle 1: Savings leads with history and keeps aggregate and goals below', () => {
+test('evaluation cycle 1: Savings leads with history, grouped context, and goals below', () => {
   const savings = savingsMarkup();
   const layout = savings.indexOf('class="savings-layout"');
   const history = savings.indexOf('class="panel contribution-panel savings-history-card savings-top-card"', layout);
@@ -35,9 +35,10 @@ test('evaluation cycle 1: Savings leads with history and keeps aggregate and goa
   const unifiedEnd = savings.indexOf('</aside>', recommendation);
   const unified = savings.slice(recommendation, unifiedEnd);
 
-  assert.ok(layout >= 0 && history > layout && recommendation > history, 'history and recommendation are direct Savings peers');
-  assert.ok(aggregate > layoutEnd && goals > aggregate, 'aggregate and individual goals follow the top chart row');
-  assert.equal((topLayout.match(/<(?:article|aside)\b[^>]*class="[^"]*\bpanel\b/g) || []).length, 2, 'top layout owns exactly two cards');
+  assert.ok(layout >= 0 && history > layout && recommendation > history, 'history precedes the grouped contextual cards');
+  assert.ok(aggregate < layoutEnd && goals > layoutEnd, 'aggregate belongs to the context column; individual goals follow the top row');
+  assert.match(topLayout, /savings-context-column[\s\S]*savingsRecommendationCard[\s\S]*savings-aggregate-card/);
+  assert.equal((topLayout.match(/<(?:article|aside)\b[^>]*class="[^"]*\bpanel\b/g) || []).length, 3, 'top layout contains history and its two contextual cards');
   assert.equal((savings.match(/\bsavings-insight-card\b/g) || []).length, 1, 'Savings owns exactly one unified recommendation card');
   assert.match(unified, /id="savingsRecommendationCard"/);
   assert.ok(goals > recommendation, 'goal targets remain a separate lower panel');
