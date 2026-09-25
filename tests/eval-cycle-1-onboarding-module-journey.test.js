@@ -50,7 +50,7 @@ test('evaluation cycle 1: module features point at the requested high-value surf
   }
   for (const id of ['security','privacy','personal']) {
     assert.equal(byId[id].surface, 'settings');
-    assert.match(byId[id].contextTarget, /^#(?:settings-device-flow-title|bankSettingsModal \[data-settings-tab=)/);
+    assert.equal(byId[id].contextTarget, '#openSettings');
     assert.equal(byId[id].view, undefined, 'opening Settings must not reactivate Insights');
   }
   assert.equal(byId.security.settingsTab, 'security');
@@ -64,7 +64,7 @@ test('evaluation cycle 1: module features point at the requested high-value surf
   assert.equal(byId.help.mobileTarget, '#helpTourConversation');
   assert.equal(byId.help.surface, 'help', 'the final step opens the actual Help popup');
   assert.equal(byId.help.helpMode, 'assistant', 'the popup starts with the input and sample questions visible');
-  assert.equal(byId.help.contextTarget, '#helpAiMode', 'real Help mode is highlighted, not a sidebar clone');
+  assert.equal(byId.help.contextTarget, '#openHelpAssistant', 'the real sidebar Help entry is highlighted beside the open modal');
   assert.equal(byId.insights.preserveScroll, true, 'a full-page highlight must not shift the content');
   assert.doesNotMatch(JSON.stringify(MerOnboarding.DEFAULT_STEPS), /Financijsko zdravlje|Podjela računa|healthScore|splitBill|TRENUTAČNI MODUL/i);
 });

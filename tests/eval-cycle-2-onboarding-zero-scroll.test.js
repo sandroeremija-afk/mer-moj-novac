@@ -35,7 +35,7 @@ test('evaluation cycle 2: module transitions retain the backdrop and expose side
   assert.match(preview, /if \(mobileViewport\(\) && step\.openSidebar\) openSidebar\(\)/);
   MerOnboarding.DEFAULT_STEPS.filter(step => step.view).forEach(step => assert.match(step.contextTarget, /^\.nav-item\[data-view="[a-z]+"\]$/));
   MerOnboarding.DEFAULT_STEPS.filter(step => step.surface).forEach(step => {
-    assert.match(step.contextTarget, /^#(?:settings-device-flow-title|bankSettingsModal|helpAiMode)/);
+    assert.match(step.contextTarget, /^#(?:openSettings|openHelpAssistant)$/);
     assert.doesNotMatch(step.contextTarget || '', /insights/);
   });
 });

@@ -67,6 +67,7 @@
     dialog.removeAttribute('data-tour-step');
     dialog.style.removeProperty('--tour-panel-top');
     dialog.style.removeProperty('--tour-panel-height');
+    document.body.removeAttribute('data-tour-sidebar-context');
     tour.classList.remove('is-hosted');
     popover.setAttribute('aria-modal', 'true');
     if (dialog.open && !(keepSettingsOpen && dialog.id === 'bankSettingsModal')) closeModal(dialog);
@@ -98,6 +99,9 @@
       popover.setAttribute('aria-modal', 'false');
     } else if (step.surface === 'settings') window.MerSettings?.selectTab(step.settingsTab);
     dialog.setAttribute('data-tour-step', step.id);
+    if (step.contextTarget === '#openSettings' || step.contextTarget === '#openHelpAssistant') {
+      document.body.setAttribute('data-tour-sidebar-context', step.surface);
+    }
     // The step explicitly selects its tab/child flow. A second target-based router
     // can close that native child or switch away from the tab just selected.
   }
@@ -273,9 +277,14 @@
     const splitSurface = ownedDialog && viewport.width <= 1024;
     if (splitSurface) {
       const panelTop = viewport.top + popoverSize.height + 26;
+      // Keep the actual sidebar entry visible below the native dialog on small
+      // screens. It stays in its original DOM, inert along with the app shell.
+      const contextRect = currentContextLink?.getBoundingClientRect();
+      const contextReserve = document.body.hasAttribute('data-tour-sidebar-context') && contextRect
+        ? Math.max(0, viewport.top + viewport.height - contextRect.top + 14) : 12;
       const topValue = `${panelTop}px`;
       ownedDialog.style.setProperty('--tour-panel-top', topValue);
-      ownedDialog.style.setProperty('--tour-panel-height', `${Math.max(1, viewport.top + viewport.height - panelTop - 12)}px`);
+      ownedDialog.style.setProperty('--tour-panel-height', `${Math.max(1, viewport.top + viewport.height - panelTop - contextReserve)}px`);
     } else if (ownedDialog) {
       ownedDialog.style.removeProperty('--tour-panel-top');
       ownedDialog.style.removeProperty('--tour-panel-height');

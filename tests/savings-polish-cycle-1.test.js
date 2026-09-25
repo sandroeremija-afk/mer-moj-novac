@@ -19,9 +19,29 @@ function harness({values=[100,200,450],width=400,height=180,language='hr',curren
   ['savingsHistorySvg','savingsChartPoints','savingsChartAxis','savingsChartTooltip','contributionChart'].forEach(id=>nodes.set(id,new Node(id)));
   const context={MerCore,state,Intl,Number,Math,Date,appReferenceDate:'2026-08-14',document:{body:{classList:{contains:()=>editing}}},locale:()=>language==='hr'?'hr-HR':'en-GB',currency:value=>MerCore.formatCurrency(value,{locale:language==='hr'?'hr-HR':'en-GB',currency}),escapeHtml:String,t:(key,options={})=>key==='savingsPointLabel'?`${options.month}: ${options.amount}`:key,$:selector=>nodes.get(selector.slice(1)),$$:()=>buttons};
   vm.createContext(context);vm.runInContext(chartSource,context);context.renderSavingsHistoryChart();
-  return{context,state,chart:nodes.get('contributionChart'),tooltip:nodes.get('savingsChartTooltip'),buttons:()=>buttons,setEditing:value=>{editing=value;}};
+  return{context,state,nodes,chart:nodes.get('contributionChart'),tooltip:nodes.get('savingsChartTooltip'),buttons:()=>buttons,setEditing:value=>{editing=value;}};
 }
 const normalized=value=>value.replace(/\s/g,' ');
+test('Cycle 1: visible savings labels retain exact localized profile amounts and privacy markers',()=>{
+  const h=harness({values:[10.5,1250.5,0]}),markup=normalized(h.nodes.get('savingsChartPoints').innerHTML);
+  assert.equal((markup.match(/class="savings-point-value/g)||[]).length,3);
+  for(const amount of ['10,50 €','1.250,50 €','0 €'])assert.ok(markup.includes(amount));
+  assert.equal((markup.match(/data-monetary aria-hidden="true"/g)||[]).length,3);
+  assert.match(markup,/savings-point-value is-intermediate is-below/,'Peak labels sit below high points');
+  assert.equal(h.buttons().length,3,'All months remain keyboard and pointer reachable');
+  h.state.savingsHistory=[70];h.context.renderSavingsHistoryChart();
+  const refreshed=normalized(h.nodes.get('savingsChartPoints').innerHTML);
+  assert.ok(refreshed.includes('70,00 €'));assert.ok(!refreshed.includes('1.250,50 €'));
+});
+test('Cycle 1: savings summary removes the requested note and exposes real chart summary metrics',()=>{
+  const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
+  const css=fs.readFileSync(require.resolve('../savings-minimal.css'),'utf8');
+  assert.doesNotMatch(html,/savings-aggregate-note|Višak na jednom cilju/);
+  assert.match(css,/#appShell #savingsView \.savings-inline-kpis \{ display:grid/);
+  assert.match(app,/if\(inlineAverage\)inlineAverage.textContent=currency\(history.length\?sum\/history.length:0\)/);
+  assert.match(app,/if\(inlineBest\)inlineBest.textContent=`\$\{best.fullLabel\} · \$\{currency\(best.amount\)\}`/);
+  assert.match(css,/@container \(max-width:560px\)[\s\S]*?\.savings-point-value\.is-intermediate \{ display:none/);
+});
 test('Cycle 1: full-area hover selects precise full month and amount without financial mutations',()=>{
   const h=harness(),before=JSON.stringify(h.state);
   h.chart.onpointermove({clientX:390,pointerType:'mouse'});

@@ -37,6 +37,21 @@
   flex:0 0 auto;
   margin:0 auto;
 }
+/* Both semicircle layers must share an explicit origin and scale from the
+   gauge itself. Auto-positioned square layers can fall outside its clipped
+   half-height box when the surrounding summary card changes layout. */
+#insightsView .insights-rate-summary .savings-gauge::before {
+  inset:0 auto auto 0;
+  width:100%;
+  height:200%;
+  aspect-ratio:auto;
+}
+#insightsView .insights-rate-summary .savings-gauge::after {
+  inset:26% auto auto 13%;
+  width:74%;
+  height:148%;
+  aspect-ratio:auto;
+}
 #insightsView .insights-rate-summary .savings-gauge > span { bottom:0; gap:1px; }
 #insightsView .insights-rate-summary .savings-gauge strong {
   max-inline-size:94%;

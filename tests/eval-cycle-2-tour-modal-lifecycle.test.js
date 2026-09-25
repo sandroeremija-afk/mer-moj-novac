@@ -90,6 +90,11 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
       this.rect = { ...this.rect, left:rect.left, right:rect.right, width:rect.width, top:rect.top, bottom:rect.top + this.rect.height };
     }
     getBoundingClientRect() {
+      if (['openSettings','openHelpAssistant'].includes(this.id)) {
+        const compact = width <= 1024 && document.body.hasAttribute('data-tour-sidebar-context');
+        const top = height - (compact ? 76 : this.id === 'openSettings' ? 84 : 150);
+        return {left:20, right:compact ? Math.min(304,width-20) : 240, top, bottom:top+56, width:compact ? Math.min(284,width-40) : 220, height:56};
+      }
       if (['settingsBody', 'deviceBody', 'helpBody'].includes(this.id)) {
         const host = this.closest('dialog');
         const panelTop = Number.parseFloat(host.style.getPropertyValue('--tour-panel-top'));
@@ -352,8 +357,8 @@ test('cycle 2: production device, privacy and personal settings support Back wit
     env.click('onboardingPrevious');
     assert.equal(env.settings.open,true);assert.equal(env.help.open,false);
     assert.equal(env.nodes.get('privacySetting').classList.contains('tour-target-active'),true);
-    assert.equal(env.nodes.get('settingsTab-general').classList.contains('tour-context-active'),true);
-    assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
+    assert.equal(env.nodes.get('settingsTab-general').classList.contains('tour-context-active'),false);
+    assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),true);
     assert.equal(env.nodes.get('openHelpAssistant').classList.contains('tour-context-active'),false);
     env.click('onboardingPrevious');
     assert.equal(env.device.open,true);assert.equal(env.tour.parentNode,env.device);
@@ -466,7 +471,7 @@ test('cycle 2: final Help step opens the real chat surface with input and sample
     assert.equal(env.navLinks.insights.classList.contains('tour-context-active'),false);
     assert.equal(env.nodes.get('insightsView').classList.contains('tour-target-active'),false);
     assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
-    assert.equal(env.nodes.get('helpAiMode').classList.contains('tour-context-active'),true);
+    assert.equal(env.nodes.get('openHelpAssistant').classList.contains('tour-context-active'),true);
     env.click('onboardingPrevious');
     assert.equal(env.help.open,false);
     assert.equal(env.settings.open,true);assert.equal(env.nodes.get('personalDataForm').classList.contains('tour-target-active'),true);
@@ -769,20 +774,27 @@ test('cycle 2: hosted steps select their real settings tab and context without h
   env.start();env.next(5);
   const backdrop = env.tour.children.find(node => node.className === 'onboarding-backdrop');
   assert.ok(backdrop);
-  for (const [offset,tab,contextId] of [[0,'security','settings-device-flow-title'],[1,'general','settingsTab-general'],[2,'personal','settingsTab-personal']]) {
+  const originalParent = env.nodes.get('openSettings').parentNode;
+  for (const [offset,tab,contextId] of [[0,'security','openSettings'],[1,'general','openSettings'],[2,'personal','openSettings']]) {
     if(offset)env.next();
     assert.equal(env.calls.filter(call => call[0] === 'tab').at(-1)[1],tab);
     assert.equal(env.nodes.get(contextId).classList.contains('tour-context-active'),true);
-    assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
+    assert.equal(env.nodes.get('openSettings').parentNode,originalParent,'the actual sidebar control never leaves its original DOM');
+    assert.equal(env.shell.inert,true,'the highlighted sidebar remains non-interactive behind the modal');
+    assert.equal(env.document.body.getAttribute('data-tour-sidebar-context'),'settings');
     assert.equal(env.nodes.get('onboardingContextSpotlight').children.length,0,'the outline never copies profile markup');
     assert.match(backdrop.style.clipPath,/^path\(evenodd,/,'both originals are revealed by one persistent mask');
     assert.equal(env.tour.children.find(node => node.className === 'onboarding-backdrop'),backdrop,'no backdrop remount during transitions');
     assert.equal(env.navLinks.insights.classList.contains('tour-context-active'),false);
   }
   env.next();
-  assert.equal(env.nodes.get('helpAiMode').classList.contains('tour-context-active'),true);
+  assert.equal(env.nodes.get('openHelpAssistant').classList.contains('tour-context-active'),true);
+  assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
+  assert.equal(env.document.body.getAttribute('data-tour-sidebar-context'),'help');
   assert.equal(env.nodes.get('settingsTab-personal').classList.contains('tour-context-active'),false);
   assert.equal(env.tour.parentNode,env.help);
+  env.click('onboardingClose');
+  assert.equal(env.document.body.hasAttribute('data-tour-sidebar-context'),false,'closing the tour restores ordinary sidebar layout');
 });
 
 test('cycle 2: hidden sidebar context is not recreated as a misleading floating duplicate', () => {

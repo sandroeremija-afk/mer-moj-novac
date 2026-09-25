@@ -404,6 +404,10 @@
     });
     helpFaqPanel.hidden = selected !== 'faq';
     helpUi.aiPanel.hidden = selected !== 'assistant';
+    helpUi.restart.hidden = selected !== 'faq';
+    if (helpUi.restart.hidden && document.activeElement === helpUi.restart && modal.open) {
+      helpUi.aiMode.focus({ preventScroll:true });
+    }
     helpBody.classList.toggle('assistant-mode', selected === 'assistant');
     if (selected === 'assistant') {
       renderMessages();

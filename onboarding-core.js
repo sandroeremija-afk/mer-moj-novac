@@ -30,19 +30,19 @@
       copy:copy('Analitika i izvješća', 'Usporedite prihode i troškove po razdobljima. Odaberite dan, mjesec, godinu ili cijelu povijest.', 'Analytics and reports', 'Compare income and expenses by period. Choose a day, a month, a year or your full history.')
     },
     {
-      id:'security', surface:'settings', settingsTab:'security', settingsFlow:'device', target:'#settings-device-flow .settings-flow-body', mobileTarget:'#settings-device-flow .settings-flow-body', contextTarget:'#settings-device-flow-title', placement:'left', titleKey:'onboardingSecurityTitle', bodyKey:'onboardingSecurityBody',
+      id:'security', surface:'settings', settingsTab:'security', settingsFlow:'device', target:'#settings-device-flow .settings-flow-body', mobileTarget:'#settings-device-flow .settings-flow-body', contextTarget:'#openSettings', placement:'left', titleKey:'onboardingSecurityTitle', bodyKey:'onboardingSecurityBody',
       copy:copy('Zaključavanje po vašem izboru', 'Po želji uključite zaključavanje nakon 10 minuta. Otključavate lozinkom ili postavljenim PIN-om. Vodič ne mijenja ovu postavku.', 'Locking is your choice', 'Enable locking after 10 minutes if you wish. Unlock with your password or configured PIN. This tour does not change the setting.')
     },
     {
-      id:'privacy', surface:'settings', settingsTab:'general', target:'#bankSettingsModal label:has(#hideBalances)', mobileTarget:'#bankSettingsModal label:has(#hideBalances)', contextTarget:'#bankSettingsModal [data-settings-tab="general"]', placement:'left', titleKey:'onboardingPrivacyTitle', bodyKey:'onboardingPrivacyBody',
+      id:'privacy', surface:'settings', settingsTab:'general', target:'#bankSettingsModal label:has(#hideBalances)', mobileTarget:'#bankSettingsModal label:has(#hideBalances)', contextTarget:'#openSettings', placement:'left', titleKey:'onboardingPrivacyTitle', bodyKey:'onboardingPrivacyBody',
       copy:copy('Sakrijte iznose jednim potezom', 'Privatni način zamagljuje novčane iznose. Uključite ga ovdje ili prečacem Ctrl / ⌘ + Shift + H. Vaši podaci ostaju nepromijenjeni.', 'Hide amounts in one step', 'Privacy mode blurs monetary amounts. Enable it here or press Ctrl / ⌘ + Shift + H. Your financial data stays unchanged.')
     },
     {
-      id:'personal', surface:'settings', settingsTab:'personal', target:'#personalDataForm', mobileTarget:'#personalDataForm', contextTarget:'#bankSettingsModal [data-settings-tab="personal"]', placement:'left', titleKey:'onboardingPersonalTitle', bodyKey:'onboardingPersonalBody',
+      id:'personal', surface:'settings', settingsTab:'personal', target:'#personalDataForm', mobileTarget:'#personalDataForm', contextTarget:'#openSettings', placement:'left', titleKey:'onboardingPersonalTitle', bodyKey:'onboardingPersonalBody',
       copy:copy('Vaši osobni podaci', 'U odjeljku Podaci uredite ime, prezime, OIB i adresu. Unos je neobavezan i sprema se u ovom pregledniku; nije provjera identiteta.', 'Your personal information', 'Edit your name, OIB and address in Personal data. These optional details are stored in this browser; this is not identity verification.')
     },
     {
-      id:'help', surface:'help', helpMode:'assistant', target:'#helpTourConversation', mobileTarget:'#helpTourConversation', contextTarget:'#helpAiMode', placement:'left', titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
+      id:'help', surface:'help', helpMode:'assistant', target:'#helpTourConversation', mobileTarget:'#helpTourConversation', contextTarget:'#openHelpAssistant', placement:'left', titleKey:'onboardingHelpTitle', bodyKey:'onboardingHelpBody',
       copy:copy('Pomoć i AI asistent', 'Opišite transakciju rečenicom ili postavite pitanje o svojim financijama. Upute su dostupne za svaki modul. Provjerite AI prijedloge prije spremanja.', 'Help & AI Assistant', 'Ask to draft a transaction in plain language or get financial guidance. Module FAQs explain the app. Review AI suggestions before saving.')
     }
   ].map(step => Object.freeze(step)));

@@ -12,8 +12,8 @@ const translations = {
 
 translations.hr.merRecommendation = 'MER preporuka';
 translations.en.merRecommendation = 'MER Recommendation';
-Object.assign(translations.hr,{aggregateSavingsOverline:'SVI CILJEVI OVOG PROFILA',aggregateSavingsTitle:'Sažetak štednje',aggregateSavingsBalance:'Stanje svih ciljeva',aggregateSavingsRemaining:'Preostalo po ciljevima',aggregateSavingsActive:'Aktivni ciljevi',aggregateSavingsProgress:'Ukupni napredak ciljeva',aggregateSavingsNote:'Višak na jednom cilju ne umanjuje preostale iznose drugih ciljeva.'});
-Object.assign(translations.en,{aggregateSavingsOverline:'ALL GOALS IN THIS PROFILE',aggregateSavingsTitle:'Savings summary',aggregateSavingsBalance:'Balance across all goals',aggregateSavingsRemaining:'Remaining across goals',aggregateSavingsActive:'Active goals',aggregateSavingsProgress:'Combined goal progress',aggregateSavingsNote:'A surplus in one goal does not reduce the remaining amounts in other goals.'});
+Object.assign(translations.hr,{aggregateSavingsOverline:'SVI CILJEVI OVOG PROFILA',aggregateSavingsTitle:'Sažetak štednje',aggregateSavingsBalance:'Stanje svih ciljeva',aggregateSavingsRemaining:'Preostalo po ciljevima',aggregateSavingsActive:'Aktivni ciljevi',aggregateSavingsProgress:'Ukupni napredak ciljeva'});
+Object.assign(translations.en,{aggregateSavingsOverline:'ALL GOALS IN THIS PROFILE',aggregateSavingsTitle:'Savings summary',aggregateSavingsBalance:'Balance across all goals',aggregateSavingsRemaining:'Remaining across goals',aggregateSavingsActive:'Active goals',aggregateSavingsProgress:'Combined goal progress'});
 
 Object.assign(translations.hr, {
   businessAccount:'Poslovni račun', darkMode:'Tamni način', lightMode:'Svijetli način', switchAccount:'PROMIJENI RAČUN', settings:'POSTAVKE', exportCsv:'Izvezi mjesečni CSV', notificationCenter:'Centar obavijesti',
@@ -681,7 +681,7 @@ function renderSavingsHistoryChart() {
   const series=points.map((point,index)=>{const date=new Date(endMonth);date.setUTCMonth(date.getUTCMonth()-(points.length-1-index));const fullMonth=new Intl.DateTimeFormat(locale(),{month:'long',timeZone:'UTC'}).format(date);return {...point,label:new Intl.DateTimeFormat(locale(),{month:'short',timeZone:'UTC'}).format(date),fullLabel:fullMonth.charAt(0).toLocaleUpperCase(locale())+fullMonth.slice(1)};});
   const areaPath=`${linePath} L ${points.at(-1).x} ${baseline} L ${points[0].x} ${baseline} Z`;
   $('#savingsHistorySvg').innerHTML=`<defs><linearGradient id="savingsAreaGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--blue)" stop-opacity=".28"></stop><stop offset="72%" stop-color="var(--green)" stop-opacity=".08"></stop><stop offset="100%" stop-color="var(--green)" stop-opacity="0"></stop></linearGradient></defs><g class="savings-chart-grid" aria-hidden="true"><line x1="28" y1="24" x2="972" y2="24"></line><line x1="28" y1="77" x2="972" y2="77"></line><line x1="28" y1="130" x2="972" y2="130"></line><line x1="28" y1="184" x2="972" y2="184"></line></g><path class="savings-area-fill" d="${areaPath}"></path><path class="savings-area-line" d="${linePath}"></path>`;
-  $('#savingsChartPoints').innerHTML=series.map((point,index)=>{const x=point.x/10,y=point.y/2.2,label=t('savingsPointLabel',{month:point.fullLabel,amount:currency(point.amount)});return `<button type="button" class="savings-chart-point ${index===series.length-1?'current':''}" style="--point-x:${x}%;--point-y:${y}%" data-savings-chart-point="${index}" aria-label="${escapeHtml(label)}"><span aria-hidden="true"></span></button>`;}).join('');
+  $('#savingsChartPoints').innerHTML=series.map((point,index)=>{const x=point.x/10,y=point.y/2.2,label=t('savingsPointLabel',{month:point.fullLabel,amount:currency(point.amount)}),optional=index>0&&index<series.length-1;return `<button type="button" class="savings-chart-point ${index===series.length-1?'current':''}" style="--point-x:${x}%;--point-y:${y}%" data-savings-chart-point="${index}" aria-label="${escapeHtml(label)}"><span aria-hidden="true"></span></button><span class="savings-point-value${optional?' is-intermediate':''}${point.y<55?' is-below':''}" style="--point-x:${x}%;--point-y:${y}%" data-monetary aria-hidden="true">${escapeHtml(currency(point.amount))}</span>`;}).join('');
   $('#savingsChartAxis').style.setProperty('--chart-columns',String(series.length));
   $('#savingsChartAxis').innerHTML=series.map((point,index)=>`<span class="${series.length>8&&index%2===1&&index!==series.length-1?'axis-label-optional':''}">${escapeHtml(point.label)}</span>`).join('');
   const chart=$('#contributionChart'),tooltip=$('#savingsChartTooltip'),buttons=$$('[data-savings-chart-point]');
@@ -736,6 +736,9 @@ function renderSavingsView() {
   $('#savingsMonthlyAverage').textContent=currency(history.length?sum/history.length:0,true);
   const series=renderSavingsHistoryChart(),best=series.reduce((winner,point)=>point.amount>winner.amount?point:winner,series[0]);
   $('#savingsBestMonth').textContent=`${best.label} · ${currency(best.amount,true)}`;
+  const inlineAverage=$('#savingsInlineAverage'),inlineBest=$('#savingsInlineBest');
+  if(inlineAverage)inlineAverage.textContent=currency(history.length?sum/history.length:0);
+  if(inlineBest)inlineBest.textContent=`${best.fullLabel} · ${currency(best.amount)}`;
   const current=history.at(-1)||0,previous=history.at(-2)||0,delta=previous>0?(current-previous)/previous*100:current>0?100:0,rounded=Math.round(Math.abs(delta));
   const trendBadge=$('#savingsTrendBadge');trendBadge.textContent=`${delta>0?'+':delta<0?'−':''}${rounded}%`;trendBadge.className=`savings-trend-pill ${delta>0?'positive':delta<0?'negative':'neutral'}`;trendBadge.title=previous===0&&current>0?t('savingsTrendNoBaseline'):delta>0?t('savingsTrendUp'):delta<0?t('savingsTrendDown'):t('savingsTrendFlat');trendBadge.setAttribute('aria-label',`${trendBadge.textContent} · ${trendBadge.title}`);
 }

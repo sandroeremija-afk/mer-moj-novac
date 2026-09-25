@@ -20,7 +20,7 @@ function realHelp() {
   const panelStart=source.indexOf('    const aiPanel = document.createElement(');
   const panelEnd=source.indexOf('    helpBody.append(aiPanel);',panelStart)+'    helpBody.append(aiPanel);'.length;
   assert.ok(panelStart>0&&panelEnd>panelStart);
-  vm.runInContext(`${source.slice(panelStart,panelEnd)}\nglobalThis.helpUi={aiPanel,input};`,context);
+  vm.runInContext(`${source.slice(panelStart,panelEnd)}\nglobalThis.helpUi={aiPanel,input,restart:document.createElement('button'),aiMode:document.createElement('button')};`,context);
   const modeStart=source.indexOf('  function selectHelpMode('),modeEnd=source.indexOf('  function bindRovingTabs(',modeStart);
   const openStart=source.indexOf('  function openHelp('),openEnd=source.indexOf("  $('#openHelpAssistant').addEventListener",openStart);
   const closeStart=source.indexOf("  modal.addEventListener('close', () => {"),closeEnd=source.indexOf('  reactiveStore.subscribe(',closeStart);
