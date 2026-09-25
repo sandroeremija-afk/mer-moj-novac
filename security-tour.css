@@ -1,5 +1,10 @@
 /* Scoped tour presentation: original controls remain mounted, retain drafts and
    restore their ordinary layout as soon as the guide leaves the surface. */
+.onboarding-backdrop { position:fixed;inset:0;z-index:0;background:rgba(2,14,12,.72);pointer-events:none;transition:clip-path .5s ease-in-out; }
+.onboarding-tour .onboarding-spotlight { box-shadow:0 0 0 5px rgba(0,169,228,.18),0 10px 30px rgba(0,0,0,.2); }
+.onboarding-tour .onboarding-context-spotlight { background:transparent; }
+[data-theme="dark"] .onboarding-backdrop { background:rgba(0,0,0,.78); }
+.tour-modal-host[data-tour-step] { isolation:isolate; }
 .tour-modal-host[data-tour-step="security"] .settings-flow-body { min-width:0; }
 .tour-modal-host[data-tour-step="privacy"] label:has(#hideBalances) { scroll-margin:12px; }
 .tour-modal-host[data-tour-step="personal"] #personalDataForm { min-width:0; }
@@ -11,7 +16,9 @@ body.tour-active #merAppUpdate { display:none; }
     width:calc(100vw - 16px);height:var(--tour-panel-height,50dvh);
     max-height:var(--tour-panel-height,50dvh);padding:14px;overflow:visible;
   }
-  .tour-modal-host[data-tour-step="security"] .settings-flow-body { flex:0 0 auto;overflow:visible; }
+  html body dialog.settings-security-flow.tour-modal-host[data-tour-step="security"][open],
+  html body #bankSettingsModal.tour-modal-host[data-tour-step="privacy"][open] { height:auto;max-height:var(--tour-panel-height,50dvh); }
+  .tour-modal-host[data-tour-step="security"] .settings-flow-body { flex:1 1 auto;min-height:0;overflow:auto; }
   .tour-modal-host[data-tour-step="security"] .auto-lock-setting { padding:10px;margin:0 0 10px; }
   .tour-modal-host[data-tour-step="security"] .auto-lock-setting strong { font-size:14px;line-height:1.4; }
   .tour-modal-host[data-tour-step="security"] .auto-lock-setting small { font-size:12px;line-height:1.4; }
@@ -23,11 +30,32 @@ body.tour-active #merAppUpdate { display:none; }
   /* The guide already supplies Back, Skip and Close; a duplicate host footer
      would consume the space reserved for the actual security controls. */
   .tour-modal-host[data-tour-step] > :is(.mer-generated-footer,.settings-flow-footer) { display:none; }
-  #bankSettingsModal.tour-modal-host[data-tour-step="privacy"] [data-settings-panel="general"] > * { display:none; }
-  #bankSettingsModal.tour-modal-host[data-tour-step="privacy"] [data-settings-panel="general"] > label:has(#hideBalances) { display:flex;margin:0;padding:14px; }
-  #bankSettingsModal.tour-modal-host[data-tour-step="personal"] .settings-modal-body { flex:0 0 auto;min-height:0;overflow:visible;padding:0;scrollbar-gutter:auto; }
-  #bankSettingsModal.tour-modal-host[data-tour-step="personal"] .personal-data-intro { font-size:12px;line-height:1.4;margin-bottom:8px; }
-  #bankSettingsModal.tour-modal-host[data-tour-step="personal"] .personal-data-fields { gap:8px; }
+  html body dialog.tour-modal-host[data-tour-step] { display:flex;flex-direction:column;gap:8px;min-height:0; }
+  html body .tour-modal-host[data-tour-step] > h2,
+  html body .tour-modal-host[data-tour-step="help"] > .help-assistant-heading { display:block;flex:0 0 auto;margin:0;padding-right:40px;font-size:18px;line-height:1.3; }
+  .tour-modal-host[data-tour-step="help"] .help-assistant-heading > :is(svg,.help-heading-icon),
+  .tour-modal-host[data-tour-step="help"] .help-assistant-heading p { display:none; }
+  .tour-modal-host[data-tour-step="help"] .help-assistant-heading h2 { margin:0;font-size:18px;line-height:1.3; }
+  html body #bankSettingsModal.tour-modal-host[data-tour-step] .settings-modal-body { display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0;scrollbar-gutter:auto; }
+  html body #bankSettingsModal.tour-modal-host[data-tour-step] .settings-tabs { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:0 0 auto;margin:0 0 8px;overflow:visible;position:static; }
+  html body #bankSettingsModal.tour-modal-host[data-tour-step] .settings-tabs button { min-width:0;min-inline-size:0;min-height:44px;padding:6px 3px;font-size:12px;line-height:1.3;white-space:normal; }
+  #bankSettingsModal.tour-modal-host[data-tour-step="privacy"] [data-settings-panel="general"] > :not(:has(#hideBalances)) { display:none; }
+  #bankSettingsModal.tour-modal-host[data-tour-step="privacy"] [data-settings-panel="general"] > label:has(#hideBalances) { display:flex;margin:0;padding:14px;min-height:0;gap:12px; }
+  #bankSettingsModal.tour-modal-host[data-tour-step="privacy"] [data-settings-panel="general"] { flex:0 0 auto; }
+  #bankSettingsModal.tour-modal-host[data-tour-step="privacy"] label:has(#hideBalances) span { min-width:0; }
+  #bankSettingsModal.tour-modal-host[data-tour-step="privacy"] label:has(#hideBalances) small { font-size:13px;line-height:1.45; }
+  #bankSettingsModal.tour-modal-host[data-tour-step="personal"] .personal-data-intro { display:none; }
+  #bankSettingsModal.tour-modal-host[data-tour-step="personal"] .personal-data-fields { grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
   #bankSettingsModal.tour-modal-host[data-tour-step="personal"] .personal-data-fields label { gap:4px;font-size:13px; }
+  #bankSettingsModal.tour-modal-host[data-tour-step="personal"] .personal-data-fields input { min-width:0;min-height:40px;padding:7px 8px;font-size:16px; }
   #bankSettingsModal.tour-modal-host[data-tour-step="personal"] .personal-data-actions { margin-top:8px; }
+  html body #helpAssistantModal.tour-modal-host[data-tour-step="help"] .help-modal-toolbar { margin:0; }
+  html body #helpAssistantModal.tour-modal-host[data-tour-step="help"] .help-assistant-body { flex:1 1 auto;min-height:0;overflow-y:auto; }
+  html body #helpAssistantModal.tour-modal-host[data-tour-step="help"] .help-modal-assistant-panel { min-height:0;height:auto; }
+  html body #helpAssistantModal.tour-modal-host[data-tour-step="help"] .assistant-messages { flex:0 0 auto;min-height:0;max-height:100px;overflow-y:auto; }
+  html body #helpAssistantModal.tour-modal-host[data-tour-step="help"] .assistant-messages:not(:has(.user)) { display:none; }
+  .tour-modal-host[data-tour-step="help"] .help-tour-conversation { flex:0 0 auto;min-height:0; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .onboarding-backdrop { transition:none; }
 }

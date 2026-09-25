@@ -30,11 +30,15 @@
   const appShell = $('#appShell');
   if (!tour || !spotlight || !contextSpotlight || !popover || !appShell || !window.MerOnboardingCore) return;
 
+  const backdrop = document.createElement('div');
+  backdrop.className = 'onboarding-backdrop';
+  backdrop.setAttribute('aria-hidden', 'true');
+  tour.insertBefore(backdrop, spotlight);
+
   let controller = null;
   let pendingSession = null;
   let currentTarget = null;
   let currentContextLink = null;
-  let renderedContextLink = null;
   let previousDescription = null;
   let resizeObserver = null;
   let geometryFrame = 0;
@@ -94,9 +98,8 @@
       popover.setAttribute('aria-modal', 'false');
     } else if (step.surface === 'settings') window.MerSettings?.selectTab(step.settingsTab);
     dialog.setAttribute('data-tour-step', step.id);
-    // A device flow owns real security controls in a native child dialog. Calling
-    // revealTarget here would close that child and leave the guide in an inert host.
-    if(settings && !step.settingsFlow)window.MerPopupLayout?.revealTarget(step.target);
+    // The step explicitly selects its tab/child flow. A second target-based router
+    // can close that native child or switch away from the tab just selected.
   }
 
   function focusTourNext() {
@@ -127,7 +130,6 @@
     contextSpotlight.classList.remove('is-visible', 'is-docked');
     contextSpotlight.replaceChildren();
     contextSpotlight.removeAttribute('style');
-    renderedContextLink = null;
   }
 
   function releaseTarget({ preserveContext = false } = {}) {
@@ -162,7 +164,7 @@
     }
     const primary = visibleTarget(step.target);
     if (primary) return primary;
-    return visibleTarget(step.mobileTarget) || $('#menuToggle') || appShell;
+    return visibleTarget(step.mobileTarget) || ownedDialog || $('#menuToggle') || appShell;
   }
 
   function refreshResponsiveTarget() {
@@ -222,36 +224,17 @@
     return first.left < second.right + gap && first.right > second.left - gap && first.top < second.bottom + gap && first.bottom > second.top - gap;
   }
 
-  function overlapArea(first, second) {
-    if (!first || !second) return 0;
-    return Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left))
-      * Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
-  }
-
   function contextSpotlightRect(linkRect, targetRect, popoverRect, viewport) {
     const right = viewport.left + viewport.width;
     const bottom = viewport.top + viewport.height;
     const linkIsVisible = linkRect && linkRect.width > 0 && linkRect.height > 0
       && linkRect.right > viewport.left && linkRect.left < right && linkRect.bottom > viewport.top && linkRect.top < bottom;
-    const exact = linkIsVisible
-      ? { left:linkRect.left - 4, top:linkRect.top - 4, width:linkRect.width + 8, height:linkRect.height + 8, right:linkRect.right + 4, bottom:linkRect.bottom + 4 }
-      : null;
-    if (exact && !overlaps(exact, targetRect, 8) && !overlaps(exact, popoverRect, 8)) return { ...exact, docked:false, overlapsPopover:false };
-
-    const width = Math.min(196, Math.max(150, viewport.width - 24));
-    const height = 48;
-    const edge = 12;
-    const candidates = [
-      { left:viewport.left + edge, top:viewport.top + edge },
-      { left:right - width - edge, top:viewport.top + edge },
-      { left:viewport.left + edge, top:bottom - height - edge },
-      { left:right - width - edge, top:bottom - height - edge },
-      { left:viewport.left + edge, top:Math.max(viewport.top + edge, popoverRect.top - height - 12) },
-      { left:viewport.left + edge, top:Math.min(bottom - height - edge, popoverRect.bottom + 12) }
-    ].map(item => ({ ...item, width, height, right:item.left + width, bottom:item.top + height }));
-    const safe = candidates.find(candidate => !overlaps(candidate, targetRect, 10) && !overlaps(candidate, popoverRect, 10));
-    const selected = safe || [...candidates].sort((first, second) => overlapArea(first, popoverRect) - overlapArea(second, popoverRect) || overlapArea(first, targetRect) - overlapArea(second, targetRect))[0];
-    return { left:selected.left, top:selected.top, width:selected.width, height:selected.height, docked:true, overlapsPopover:overlaps(selected, popoverRect) };
+    if (!linkIsVisible) return null;
+    const left = Math.max(viewport.left, linkRect.left - 4), top = Math.max(viewport.top, linkRect.top - 4);
+    const exact = { left, top, right:Math.min(right, linkRect.right + 4), bottom:Math.min(bottom, linkRect.bottom + 4) };
+    // Cut out the real control only. Never manufacture a detached profile/nav copy.
+    if (overlaps(exact, targetRect) || overlaps(exact, popoverRect)) return null;
+    return { ...exact, width:exact.right-left, height:exact.bottom-top };
   }
 
   function renderContextSpotlight(targetRect, popoverRect, viewport) {
@@ -259,22 +242,25 @@
       contextSpotlight.classList.remove('is-visible', 'is-docked');
       contextSpotlight.replaceChildren();
       contextSpotlight.removeAttribute('style');
-      return;
+      return null;
     }
     const contextRect = contextSpotlightRect(currentContextLink.getBoundingClientRect(), targetRect, popoverRect, viewport);
-    if (renderedContextLink !== currentContextLink) {
-      const content = document.createElement('div');
-      content.className = 'onboarding-context-spotlight-content';
-      content.setAttribute('aria-hidden', 'true');
-      content.innerHTML = currentContextLink.innerHTML;
-      contextSpotlight.replaceChildren(content);
-      renderedContextLink = currentContextLink;
-    }
-    contextSpotlight.classList.toggle('is-docked', contextRect.docked);
+    if (!contextRect) { clearContextSpotlight();return null; }
     contextSpotlight.classList.add('is-visible');
     Object.assign(contextSpotlight.style, {
       left:`${contextRect.left}px`, top:`${contextRect.top}px`, width:`${contextRect.width}px`, height:`${contextRect.height}px`
     });
+    return contextRect;
+  }
+
+  function renderBackdrop(targetRect, contextRect, viewport) {
+    const right = viewport.left + viewport.width, bottom = viewport.top + viewport.height;
+    const rectangle = rect => `M${rect.left} ${rect.top}H${rect.right}V${rect.bottom}H${rect.left}Z`;
+    const outer = rectangle({left:viewport.left, top:viewport.top, right, bottom});
+    // Even-odd cutouts reveal both original elements with their own typography.
+    // Both paths always exist so geometry transitions do not reset the backdrop.
+    const secondary = contextRect || {left:0, top:0, right:0, bottom:0};
+    backdrop.style.clipPath = `path(evenodd, "${outer}${rectangle(targetRect)}${rectangle(secondary)}")`;
   }
 
   function positionSpotlight() {
@@ -288,10 +274,8 @@
     if (splitSurface) {
       const panelTop = viewport.top + popoverSize.height + 26;
       const topValue = `${panelTop}px`;
-      const changed = ownedDialog.style.getPropertyValue('--tour-panel-top') !== topValue;
       ownedDialog.style.setProperty('--tour-panel-top', topValue);
       ownedDialog.style.setProperty('--tour-panel-height', `${Math.max(1, viewport.top + viewport.height - panelTop - 12)}px`);
-      if (changed) scrollTarget().scrollIntoView({ behavior:'auto', block:'start', inline:'nearest' });
     } else if (ownedDialog) {
       ownedDialog.style.removeProperty('--tour-panel-top');
       ownedDialog.style.removeProperty('--tour-panel-height');
@@ -332,11 +316,9 @@
       maxWidth:`${layout.popover.width}px`
     });
     popover.dataset.placement = layout.popover.placement;
-    renderContextSpotlight(
-      { left:layout.spotlight.left, top:layout.spotlight.top, right:layout.spotlight.left + layout.spotlight.width, bottom:layout.spotlight.top + layout.spotlight.height },
-      { left:layout.popover.left, top:layout.popover.top, right:layout.popover.left + layout.popover.width, bottom:layout.popover.top + layout.popover.height },
-      viewport
-    );
+    const targetBounds = { left:layout.spotlight.left, top:layout.spotlight.top, right:layout.spotlight.left + layout.spotlight.width, bottom:layout.spotlight.top + layout.spotlight.height };
+    const popoverBounds = { left:layout.popover.left, top:layout.popover.top, right:layout.popover.left + layout.popover.width, bottom:layout.popover.top + layout.popover.height };
+    renderBackdrop(targetBounds, renderContextSpotlight(targetBounds, popoverBounds, viewport), viewport);
   }
 
   function scrollTarget() {
@@ -348,6 +330,7 @@
     tour.classList.add('is-positioning');
     prepareSurface(step);
     if (step.view && typeof showView === 'function') showView(step.view);
+    if (step.view) window.MerModulePages?.revealTarget(step.target);
     if (mobileViewport() && step.openSidebar) openSidebar();
     else if (mobileViewport()) closeSidebar();
 
@@ -357,7 +340,7 @@
     previousDescription = currentTarget.getAttribute('aria-describedby');
     currentTarget.setAttribute('aria-describedby', 'onboardingBody');
     currentTarget.classList.add('tour-target-active');
-    scrollTarget().scrollIntoView({ behavior:reducedMotion() || ownedDialog ? 'auto':'smooth', block:mobileViewport()?'start':'center', inline:'nearest' });
+    if (!step.preserveScroll && !ownedDialog) scrollTarget().scrollIntoView({ behavior:reducedMotion() ? 'auto':'smooth', block:'nearest', inline:'nearest' });
     resizeObserver = new ResizeObserver(scheduleGeometry);
     resizeObserver.observe(currentTarget);
     if (currentContextLink && currentContextLink !== currentTarget) resizeObserver.observe(currentContextLink);

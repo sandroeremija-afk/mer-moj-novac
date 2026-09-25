@@ -19,6 +19,7 @@
   let mutationObserver = null;
   let chartObserver = null;
   let eventController = null;
+  let modulePages = null;
   let sidebarWasOpen = false;
   let sidebarReturnFocus = null;
   const sidebarInertState = new Map();
@@ -47,6 +48,142 @@
     if (inlineSize < 360) return 'compact';
     if (inlineSize < 720) return 'regular';
     return 'spacious';
+  }
+
+  function compactModuleMode(width, height) {
+    return Math.max(0, finite(width)) <= 1200 || Math.max(0, finite(height)) <= 700;
+  }
+
+  function createModulePages(doc, getViewport = viewportBounds) {
+    const definitions = [
+      { id:'savings', view:'#savingsView', anchor:':scope > .page-heading', hr:'Dijelovi štednje', en:'Savings sections', groups:[
+        { key:'history', selector:':scope > .savings-layout > .savings-history-card', hr:'Povijest', en:'History' },
+        { key:'summary', selector:':scope > .savings-layout > .savings-context-column', hr:'Sažetak', en:'Summary' },
+        { key:'goals', selector:':scope > .goal-buckets-panel', hr:'Ciljevi', en:'Goals' }
+      ] },
+      { id:'insights', view:'#insightsView', anchor:'#insightsFilters', hr:'Dijelovi uvida', en:'Insights sections', groups:[
+        { key:'summary', selector:':scope > .insights-kpis', hr:'Sažetak', en:'Summary' },
+        { key:'category', selector:':scope > .advanced-insights-grid > .donut-card', hr:'Kategorije', en:'Categories' },
+        { key:'cashflow', selector:':scope > .advanced-insights-grid > .monthly-bars-card', hr:'Novčani tok', en:'Cash flow' },
+        { key:'expenses', selector:':scope > .advanced-insights-grid > .expense-structure-card', hr:'Troškovi', en:'Expenses' }
+      ] }
+    ];
+    const records = new Map();
+    const attribute = (node, name, value) => { if (node.getAttribute(name) !== value) node.setAttribute(name, value); };
+    const groupsFor = record => record.definition.groups.map(group => ({ ...group, node:record.view.querySelector(group.selector) }));
+
+    function syncRecord(record) {
+      const bounds = getViewport(), compact = compactModuleMode(bounds.width, bounds.height);
+      const language = doc.documentElement.lang === 'en' ? 'en' : 'hr';
+      const groups = groupsFor(record), available = groups.filter(group => group.node);
+      if (!available.some(group => group.key === record.selected)) record.selected = available[0]?.key;
+      // A resize must not strand keyboard focus in a newly concealed section.
+      if (compact && !record.compact) {
+        const focused = available.find(group => group.node.contains(doc.activeElement));
+        if (focused) record.selected = focused.key;
+      }
+      const recoverFocus = record.compact && !compact && record.nav.contains(doc.activeElement);
+      record.compact = compact;
+      attribute(record.nav, 'aria-label', record.definition[language]);
+      if (compact) {
+        record.view.dataset.compactPage = 'true';
+        record.view.dataset.modulePage = record.selected || '';
+      } else {
+        delete record.view.dataset.compactPage;
+        delete record.view.dataset.modulePage;
+      }
+      groups.forEach(group => {
+        const button = record.buttons.get(group.key), node = group.node;
+        if (button.hidden !== !node) button.hidden = !node;
+        if (button.textContent !== group[language]) button.textContent = group[language];
+        attribute(button, 'aria-pressed', String(group.key === record.selected));
+        if (!node) return;
+        node.id ||= `module-${record.definition.id}-${group.key}`;
+        attribute(button, 'aria-controls', node.id);
+        node.dataset.moduleGroup = group.key;
+        if (compact) node.dataset.moduleHidden = String(group.key !== record.selected);
+        else delete node.dataset.moduleHidden;
+      });
+      if (recoverFocus) {
+        const group = available.find(item => item.key === record.selected)?.node;
+        if (group) {
+          const controls = group.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])');
+          const control = [...controls].find(node => {
+            const visibility = doc.defaultView?.getComputedStyle(node).visibility;
+            return !node.hidden && !node.disabled && node.getAttribute('aria-disabled') !== 'true' && !node.closest('[inert],[hidden],[data-page-hidden="true"]') && node.getClientRects().length && visibility !== 'hidden' && visibility !== 'collapse';
+          });
+          if (!control && group.getAttribute('tabindex') === null) group.setAttribute('tabindex', '-1');
+          (control || group).focus({ preventScroll:true });
+        }
+      }
+      if (record.nav.hidden !== !compact) record.nav.hidden = !compact;
+    }
+
+    function refreshPages() {
+      definitions.forEach(definition => {
+        const view = doc.querySelector(definition.view), anchor = view?.querySelector(definition.anchor);
+        if (!view || !anchor) return;
+        let record = records.get(definition.id);
+        if (!record || record.view !== view) {
+          record?.nav.remove();
+          const nav = doc.createElement('nav');
+          nav.className = 'module-page-tabs';
+          nav.hidden = true;
+          nav.setAttribute('role', 'group');
+          record = { definition, view, nav, buttons:new Map(), selected:definition.groups[0].key, compact:false };
+          definition.groups.forEach(group => {
+            const button = doc.createElement('button');
+            button.type = 'button';
+            button.dataset.modulePageButton = group.key;
+            button.addEventListener('click', () => { record.selected = group.key; syncRecord(record); });
+            button.addEventListener('keydown', event => {
+              if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+              const buttons = [...record.buttons.values()].filter(item => !item.hidden);
+              const current = buttons.indexOf(button);
+              if (current < 0 || !buttons.length) return;
+              event.preventDefault();
+              const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (current + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+              buttons[next].focus({ preventScroll:true });
+              buttons[next].click();
+            });
+            nav.append(button);
+            record.buttons.set(group.key, button);
+          });
+          anchor.after(nav);
+          records.set(definition.id, record);
+        }
+        syncRecord(record);
+      });
+    }
+
+    function revealTarget(target) {
+      const node = typeof target === 'string' ? doc.querySelector(target) : target;
+      if (!node) return false;
+      refreshPages();
+      for (const record of records.values()) {
+        const group = groupsFor(record).find(item => item.node?.contains(node));
+        if (!group) continue;
+        record.selected = group.key;
+        syncRecord(record);
+        return true;
+      }
+      return false;
+    }
+
+    function destroyPages() {
+      records.forEach(record => {
+        groupsFor(record).forEach(group => {
+          if (!group.node) return;
+          delete group.node.dataset.moduleHidden;
+          delete group.node.dataset.moduleGroup;
+        });
+        delete record.view.dataset.compactPage;
+        delete record.view.dataset.modulePage;
+        record.nav.remove();
+      });
+      records.clear();
+    }
+    return Object.freeze({ refresh:refreshPages, revealTarget, destroy:destroyPages });
   }
 
   function computeFloatingPosition({ triggerRect = {}, menuSize = {}, viewport = {}, gap = 8, edge = 12 } = {}) {
@@ -392,6 +529,7 @@
     refreshFrame = 0;
     markPrimitives();
     syncViewport();
+    modulePages?.refresh();
     labelResponsiveTables();
     observeCharts();
     positionOpenMenus();
@@ -407,6 +545,8 @@
     initialized = true;
     eventController = new AbortController();
     const signal = eventController.signal;
+    modulePages = createModulePages(document);
+    window.MerModulePages = modulePages;
     chartObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(entries => {
       entries.forEach(entry => { entry.target.dataset.chartDensity = chartDensity(entry.contentRect.width); });
     });
@@ -417,6 +557,7 @@
       attributes:true,
       attributeFilter:['hidden','open','class','aria-selected','aria-pressed']
     });
+    mutationObserver.observe(document.documentElement, { attributes:true, attributeFilter:['lang'] });
     window.addEventListener('resize', scheduleRefresh, { signal, passive:true });
     window.addEventListener('scroll', positionOpenMenus, { signal, passive:true, capture:true });
     window.visualViewport?.addEventListener('resize', scheduleRefresh, { signal, passive:true });
@@ -435,6 +576,9 @@
     mutationObserver?.disconnect();
     chartObserver?.disconnect();
     eventController?.abort();
+    modulePages?.destroy();
+    modulePages = null;
+    delete window.MerModulePages;
     mutationObserver = null;
     chartObserver = null;
     eventController = null;
@@ -460,5 +604,5 @@
     initialized = false;
   }
 
-  return Object.freeze({ BREAKPOINTS, chartDensity, computeFloatingPosition, destroy, init, labelResponsiveTable, viewportMode });
+  return Object.freeze({ BREAKPOINTS, chartDensity, compactModuleMode, createModulePages, computeFloatingPosition, destroy, init, labelResponsiveTable, viewportMode });
 });

@@ -11,5 +11,7 @@ assert.equal(hasOverflow(600,600),false);assert.equal(hasOverflow(602,600),false
 const source=fs.readFileSync(require.resolve('../popup-layout.js'),'utf8');
 assert.match(source,/settings-security-overview/);assert.doesNotMatch(source,/localStorage|reactiveStore\.update|\.value\s*=\s*''/);
 assert.match(fs.readFileSync(require.resolve('../enterprise-ui.js'),'utf8'),/MerPopupLayout\?\.revealTarget\(id\)/);
-assert.match(fs.readFileSync(require.resolve('../onboarding.js'),'utf8'),/MerPopupLayout\?\.revealTarget\(step\.target\)/);
+const tour=fs.readFileSync(require.resolve('../onboarding.js'),'utf8');
+assert.match(tour,/MerSettings\?\.selectTab\(step\.settingsTab\)/);
+assert.doesNotMatch(tour,/MerPopupLayout\?\.revealTarget\(step\.target\)/,'explicit tour tabs must not be rerouted by a second heuristic router');
 process.stdout.write('Popup cycle 1: topic routing, fit boundaries, state preservation and tour/deep-link guards passed.\n');

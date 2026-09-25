@@ -78,12 +78,11 @@ test('popup labels preserve the local-only boundary and localize the recovery/bl
   assert.match(popup,/Kod iz aplikacije ili demonstracija SMS provjere/);
 });
 
-test('currency explanation uses the existing accessible tooltip without adding a mobile form text row',()=>{
+test('currency field omits its info button while retaining other accessible tooltips',()=>{
   const html=fs.readFileSync(require.resolve('../index.html'),'utf8'),app=fs.readFileSync(require.resolve('../app.js'),'utf8'),copy=settingsCopy();
-  const trigger=html.match(/<button\b[^>]*data-tooltip-key="baseCurrencyHint"[^>]*>i<\/button>/)?.[0];
-  assert.ok(trigger,'currency information is a focusable native button');
-  assert.match(trigger,/type="button"/);assert.match(trigger,/class="info-button"/);
-  assert.match(trigger,/aria-label="Informacije o osnovnoj valuti"/);assert.match(trigger,/data-i18n-aria="baseCurrencyInfo"/);
+  assert.doesNotMatch(html,/<button\b[^>]*data-tooltip-key="baseCurrencyHint"/);
+  assert.match(html,/<select id="baseCurrency"><option value="EUR">/);
+  assert.match(html,/<button\b[^>]*class="info-button"[^>]*data-tooltip-key="topCategoryTooltip"/);
   assert.equal(copy.hr.baseCurrencyInfo,'Informacije o osnovnoj valuti');
   assert.equal(copy.en.baseCurrencyInfo,'About the display currency');
   assert.doesNotMatch(html,/<small\b[^>]*data-i18n="baseCurrencyHint"/,'the compact form must not reintroduce the overflowing helper row');

@@ -81,13 +81,13 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
     click() { if (!this.disabled) this.dispatch('click'); }
     focus() { document.activeElement = this; }
     scrollIntoView() {
+      calls.push(['scroll-target', this.id]);
       const host = this.closest('dialog');
       if (!host?.style.getPropertyValue('--tour-panel-top')) return;
       const body = host.querySelector('.settings-modal-body, .settings-flow-body, .help-assistant-body');
       if (!body || !body.contains(this)) return;
       const rect = body.getBoundingClientRect();
       this.rect = { ...this.rect, left:rect.left, right:rect.right, width:rect.width, top:rect.top, bottom:rect.top + this.rect.height };
-      calls.push(['scroll-target', this.id]);
     }
     getBoundingClientRect() {
       if (['settingsBody', 'deviceBody', 'helpBody'].includes(this.id)) {
@@ -97,6 +97,12 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
           const top = panelTop + 72, bottom = panelTop + Number.parseFloat(host.style.getPropertyValue('--tour-panel-height')) - 12;
           return { left:28, right:width - 28, top, bottom, width:width - 56, height:Math.max(1, bottom - top) };
         }
+      }
+      const host = this.closest('dialog');
+      const panelTop = Number.parseFloat(host?.style.getPropertyValue('--tour-panel-top'));
+      if (Number.isFinite(panelTop) && ['privacySetting','personalDataForm','helpTourConversation'].includes(this.id)) {
+        const body = host.querySelector('.settings-modal-body, .settings-flow-body, .help-assistant-body').getBoundingClientRect();
+        return { ...this.rect, left:body.left, right:body.right, width:body.width, top:body.top, bottom:body.top + this.rect.height };
       }
       return { ...this.rect };
     }
@@ -169,6 +175,8 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   for (const tab of ['general', 'security', 'personal', 'automation']) {
     const button = add(`settingsTab-${tab}`, settingsBody, 'BUTTON');
     button.dataset.settingsTab = tab;
+    button.rect = {left:400, top:30, right:500, bottom:70, width:100, height:40};
+    aliases.set(`#bankSettingsModal [data-settings-tab="${tab}"]`, button);
   }
   const preferences = add('settingsTourPreferences', settingsBody);
   add('settingsLanguage', preferences, 'SELECT');
@@ -185,6 +193,7 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   add('personalOib', personal, 'INPUT').value='';
   add('personalAddress', personal, 'INPUT').value='Original draft address';
   const device = add('settings-device-flow', document.body, 'DIALOG');
+  add('settings-device-flow-title', device, 'H2').rect = {left:400, top:30, right:650, bottom:70, width:250, height:40};
   const deviceClose = add('deviceClose', device, 'BUTTON');
   const deviceBody = add('deviceBody', device);
   aliases.set('#settings-device-flow .settings-flow-body', deviceBody);
@@ -208,6 +217,7 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
   aliases.set('#onboardingTip span', tipText);
   for (const id of ['onboardingClose', 'onboardingPrevious', 'onboardingNext', 'onboardingSkip']) add(id, popover, 'BUTTON');
   const help = add('helpAssistantModal', document.body, 'DIALOG');
+  add('helpAiMode', help, 'BUTTON').rect = {left:400, top:30, right:500, bottom:70, width:100, height:40};
   const helpClose = add('helpClose', help, 'BUTTON');
   helpClose.setAttribute('data-close-modal', '');
   const helpBody = add('helpBody', help);
@@ -342,7 +352,8 @@ test('cycle 2: production device, privacy and personal settings support Back wit
     env.click('onboardingPrevious');
     assert.equal(env.settings.open,true);assert.equal(env.help.open,false);
     assert.equal(env.nodes.get('privacySetting').classList.contains('tour-target-active'),true);
-    assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),true);
+    assert.equal(env.nodes.get('settingsTab-general').classList.contains('tour-context-active'),true);
+    assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
     assert.equal(env.nodes.get('openHelpAssistant').classList.contains('tour-context-active'),false);
     env.click('onboardingPrevious');
     assert.equal(env.device.open,true);assert.equal(env.tour.parentNode,env.device);
@@ -455,7 +466,7 @@ test('cycle 2: final Help step opens the real chat surface with input and sample
     assert.equal(env.navLinks.insights.classList.contains('tour-context-active'),false);
     assert.equal(env.nodes.get('insightsView').classList.contains('tour-target-active'),false);
     assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
-    assert.equal(env.nodes.get('onboardingContextSpotlight').classList.contains('is-visible'),false);
+    assert.equal(env.nodes.get('helpAiMode').classList.contains('tour-context-active'),true);
     env.click('onboardingPrevious');
     assert.equal(env.help.open,false);
     assert.equal(env.settings.open,true);assert.equal(env.nodes.get('personalDataForm').classList.contains('tour-target-active'),true);
@@ -735,4 +746,52 @@ test('cycle 2: split phone and tablet surfaces reserve non-overlapping tooltip a
       assert.equal(host.style.getPropertyValue('--tour-panel-height'), '');
     }
   }
+});
+
+test('cycle 2: whole Insights highlighting never scrolls the module out from under its header', () => {
+  for (const width of [375, 768, 1440]) {
+    const env = harness({minimal:true, width});
+    const revealCalls = [];
+    env.context.window.MerModulePages = {revealTarget:selector => revealCalls.push(selector)};
+    env.start();env.next(4);
+    assert.equal(env.nodes.get('insightsView').classList.contains('tour-target-active'),true);
+    assert.equal(env.calls.some(call => call[0] === 'scroll-target' && call[1] === 'insightsView'),false);
+    assert.equal(revealCalls.at(-1),'#insightsView');
+    env.resize(width,667);
+    assert.equal(env.calls.some(call => call[0] === 'scroll-target' && call[1] === 'insightsView'),false);
+  }
+});
+
+test('cycle 2: hosted steps select their real settings tab and context without heuristic rerouting or profile clones', () => {
+  const env = harness({minimal:true});
+  env.context.window.MerPopupLayout = {revealTarget() { throw new Error('Explicit settings steps must own their routing'); }};
+  env.nodes.get('openSettings').innerHTML = '<span>ME</span><span><strong>Moj eRačun</strong><small>Osobni račun</small></span>';
+  env.start();env.next(5);
+  const backdrop = env.tour.children.find(node => node.className === 'onboarding-backdrop');
+  assert.ok(backdrop);
+  for (const [offset,tab,contextId] of [[0,'security','settings-device-flow-title'],[1,'general','settingsTab-general'],[2,'personal','settingsTab-personal']]) {
+    if(offset)env.next();
+    assert.equal(env.calls.filter(call => call[0] === 'tab').at(-1)[1],tab);
+    assert.equal(env.nodes.get(contextId).classList.contains('tour-context-active'),true);
+    assert.equal(env.nodes.get('openSettings').classList.contains('tour-context-active'),false);
+    assert.equal(env.nodes.get('onboardingContextSpotlight').children.length,0,'the outline never copies profile markup');
+    assert.match(backdrop.style.clipPath,/^path\(evenodd,/,'both originals are revealed by one persistent mask');
+    assert.equal(env.tour.children.find(node => node.className === 'onboarding-backdrop'),backdrop,'no backdrop remount during transitions');
+    assert.equal(env.navLinks.insights.classList.contains('tour-context-active'),false);
+  }
+  env.next();
+  assert.equal(env.nodes.get('helpAiMode').classList.contains('tour-context-active'),true);
+  assert.equal(env.nodes.get('settingsTab-personal').classList.contains('tour-context-active'),false);
+  assert.equal(env.tour.parentNode,env.help);
+});
+
+test('cycle 2: hidden sidebar context is not recreated as a misleading floating duplicate', () => {
+  const env = harness({minimal:true,width:375});
+  env.navLinks.insights.rect = {left:-260,top:100,right:-20,bottom:144,width:240,height:44};
+  env.start();env.next(4);
+  const context = env.nodes.get('onboardingContextSpotlight');
+  assert.equal(context.classList.contains('is-visible'),false);
+  assert.equal(context.classList.contains('is-docked'),false);
+  assert.equal(context.children.length,0);
+  assert.equal(env.nodes.get('insightsView').classList.contains('tour-target-active'),true);
 });

@@ -9,15 +9,18 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 const ui = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
+const tourCss = fs.readFileSync(path.join(root, 'security-tour.css'), 'utf8');
 
 test('evaluation cycle 2: onboarding renders independent feature and context spotlights', () => {
   assert.match(html, /id="onboardingSpotlight"[\s\S]*id="onboardingContextSpotlight"[\s\S]*id="onboardingPopover"/);
   assert.match(ui, /function renderContextSpotlight\(targetRect, popoverRect, viewport\)/);
   assert.match(ui, /step\.contextTarget \? document\.querySelector\(step\.contextTarget\) : null/);
   assert.match(ui, /document\.createElement\('div'\)/);
-  assert.match(ui, /content\.innerHTML = currentContextLink\.innerHTML/);
+  assert.doesNotMatch(ui, /content\.innerHTML = currentContextLink\.innerHTML/);
   assert.doesNotMatch(ui, /currentContextLink\.cloneNode\(true\)/);
-  assert.match(ui, /!overlaps\(candidate, targetRect, 10\) && !overlaps\(candidate, popoverRect, 10\)/);
+  assert.match(ui, /renderBackdrop\(targetBounds, renderContextSpotlight/);
+  assert.match(ui, /backdrop\.style\.clipPath = `path\(evenodd/);
+  assert.match(tourCss, /\.onboarding-tour \.onboarding-context-spotlight \{ background:transparent;/);
   assert.match(css, /\.onboarding-context-spotlight\s*\{[^}]*pointer-events:none;[^}]*transition:/);
 });
 
@@ -28,10 +31,11 @@ test('evaluation cycle 2: context highlight disappears cleanly when unavailable 
   assert.match(ui, /releaseTarget\(\{ preserveContext:Boolean\(step\.contextTarget\) \}\)/);
 });
 
-test('evaluation cycle 2: geometry updates preserve the context clone and avoid popover overlap', () => {
-  assert.match(ui, /if \(renderedContextLink !== currentContextLink\) \{[\s\S]*?contextSpotlight\.replaceChildren\(content\);[\s\S]*?renderedContextLink = currentContextLink;/);
-  assert.match(ui, /candidates\.find\(candidate => !overlaps\(candidate, targetRect, 10\) && !overlaps\(candidate, popoverRect, 10\)\)/);
-  assert.match(ui, /overlapsPopover:overlaps\(selected, popoverRect\)/);
+test('evaluation cycle 2: context geometry uses only the actual control and never a fabricated dock', () => {
+  assert.match(ui, /if \(!linkIsVisible\) return null/);
+  assert.match(ui, /overlaps\(exact, targetRect\) \|\| overlaps\(exact, popoverRect\)/);
+  assert.doesNotMatch(ui, /docked:true|renderedContextLink|contextSpotlight\.replaceChildren\(content\)/);
+  assert.match(tourCss, /\.onboarding-backdrop \{[^}]*transition:clip-path \.5s ease-in-out/);
 });
 
 test('evaluation cycle 2: popover has no visible uppercase context prefix or internal scrolling', () => {

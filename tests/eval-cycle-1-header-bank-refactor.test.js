@@ -10,7 +10,7 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 
 test('evaluation cycle 1: dashboard greeting and streamlined global header order are deterministic', () => {
-  assert.match(app, /dashboardGreeting:'Dobro jutro, Mer'/);
+  assert.match(app, /dashboardGreeting:'Pozdrav, Mer'/);
   assert.match(html, /id="accountName">Moj eRačun/);
   assert.match(html, /id="accountLabel"[^>]*data-i18n="personalAccount">Osobni račun/);
   assert.match(app, /\$\('#accountAvatar'\)\.textContent=state\.initials;[\s\S]*?\$\('#accountName'\)\.textContent=state\.accountName;[\s\S]*?\$\('#accountLabel'\)\.textContent=t\(state\.accountLabel\)/);

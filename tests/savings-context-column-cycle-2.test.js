@@ -111,7 +111,7 @@ test('context column declares one desktop track and clears legacy aggregate grid
   assert.match(cssRule('#savingsView .savings-context-column', mediaRules('max-width:700px'))['grid-template-columns'], /^minmax\(0,\s*1fr\)$/);
 });
 
-test('Savings uses intrinsic rows and a bounded page scroll fallback rather than clipping short screens', () => {
+test('Savings uses intrinsic rows and compact sections instead of a page scroll fallback', () => {
   const view = cssRule(':is(#overviewView,#insightsView,#savingsView):not([hidden])');
   assert.equal(view.height, 'auto');
   assert.equal(view['min-height'], '0');
@@ -123,9 +123,11 @@ test('Savings uses intrinsic rows and a bounded page scroll fallback rather than
   assert.equal(top.height, 'auto');
   assert.equal(top.overflow, 'visible');
   assert.equal(top['grid-area'], 'auto');
-  const page = cssRule('.page:has(> :is(#overviewView,#insightsView,#savingsView):not([hidden]))', mediaRules('min-width:1025px'));
-  assert.equal(page['overflow-y'], 'auto', 'Short screens retain access to the final goal and its actions');
-  assert.equal(page['overflow-x'], 'hidden');
+  const page = cssRule('.page:has(> :is(#insightsView,#savingsView).active)');
+  assert.equal(page.overflow, 'hidden', 'Compact section navigation replaces outer scrolling');
+  assert.match(css, /\.module-page-tabs button\[aria-pressed="true"\]/, 'Visible navigation identifies the selected content group');
+  assert.match(css, /\[data-module-hidden="true"\]/, 'Only explicit section selection can hide a group');
+  assert.match(read('responsive-ui.js'), /MerModulePages/, 'Responsive group controller keeps every section reachable');
   assert.doesNotMatch(css, /(?:^|})\s*(?:html|body)\s*\{/, 'The fallback must not unlock the outer browser document');
 });
 

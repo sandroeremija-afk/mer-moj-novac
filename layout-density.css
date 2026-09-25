@@ -1,5 +1,5 @@
-/* Content owns card height. A short viewport may scroll the page, never clip
-   financial information or stretch a small summary into an empty dashboard. */
+/* Content owns card height. Compact module sections keep narrow and short
+   screens on one page without clipping financial information. */
 :is(#overviewView,#insightsView,#savingsView):not([hidden]) {
   height:auto;
   min-height:0;
@@ -173,7 +173,7 @@
 }
 
 @media (min-width:1025px) {
-  .page:has(> :is(#overviewView,#insightsView,#savingsView):not([hidden])) { overflow-y:auto; overflow-x:hidden; }
+  .page:has(> #overviewView:not([hidden])) { overflow-y:auto; overflow-x:hidden; }
   #overviewView > .summary-grid { min-height:0; }
   #overviewView > .summary-grid > .summary-card,
   #insightsView > .insights-kpis > .summary-card { min-height:152px; padding:20px; }
@@ -230,4 +230,91 @@
   #savingsView .savings-history-heading h2 { font-size:18px; }
   #savingsView .savings-history-total { align-items:flex-end; text-align:right; }
   #savingsView .savings-history-total strong { font-size:22px; }
+}
+
+/* A viewport budget is shared by the summary and chart rows. No card grows
+   solely to fill the screen; small screens select an accessible content group. */
+.main:has(:is(#insightsView,#savingsView).active) { height:100dvh; min-height:0; overflow:hidden; }
+.page:has(> :is(#insightsView,#savingsView).active) { min-height:0; overflow:hidden; padding-block:14px; }
+#appShell :is(#insightsView,#savingsView) > .actions-only-heading .heading-actions > button { min-height:44px; padding-block:10px; }
+#insightsView:not([hidden]), #savingsView:not([hidden]) { gap:14px; }
+#insightsView > .insights-kpis > .summary-card { min-height:136px; padding:16px; gap:6px; }
+#insightsView > .insights-kpis .summary-value { font-size:clamp(24px,1.8vw,32px); }
+#insightsView .insights-rate-summary .savings-gauge { width:112px; margin:0 auto; }
+#insightsView > .advanced-insights-grid { gap:14px; padding:0; }
+#insightsView > .advanced-insights-grid > .insight-visual-card { padding:16px; gap:8px; }
+#insightsView > .advanced-insights-grid .panel-heading { flex-wrap:wrap; gap:4px 8px; margin:0; }
+#insightsView > .advanced-insights-grid .panel-heading h2 { font-size:16px; }
+#insightsView > .advanced-insights-grid .insight-caption { display:block; margin-top:4px; padding-top:8px; }
+#insightsView > .advanced-insights-grid .insight-caption strong { margin-right:4px; }
+#insightsView #insightsFilters { padding:4px; }
+#insightsView #insightsFilters button { min-height:40px; padding-block:8px; }
+#insightsView #categoryDonut { width:140px; height:140px; max-height:140px; }
+#insightsView #monthlyBarChart { gap:6px; }
+
+#savingsView .savings-context-column { gap:10px; }
+#savingsView > .savings-layout { gap:14px; }
+#savingsView > .savings-layout > .savings-history-card { padding:16px; gap:10px; }
+#savingsView .savings-area-chart { flex:1 1 160px; height:160px; min-height:160px; }
+#savingsView #savingsRecommendationCard { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto; padding:14px; gap:6px 12px; align-items:center; }
+#savingsView #savingsRecommendationCard .recommendation-header { gap:8px; }
+#savingsView #savingsRecommendationCard .recommendation-icon { width:28px; height:28px; flex:0 0 28px; }
+#savingsView #savingsRecommendationCard .recommendation-title h2 { font-size:16px; }
+#savingsView #savingsRecommendationCard .recommendation-stat { grid-column:2; grid-row:1 / 3; }
+#savingsView #savingsRecommendationCard .recommendation-stat strong { font-size:22px; }
+#savingsView #savingsRecommendationCard > .savings-summary-link { grid-column:1; }
+#savingsView .savings-aggregate-card { padding:14px; gap:7px; }
+#savingsView .savings-aggregate-card .savings-hero-head h2 { font-size:16px; }
+#savingsView .savings-aggregate-card .savings-number { flex-direction:row; flex-wrap:wrap; gap:3px 8px; }
+#savingsView .savings-aggregate-card .savings-number strong { font-size:24px; }
+#savingsView .savings-aggregate-card .savings-hero-head .overline { margin-bottom:2px; }
+#savingsView .savings-aggregate-facts { gap:8px; }
+#savingsView > .goal-buckets-panel { padding:14px 16px; }
+#savingsView .goal-buckets-panel > .panel-heading { margin-bottom:10px; }
+#savingsView .goal-buckets-panel > .panel-heading .overline { display:none; }
+#savingsView .goal-bucket-grid { margin-top:0; }
+#savingsView .goal-bucket-card { padding:12px; gap:7px; }
+#savingsView .rich-goal-card .goal-bucket-head { grid-template-columns:48px minmax(0,1fr); gap:10px; }
+#savingsView .goal-progress-ring { width:48px; height:48px; flex-basis:48px; }
+#savingsView .goal-bucket-values strong { font-size:22px; }
+@media (min-width:701px) {
+  #savingsView .goal-bucket-card > .goal-linear-track { grid-column:1; grid-row:2; }
+  #savingsView .goal-bucket-card > .savings-summary-link { grid-column:2; grid-row:2; justify-self:end; }
+}
+
+.module-page-tabs { display:flex; gap:6px; flex:none; min-width:0; margin:0; }
+.module-page-tabs[hidden], [data-module-hidden="true"] { display:none !important; }
+.module-page-tabs button { flex:1; min-width:0; min-height:44px; border:1px solid var(--line); border-radius:9px; padding:8px; background:var(--panel); color:var(--muted); font:inherit; font-size:13px; font-weight:600; }
+.module-page-tabs button[aria-pressed="true"] { background:var(--blue-soft); border-color:var(--blue); color:var(--ink); }
+.module-page-tabs button:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+:is(#insightsView,#savingsView)[data-compact-page="true"]:not([hidden]) { display:flex; flex-direction:column; gap:10px; height:auto; min-height:0; }
+:is(#insightsView,#savingsView)[data-compact-page="true"] > .page-heading { flex:none; margin:0; }
+#insightsView[data-compact-page="true"] > #insightsFilters { flex:none; margin:0; align-self:stretch; }
+#insightsView[data-compact-page="true"] > .insights-kpis { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:0; }
+#insightsView[data-compact-page="true"] > .advanced-insights-grid { display:contents; }
+#insightsView[data-compact-page="true"] > .advanced-insights-grid > .insight-visual-card { width:100%; max-width:900px; align-self:center; min-height:0; }
+#insightsView[data-compact-page="true"] .donut-layout { display:grid; grid-template-columns:minmax(140px,1fr) minmax(0,1fr); grid-template-rows:auto; align-items:center; }
+#insightsView[data-compact-page="true"] #monthlyBarChart { gap:6px; }
+#savingsView[data-compact-page="true"] > .savings-layout { display:contents; }
+#savingsView[data-compact-page="true"] .savings-context-column { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:start; }
+#savingsView[data-compact-page="true"] > .savings-layout > .savings-history-card { height:auto; min-height:0; }
+#savingsView[data-compact-page="true"] .savings-area-chart { flex:none; height:clamp(140px,28dvh,260px); min-height:140px; }
+#savingsView[data-compact-page="true"] .goal-bucket-grid { grid-template-columns:minmax(0,1fr); }
+
+@media (max-width:700px) {
+  #savingsView[data-compact-page="true"] .savings-context-column { grid-template-columns:minmax(0,1fr); }
+  #insightsView[data-compact-page="true"] > .insights-kpis > .summary-card { padding:12px; min-height:120px; }
+  #insightsView[data-compact-page="true"] .insights-kpis .card-label { font-size:12px; gap:6px; }
+  #insightsView[data-compact-page="true"] .insights-kpis .summary-value { font-size:22px; }
+  #insightsView[data-compact-page="true"] .insights-kpis .metric-note { font-size:12px; line-height:1.4; }
+  #insightsView[data-compact-page="true"] > .advanced-insights-grid > .insight-visual-card { padding:12px; }
+  #insightsView[data-compact-page="true"] .donut-layout { grid-template-columns:140px minmax(0,1fr); gap:10px; }
+  #insightsView[data-compact-page="true"] #insightsFilters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); width:100%; }
+  #insightsView[data-compact-page="true"] #insightsFilters button { padding:6px 3px; font-size:11px; }
+  #appShell #insightsView > .actions-only-heading .heading-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #appShell #insightsView > .actions-only-heading .heading-actions > button { grid-column:auto; padding-inline:8px; font-size:12px; }
+  #savingsView[data-compact-page="true"] .goal-bucket-card { display:grid; grid-template-columns:minmax(0,1fr) auto; }
+  #savingsView[data-compact-page="true"] .goal-bucket-values { text-align:right; align-items:flex-end; }
+  #savingsView[data-compact-page="true"] .goal-bucket-card > :is(.goal-linear-track,.savings-summary-link) { grid-column:1 / -1; }
+  #savingsView[data-compact-page="true"] .goal-bucket-values strong { font-size:18px; }
 }
