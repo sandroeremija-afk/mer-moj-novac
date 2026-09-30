@@ -64,7 +64,11 @@
       nav.setAttribute('aria-label', config.label || (english ? 'List pages' : 'Stranice popisa'));
       nav.hidden = result.pages <= 1;
       const previousLabel = english ? 'Previous' : 'Prethodna', nextLabel = english ? 'Next' : 'Sljedeća';
-      const summary = `${page} / ${result.pages} · ${result.total}`;
+      const summary = `${page} / ${result.pages}`;
+      const accessibleSummary = english
+        ? `Page ${page} of ${result.pages}, ${result.total} items`
+        : `Stranica ${page} od ${result.pages}, ukupno stavki: ${result.total}`;
+      if (status.getAttribute('aria-label') !== accessibleSummary) status.setAttribute('aria-label', accessibleSummary);
       if (previous.textContent !== previousLabel) previous.textContent = previousLabel;
       if (next.textContent !== nextLabel) next.textContent = nextLabel;
       if (status.textContent !== summary) status.textContent = summary;

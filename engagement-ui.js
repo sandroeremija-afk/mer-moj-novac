@@ -90,18 +90,56 @@
   }
   el('wrappedBack').addEventListener('click',()=>{storyIndex=Math.max(0,storyIndex-1);renderStory();});el('wrappedNext').addEventListener('click',()=>{if(storyIndex===3)closeModal(storyDialog);else {storyIndex++;renderStory();}});
   el('wrappedMonth').addEventListener('change',()=>{if(!el('wrappedMonth').reportValidity()||!/^\d{4}-(0[1-9]|1[0-2])$/.test(el('wrappedMonth').value))return;storyMonth=el('wrappedMonth').value;storyIndex=0;renderStory();});
-  const payment=document.createElement('label');payment.className='transaction-payment-method';payment.innerHTML='<span id="transactionPaymentLabel"></span><select id="transactionPaymentMethod"><option value="transfer"></option><option value="card"></option><option value="cash"></option></select>';el('spendCheck').before(payment);
+  const payment=document.createElement('label');payment.className='transaction-payment-method';payment.innerHTML='<span id="transactionPaymentLabel"></span><select id="transactionPaymentMethod"><option value="transfer"></option><option value="card"></option><option value="cash"></option></select>';
+  const paymentCard=document.createElement('label');paymentCard.className='transaction-payment-card';paymentCard.hidden=true;paymentCard.innerHTML='<span id="transactionCardLabel"></span><select id="transactionCard" disabled></select>';
+  const details=el('transactionModal').querySelector('.transaction-details-row');
+  if(details)details.append(payment,paymentCard);else {el('spendCheck').before(payment);el('spendCheck').before(paymentCard);}
+  let paymentOwner='';
+  const validCardReference=value=>typeof value==='string'&&/^(connection|manual):[a-zA-Z0-9_-]{1,100}$/.test(value)?value:'';
+  function paymentCardChoices() {
+    const connected=(Array.isArray(appState.bankConnections)?appState.bankConnections:[])
+      .filter(connection=>connection.profileId===appState.activeAccount&&connection.status!=='disconnected'&&validCardReference(`connection:${connection.id}`))
+      .map(connection=>({value:`connection:${connection.id}`,label:[connection.institution,connection.connectionAlias||connection.accountName,connection.accountMask].filter(Boolean).join(' · ')}));
+    const manual=(window.MerBankProviders?.getProviders?.()||[])
+      .filter(provider=>validCardReference(`manual:${provider.id}`))
+      .map(provider=>({value:`manual:${provider.id}`,label:`${provider.name} · ${say('ručni odabir','manual selection')}`}));
+    return {connected,manual};
+  }
+  function renderPaymentCard(reference=el('transactionCard').value) {
+    const isCard=el('transactionPaymentMethod').value==='card',select=el('transactionCard'),choices=paymentCardChoices();
+    paymentCard.hidden=!isCard;select.disabled=!isCard;select.required=isCard;select.setCustomValidity?.('');
+    el('transactionCardLabel').textContent=say('Kartica / banka','Card / bank');
+    const group=(label,items)=>items.length?`<optgroup label="${esc(label)}">${items.map(item=>`<option value="${esc(item.value)}">${esc(item.label)}</option>`).join('')}</optgroup>`:'';
+    select.innerHTML=`<option value="">${say('Odaberite karticu ili banku','Choose a card or bank')}</option>${group(say('Povezani računi','Connected accounts'),choices.connected)}${group(say('Ručni odabir banke','Manual bank selection'),choices.manual)}`;
+    select.value=isCard&&[...choices.connected,...choices.manual].some(item=>item.value===validCardReference(reference))?reference:'';
+  }
+  function resetPayment(existing=null) {
+    paymentOwner=identity();
+    el('transactionPaymentMethod').value=['card','cash'].includes(existing?.paymentMethod)?existing.paymentMethod:'transfer';
+    renderPaymentCard(validCardReference(existing?.cardReference)||validCardReference(existing?.connectionId?`connection:${existing.connectionId}`:''));
+  }
+  function readPaymentCard() {
+    if(el('transactionPaymentMethod').value!=='card')return '';
+    const select=el('transactionCard'),reference=validCardReference(select.value),choices=paymentCardChoices();
+    if(paymentOwner!==identity()||!snapshot().authenticated||![...choices.connected,...choices.manual].some(item=>item.value===reference)){
+      select.setCustomValidity?.(say('Odaberite dostupnu karticu ili banku.','Choose an available card or bank.'));select.reportValidity?.();return null;
+    }
+    select.setCustomValidity?.('');return reference;
+  }
+  el('transactionPaymentMethod').addEventListener('change',()=>renderPaymentCard());
+  el('transactionCard').addEventListener('change',()=>el('transactionCard').setCustomValidity?.(''));
   const oldRenderAll=renderAll;
-  renderAll=function renderEngagementApp(){oldRenderAll();render();window.MerVaultsUI?.render?.();window.MerNaturalInputUI?.render?.();};
+  renderAll=function renderEngagementApp(){oldRenderAll();render();window.MerVaultsUI?.render?.();};
   function render() {
     const context=snapshot();
+    if(paymentOwner!==identity()||!context.authenticated)resetPayment();else renderPaymentCard();
     if(!context.authenticated){if(storyDialog.open)closeModal(storyDialog);if(healthDialog.open)closeModal(healthDialog);return;}
     if(storyDialog.open&&owner!==identity())closeModal(storyDialog);
     if(healthDialog.open&&proposalOwner!==identity())closeModal(healthDialog);
     el('transactionPaymentLabel').textContent=say('Način plaćanja','Payment method');
-    const labels=[say('Prijenos / nije navedeno','Transfer / unspecified'),say('Kartica · zaokruživanje ako je uključeno','Card · roundup if enabled'),say('Gotovina','Cash')];[...el('transactionPaymentMethod').options].forEach((option,index)=>option.textContent=labels[index]);
+    const labels=[say('Prijenos / nije navedeno','Transfer / unspecified'),say('Kartica','Card'),say('Gotovina','Cash')];[...el('transactionPaymentMethod').options].forEach((option,index)=>option.textContent=labels[index]);
     if(storyDialog.open)renderStory();
     if(E.shouldAutoOpen(state,context.userId,options())&&!document.querySelector('dialog[open],#onboardingTour:not([hidden])')&&activeView==='overview')setTimeout(()=>{if(activeView==='overview'&&snapshot().authenticated&&!document.querySelector('dialog[open],#onboardingTour:not([hidden])')&&E.shouldAutoOpen(state,snapshot().userId,options()))openWrapped();},250);
   }
-  window.MerEngagementUI={render,openHealth,openWrapped};render();
+  window.MerEngagementUI={render,openHealth,openWrapped,resetPayment,readPaymentCard};render();
 })();

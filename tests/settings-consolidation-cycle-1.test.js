@@ -4,6 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const source=fs.readFileSync(require.resolve('../popup-layout.js'),'utf8');
+const {createController:createFooterController}=require('../modal-footer.js');
 
 // Execute the production DOM migration with node identity, values and real
 // listeners. This intentionally does not simulate CSS dimensions; browser
@@ -12,7 +13,7 @@ class Element {
   constructor(tag,document){
     this.tagName=tag.toLowerCase();this.ownerDocument=document;this.children=[];this.parentElement=null;
     this.attrs=new Map();this.listeners=new Map();this._text='';this.scrollHeight=500;this.clientHeight=500;
-    this.classList={contains:name=>this.className.split(/\s+/).includes(name)};
+    this.classList={contains:name=>this.className.split(/\s+/).includes(name),add:(...names)=>{this.className=[...new Set([...this.className.split(/\s+/).filter(Boolean),...names])].join(' ');}};
     this.dataset=new Proxy({}, {get:(_,key)=>this.getAttribute(`data-${String(key).replace(/[A-Z]/g,c=>`-${c.toLowerCase()}`)}`)??undefined,set:(_,key,value)=>{this.setAttribute(`data-${key.replace(/[A-Z]/g,c=>`-${c.toLowerCase()}`)}`,value);return true;}});
   }
   get id(){return this.getAttribute('id')||'';}set id(value){this.setAttribute('id',value);}
@@ -25,6 +26,7 @@ class Element {
   showModal(){this.setAttribute('open','');}
   close(){this.removeAttribute('open');this.dispatch('close');}
   get isConnected(){return this===this.ownerDocument.body||Boolean(this.parentElement?.isConnected);}
+  get firstElementChild(){return this.children[0]||null;}
   setAttribute(name,value){this.attrs.set(name,String(value));}
   getAttribute(name){return this.attrs.get(name)??null;}
   hasAttribute(name){return this.attrs.has(name);}
@@ -95,11 +97,13 @@ function harness(){
   const importDialog=node('dialog',{id:'importDataModal'},document.body);node('div',{class:'import-dropzone'},importDialog);
   const importReview=node('div',{id:'importReview',hidden:''},importDialog);
   node('div',{class:'bulk-editor'},importReview);node('div',{id:'bulkOverrideConfirmation'},importReview);node('div',{id:'bulkOverrideUndoBar'},importReview);
+  const importFooter=node('div',{class:'modal-actions import-commit-actions'},importReview),importCancel=node('button',{type:'button'},importFooter),importConfirm=node('button',{id:'confirmImport',type:'button'},importFooter);
+  importCancel.textContent='Zatvori';importConfirm.textContent='Pregledano — potvrdi uvoz';
   const calls={export:0,delete:0,password:0,personal:0},tabs=[];
   exportButton.addEventListener('click',()=>calls.export++);deleteButton.addEventListener('click',()=>calls.delete++);
   password.addEventListener('submit',()=>calls.password++);personalForm.addEventListener('submit',()=>calls.personal++);
   const frames=[],events={};
-  const window={document,MerSettings:{selectTab:tab=>tabs.push(tab)},addEventListener:(name,handler)=>events[name]=handler};
+  const window={document,MerModalFooters:createFooterController(document),MerSettings:{selectTab:tab=>tabs.push(tab)},addEventListener:(name,handler)=>events[name]=handler};
   vm.runInNewContext(source,{window,requestAnimationFrame:callback=>{frames.push(callback);return frames.length;},MutationObserver:class{observe(){}}});
   const flush=()=>{while(frames.length)frames.shift()();};flush();
   return{window,document,dialog,body,general,personal,security,demo,personalForm,firstName,password,passwordInput,mfa,setup,code,notice,sessions,exportButton,deleteButton,calls,tabs,flush,events};
@@ -166,6 +170,33 @@ test('mounted subviews retain connected controls and disabled import steps canno
   app.document.getElementById('settingsRecoveryContinue').click();assert.equal(mfaFlow.dataset.mfaRecoveryView,'false');
   app.document.getElementById('settingsRecoveryReturn').click();assert.equal(mfaFlow.dataset.mfaRecoveryView,'true');
   assert.equal(app.code.value,'123456');
+});
+
+test('import tabs appear only with a staged file and switch the original review and bulk controls',()=>{
+  const app=harness(),get=id=>app.document.getElementById(id);
+  const upload=get('settings-import-upload-tab'),review=get('settings-import-review-tab'),bulk=get('settings-import-bulk-tab');
+  const tabs=upload.parentElement,originalReview=get('importReview'),originalBulk=get('bulkOverrideConfirmation');
+  assert.equal(tabs.hidden,true,'empty imports must not advertise unavailable review actions');
+  const confirm=get('confirmImport');assert.equal(confirm.hidden,true);
+  app.window.MerImportLayout.review();
+  assert.equal(upload.getAttribute('aria-selected'),'true','programmatic selection cannot expose an unavailable review');
+  originalReview.hidden=false;app.window.MerImportLayout.refresh(true);
+  assert.equal(tabs.hidden,false);assert.equal(review.disabled,false);assert.equal(bulk.disabled,false);
+  assert.equal(review.getAttribute('aria-selected'),'true');
+  assert.equal(confirm.hidden,false,'staging reveals the existing confirmation without waiting for a MutationObserver');
+  const draft=app.document.createElement('input');draft.value='Uncommitted import draft';originalReview.append(draft);
+  bulk.click();assert.equal(get('settings-import-bulk').hidden,false);assert.equal(get('settings-import-review').hidden,true);
+  assert.equal(confirm.hidden,true,'bulk edits still require returning to review before committing');
+  assert.ok(get('settings-import-bulk').contains(originalBulk));
+  app.window.MerImportLayout.refresh(true);
+  assert.equal(bulk.getAttribute('aria-selected'),'true','refreshing staged rows keeps bulk editing selected');
+  review.click();assert.equal(originalReview.closest('[hidden]'),null);assert.equal(draft.value,'Uncommitted import draft');
+  assert.equal(confirm.hidden,false);assert.equal(get('confirmImport'),confirm);
+  review.dispatch('keydown',{key:'ArrowRight'});assert.equal(app.document.activeElement,bulk);
+  originalReview.hidden=true;app.window.MerImportLayout.refresh(false);
+  assert.equal(tabs.hidden,true);assert.equal(upload.getAttribute('aria-selected'),'true');
+  assert.equal(confirm.hidden,true);
+  assert.equal(get('importReview'),originalReview);assert.equal(get('bulkOverrideConfirmation'),originalBulk);
 });
 
 test('native validation reveals the original input and active outer settings tab',()=>{

@@ -2367,12 +2367,12 @@ body.tour-active { overflow:hidden; }
   flex:0 0 auto;
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:center;
   gap:12px;
-  padding:10px 0;
-  border-bottom:1px solid var(--line);
+  padding:6px 0 0;
+  border:0;
 }
-.activity-result-summary { color:var(--muted); font-size:.75rem; font-weight:650; }
+.activity-result-summary { color:var(--muted); font-size:.75rem; font-weight:500; text-align:center; }
 .activity-view-switcher {
   display:inline-grid;
   grid-template-columns:auto auto;

@@ -8,6 +8,8 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+const assistantUi = fs.readFileSync(path.join(root, 'assistant-ui.js'), 'utf8');
+const assistantVoiceCss = fs.readFileSync(path.join(root, 'assistant-voice.css'), 'utf8');
 const javascript = fs.readdirSync(root)
   .filter(file => file.endsWith('.js'))
   .map(file => fs.readFileSync(path.join(root, file), 'utf8'))
@@ -99,7 +101,11 @@ test('evaluation cycle 2: Help modal exposes contextual FAQ and the FAB owns the
   assert.match(widget, /id="assistantMessages"[^>]*role="log"[^>]*aria-live="polite"[^>]*aria-relevant="additions"/);
   assert.match(widget, /id="assistantForm"/);
   assert.match(widget, /id="assistantInput"[^>]*(?:aria-label|aria-labelledby)=/);
-  assert.equal((widget.match(/data-ai-prompt=/g) || []).length, 2, 'floating chat keeps both starter prompts visible at once');
+  assert.doesNotMatch(widget, /data-ai-prompt|assistant-suggestions/, 'floating chat no longer displays question templates');
+  assert.doesNotMatch(assistantUi, /data-ai-prompt|dataset\.aiPrompt|assistant-suggestions/, 'Help must not insert question templates dynamically');
+  assert.match(widget, /type="submit"[^>]*id="assistantSend"/);
+  assert.match(assistantUi, /input\.setAttribute\('aria-label', t\('askAssistant'\)\)/);
+  assert.match(assistantUi, /voice\?\.attach\(surface\)/);
 });
 
 test('evaluation cycle 2: assistant requests are adapter-ready, profile scoped and race safe', () => {
@@ -108,14 +114,16 @@ test('evaluation cycle 2: assistant requests are adapter-ready, profile scoped a
   assert.match(javascript, /\/api\/ai\/chat/);
   assert.match(javascript, /AbortController/);
   assert.match(javascript, /requestProfileId[\s\S]*appState\.activeAccount\s*!==\s*requestProfileId/);
-  assert.match(javascript, /\[data-ai-prompt\][\s\S]*addEventListener\('click'/);
+  assert.doesNotMatch(assistantUi, /\[data-ai-prompt\]/, 'removed templates have no stale click handler');
+  assert.match(assistantUi, /surface\.form\.addEventListener\('submit',[\s\S]*?submitAssistantMessage\(surface\.input\.value\)/);
+  assert.match(assistantUi, /surface\.form\.requestSubmit\(\)/, 'Enter submits through the same reviewed conversation flow');
   assert.match(javascript, /assistantForm[\s\S]*addEventListener\('submit'/);
 });
 
 test('evaluation cycle 2: Help and floating assistant remain bounded and touch friendly on mobile', () => {
   assert.match(cssRule('.help-assistant-trigger'), /min-height:44px/);
   assert.match(cssRule('.assistant-fab'), /min-height:44px/);
-  assert.match(css, /\.assistant-suggestion\s*\{[^}]*min-height:44px/);
+  assert.match(assistantVoiceCss, /\.assistant-mic-button\{[^}]*width:44px;[^}]*height:44px/);
   assert.match(css, /\.assistant-messages\s*\{[^}]*overflow-y:auto/);
   assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.help-assistant-modal[^}]*\{[^}]*width:calc\(100vw - 16px\);[^}]*max-height:90dvh;/);
   assert.match(css, /@media \(max-width:767px\) \{[\s\S]*?\.assistant-widget[^}]*\{[^}]*(?:width:calc\(100vw - 24px\)|inset-inline:12px)/);

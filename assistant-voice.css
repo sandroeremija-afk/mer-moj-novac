@@ -12,6 +12,13 @@
 .assistant-voice-status{font-size:12px;color:var(--ink);font-weight:500}
 .assistant-voice-status.is-error{color:var(--red,#ad2638)}
 .assistant-voice-status[hidden]{display:none}
+.assistant-voice-meta:not(:has(.assistant-voice-status:not([hidden]))){margin:0}
+/* The conversation owns the free height; only live status messages use footer space. */
+#helpAssistantModal .assistant-mode{flex:1 1 0;min-height:0}
+#helpAssistantModal #helpModalAiPanel{flex:1 1 0;min-height:0;height:100%;padding-bottom:0}
+#helpAssistantModal #helpAssistantMessages,#assistantWidget #assistantMessages{flex:1 1 0;min-height:0}
+#helpAssistantModal .assistant-status:empty,#assistantWidget .assistant-status:empty{display:none}
+#helpAssistantModal .assistant-disclaimer,#assistantWidget .assistant-disclaimer{margin-top:6px;padding-top:0;border-top:0;font-size:11px;line-height:1.4;text-align:center}
 .assistant-read-button{display:inline-flex;align-items:center;justify-self:start;gap:6px;min-height:44px;max-width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--panel);font:inherit;font-size:12px;line-height:1.4;white-space:normal;text-align:left;cursor:pointer}
 .assistant-read-button[aria-pressed=true]{border-color:var(--blue);background:var(--blue-soft)}
 .assistant-read-button svg{flex:0 0 18px;width:18px;height:18px}

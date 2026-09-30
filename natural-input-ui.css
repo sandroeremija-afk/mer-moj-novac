@@ -25,7 +25,7 @@
 /* Scoped form density: accessible controls, no duplicated marketing paragraphs. */
 #transactionModal{width:min(650px,calc(100vw - 24px));height:auto;max-height:90dvh;padding:20px;overflow:hidden}
 #transactionModal #transactionOverline,#transactionModal #transactionIntro{display:none}
-#transactionModal #transactionTitle{padding-right:102px;margin:0 0 14px;font-size:24px;line-height:1.3;min-height:44px;display:flex;align-items:center}
+#transactionModal #transactionTitle{padding-right:48px;margin:0 0 14px;font-size:24px;line-height:1.3;min-height:44px;display:flex;align-items:center}
 #transactionModal .modal-close{top:16px;right:16px;width:44px;height:44px}
 #transactionModal .bulk-entry-card{flex-direction:row;align-items:center;gap:10px;padding:6px 10px;margin:0 0 10px;min-height:54px}
 #transactionModal .bulk-entry-card strong{font-size:14px;line-height:1.4;font-weight:500}
@@ -38,6 +38,8 @@
 #transactionForm input,#transactionForm select{height:44px;min-width:0;font-size:16px}
 #transactionForm .transaction-details-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}
 #transactionForm .transaction-payment-method{margin-top:0}
+#transactionForm .transaction-payment-card{grid-column:1 / -1}
+#transactionForm .transaction-payment-card[hidden]{display:none}
 #transactionForm .spend-check{margin:0 0 8px;padding:8px;gap:8px}
 #transactionForm .spend-check strong{font-size:13px;line-height:1.4}
 #transactionForm .spend-check span{font-size:12px;line-height:1.4;margin-top:2px}
@@ -47,7 +49,7 @@
 #transactionModal.is-natural-input-open #transactionForm,#transactionModal.is-natural-input-open .bulk-entry-card{display:none}
 @media(max-width:600px){
   #transactionModal{inset:auto 8px 0;width:calc(100vw - 16px);padding:16px 14px calc(16px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;max-height:90dvh}
-  #transactionModal #transactionTitle{font-size:22px;padding-right:98px;margin-bottom:10px}
+  #transactionModal #transactionTitle{font-size:22px;padding-right:48px;margin-bottom:10px}
   #transactionModal .modal-close{top:16px;right:12px}
   .natural-input-toggle{right:60px}
   #transactionModal .bulk-entry-card{padding:4px 8px;min-height:52px;margin-bottom:8px}

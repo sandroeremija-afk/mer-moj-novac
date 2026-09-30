@@ -16,9 +16,9 @@ test('Cycle 2: chart controls are visible, keyboard reachable and independent fr
   assert.match(source,/closest\('button,a,input,select,textarea,\.layout-drag-handle,#contributionChart'\)/);
   assert.match(source,/card.setAttribute\('role', 'group'\)/);assert.match(source,/doc.createElement\(kind === 'history' \? 'button' : 'span'\)/);
 });
-test('Cycle 2: goal progress badge is larger and generic title glyphs do not duplicate it',()=>{
+test('Cycle 2: goal progress badge keeps proportional readable text without duplicate title glyphs',()=>{
   assert.match(css,/goal-progress-ring \{ width:64px; height:64px; flex-basis:64px/);
-  assert.match(css,/goal-progress-ring span \{ font-size:16px/);
+  assert.match(css,/#appShell #savingsView \.goal-progress-ring span \{ font-size:13px; font-weight:600; line-height:1/);
   assert.match(css,/rich-goal-card \.goal-bucket-head \{ grid-template-columns:64px minmax\(0,1fr\)/);
   assert.match(source,/icon\.textContent\.trim\(\)\)\) icon\.remove\(\)/);
   assert.doesNotMatch(source,/goal\.icon\s*=/,'custom icons remain stored and available in goal details/editor');

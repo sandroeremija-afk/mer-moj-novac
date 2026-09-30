@@ -56,6 +56,20 @@ test('repeated enhancement emits no child-list mutations and language changes up
   assert.equal(nav.children[0].textContent,'Prethodna');assert.equal(nav.children[2].textContent,'Sljedeća');
 });
 
+test('pagination shows only current and total pages while retaining the item total for screen readers',()=>{
+  const h=harness(),container=h.add('div');for(let i=0;i<7;i++)h.add('article',container);
+  const pager=h.root.MerPagination.attach(container,{pageSize:4,itemSelector:'article'}),nav=container.parentElement.children.at(-1),status=nav.children[1];
+  assert.equal(status.textContent,'1 / 2');
+  assert.equal(status.getAttribute('aria-label'),'Page 1 of 2, 7 items');
+  pager.goTo(2);
+  assert.equal(status.textContent,'2 / 2');
+  assert.equal(status.getAttribute('aria-label'),'Page 2 of 2, 7 items');
+  assert.equal(visible(container).length,3);
+  h.document.documentElement.lang='hr';h.notifyLanguage();h.flush();
+  assert.equal(status.textContent,'2 / 2');
+  assert.equal(status.getAttribute('aria-label'),'Stranica 2 od 2, ukupno stavki: 7');
+});
+
 test('native form validation reveals the first invalid page and keeps later invalid fields from hiding it',()=>{
   const h=harness(),form=h.add('form'),container=h.add('div',form),fields=[];
   for(let i=0;i<7;i++){const row=h.add('article',container),field=h.add('input',row);field.form=form;fields.push(field);}

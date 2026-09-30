@@ -51,6 +51,19 @@ test('cycle 2: AI message history retains its dedicated scrolling exception',()=
   assert.match(messageRule.declarations,/scrollbar-width\s*:\s*thin/);
 });
 
+test('cycle 2: four deposit rows retain the compact padding budget above the close footer',()=>{
+  const source=read('list-pagination.css');
+  const rowRule=rules(source).find(rule=>rule.selector.includes('#savingsDetailsModal #savingsEntryList .savings-entry-item'));
+  assert.ok(rowRule,'the paged list rule outranks the later one-ID readability rule');
+  assert.match(rowRule.declarations,/padding-block\s*:\s*8px/);
+  const legibility=read('quick-tools.css');
+  assert.match(legibility,/#savingsDetailsModal \.savings-entry-copy strong \{[^}]*font-size:16px/);
+  assert.match(legibility,/#savingsDetailsModal \.savings-entry-amount \{[^}]*font-size:18px/);
+  assert.match(legibility,/#savingsDetailsModal \.savings-entry-item>button \{[^}]*min-height:44px/);
+  assert.match(read('modal-footer.css'),/\[data-footer-left\] \{[^}]*min-height:44px/);
+  assert.match(read('app.js'),/renderListPagination\('#savingsEntryList',[^\n]*pageSize:bulkyListPageSize/);
+});
+
 test('cycle 2: planning dialog uses dvh after the vh fallback for mobile browser chrome', () => {
   const planning = rules(read('planning.css')).find(rule => rule.selector === '.planning-dialog' && /max-height\s*:\s*90vh/.test(rule.declarations));
   assert.ok(planning);

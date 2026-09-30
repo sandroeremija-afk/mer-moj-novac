@@ -20,8 +20,10 @@
     });
     const first=views[0];first.view.before(navigation);
     function select(name) {
-      const chosen=views.find(view=>view.name===name)||first;
+      const chosen=views.find(view=>view.name===name&&!view.button.disabled)||first;
       for(const entry of views){const active=entry===chosen;entry.view.hidden=!active;entry.button.setAttribute('aria-selected',String(active));entry.button.tabIndex=active?0:-1;}
+      // Confirmation belongs to the visible review, not a deferred footer audit.
+      if(key==='import')root.MerModalFooters?.enhance(host.closest('dialog'));
       schedule();return chosen;
     }
     views.forEach(entry=>{
@@ -58,7 +60,14 @@
     ['bulk','Grupna izmjena','Bulk edit',[importDialog.querySelector('.bulk-editor'),document.getElementById('bulkOverrideConfirmation'),document.getElementById('bulkOverrideUndoBar')]]
   ]);
   let importReady=false;
-  function refreshImport(ready) {importViews.views.forEach(entry=>{entry.button.disabled=entry.name!=='upload'&&!ready;});if(ready!==importReady)importViews.select(ready?'review':'upload');importReady=ready;}
+  function refreshImport(ready) {
+    // Review and bulk editing only have meaning after a file has been staged.
+    // Keep their original controls mounted, but do not present unavailable steps.
+    ready=Boolean(ready);importViews.navigation.hidden=!ready;
+    importViews.views.forEach(entry=>{entry.button.disabled=entry.name!=='upload'&&!ready;});
+    if(ready!==importReady||!ready)importViews.select(ready?'review':'upload');
+    importReady=ready;
+  }
   root.MerImportLayout=Object.freeze({refresh:refreshImport,review:()=>importViews.select('review')});refreshImport(!document.getElementById('importReview').hidden);
   const flows=new Map(),flowLabels=[];
   function createFlow(key,hr,en,nodes) {

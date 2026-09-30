@@ -35,6 +35,16 @@ html body dialog:is(#breakdownModal,#budgetCategoriesModal,#budgetDetailsModal,#
   #savingsStrategyModal .savings-strategy-grid p { line-height:1.6; }
 }
 @media(max-width:640px) {
+  /* The card picker adds one form row. Use the available phone height and a
+     normal-flow footer so validation messages cannot hide behind sticky actions. */
+  html body dialog#transactionModal[open]:not(.tour-modal-host) {
+    inset:0; margin:auto;
+    max-height:calc(var(--ui-visual-height,100dvh) - 16px);
+    max-block-size:calc(var(--ui-visual-height,100dvh) - 16px);
+  }
+  html body #transactionModal #transactionForm .mer-modal-footer {
+    position:static; padding:8px 0 0; margin:4px 0 0;
+  }
   html body dialog#bankSettingsModal[open]:not(.tour-modal-host) { inset:0; margin:auto; }
   html body #bankSettingsModal:not(.tour-modal-host) > .mer-generated-footer { padding-block:0; margin-top:4px; }
   /* Keep the full explanation and footer visible on short phones. The legacy

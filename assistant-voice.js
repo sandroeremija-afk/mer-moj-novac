@@ -117,7 +117,7 @@
       const micIcon=icon('mic'),stopLabel=document.createElement('span');stopLabel.className='assistant-mic-stop';stopLabel.setAttribute('aria-hidden','true');stopLabel.hidden=true;mic.append(micIcon,stopLabel);
       const meta=document.createElement('div');meta.className='assistant-voice-meta';
       const status=document.createElement('p');status.id=`${surface.input.id}VoiceStatus`;status.className='assistant-voice-status';status.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-      const hint=document.createElement('p');hint.id=`${surface.input.id}VoiceHint`;hint.className='assistant-voice-hint';mic.setAttribute('aria-describedby',`${hint.id} ${status.id}`);
+      const hint=document.createElement('p');hint.id=`${surface.input.id}VoiceHint`;hint.className='assistant-voice-hint sr-only';mic.setAttribute('aria-describedby',`${hint.id} ${status.id}`);
       meta.append(status,hint);surface.form.insertBefore(mic,surface.send);surface.form.after(meta);surface.form.classList.add('assistant-voice-enabled');
       Object.assign(surface,{micButton:mic,micIcon,stopLabel,voiceStatus:status,voiceHint:hint});surfaces.push(surface);
       bind(mic,'click',()=>start(surface));

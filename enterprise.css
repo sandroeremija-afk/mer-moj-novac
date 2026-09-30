@@ -109,7 +109,32 @@
 #intelligenceModal .forecast-tooltip span:not([data-money]){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #intelligenceModal .enterprise-footer{justify-content:flex-start;margin-top:auto;flex-shrink:0}
 .forecast-accessible,#intelligenceModal .forecast-inspector{position:absolute;width:1px;height:1px;min-height:0;padding:0;margin:-1px;border:0;overflow:hidden;clip-path:inset(50%);white-space:normal}
-#planTaxBody>p{font-size:14px;line-height:1.5;margin:12px 0}
+html body dialog#taxVaultModal[open]:not(.tour-modal-host){width:min(1040px,calc(100vw - 32px));height:fit-content;block-size:fit-content;min-height:0;min-block-size:0;max-height:calc(100dvh - 32px);max-block-size:calc(100dvh - 32px);gap:20px}
+#planTaxBody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;padding:0}
+#planTaxBody>section{min-width:0;display:flex;flex-direction:column;gap:14px;padding:20px;border:1px solid var(--enterprise-line);border-radius:12px;background:var(--enterprise-bg)}
+#planTaxBody .enterprise-metrics{display:block;margin:0}
+#planTaxBody .enterprise-metrics>div{padding:18px}
+#planTaxBody .enterprise-metrics strong{font-size:clamp(26px,3vw,34px)}
+#planTaxBody .enterprise-b2b{margin:0;flex-direction:row;align-items:flex-start;line-height:1.5}
+#planTaxBody .enterprise-b2b input{flex:0 0 20px;margin-top:1px}
+#planTaxBody :is(p,h3,dl){margin:0}
+#planTaxBody p{font-size:14px;line-height:1.55}
+#planTaxBody h3{font-size:16px;line-height:1.4}
+#planTaxBody dl{display:grid;gap:12px;margin-top:auto}
+#planTaxBody dl>div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;padding-top:12px;border-top:1px solid var(--enterprise-line)}
+#planTaxBody dt{font-size:14px;color:var(--enterprise-muted)}
+#planTaxBody dd{margin:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+#planTaxBody .tax-vault-note{grid-column:1/-1;font-size:12px}
+#taxVaultModal .enterprise-footer{margin-top:0;flex-shrink:0}
+@media(max-width:640px){
+  html body dialog#taxVaultModal[open]:not(.tour-modal-host){inset:0;margin:auto;width:calc(100vw - 20px);max-height:calc(100dvh - 20px);max-block-size:calc(100dvh - 20px);padding:16px;gap:12px}
+  #planTaxBody{grid-template-columns:minmax(0,1fr);gap:10px}
+  #planTaxBody>section{padding:12px;gap:10px}
+  #planTaxBody .enterprise-metrics>div{padding:12px}
+  #planTaxBody p,#planTaxBody dt{font-size:13px;line-height:1.45}
+  #planTaxBody dl{gap:8px}
+  #planTaxBody dl>div{padding-top:8px}
+}
 @media(max-width:600px){
   html body #intelligenceModal[open]{padding:12px;gap:4px;max-height:calc(100dvh - 20px)}
   #intelligenceModal .enterprise-dialog-head h2{padding-right:0;font-size:21px}

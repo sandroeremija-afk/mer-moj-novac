@@ -28,6 +28,8 @@ function harness({supported=true,prefixed=false,language='hr',startError,tts=tru
 test('voice cycle 1: explicit microphone activation and Croatian interim results preserve an existing draft',()=>{
   const h=harness();assert.equal(h.instances.length,0,'mounting does not request microphone access');
   assert.equal(h.first.micButton.type,'button');assert.equal(h.first.form.children.at(-2),h.first.micButton);assert.match(h.first.voiceHint.textContent,/usluga preglednika/);
+  assert.match(h.first.voiceHint.className,/\bsr-only\b/,'privacy context remains accessible without adding a visible note below the composer');
+  assert.ok(h.first.micButton.getAttribute('aria-describedby').includes(h.first.voiceHint.id));
   h.first.input.value='Molim vas,';h.first.micButton.click();const recognition=h.instances[0];
   assert.equal(recognition.lang,'hr-HR');assert.equal(recognition.interimResults,true);assert.equal(recognition.continuous,false);assert.match(h.first.voiceStatus.textContent,/Slušam/);
   assert.equal(h.first.micButton.getAttribute('aria-pressed'),'true');assert.equal(h.first.stopLabel.hidden,false);

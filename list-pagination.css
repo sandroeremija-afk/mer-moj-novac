@@ -28,7 +28,9 @@
 
 #budgetTable .budget-row,
 #budgetCategoryModalList .budget-manager-row { min-height:56px; padding-block:8px; }
-#savingsEntryList .savings-entry-item,
+/* The later readability layer enlarges text, but must not double the padding
+   of all four deposit rows and push the footer outside the bounded dialog. */
+#savingsDetailsModal #savingsEntryList .savings-entry-item,
 #recurringList .recurring-item { padding-block:8px; }
 #savingsEntryList .savings-entry-profile { margin-top:2px; padding-block:2px; }
 #notificationList .notification-item { padding-block:10px; }

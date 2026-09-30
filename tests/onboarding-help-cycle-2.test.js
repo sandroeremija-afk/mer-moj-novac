@@ -28,7 +28,7 @@ function realHelp() {
   return {context,modal,helpBody,helpFaqPanel,calls,voiceCalls};
 }
 
-test('step 9 opens the production Help mode containing real chat input and three localized sample questions',()=>{
+test('step 9 opens the production Help mode with its real composer and no question templates',()=>{
   const step=Core.DEFAULT_STEPS[8],{context,modal,helpBody,helpFaqPanel,calls}=realHelp();
   context.openHelp(step.helpMode);
   assert.equal(step.surface,'help');assert.equal(step.target,'#helpTourConversation');
@@ -38,8 +38,8 @@ test('step 9 opens the production Help mode containing real chat input and three
   const input=conversation.descendants().find(node=>node.id==='helpAssistantInput');
   assert.equal(input.tagName,'textarea');assert.equal(input.visible(),true);
   const prompts=conversation.descendants().filter(node=>node.dataset.aiPrompt);
-  assert.equal(prompts.length,3);
-  assert.ok(prompts.every(node=>node.visible()&&node.dataset.aiPromptEn&&node.type==='button'));
+  assert.equal(prompts.length,0);
+  assert.equal(conversation.descendants().find(node=>node.id==='helpAssistantSend').type,'submit');
   assert.deepEqual(calls,['render','open-help'],'tour opens the real mode without sending a message or running a prompt');
 });
 

@@ -9,6 +9,7 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 const assistantUi = fs.readFileSync(path.join(root, 'assistant-ui.js'), 'utf8');
+const assistantVoice = fs.readFileSync(path.join(root, 'assistant-voice.js'), 'utf8');
 
 function elementMarkup(id, closingTag) {
   const idIndex = html.indexOf(`id="${id}"`);
@@ -64,7 +65,13 @@ test('evaluation cycle 2: floating chat owns one accessible conversation surface
   assert.match(widget, /id="assistantMessages"[^>]*role="log"[^>]*aria-live="polite"/);
   assert.match(widget, /id="assistantForm"/);
   assert.match(widget, /id="assistantInput"[^>]*(?:aria-label|aria-labelledby)=/);
-  assert.equal((widget.match(/data-ai-prompt=/g) || []).length, 2, 'widget exposes both quick prompts without a scroller');
+  assert.doesNotMatch(widget, /data-ai-prompt|assistant-suggestions/, 'floating chat has no starter templates');
+  assert.doesNotMatch(assistantUi, /data-ai-prompt|dataset\.aiPrompt|assistant-suggestions/, 'Help does not dynamically recreate starter templates');
+  assert.match(widget, /type="submit"[^>]*id="assistantSend"/);
+  assert.match(assistantUi, /surface\.send\.setAttribute\('aria-label', t\('send'\)\)/);
+  assert.match(assistantUi, /voice\?\.attach\(surface\)/, 'both chat surfaces retain voice input');
+  assert.match(assistantVoice, /surface\.form\.insertBefore\(mic,surface\.send\)/);
+  assert.match(assistantVoice, /mic\.setAttribute\('aria-describedby',/);
 
   const help = elementMarkup('helpAssistantModal', 'dialog');
   assert.doesNotMatch(help, /id="assistantMessages"|id="assistantForm"/, 'chat surface is not duplicated in the full Help dialog');

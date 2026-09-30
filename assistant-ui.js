@@ -24,14 +24,18 @@
   Object.assign(translations.hr, {
     assistantThinking:'Mer priprema akciju…', assistantRemote:'Mer AI · OpenAI',
     assistantWelcome:'Pozdrav! Mogu objasniti financije, otvoriti traženi modul te pripremiti transakciju ili cilj štednje. Vi provjeravate i spremate svaki unos.',
-    assistantDisclaimer:'Poruke i zbirni iznosi aktivnog profila šalju se OpenAIju. AI odgovor je informativan; svaki financijski unos spremate tek nakon provjere.',
-    assistantWidgetDisclaimer:'Poruke i zbirni iznosi aktivnog profila šalju se OpenAIju. Pripremljene unose provjerite prije spremanja.'
+    assistantDisclaimer:'Razgovarate s umjetnom inteligencijom. Odgovore provjerite.',
+    assistantWidgetDisclaimer:'Razgovarate s umjetnom inteligencijom. Odgovore provjerite.',
+    faqAssistantPrivacyQuestion:'Kako se obrađuju poruke i glasovni unos?',
+    faqAssistantPrivacyAnswer:'Kada pošaljete poruku, njezin sadržaj i zbirni financijski iznosi aktivnog profila šalju se OpenAIju radi odgovora. Glasovni unos obrađuje usluga preglednika i pretvara ga u tekst; poruku zatim šaljete sami. AI odgovore i pripremljene unose provjerite prije spremanja. Odgovori ne zamjenjuju profesionalni financijski savjet.'
   });
   Object.assign(translations.en, {
     assistantThinking:'Mer is preparing your action…', assistantRemote:'Mer AI · OpenAI',
     assistantWelcome:'Hello! I can explain your finances, navigate to a module, and prepare a transaction or savings goal. You review and save every entry.',
-    assistantDisclaimer:'Messages and active-profile aggregate amounts are sent to OpenAI. AI guidance is informational; financial entries are saved only after your review.',
-    assistantWidgetDisclaimer:'Messages and active-profile aggregate amounts are sent to OpenAI. Review prepared entries before saving.'
+    assistantDisclaimer:'You are speaking with artificial intelligence. Verify its responses.',
+    assistantWidgetDisclaimer:'You are speaking with artificial intelligence. Verify its responses.',
+    faqAssistantPrivacyQuestion:'How are messages and voice input processed?',
+    faqAssistantPrivacyAnswer:'When you send a message, its content and the active profile’s aggregate financial amounts are sent to OpenAI to prepare a response. The browser’s speech service transcribes voice input; you then send the message yourself. Review AI responses and prepared entries before saving. Responses do not replace professional financial advice.'
   });
   Object.assign(translations.hr, {
     faqSafeAnswer:'Od evidentiranih prihoda ovog mjeseca oduzimaju se osnovne obveze, cilj štednje, rezerva i evidentirani troškovi. Rezerva je odabrani postotak planiranog prihoda; izračun ne blokira plaćanja niti rezervira novac u banci.',
@@ -139,25 +143,6 @@
     messages.setAttribute('aria-live', 'polite');
     messages.setAttribute('aria-relevant', 'additions');
 
-    const suggestions = document.createElement('div');
-    suggestions.className = 'assistant-suggestions';
-    suggestions.setAttribute('aria-label', t('suggestedQuestions'));
-    suggestions.dataset.i18nAria = 'suggestedQuestions';
-    [
-      ['promptSafe', 'Kako se računa Zaštita budžeta?', 'How is Safe to Spend calculated?'],
-      ['promptSavings', 'Kako mogu povećati stopu štednje?', 'How can I improve my savings rate?'],
-      ['promptLimit', 'Kako postaviti mjesečni limit?', 'How do I set a monthly limit?']
-    ].forEach(([key, prompt, promptEn]) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'assistant-suggestion';
-      button.dataset.aiPrompt = prompt;
-      button.dataset.aiPromptEn = promptEn;
-      button.dataset.i18n = key;
-      button.textContent = t(key);
-      suggestions.append(button);
-    });
-
     const form = document.createElement('form');
     form.className = 'assistant-composer';
     form.id = 'helpAssistantForm';
@@ -197,12 +182,13 @@
     const conversation = document.createElement('div');
     conversation.id = 'helpTourConversation';
     conversation.className = 'help-tour-conversation';
-    conversation.append(suggestions, form);
+    conversation.append(form);
     aiPanel.append(messages, conversation, status, disclaimer);
     helpBody.append(aiPanel);
 
     const extraFaqs = [
       ['overview', 'faqBalancePrivacyQuestion', 'faqBalancePrivacyAnswer'],
+      ['overview', 'faqAssistantPrivacyQuestion', 'faqAssistantPrivacyAnswer'],
       ['budgets', 'faqCategoryManageQuestion', 'faqCategoryManageAnswer'],
       ['savings', 'faqEmergencyFundQuestion', 'faqEmergencyFundAnswer'],
       ['activity', 'faqImportedSourceQuestion', 'faqImportedSourceAnswer'],
@@ -225,7 +211,7 @@
       faqList?.append(details);
     });
 
-    return { toolbar, faqMode, aiMode, restart, aiPanel, messages, suggestions, form, input, send, status };
+    return { toolbar, faqMode, aiMode, restart, aiPanel, messages, form, input, send, status };
   }
 
   const helpUi = createHelpExtensions();
@@ -515,7 +501,6 @@
   bindRovingTabs('[data-faq-filter]', button => selectFaqModule(button.dataset.faqFilter));
   bindRovingTabs('[data-help-mode]', button => selectHelpMode(button.dataset.helpMode));
   $$('[data-help-settings]').forEach(button => button.addEventListener('click', () => { const tab=button.dataset.helpSettings;closeModal(modal);setTimeout(() => window.MerSettings?.open(tab), 30); }));
-  $$('[data-ai-prompt]').forEach(button => button.addEventListener('click', () => submitAssistantMessage(currentLang==='en'?button.dataset.aiPromptEn:button.dataset.aiPrompt)));
   assistantSurfaces.forEach(surface => {
     surface.form.addEventListener('submit', event => { event.preventDefault();submitAssistantMessage(surface.input.value); });
     surface.input.addEventListener('keydown', event => { if (event.key==='Enter'&&!event.shiftKey){event.preventDefault();surface.form.requestSubmit();} });

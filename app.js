@@ -319,6 +319,7 @@ function normalizeProfile(profile,fallbackProfile=personalDefaults) {
   const expenseFallback=profile.categories.find(category=>category.id==='other')||profile.categories[0];
   const incomeFallback=profile.incomeCategories.find(category=>category.id==='otherIncome')||profile.incomeCategories[0];
   profile.transactions=(Array.isArray(profile.transactions)?profile.transactions:[]).filter(transaction=>transaction&&typeof transaction==='object'&&validStoredDate(transaction.date)&&Number.isFinite(Number(transaction.amount))&&Number(transaction.amount)!==0).map((transaction,index)=>{const type=MerCore.transactionType(transaction),available=type==='income'?profile.incomeCategories:profile.categories,fallbackCategory=type==='income'?incomeFallback:expenseFallback;return {...transaction,id:safeIdentifier(transaction.id,`restored-${index}-${MerCore.stableTransactionHash([transaction.date,transaction.name,transaction.amount])}`),type,name:String(transaction.name||'Transakcija').trim().slice(0,100)||'Transakcija',amount:Number(transaction.amount),category:available.some(category=>category.id===transaction.category)?transaction.category:fallbackCategory.id,source:String(transaction.source||tSourceManual()).slice(0,100),sourceType:['manual','auto','import','round-up'].includes(transaction.sourceType)?transaction.sourceType:'manual',needsReview:Boolean(transaction.needsReview)};});
+  profile.transactions.forEach(transaction=>{if(transaction.paymentMethod!=='card'||typeof transaction.cardReference!=='string'||!/^(connection|manual):[a-zA-Z0-9_-]{1,100}$/.test(transaction.cardReference))delete transaction.cardReference;});
   if(profile.accountLabel==='personalAccount'&&!profile.categories.some(category=>category.id==='healthBeauty')){
     profile.categories.forEach(category=>{const limits={food:520,transport:260,shopping:370,entertainment:180,other:190};if(limits[category.id]!==undefined)category.limit=limits[category.id];});
     profile.categories.splice(Math.min(3,profile.categories.length),0,{id:'healthBeauty',spent:0,limit:80},{id:'utilities',spent:0,limit:470});
@@ -1589,7 +1590,6 @@ function evaluateTransaction() {
 }
 
 function openTransaction(id=null) {
-  window.MerNaturalInputUI?.reset?.();
   editingTransactionId=id===null?null:id;$('#transactionForm').reset();
   const existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
   $('#transactionDate').value=String(existing?.date||appReferenceDate).slice(0,10);
@@ -1597,10 +1597,11 @@ function openTransaction(id=null) {
   if(existing){$('#transactionName').value=existing.name;$('#transactionAmount').value=existing.amount;renderCategorySelects();$('#transactionCategory').value=existing.category;evaluateTransaction();}
   if($('#transactionB2B'))$('#transactionB2B').checked=Boolean(existing?.isB2B);
   if($('#transactionPaymentMethod'))$('#transactionPaymentMethod').value=['card','cash'].includes(existing?.paymentMethod)?existing.paymentMethod:'transfer';
+  window.MerEngagementUI?.resetPayment?.(existing);
   openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50);
 }
 
-function openIncomeTransaction() { window.MerNaturalInputUI?.reset?.();editingTransactionId=null;$('#transactionForm').reset();$('#transactionDate').value=appReferenceDate;transactionType='income';setTransactionType('income');$('#deleteTransaction').hidden=true;openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50); }
+function openIncomeTransaction() { editingTransactionId=null;$('#transactionForm').reset();window.MerEngagementUI?.resetPayment?.();$('#transactionDate').value=appReferenceDate;transactionType='income';setTransactionType('income');$('#deleteTransaction').hidden=true;openModal($('#transactionModal'));setTimeout(()=>$('#transactionName').focus(),50); }
 
 // AI prepares ordinary application forms; the existing submit handlers remain
 // the only place that saves transactions and savings goals.
@@ -1860,12 +1861,16 @@ $('#transactionForm').addEventListener('submit',event=>{
   if(!name||!Number.isFinite(amount)||amount<=0||!validStoredDate(dateValue)||!evaluateTransaction()){showToast(t(validStoredDate(dateValue)?'positiveAmountRequired':'transactionDateRequired'));return;}
   const warning=$('#spendCheck').dataset.budgetWarning||'',monthlyOver=Number($('#spendCheck').dataset.monthlyOver)||0,categoryOver=Number($('#spendCheck').dataset.categoryOver)||0,overage=warning==='monthly-over'?monthlyOver:categoryOver,category=$('#transactionCategory').value,existing=editingTransactionId!==null?state.transactions.find(tx=>String(tx.id)===String(editingTransactionId)):null;
   if(!navigator.onLine&&existing&&!existing.offlineDraft){showToast(currentLang==='hr'?'Uređivanje potvrđenih transakcija zahtijeva vezu. Novi unos možete spremiti kao nacrt.':'Connect before editing posted transactions. New entries can be saved as drafts.');return;}
+  const paymentMethod=['card','cash'].includes($('#transactionPaymentMethod')?.value)?$('#transactionPaymentMethod').value:'transfer';
+  const cardReference=paymentMethod==='card'?window.MerEngagementUI?.readPaymentCard?.():'';
+  if(paymentMethod==='card'&&!cardReference){showToast(currentLang==='hr'?'Odaberite karticu ili banku za ovu transakciju.':'Choose a card or bank for this transaction.');return;}
   if(existing)MerAccounting.undoRoundUp(state,existing);
-  const payload={type:transactionType,name,amount,category,date:`${dateValue}T12:00:00`,timestamp:`${dateValue}T12:00:00`,paymentMethod:['card','cash'].includes($('#transactionPaymentMethod')?.value)?$('#transactionPaymentMethod').value:'transfer',isB2B:appState.activeAccount==='business'&&transactionType==='income'&&Boolean($('#transactionB2B')?.checked)};
+  const payload={type:transactionType,name,amount,category,date:`${dateValue}T12:00:00`,timestamp:`${dateValue}T12:00:00`,paymentMethod,...(cardReference?{cardReference}:{}),isB2B:appState.activeAccount==='business'&&transactionType==='income'&&Boolean($('#transactionB2B')?.checked)};
   if(!navigator.onLine){payload.offlineDraft=true;payload.status='draft';}
   let savedTransaction;
   if(existing){
     Object.assign(existing,payload);
+    if(paymentMethod!=='card')delete existing.cardReference;
     MerCore.updateTransactionSchedule(existing,appReferenceDate);
     if(existing.sourceType==='auto'){existing.needsReview=false;existing.categoryConfidence='manual';}
     MerAccounting.applyRoundUp(state,existing,appReferenceDate);

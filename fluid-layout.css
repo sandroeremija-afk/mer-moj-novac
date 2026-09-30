@@ -22,13 +22,17 @@
   #appShell .page > .view > .actions-only-heading .heading-actions { gap:calc(10px + var(--fluid-step) * .25); }
   #appShell .page > .view > .actions-only-heading .heading-actions > button,
   #insightsFilters > button,
-  #activityView > .activity-panel .activity-toolbar :is(input,select,button),
+  #activityView > .activity-panel .activity-toolbar :is(select,button),
   #activityPagination > button,
   #budgetsView #budgetTableWindow > .mer-pagination button,
   #savingsView > .goal-buckets-panel > .panel-heading > button {
     min-height:var(--fluid-control);
     font-size:calc(13px + var(--fluid-step) * .1875);
     padding-inline:calc(14px + var(--fluid-step) * .375);
+  }
+  #activityView > .activity-panel .activity-toolbar input {
+    min-height:var(--fluid-control);
+    font-size:calc(13px + var(--fluid-step) * .1875);
   }
   #appShell .page > .view > .actions-only-heading .heading-actions > button > svg {
     flex-basis:calc(17px + var(--fluid-step) * .25);

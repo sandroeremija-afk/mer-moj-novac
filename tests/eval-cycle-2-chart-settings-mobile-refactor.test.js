@@ -9,6 +9,8 @@ const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+const assistantUi = fs.readFileSync(path.join(root, 'assistant-ui.js'), 'utf8');
+const assistantVoiceCss = fs.readFileSync(path.join(root, 'assistant-voice.css'), 'utf8');
 
 function settingsPanel(name) {
   const start = html.indexOf(`data-settings-panel="${name}"`);
@@ -43,16 +45,17 @@ test('evaluation cycle 2: Insights labels and donut metrics never rely on ellips
   assert.doesNotMatch(finalRule, /text-overflow:ellipsis/);
 });
 
-test('evaluation cycle 2: mobile savings goals and assistant prompts have no nested horizontal or vertical scroller', () => {
+test('evaluation cycle 2: mobile savings goals avoid nested scroll and chat gives prompt space back to the conversation', () => {
   const phone = css.slice(css.lastIndexOf('@media (max-width:414px)'));
   assert.match(phone, /#savingsView \.goal-bucket-grid \{[^}]*max-height:none[^}]*overflow-y:visible/);
   assert.doesNotMatch(phone, /#savingsView \.goal-bucket-grid \{[^}]*overflow-y:auto/);
-  const widgetRules = [...css.matchAll(/\.assistant-widget \.assistant-suggestions\s*\{([^}]*)\}/g)];
-  const widgetRule = widgetRules.at(-1)?.[1] || '';
-  assert.match(widgetRule, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(widgetRule, /overflow:visible/);
-  assert.doesNotMatch(widgetRule, /overflow-x:auto/);
   const widgetStart = html.indexOf('id="assistantWidget"');
   const widgetEnd = html.indexOf('</section>', widgetStart);
-  assert.equal((html.slice(widgetStart, widgetEnd).match(/data-ai-prompt=/g) || []).length, 2);
+  const widget = html.slice(widgetStart, widgetEnd);
+  assert.doesNotMatch(widget, /data-ai-prompt|assistant-suggestions/);
+  assert.doesNotMatch(assistantUi, /data-ai-prompt|dataset\.aiPrompt|assistant-suggestions/);
+  assert.match(widget, /id="assistantInput"[^>]*aria-label=/);
+  assert.match(widget, /type="submit"[^>]*id="assistantSend"/);
+  assert.match(assistantVoiceCss, /#assistantWidget #assistantMessages\{flex:1 1 0;min-height:0\}/);
+  assert.match(assistantVoiceCss, /\.assistant-composer\.assistant-voice-enabled\{grid-template-columns:minmax\(0,1fr\) 44px auto/);
 });

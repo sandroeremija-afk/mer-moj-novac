@@ -77,7 +77,7 @@ body.layout-editing #savingsView [data-savings-summary] { cursor:grab; }
 #savingsView .goal-bucket-card { display:flex; flex-direction:column; justify-content:center; gap:14px; min-height:0; padding:18px; height:100%; }
 #savingsView .rich-goal-card .goal-bucket-head { grid-template-columns:64px minmax(0,1fr); gap:14px; }
 #savingsView .goal-progress-ring { width:64px; height:64px; flex-basis:64px; }
-#savingsView .goal-progress-ring span { font-size:16px; font-weight:700; }
+#appShell #savingsView .goal-progress-ring span { font-size:13px; font-weight:600; line-height:1; }
 #savingsView .goal-bucket-title strong { font-size:14px; line-height:1.5; white-space:normal; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; }
 #savingsView .goal-bucket-title small { font-size:12px; line-height:1.5; white-space:normal; overflow:visible; }
 #savingsView .goal-bucket-values { display:flex; flex-direction:column; align-items:flex-start; margin:0; gap:4px; }
