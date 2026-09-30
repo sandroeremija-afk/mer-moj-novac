@@ -2,6 +2,25 @@
    Set both dimensions to override the legacy mobile logical block-size, not only height. */
 #bankSettingsModal .settings-label-with-info { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 #bankSettingsModal .settings-label-with-info .info-button { flex:0 0 20px; width:20px; height:20px; margin:0; }
+/* Import height follows the active step, not the shared full-screen dialog size.
+   Leave the wide workspace for staged rows and a compact surface for file choice. */
+html body dialog#importDataModal[open]:not(.tour-modal-host) {
+  height:fit-content; block-size:fit-content; min-height:0; min-block-size:0;
+  max-height:calc(var(--ui-visual-height,100dvh) - 20px);
+  max-block-size:calc(var(--ui-visual-height,100dvh) - 20px);
+  inset:0; margin:auto; overflow:hidden;
+}
+html body dialog#importDataModal[open]:not(.has-import-review):not(.tour-modal-host) {
+  width:min(800px,calc(100vw - 20px));
+}
+#importDataModal > .settings-pane-heading {
+  padding-right:56px; align-items:flex-start; gap:12px; flex-shrink:0;
+}
+#importDataModal > .settings-pane-heading #importProfileBadge { margin-top:4px; }
+#importDataModal > .import-workspace { flex:0 0 auto; }
+html body #importDataModal > .import-commit-actions {
+  position:static; margin:12px 0 0; padding:12px 0 0;
+}
 html body dialog:is(#transactionModal,#assessmentModal,#budgetModal,#savingsModal,#goalModal,#recurringModal,#incomeCategoryModal,#budgetTransferModal,#savingsStrategyModal,.savings-minimal-modal,#breakdownModal,#budgetCategoriesModal,#budgetDetailsModal,#savingsDetailsModal,.planning-hub-modal,.planning-dialog,#subscriptionsModal)[open]:not(.tour-modal-host) {
   height:fit-content; block-size:fit-content; min-height:0; min-block-size:0;
   max-height:min(90dvh,calc(var(--ui-visual-height,100dvh) - 20px));
@@ -35,6 +54,14 @@ html body dialog:is(#breakdownModal,#budgetCategoriesModal,#budgetDetailsModal,#
   #savingsStrategyModal .savings-strategy-grid p { line-height:1.6; }
 }
 @media(max-width:640px) {
+  #importDataModal > .settings-pane-heading { gap:6px; }
+  #importDataModal .settings-pane-heading h2 { padding-right:0; }
+  #importDataModal > .settings-pane-heading #importProfileBadge { margin-top:0; }
+  #importDataModal .settings-subtabs { margin-bottom:8px; }
+  #importDataModal .import-review { margin-top:0; }
+  #importDataModal .import-summary { padding:8px 10px; }
+  #importDataModal .import-table tr { gap:6px; padding:8px; }
+  html body #importDataModal > .import-commit-actions { margin-top:8px; padding-top:8px; }
   /* The card picker adds one form row. Use the available phone height and a
      normal-flow footer so validation messages cannot hide behind sticky actions. */
   html body dialog#transactionModal[open]:not(.tour-modal-host) {

@@ -49,7 +49,7 @@ test('overview lower cards stay bounded with and without a spending alert', () =
   }
 });
 
-test('budget page stretches only the visible rows and retains a nonshrinking pager and allocation footer', () => {
+test('budget page stretches visible rows and ends at a nonshrinking pager without a redundant allocation footer', () => {
   assert.match(declarations('#budgetsView #budgetTableWindow'), /flex-direction:column/);
   assert.match(declarations('#budgetsView #budgetTableWindow'), /flex:1 1 0/);
   assert.match(declarations('#budgetsView #budgetTable'), /grid-auto-rows:minmax\(64px,1fr\)/);
@@ -57,7 +57,13 @@ test('budget page stretches only the visible rows and retains a nonshrinking pag
   const pager = declarations('#budgetsView #budgetTableWindow > .mer-pagination');
   assert.match(pager, /flex:0 0 auto/);
   assert.match(pager, /margin-top:auto/);
-  assert.match(css, /#budgetsView > \.table-panel > :is\(\.allocation-bar,\.allocation-foot\)[^}]*flex:0 0 auto/);
+  const budget = read('index.html').slice(read('index.html').indexOf('id="budgetsView"'), read('index.html').indexOf('id="savingsView"'));
+  assert.doesNotMatch(budget, /allocation-bar|allocation-foot|allocationProgress|allocationCopy/);
+  assert.match(budget, /id="allocatedValue"/);
+  assert.match(budget, /id="unallocatedValue"/);
+  assert.match(budget, /id="allocationStatus"/);
+  const render = read('app.js').slice(read('app.js').indexOf('function renderBudgetView('), read('app.js').indexOf('function budgetCategoryPercent('));
+  assert.doesNotMatch(render, /allocationProgress|allocationCopy|allocation-bar/);
 });
 
 test('activity keeps date headings intrinsic and fills empty-state and transaction space separately', () => {

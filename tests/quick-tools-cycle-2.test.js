@@ -5,7 +5,8 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const core=require('../quick-tools-core.js');
 const quickSource=fs.readFileSync(require.resolve('../quick-tools-ui.js'),'utf8');
-const enterpriseSource=fs.readFileSync(require.resolve('../enterprise-ui.js'),'utf8');
+// Keep source-boundary extraction independent of Windows checkout line endings.
+const enterpriseSource=fs.readFileSync(require.resolve('../enterprise-ui.js'),'utf8').replace(/\r\n/g,'\n');
 
 test('forecast resize preserves the current tooltip and focus until the chart width changes',()=>{
   const start=enterpriseSource.indexOf('const resizeProjection='),end=enterpriseSource.indexOf('new ResizeObserver(resizeProjection)',start);

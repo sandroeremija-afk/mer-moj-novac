@@ -188,7 +188,10 @@ test('evaluation cycle 1: proportional budget cents render no phantom zero-euro 
   context.renderBudgetView();
   assert.equal(elements.get('#unallocatedValue').textContent,'allocated');
   assert.equal(elements.get('[data-layout-card="budget-allocation"]').classList.contains('is-over-allocated'),false);
-  assert.equal(elements.get('.allocation-bar').classList.contains('over'),false);
+  assert.equal(elements.get('#allocatedValue').textContent,'1900 €');
+  assert.equal(elements.get('#fullBudgetValue').textContent,'1900 €');
+  assert.equal(elements.get('#allocationStatus').textContent,'allocationPercent');
+  assert.equal(elements.has('.allocation-bar'),false);
   assert.equal(elements.get('#budgetRecovery').hidden,true);
   assert.equal(elements.get('#autoBalanceBudget').hidden,true);
   // Real cent over-allocation is still surfaced; only binary floating noise is removed.
@@ -196,5 +199,6 @@ test('evaluation cycle 1: proportional budget cents render no phantom zero-euro 
   context.renderBudgetView();
   assert.equal(elements.get('#unallocatedValue').textContent,'overAllocated');
   assert.equal(elements.get('[data-layout-card="budget-allocation"]').classList.contains('is-over-allocated'),true);
+  assert.equal(elements.get('#allocatedValue').textContent,'1900.01 €');
   assert.equal(elements.get('#budgetRecovery').hidden,false);
 });

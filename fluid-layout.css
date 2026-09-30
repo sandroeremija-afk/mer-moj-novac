@@ -119,6 +119,10 @@
 
   #budgetsView > .table-panel,
   #activityView > .activity-panel { padding:var(--fluid-pad); }
+  /* Keep four readable rows and the pager inside a short desktop canvas. */
+  @media (max-height:760px) {
+    #budgetsView > .table-panel { padding-block:14px; }
+  }
   #budgetsView #budgetTableWindow { margin-top:10px; }
   #budgetsView #budgetTable .budget-row {
     grid-template-columns:minmax(0,1.2fr) minmax(0,1.4fr) max-content 44px;
@@ -130,12 +134,10 @@
   #budgetsView #budgetTable .budget-category strong { overflow-wrap:anywhere; }
   #budgetsView #budgetTable .budget-row-progress { min-width:0; grid-template-columns:minmax(0,1fr) max-content; }
   #budgetsView #budgetTable .budget-row-value { white-space:nowrap; }
-  #budgetsView > .table-panel > .allocation-bar { margin-top:8px; }
-  #budgetsView > .table-panel > .allocation-foot { margin-top:6px; }
   #budgetsView #budgetTable .budget-category strong,
   #activityView #transactionList .transaction-copy > strong { font-size:var(--fluid-body); }
   #budgetsView #budgetTable :is(.budget-category small,.budget-row-value,.budget-percent),
-  #budgetsView > .table-panel :is(.allocation-foot,.status-pill),
+  #budgetsView > .table-panel .status-pill,
   #activityView #transactionList :is(.transaction-meta,.transaction-meta small,.transaction-category),
   #activityView .activity-result-summary,
   #budgetsView #budgetTableWindow > .mer-pagination span { font-size:var(--fluid-label); }

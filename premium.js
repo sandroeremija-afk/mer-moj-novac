@@ -117,6 +117,7 @@
   let importStage = null;
   let importPage = 0;
   let returnToTransactionEntry = false;
+  let returnToImportSettings = false;
   let pendingBulkOverride = null;
   let lastBulkOverride = null;
   let editingGoalId = null;
@@ -288,7 +289,8 @@
 
   function openGlobalImport({fromTransaction=false}={}) {
     returnToTransactionEntry=Boolean(fromTransaction);
-    $('#importTransactionBackWrap').hidden=!returnToTransactionEntry;
+    returnToImportSettings=!returnToTransactionEntry&&$('#bankSettingsModal').open;
+    $('#importTransactionBackWrap').hidden=false;
     closeCardMenus();
     if($('#transactionModal').open)closeModal($('#transactionModal'));
     if($('#bankSettingsModal').open)closeModal($('#bankSettingsModal'));
@@ -301,12 +303,16 @@
   }
 
   function backToManualTransaction() {
-    if(!returnToTransactionEntry)return;
+    const toTransaction=returnToTransactionEntry,toSettings=returnToImportSettings;
     returnToTransactionEntry=false;
+    returnToImportSettings=false;
     $('#importTransactionBackWrap').hidden=true;
     closeModal($('#importDataModal'));
-    openModal($('#transactionModal'));
-    setTimeout(()=>$('#transactionName').focus({preventScroll:true}),50);
+    if(toTransaction){
+      openModal($('#transactionModal'));
+      setTimeout(()=>$('#transactionName').focus({preventScroll:true}),50);
+    }else if(toSettings)openModal($('#bankSettingsModal'));
+    else window.MerExportUI?.openActivityTransfer();
   }
 
   function categoryOptions(type,selected) {

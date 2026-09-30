@@ -54,6 +54,13 @@ test('budget rows reserve comfortable space and shrink tracks without squeezing 
   assert.match(css, /#budgetsView #budgetTable \.budget-row-progress \{[^}]*grid-template-columns:minmax\(0,1fr\) max-content/);
 });
 
+test('short desktop budget panels reserve room for the footer without shrinking rows or hit targets', () => {
+  assert.match(css, /@media \(max-height:760px\) \{\s*#budgetsView > \.table-panel \{ padding-block:14px; \}\s*\}/);
+  assert.match(css, /#budgetsView #budgetTableWindow \{ margin-top:10px; \}/);
+  assert.match(css, /#budgetsView #budgetTable \.budget-row \{[^}]*min-height:64px/);
+  assert.match(css, /--fluid-control:calc\(44px \+ var\(--fluid-step\) \* \.75\)/);
+});
+
 test('a single visible savings goal fills its row without unhiding paginated goals', () => {
   assert.match(css, /#goalBucketGrid:not\(:has\(> \.goal-bucket-card:not\(\[data-page-hidden="true"\]\):not\(\[hidden\]\) ~ \.goal-bucket-card:not\(\[data-page-hidden="true"\]\):not\(\[hidden\]\)\)\)\s*\{\s*grid-template-columns:minmax\(0,1fr\)/);
   assert.match(read('zero-scroll.css'), /\[data-page-hidden="true"\][^}]*display:none !important/);

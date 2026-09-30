@@ -611,9 +611,6 @@ function renderBudgetView() {
   $('#unallocatedValue').textContent = difference >= 0 ? t('allocated',{amount:currency(difference,true)}) : t('overAllocated',{amount:currency(Math.abs(difference),true)});
   $('[data-layout-card="budget-allocation"]').classList.toggle('is-over-allocated',difference<0);
   $('#allocationStatus').textContent = t('allocationPercent',{percent:allocationPercent});
-  $('#allocationProgress').style.width = `${Math.min(100,allocationPercent)}%`;
-  $('.allocation-bar').classList.toggle('over', allocationPercent > 100);
-  $('#allocationCopy').textContent = t('allocationCopy',{allocated:currency(allocated,true),budget:currency(plan.monthlyBudget,true)});
   $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
   renderListPagination('#budgetTable',{itemSelector:'.budget-row',label:t('budgetCategoryList')});
   const overspent=state.categories.filter(cat=>cat.spent>cat.limit+.005),donors=state.categories.filter(cat=>cat.limit>cat.spent+.005),overAllocated=difference<-.005,recovery=$('#budgetRecovery');

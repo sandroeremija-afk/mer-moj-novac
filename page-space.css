@@ -29,10 +29,6 @@
     margin-top:auto;
     padding-top:10px;
   }
-  #budgetsView > .table-panel > :is(.allocation-bar,.allocation-foot) {
-    flex:0 0 auto;
-  }
-
   /* Date headings stay compact while transaction rows use the available height. */
   #activityView #transactionList {
     display:flex;
