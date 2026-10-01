@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const Anomalies = require('../anomaly-core.js');
+const Core = require('../core.js');
 const ui = fs.readFileSync(require.resolve('../anomaly-ui.js'),'utf8');
 const fixture = (amount = 130) => ({profileId:'personal',currency:'EUR',categories:[{id:'food',name:'Hrana'}],transactions:[
   {id:'baseline',type:'expense',date:'2026-08-15',amount:400,currency:'EUR',category:'food'},
@@ -11,140 +12,160 @@ const fixture = (amount = 130) => ({profileId:'personal',currency:'EUR',categori
 ]});
 
 class Element {
-  constructor(tagName) { this.tagName=tagName;this.children=[];this.attributes={};this.listeners=new Map();this.hidden=false;this.value=''; }
-  set textContent(value) { this.value=String(value);this.children=[]; }
-  get textContent() { return this.value+this.children.map(child=>child.textContent).join(''); }
-  set innerHTML(_value) { throw new Error('Category content must be rendered as text'); }
-  append(...children) { this.children.push(...children); }
-  replaceChildren(...children) { this.value='';this.children=children; }
+  constructor() { this.children=[];this.attributes={};this.hidden=false;this.textContent=''; }
+  set innerHTML(_value) { throw new Error('Category content must never enter notification markup'); }
+  replaceChildren(...children) { this.textContent='';this.children=children; }
   setAttribute(key,value) { this.attributes[key]=String(value); }
-  addEventListener(name,callback) { const callbacks=this.listeners.get(name)||[];callbacks.push(callback);this.listeners.set(name,callbacks); }
-  dispatch(name,event) { for(const callback of this.listeners.get(name)||[]) callback(event); }
 }
 
-function harness(profile = fixture()) {
-  const host=new Element('aside'), created=[], calls=[];
+function harness(profile = fixture(), storage = new Map()) {
+  const host=new Element(),button=new Element(),badge=new Element(),shell=new Element(),calls=[];
+  button.querySelector=selector=>selector==='.assistant-fab-status'?badge:null;
   const context={
-    window:{MerAnomalies:Anomalies,MerAssistantUi:{open:()=>calls.push('open')}},MerAnomalies:Anomalies,
+    window:{MerAnomalies:Anomalies,MerCore:Core,MerFinancialAssistant:{ask:()=>calls.push('ask')},fetch:()=>calls.push('fetch'),
+      MerAuthProvider:{currentSession:()=>context.session},
+      MerEnterpriseSecurity:{isLocked:()=>context.locked},
+      localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value)}},
+    session:{userId:'synthetic-user-one'},locked:false,mfaLocked:false,
     state:profile,appReferenceDate:'2026-09-18',currentLang:'hr',
     appState:{activeAccount:'personal',settings:{currency:'EUR',timezone:'Europe/Zagreb',hideBalances:false}},
-    document:{querySelector:selector=>selector==='#spendingAnomalyAlert'?host:null,createElement:tag=>{const element=new Element(tag);created.push(element);return element;}},
-    categoryName:id=>context.state.categories.find(item=>item.id===id)?.name || (context.currentLang==='en'?'Other':'Ostalo')
+    reactiveStore:{snapshot:()=>({profile:context.state})},t:key=>key,
+    document:{querySelector:selector=>({'#spendingAnomalyAlert':host,'#assistantFab':button,'#appShell':shell}[selector]||null),body:{classList:{contains:()=>context.mfaLocked}}}
   };
-  vm.createContext(context);vm.runInContext(ui,context);
-  return {context,host,created,calls,refresh:()=>context.window.MerAnomalyUI.refresh()};
+  vm.createContext(context);
+  const assistantSource=fs.readFileSync(require.resolve('../assistant-ui.js'),'utf8');
+  vm.runInContext(assistantSource.slice(assistantSource.indexOf('  function anomalyBatchFor('),assistantSource.indexOf('  function renderMessages(')),context);
+  context.window.MerAssistantUi={anomalyBatch:()=>context.anomalyBatchFor(context.appState.activeAccount)};
+  vm.runInContext(ui,context);
+  return {context,host,button,badge,shell,calls,storage,refresh:()=>context.window.MerAnomalyUI.refresh(),markRead:()=>context.window.MerAnomalyUI.markRead()};
 }
 
-test('dashboard alert appears at exactly 30 percent, localizes and disappears immediately below the threshold', () => {
-  const {context,host,refresh}=harness();
-  assert.equal(host.hidden,false);
-  assert.match(host.textContent,/Promjena u obrascu potrošnje/);
-  assert.match(host.textContent,/Hrana: \+30%.*7 dana.*4 tjedna/);
-  assert.equal(host.children[1].textContent,'Pitaj Mer AI');
-  context.currentLang='en';context.state.categories[0].name='Food';refresh();
-  assert.match(host.textContent,/A change in your spending pattern/);
-  assert.match(host.textContent,/Food: \+30%.*last 7 days.*preceding 4 weeks/);
-  assert.equal(host.children[1].textContent,'Ask Mer AI');
+test('a private unread chat badge replaces the dashboard alert at exactly 30 percent and clears below the threshold', () => {
+  const {context,host,button,badge,refresh}=harness();
+  assert.equal(host.hidden,true);assert.equal(host.children.length,0);
+  assert.equal(badge.hidden,false);assert.equal(badge.textContent,'1');
+  assert.match(button.attributes['aria-label'],/Otvori AI financijskog asistenta.*Nova poruka Mer AI/);
+  context.currentLang='en';refresh();
+  assert.match(button.attributes['aria-label'],/Open AI financial assistant.*New Mer AI message/);
   context.state.transactions[1].amount=129.99;refresh();
-  assert.equal(host.hidden,true);assert.equal(host.children.length,0);assert.equal(host.textContent,'');
+  assert.equal(badge.hidden,true);assert.equal(badge.textContent,'');
+  assert.equal(button.attributes['aria-label'],'Open AI financial assistant');
   context.state.transactions[1].amount=150;refresh();
-  assert.equal(host.hidden,false);assert.match(host.textContent,/\+50%/);
+  assert.equal(badge.hidden,false);
 });
 
-test('a zero baseline or incomplete historical window never creates a dashboard alert', () => {
+test('a zero baseline or incomplete historical window never creates an unread message', () => {
   const empty=harness({profileId:'personal',currency:'EUR',categories:[],transactions:[]});
-  assert.equal(empty.host.hidden,true);
-  const {context,host,refresh}=harness();
-  context.state.transactions[0].amount=0;refresh();
-  assert.equal(host.hidden,true);assert.equal(host.children.length,0);
-  context.state.transactions[0].amount=400;context.state.transactions[0].date='2026-08-16';refresh();
-  assert.equal(host.hidden,true);assert.equal(host.textContent,'');
-  context.state.transactions[0].date='2026-08-15';refresh();
-  assert.equal(host.hidden,false);
+  assert.equal(empty.badge.hidden,true);
+  const {context,badge,refresh}=harness();
+  context.state.transactions[0].amount=0;refresh();assert.equal(badge.hidden,true);
+  context.state.transactions[0].amount=400;context.state.transactions[0].date='2026-08-16';refresh();assert.equal(badge.hidden,true);
+  context.state.transactions[0].date='2026-08-15';refresh();assert.equal(badge.hidden,false);
 });
 
-test('privacy mode replaces category and numerical details in both languages and restores fresh data when disabled', () => {
-  const {context,host,refresh}=harness();
-  for (const lang of ['hr','en']) {
-    context.currentLang=lang;context.appState.settings.hideBalances=true;refresh();
-    assert.equal(host.hidden,false);
-    assert.doesNotMatch(host.textContent,/Hrana|130|100|30|%|€/);
-    assert.match(host.textContent,lang==='en'?/Higher category spending/:/Povećana potrošnja u kategoriji/);
-  }
-  context.appState.settings.hideBalances=false;context.state.transactions[1].amount=160;refresh();
-  assert.match(host.textContent,/Hrana: \+60%/);
-});
-
-test('switching profile, currency, or comparison day removes stale alert content', () => {
-  const personal=fixture(), {context,host,refresh}=harness(personal);
-  context.appState.activeAccount='business';context.state={profileId:'business',currency:'EUR',categories:[],transactions:[]};refresh();
-  assert.equal(host.hidden,true);assert.equal(host.textContent,'');
-  context.appState.activeAccount='personal';context.state=personal;refresh();
-  assert.equal(host.hidden,false);
-  context.appState.settings.currency='USD';refresh();
-  assert.equal(host.hidden,true);assert.equal(host.children.length,0);
-  context.appState.settings.currency='EUR';context.appReferenceDate='2026-09-25';refresh();
-  assert.equal(host.hidden,true);assert.equal(host.textContent,'');
-});
-
-test('the alert button stops the outside-click handler and opens Mer AI once without an automatic AI request', () => {
-  const {context,host,calls,refresh}=harness();
-  assert.equal(calls.length,0);
-  refresh();refresh();
-  const button=host.children[1], event={stopped:false,stopPropagation(){this.stopped=true;calls.push('stop');}};
-  assert.equal(button.tagName,'button');assert.equal(button.type,'button');
-  button.dispatch('click',event);
-  if (!event.stopped) calls.push('outside-close');
-  assert.deepEqual(calls,['stop','open']);
-  assert.equal(context.window.MerFinancialAssistant,undefined,'the dashboard renderer does not need an AI request adapter');
-});
-
-test('imported category markup stays inert text and cannot create extra controls or executable elements', () => {
+test('badge labels never expose category names, markup, amounts or percentages, including outside privacy mode', () => {
   const profile=fixture();profile.categories[0].name='<img src=x onerror="alert(1)">';
-  const {host,created}=harness(profile);
-  assert.equal(host.hidden,false);
-  assert.match(host.children[0].children[1].textContent,/<img src=x onerror="alert\(1\)">/);
-  assert.deepEqual(created.map(element=>element.tagName),['div','strong','p','button']);
-  assert.equal(created.filter(element=>element.tagName==='button').length,1);
+  const {context,host,button,badge,refresh,storage}=harness(profile);
+  for(const language of ['hr','en']) for(const privateMode of [false,true]) {
+    context.currentLang=language;context.appState.settings.hideBalances=privateMode;refresh();
+    assert.equal(badge.hidden,false);
+    assert.doesNotMatch(JSON.stringify(button.attributes)+badge.textContent+host.textContent,/img|alert|130|100|30%|€/);
+  }
+  assert.equal(storage.size,0,'rendering does not acknowledge the message');
 });
 
-test('the real premium renderAll wrapper refreshes the anomaly after the rest of the dashboard', () => {
+test('acknowledgement survives rerenders and reloads, while changed aggregate facts create a new unread message', () => {
+  const {context,badge,refresh,markRead,storage,calls}=harness();
+  refresh();refresh();assert.equal(badge.hidden,false);
+  markRead();refresh();refresh();assert.equal(badge.hidden,true);
+  assert.equal(storage.size,1);
+  for(const [key,value] of storage) {
+    assert.match(key,/^mer-anomaly-read-v1:tx-[a-f0-9]{8}$/);
+    assert.match(value,/^tx-[a-f0-9]{8}$/,'persistent metadata contains only a fingerprint, not financial text');
+  }
+  const reloaded=harness(fixture(),storage);assert.equal(reloaded.badge.hidden,true);
+  context.currentLang='en';context.appState.settings.hideBalances=true;context.state.categories[0].name='Food';refresh();
+  assert.equal(badge.hidden,true,'localization, privacy and renaming do not duplicate a message');
+  context.state.transactions[1].amount=160;refresh();assert.equal(badge.hidden,false);
+  markRead();assert.equal(badge.hidden,true);
+  context.state.transactions.push({id:'second-past',type:'expense',date:'2026-08-15',amount:400,currency:'EUR',category:'travel'},{id:'second-now',type:'expense',date:'2026-09-18',amount:135,currency:'EUR',category:'travel'});
+  refresh();assert.equal(badge.hidden,false,'a new secondary anomaly also creates a notification');
+  assert.deepEqual(calls,[],'notification and acknowledgement never call AI or the network');
+});
+
+test('read state is isolated by authenticated user and profile; currency and date changes cannot leave a stale badge', () => {
+  const personal=fixture(),{context,badge,refresh,markRead}=harness(personal);
+  markRead();assert.equal(badge.hidden,true);
+  context.appState.activeAccount='business';context.state={...fixture(),profileId:'business'};refresh();assert.equal(badge.hidden,false);
+  markRead();context.appState.activeAccount='personal';context.state=personal;refresh();assert.equal(badge.hidden,true);
+  context.session={userId:'synthetic-user-two'};refresh();assert.equal(badge.hidden,false);
+  context.appState.settings.currency='USD';refresh();assert.equal(badge.hidden,true);
+  context.appState.settings.currency='EUR';context.appReferenceDate='2026-09-25';refresh();assert.equal(badge.hidden,true);
+  context.appReferenceDate='2026-09-18';refresh();assert.equal(badge.hidden,false);
+  context.session={userId:'synthetic-user-one'};refresh();assert.equal(badge.hidden,true);
+});
+
+test('logout, hidden app shell and both lock states suppress unread notifications without consuming them', () => {
+  const {context,badge,shell,refresh,storage}=harness();
+  context.session=null;refresh();assert.equal(badge.hidden,true);
+  context.session={userId:'synthetic-user-one'};shell.hidden=true;refresh();assert.equal(badge.hidden,true);
+  shell.hidden=false;context.locked=true;refresh();assert.equal(badge.hidden,true);
+  context.locked=false;context.mfaLocked=true;refresh();assert.equal(badge.hidden,true);
+  context.mfaLocked=false;refresh();assert.equal(badge.hidden,false);
+  assert.equal(storage.size,0);
+});
+
+test('unavailable browser storage keeps acknowledgement functional in memory', () => {
+  const {context,badge,refresh,markRead}=harness();
+  Object.defineProperty(context.window,'localStorage',{get(){throw new Error('Storage blocked');}});
+  assert.doesNotThrow(refresh);assert.equal(badge.hidden,false);
+  assert.doesNotThrow(markRead);refresh();assert.equal(badge.hidden,true);
+  context.state.transactions[1].amount=150;refresh();assert.equal(badge.hidden,false);
+});
+
+test('the unread fingerprint covers exactly the sanitized five-category batch rendered by the chat', () => {
+  const profile=fixture();profile.transactions=[];profile.categories=[];
+  for(let index=0;index<6;index++) {
+    const category='category-'+index;
+    profile.categories.push({id:category,name:'Kategorija '+index});
+    profile.transactions.push({id:'past-'+index,type:'expense',date:'2026-08-15',amount:400,currency:'EUR',category},{id:'now-'+index,type:'expense',date:'2026-09-18',amount:200-index*10,currency:'EUR',category});
+  }
+  const {context,badge,refresh,markRead}=harness(profile);
+  const batch=context.window.MerAssistantUi.anomalyBatch();
+  assert.equal(batch.length,5);assert.deepEqual(Array.from(batch,item=>item.categoryId),['category-0','category-1','category-2','category-3','category-4']);
+  markRead();assert.equal(badge.hidden,true);
+  profile.transactions.find(item=>item.id==='now-5').amount=151;refresh();assert.equal(badge.hidden,true,'a changed sixth category is not part of the displayed batch');
+  profile.transactions.find(item=>item.id==='now-5').amount=165;refresh();assert.equal(badge.hidden,false,'the newly visible fifth category makes the rendered batch unread');
+  assert.ok(context.window.MerAssistantUi.anomalyBatch().some(item=>item.categoryId==='category-5'));
+  profile.categories[0].name='\u0000';markRead();assert.equal(context.window.MerAssistantUi.anomalyBatch().length,4,'a sanitizer-rejected label is not included in the badge fingerprint');
+  profile.transactions.find(item=>item.id==='now-0').amount=210;refresh();assert.equal(badge.hidden,true,'changing a sanitizer-rejected row cannot create an invisible notification');
+});
+
+test('the real premium renderAll wrapper refreshes the notification after the rest of the dashboard', () => {
   const source=fs.readFileSync(require.resolve('../premium.js'),'utf8');
   const start=source.indexOf('  function renderPremium()');
   const lastLine=source.indexOf('  renderAll=function renderAllWithPremium()',start);
   assert.ok(start>=0 && lastLine>start);
   const code=source.slice(start,source.indexOf('\n',lastLine));
-  const {context,host}=harness(), order=[];
-  context.applyPrivacy=()=>order.push('privacy');
-  context.renderGoals=()=>order.push('goals');
-  context.$=()=>({open:false});
-  context.renderAll=()=>order.push('dashboard');
-  context.window.MerExportUI={refresh:()=>order.push('export')};
-  context.window.MerVaultsUI={refresh:()=>order.push('vaults')};
-  context.window.MerSavingsMinimal={refresh:()=>order.push('savings')};
+  const {context,badge}=harness(),order=[];
+  context.applyPrivacy=()=>order.push('privacy');context.renderGoals=()=>order.push('goals');context.$=()=>({open:false});context.renderAll=()=>order.push('dashboard');
+  context.window.MerExportUI={refresh:()=>order.push('export')};context.window.MerVaultsUI={refresh:()=>order.push('vaults')};context.window.MerSavingsMinimal={refresh:()=>order.push('savings')};
   const originalRefresh=context.window.MerAnomalyUI.refresh;
   context.window.MerAnomalyUI={refresh:()=>{order.push('anomaly');originalRefresh();}};
   vm.runInContext(code,context);
-  context.state.transactions[1].amount=100;
-  context.renderAll();
-  assert.deepEqual(order,['dashboard','privacy','goals','export','vaults','savings','anomaly']);
-  assert.equal(host.hidden,true);
-  context.state.transactions[1].amount=130;context.renderAll();
-  assert.equal(host.hidden,false);
-  assert.equal(order.at(-1),'anomaly');
-  context.appState.activeAccount='business';context.state={profileId:'business',transactions:[],categories:[]};context.renderAll();
-  assert.equal(host.hidden,true);assert.equal(host.children.length,0);
+  context.state.transactions[1].amount=100;context.renderAll();
+  assert.deepEqual(order,['dashboard','privacy','goals','export','vaults','savings','anomaly']);assert.equal(badge.hidden,true);
+  context.state.transactions[1].amount=130;context.renderAll();assert.equal(badge.hidden,false);assert.equal(order.at(-1),'anomaly');
+  context.appState.activeAccount='business';context.state={profileId:'business',transactions:[],categories:[]};context.renderAll();assert.equal(badge.hidden,true);
 });
 
-test('dashboard anomaly dependencies are loaded in usable order and included in the production build', () => {
-  const html=fs.readFileSync(require.resolve('../index.html'),'utf8');
-  const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
-  const scripts=[...html.matchAll(/<script\b[^>]*src="([^"?]+)(?:\?[^\"]*)?"/g)].map(match=>match[1]);
-  const index=name=>{assert.ok(scripts.includes(name),`${name} is loaded`);return scripts.indexOf(name);};
-  assert.ok(index('core.js')<index('anomaly-core.js'));
-  assert.ok(index('anomaly-core.js')<index('assistant-core.js'));
-  assert.ok(index('assistant-ui.js')<index('anomaly-ui.js'));
-  assert.ok(index('app.js')<index('anomaly-ui.js'));
-  for (const file of ['anomaly-core.js','anomaly-ui.js']) assert.ok(build.includes(`'${file}'`),`${file} is included in the production assets`);
-  assert.match(html,/<aside\b[^>]*id="spendingAnomalyAlert"[^>]*aria-live="polite"[^>]*hidden/);
+test('production loads notification dependencies in order and no longer includes the dashboard anomaly card', () => {
+  const html=fs.readFileSync(require.resolve('../index.html'),'utf8'),build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8'),css=fs.readFileSync(require.resolve('../styles.css'),'utf8');
+  const scripts=[...html.matchAll(/<script\b[^>]*src="([^"?]+)(?:\?[^"]*)?"/g)].map(match=>match[1]);
+  const index=name=>{assert.ok(scripts.includes(name));return scripts.indexOf(name);};
+  assert.ok(index('core.js')<index('anomaly-core.js'));assert.ok(index('anomaly-core.js')<index('assistant-core.js'));assert.ok(index('assistant-ui.js')<index('anomaly-ui.js'));assert.ok(index('app.js')<index('anomaly-ui.js'));
+  for(const file of ['anomaly-core.js','anomaly-ui.js']) assert.ok(build.includes("'"+file+"'"));
+  assert.doesNotMatch(html,/id="spendingAnomalyAlert"/);
+  assert.match(html,/<span class="assistant-fab-status" aria-hidden="true" hidden><\/span>/);
+  assert.match(css,/\.assistant-fab-status\[hidden\]\s*\{\s*display:none/);
 });

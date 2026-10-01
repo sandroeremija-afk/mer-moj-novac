@@ -214,6 +214,7 @@
       targetRect,
       popoverSize,
       viewport,
+      contextRect:currentContextLink?.getBoundingClientRect(),
       preferredPlacement:effectiveStep?.placement,
       allowPartialTarget,
       padding:8,
@@ -308,10 +309,6 @@
     }
     let layout = spotlightLayout(targetRect, popoverSize, viewport);
     if (splitSurface) layout = { ...layout, popover:{ ...layout.popover, left:viewport.left + (viewport.width - popoverSize.width) / 2, top:viewport.top + 12, overlapsTarget:false } };
-    if (effectiveStep?.id === 'insights' && viewport.width > 1024) {
-      // The sidebar lane leaves the whole Insights canvas illuminated, not a cropped chart.
-      layout = { ...layout, popover:{ ...layout.popover, left:viewport.left + 12, top:viewport.top + viewport.height - popoverSize.height - 12, overlapsTarget:false } };
-    }
     if (layout.popover.overlapsTarget && !popover.classList.contains('is-condensed')) {
       popover.classList.add('is-condensed');
       const compactRect = popover.getBoundingClientRect();

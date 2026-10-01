@@ -8,6 +8,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+const tourCss = fs.readFileSync(path.join(root, 'security-tour.css'), 'utf8');
 const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 const onboarding = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 
@@ -22,9 +23,9 @@ test('evaluation cycle 2: senior-friendly tour uses legible controls and Croatia
   assert.match(css, /\.onboarding-actions button \{[^}]*min-height:44px;[^}]*font-size:1rem;/);
 });
 
-test('evaluation cycle 2: spotlight and popover glide for 500ms with reduced-motion fallback', () => {
-  assert.match(css, /\.onboarding-spotlight \{[\s\S]*?transition:left \.5s ease-in-out,top \.5s ease-in-out,width \.5s ease-in-out,height \.5s ease-in-out;/);
-  assert.match(css, /\.onboarding-popover \{[\s\S]*?transition:left \.5s ease-in-out,top \.5s ease-in-out/);
+test('evaluation cycle 2: exact context highlights do not animate over unrelated navigation', () => {
+  assert.match(tourCss, /\.onboarding-backdrop \{[^}]*transition:none;/);
+  assert.match(tourCss, /\.onboarding-tour :is\(\.onboarding-spotlight,\.onboarding-context-spotlight,\.onboarding-popover\) \{ transition:none;/);
   assert.match(onboarding, /container\.scrollTo\(\{ top, behavior:reducedMotion\(\) \? 'auto':'smooth' \}\)/);
   assert.match(onboarding, /ownedDialog \|\| effectiveStep\?\.preserveScroll \|\| \$\('#sidebar'\)\?\.contains\(target\)/);
   assert.doesNotMatch(onboarding, /\.scrollIntoView\(/, 'the tour never scrolls unrelated shell or sidebar ancestors');

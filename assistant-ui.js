@@ -219,6 +219,7 @@
   const histories = new Map();
   let activeRequest = null;
   let restoreFocus = null;
+  let anomalyReadRoot = null;
   const assistantSurfaces = [
     { root:assistantWidget, messages:$('#assistantMessages'), form:widgetForm, input:$('#assistantInput'), send:$('#assistantSend'), status:$('#assistantStatus') },
     { root:helpUi.aiPanel, messages:helpUi.messages, form:helpUi.form, input:helpUi.input, send:helpUi.send, status:helpUi.status }
@@ -253,11 +254,7 @@
     const plan = snapshot?.budget || {};
     const topEntry = Object.entries(snapshot?.derived?.categorySpending || {}).sort((a,b) => b[1] - a[1])[0];
     const topCategory = profile?.categories?.find(category => category.id === topEntry?.[0]);
-    const anomalySummary = window.MerAnomalies?.detect(profile, appReferenceDate, {profileId,currency:appState.settings.currency || 'EUR',timezone:appState.settings.timezone});
-    const spendingAnomalies = window.MerAnomalies?.assistantContext(anomalySummary, item => {
-      const category = profile?.categories?.find(entry => entry.id === item.categoryId);
-      return category?.nameKey ? t(category.nameKey) : category?.name || t(item.categoryId) || item.category;
-    }) || [];
+    const spendingAnomalies = anomalyBatchFor(profileId, profile).map(({categoryId,...fact}) => fact);
     return {
       currency:appState.settings.currency || 'EUR',
       totalIncome:totals.income,
@@ -272,6 +269,18 @@
       topCategorySpent:topEntry?.[1] || 0,
       spendingAnomalies
     };
+  }
+
+  function anomalyBatchFor(profileId, profile = reactiveStore.snapshot(profileId, 'monthly')?.profile) {
+    const summary = window.MerAnomalies?.detect(profile, appReferenceDate, {profileId,currency:appState.settings.currency || 'EUR',timezone:appState.settings.timezone});
+    // Match the sanitizer's first-five boundary; local IDs never enter AI context.
+    return (summary?.anomalies || []).slice(0, 5).flatMap(item => {
+      const context = window.MerAnomalies.assistantContext({...summary,anomalies:[item]}, entry => {
+        const category = profile?.categories?.find(value => value.id === entry.categoryId);
+        return category?.nameKey ? t(category.nameKey) : category?.name || t(entry.categoryId) || entry.category;
+      })[0];
+      return context ? [{categoryId:item.categoryId,...context}] : [];
+    });
   }
 
   function renderMessages() {
@@ -311,6 +320,7 @@
       }
       requestAnimationFrame(() => { list.scrollTop=list.scrollHeight; });
     });
+    if (anomalyIntro && !document.hidden && assistantSurfaces.some(surface => surface.root === anomalyReadRoot && surface.isVisible())) window.MerAnomalyUI?.markRead();
   }
 
   function renderActionCard(message, action) {
@@ -379,8 +389,10 @@
     });
   }
 
-  function selectHelpMode(mode = 'faq', { focus = false } = {}) {
+  function selectHelpMode(mode = 'faq', { focus = false, userInitiated = false } = {}) {
     const selected = mode === 'assistant' ? 'assistant' : 'faq';
+    if (selected === 'assistant') anomalyReadRoot = userInitiated ? helpUi.aiPanel : null;
+    else if (anomalyReadRoot === helpUi.aiPanel) anomalyReadRoot = null;
     if(selected!=='assistant')voice?.stopAll();
     $$('[data-help-mode]').forEach(button => {
       const active = button.dataset.helpMode === selected;
@@ -413,10 +425,11 @@
     }));
   }
 
-  function openAssistant() {
+  function openAssistant({ userInitiated = false } = {}) {
     if (modal.open) modal.querySelector('[data-close-modal]')?.click();
     restoreFocus = document.activeElement;
     assistantWidget.hidden = false;
+    anomalyReadRoot = userInitiated ? assistantWidget : null;
     assistantFab.setAttribute('aria-expanded', String(true));
     renderMessages();
     setTimeout(() => $('#assistantInput').focus({ preventScroll:true }), 30);
@@ -428,6 +441,7 @@
     activeRequest = null;
     setAssistantBusy(false);
     assistantWidget.hidden = true;
+    anomalyReadRoot = null;
     assistantFab.setAttribute('aria-expanded', String(false));
     if (focus) {
       const target = restoreFocus?.isConnected ? restoreFocus : assistantFab;
@@ -497,19 +511,19 @@
   }
   $('#openHelpAssistant').addEventListener('click', () => openHelp());
   $$('[data-faq-filter]').forEach(button => button.addEventListener('click', () => selectFaqModule(button.dataset.faqFilter)));
-  $$('[data-help-mode]').forEach(button => button.addEventListener('click', () => selectHelpMode(button.dataset.helpMode, { focus:true })));
+  $$('[data-help-mode]').forEach(button => button.addEventListener('click', () => selectHelpMode(button.dataset.helpMode, { focus:true, userInitiated:true })));
   bindRovingTabs('[data-faq-filter]', button => selectFaqModule(button.dataset.faqFilter));
-  bindRovingTabs('[data-help-mode]', button => selectHelpMode(button.dataset.helpMode));
+  bindRovingTabs('[data-help-mode]', button => selectHelpMode(button.dataset.helpMode, { userInitiated:true }));
   $$('[data-help-settings]').forEach(button => button.addEventListener('click', () => { const tab=button.dataset.helpSettings;closeModal(modal);setTimeout(() => window.MerSettings?.open(tab), 30); }));
   assistantSurfaces.forEach(surface => {
-    surface.form.addEventListener('submit', event => { event.preventDefault();submitAssistantMessage(surface.input.value); });
+    surface.form.addEventListener('submit', event => { event.preventDefault();anomalyReadRoot = surface.root;submitAssistantMessage(surface.input.value); });
     surface.input.addEventListener('keydown', event => { if (event.key==='Enter'&&!event.shiftKey){event.preventDefault();surface.form.requestSubmit();} });
   });
   helpUi.restart.addEventListener('click', () => {
     closeModal(modal);
     setTimeout(() => window.MerOnboardingUi?.restart?.($('#openHelpAssistant')), 30);
   });
-  assistantFab.addEventListener('click', () => { if (assistantWidget.hidden) openAssistant();else closeAssistant(); });
+  assistantFab.addEventListener('click', () => { if (assistantWidget.hidden) openAssistant({ userInitiated:true });else closeAssistant(); });
   assistantWidgetClose.addEventListener('click', () => closeAssistant());
   document.addEventListener('click', event => {
     if (!assistantWidget.hidden && !assistantWidget.contains(event.target) && !assistantFab.contains(event.target)) closeAssistant({ focus:false });
@@ -520,6 +534,7 @@
   modal.addEventListener('close', () => {
     // Native close events are queued; a tour Back/Next may already reopen Help.
     if (modal.open) return;
+    if (!assistantWidget.hidden) return;
     voice?.stopAll();
     activeRequest?.abort();
     activeRequest = null;
@@ -537,5 +552,5 @@
     if (!assistantWidget.hidden || (modal.open && !helpUi.aiPanel.hidden)) renderMessages();
   });
 
-  window.MerAssistantUi = Object.freeze({ open:openAssistant, openHelp, close:() => closeAssistant({ focus:false }), render:renderMessages, resetSession:resetAssistantSession });
+  window.MerAssistantUi = Object.freeze({ open:openAssistant, openHelp, close:() => closeAssistant({ focus:false }), render:renderMessages, anomalyBatch:() => anomalyBatchFor(appState.activeAccount), resetSession:resetAssistantSession });
 })();

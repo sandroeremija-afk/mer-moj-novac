@@ -8,7 +8,7 @@ const css = fs.readFileSync(path.join(__dirname,'../security-tour.css'),'utf8');
 const source = fs.readFileSync(path.join(__dirname,'../onboarding.js'),'utf8');
 
 test('tour backdrop reveals original controls and keeps reduced-motion support', () => {
-  assert.match(css,/\.onboarding-backdrop\s*\{[^}]*position:fixed;[^}]*pointer-events:none;[^}]*transition:clip-path/);
+  assert.match(css,/\.onboarding-backdrop\s*\{[^}]*position:fixed;[^}]*pointer-events:none;[^}]*transition:none/);
   assert.match(css,/\.onboarding-tour \.onboarding-spotlight\s*\{[^}]*box-shadow:0 0 0 5px/);
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)\s*\{\s*\.onboarding-backdrop\s*\{ transition:none;/);
   assert.doesNotMatch(source,/\.innerHTML\s*=|cloneNode|docked:true/);

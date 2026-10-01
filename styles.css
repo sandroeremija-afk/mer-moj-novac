@@ -2245,7 +2245,8 @@ body.tour-active { overflow:hidden; }
 .assistant-fab:hover { transform:translateY(-2px); box-shadow:0 16px 34px rgba(6,35,27,.28); }
 .assistant-fab:focus-visible { outline:3px solid color-mix(in srgb,var(--blue) 32%,transparent); outline-offset:3px; }
 .assistant-fab svg { width:23px; height:23px; }
-.assistant-fab-status { position:absolute; top:2px; right:2px; width:10px; height:10px; border:2px solid var(--panel); border-radius:50%; background:var(--blue); }
+.assistant-fab-status { position:absolute; top:-3px; right:-3px; width:21px; height:21px; display:grid; place-items:center; box-sizing:border-box; border:2px solid #fff; border-radius:50%; background:#006d93; color:#fff; font-size:11px; font-weight:700; line-height:1; }
+.assistant-fab-status[hidden] { display:none; }
 .assistant-widget {
   position:fixed;
   right:24px;

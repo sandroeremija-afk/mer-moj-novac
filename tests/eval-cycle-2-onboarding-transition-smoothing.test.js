@@ -8,6 +8,7 @@ const MerOnboarding = require('../onboarding-core.js');
 
 const root = path.resolve(__dirname, '..');
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+const tourCss = fs.readFileSync(path.join(root, 'security-tour.css'), 'utf8');
 const ui = fs.readFileSync(path.join(root, 'onboarding.js'), 'utf8');
 
 class MemoryStorage {
@@ -20,7 +21,8 @@ test('evaluation cycle 2: positioning never hides the spotlight backdrop', () =>
   assert.match(css, /\.onboarding-tour\.is-positioning \.onboarding-popover \{[^}]*opacity:0;[^}]*pointer-events:none;/);
   assert.doesNotMatch(css, /\.onboarding-tour\.is-positioning \.onboarding-spotlight/);
   assert.doesNotMatch(css, /\.onboarding-tour\.is-positioning[^{]*\{[^}]*transition:none/);
-  assert.match(css, /\.onboarding-spotlight \{[\s\S]*?box-shadow:0 0 0 100vmax[\s\S]*?transition:left \.5s ease-in-out,top \.5s ease-in-out,width \.5s ease-in-out,height \.5s ease-in-out;/);
+  assert.match(tourCss, /\.onboarding-backdrop \{[^}]*transition:none;/);
+  assert.match(tourCss, /\.onboarding-tour :is\(\.onboarding-spotlight,\.onboarding-context-spotlight,\.onboarding-popover\) \{ transition:none;/);
 });
 
 test('evaluation cycle 2: step changes keep the tour mounted while geometry is remeasured', () => {

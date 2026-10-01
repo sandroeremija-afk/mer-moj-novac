@@ -109,6 +109,10 @@ Object.assign(translations.hr, {
 });
 // Explanations mirror the live financial engine; these are not bank guarantees.
 Object.assign(translations.hr, {
+  monthlyBudget:'Planirani fleksibilni budžet',
+  afterCommitments:'Planirani prihodi nakon obveza, štednje i rezerve',
+  budgetRecoveryOverTitle:'Limiti kategorija prelaze planirani budžet',
+  budgetRecoveryOverCopy:'Smanjite neiskorištene limite za {amount} ili prilagodite mjesečni plan. Zabilježena potrošnja ostaje nepromijenjena.',
   balanceTooltip:'Početno stanje plus evidentirani prihodi minus troškovi i stanje štednje. To je izračun aplikacije, a ne provjera stanja u banci.',
   safeTooltip:'Od prihoda ovog mjeseca oduzimaju se osnovne obveze, planirana štednja, rezerva i evidentirani troškovi. Negativan iznos znači manjak u planu; ne blokira plaćanja.',
   commitmentsProtected:'Izračun odvaja obveze, cilj štednje i rezervu iz plana. Ne rezervira novac u banci niti sprječava prekoračenje.',
@@ -139,6 +143,10 @@ Object.assign(translations.hr, {
   roundUpsHint:'Razlika do odabranog višekratnika evidentira se u cilju. To nije bankovni prijenos.'
 });
 Object.assign(translations.en, {
+  monthlyBudget:'Planned flexible budget',
+  afterCommitments:'Planned income after bills, savings and buffer',
+  budgetRecoveryOverTitle:'Category limits exceed the planned budget',
+  budgetRecoveryOverCopy:'Reduce unused limits by {amount} or adjust the monthly plan. Recorded spending stays unchanged.',
   balanceTooltip:'Opening balance plus recorded income minus expenses and savings balances. This is the app calculation, not a verified bank balance.',
   safeTooltip:'This month’s income minus essential commitments, planned savings, the buffer and recorded expenses. A negative amount means a plan shortfall; it does not block payments.',
   commitmentsProtected:'The calculation sets aside planned commitments, savings and a buffer. It does not reserve bank funds or prevent overspending.',
@@ -616,10 +624,11 @@ function renderBudgetLists() {
 
 function renderBudgetView() {
   const plan = getPlan();
+  const categoryBudget = plan.plannedMonthlyBudget ?? plan.monthlyBudget;
   const allocated = state.categories.reduce((sum,cat) => sum + Math.round(cat.limit * 100), 0) / 100;
-  const difference = MerCore.roundMoney(plan.monthlyBudget - allocated);
-  const allocationPercent = plan.monthlyBudget>0?Math.round(MerCore.ratioPercent(allocated,plan.monthlyBudget)):allocated>0?100:0;
-  $('#fullBudgetValue').textContent = currency(plan.monthlyBudget, true);
+  const difference = MerCore.roundMoney(categoryBudget - allocated);
+  const allocationPercent = categoryBudget>0?Math.round(MerCore.ratioPercent(allocated,categoryBudget)):allocated>0?100:0;
+  $('#fullBudgetValue').textContent = currency(categoryBudget, true);
   $('#fullRemainingValue').textContent = currency(plan.safeRemaining);
   $('#fullRemainingValue').classList.toggle('negative-value',plan.safeRemaining<0);
   $('[data-layout-card="budget-remaining"]').classList.toggle('is-negative',plan.safeRemaining<0);
@@ -1734,7 +1743,7 @@ function applyAssessmentPlan(event) {
 }
 
 function openBudgetEditor(id=null) {
-  editingCategoryId=id;const cat=id?state.categories.find(item=>item.id===id):null,plan=getPlan(),otherAllocated=state.categories.reduce((sum,item)=>sum+item.limit,0)-(cat?.limit||0),bounds=MerCore.validateCategoryLimit(cat?.limit||0,cat?.spent||0,otherAllocated,plan.monthlyBudget),minimum=Math.max(0,bounds.minimum),maximum=Math.max(minimum,bounds.maximum);
+  editingCategoryId=id;const cat=id?state.categories.find(item=>item.id===id):null,plan=getPlan(),otherAllocated=state.categories.reduce((sum,item)=>sum+item.limit,0)-(cat?.limit||0),bounds=MerCore.validateCategoryLimit(cat?.limit||0,cat?.spent||0,otherAllocated,plan.plannedMonthlyBudget??plan.monthlyBudget),minimum=Math.max(0,bounds.minimum),maximum=Math.max(minimum,bounds.maximum);
   $('#budgetModalTitle').textContent=cat?categoryName(cat.id):t('newCategory');$('#categoryNameInput').value=cat?categoryName(cat.id):'';$('#categoryNameInput').disabled=Boolean(cat&&!cat.isCustom);$('#categoryIconInput').value=cat?(categoryVisual(cat).icon||''):'';$('#categoryIconInput').disabled=Boolean(cat&&!cat.isCustom);$('#budgetLimitInput').value=cat?cat.limit:'';$('#budgetLimitInput').min=minimum.toFixed(2);$('#budgetLimitInput').max=maximum.toFixed(2);$('#deleteCategory').hidden=!cat?.isCustom;
   $('#budgetModalContext').textContent=cat?t('spentCategory',{spent:currency(cat.spent),minimum:currency(minimum),maximum:currency(maximum)}):t('accountIsolation');openModal($('#budgetModal'));setTimeout(()=>$('#categoryNameInput').disabled?$('#budgetLimitInput').select():$('#categoryNameInput').focus(),50);
 }
@@ -1818,7 +1827,7 @@ $('#clearReviewFilter').addEventListener('click',()=>{activityReviewOnly=false;a
 $('#addCategory').addEventListener('click',()=>{returnToBudgetManager=false;openBudgetEditor();});
 $('#manageBudgetCategories')?.addEventListener('click',()=>openBudgetCategoryManager({reset:true}));
 $('#openBudgetTransfer').addEventListener('click',openBudgetTransfer);
-$('#autoBalanceBudget').addEventListener('click',()=>{if(!window.confirm(t('balancePlanConfirm')))return;const result=MerCore.trimBudgetAllocation(state.categories,getPlan().monthlyBudget);if(!result.valid)return;save('budget-auto-balance');showToast(t(result.resolved?'balancePlanReady':'balancePlanPartial',{amount:currency(result.reduced),remaining:currency(result.remaining)}));});
+$('#autoBalanceBudget').addEventListener('click',()=>{if(!window.confirm(t('balancePlanConfirm')))return;const plan=getPlan(),result=MerCore.trimBudgetAllocation(state.categories,plan.plannedMonthlyBudget??plan.monthlyBudget);if(!result.valid)return;save('budget-auto-balance');showToast(t(result.resolved?'balancePlanReady':'balancePlanPartial',{amount:currency(result.reduced),remaining:currency(result.remaining)}));});
 $('#budgetTransferTarget').addEventListener('change',refreshBudgetTransferForm);
 $('#budgetTransferSource').addEventListener('change',refreshBudgetTransferForm);
 $('#budgetTransferForm').addEventListener('submit',event=>{event.preventDefault();const result=MerCore.transferBudgetAllocation(state.categories,$('#budgetTransferSource').value,$('#budgetTransferTarget').value,Number($('#budgetTransferAmount').value));if(!result.valid){showToast(t('transferInvalid'));refreshBudgetTransferForm();return;}save('budget-cover-overspending');closeModal($('#budgetTransferModal'));showToast(t('transferSaved',{amount:currency(result.amount)}));});
@@ -1906,7 +1915,7 @@ $('#assessmentBack').addEventListener('click',()=>setAssessmentStep(Math.max(1,a
 $$('#assessmentForm input').forEach(input=>['input','change'].forEach(eventName=>input.addEventListener(eventName,()=>{if(assessmentStep===3)updateRecommendation();})));
 $('#assessmentForm').addEventListener('submit',applyAssessmentPlan);
 
-$('#budgetForm').addEventListener('submit',event=>{event.preventDefault();const cat=editingCategoryId?state.categories.find(item=>item.id===editingCategoryId):null,name=$('#categoryNameInput').value.trim(),value=Number($('#budgetLimitInput').value),plan=getPlan(),otherAllocated=state.categories.reduce((sum,item)=>sum+item.limit,0)-(cat?.limit||0),validation=MerCore.validateCategoryLimit(value,cat?.spent||0,otherAllocated,plan.monthlyBudget);if(!name){showToast(t('categoryNameRequired'));return;}if(state.categories.some(item=>item.id!==editingCategoryId&&categoryName(item.id).toLocaleLowerCase(locale())===name.toLocaleLowerCase(locale()))){showToast(t('duplicateCategory'));return;}if(!validation.valid){showToast(t(validation.reason==='below-spent'?'limitTooLow':'allocationTooHigh'));return;}if(cat){if(cat.isCustom){cat.name=name;cat.icon=$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase();}cat.limit=value;}else{state.categories.push({id:uniqueId('custom-category'),name,icon:$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase(),spent:0,limit:value,isCustom:true});}save(cat?'category-edit':'category-add');closeModal($('#budgetModal'));showToast(t(cat?'categoryUpdated':'categoryCreated'));if(returnToBudgetManager){returnToBudgetManager=false;openBudgetCategoryManager();}});
+$('#budgetForm').addEventListener('submit',event=>{event.preventDefault();const cat=editingCategoryId?state.categories.find(item=>item.id===editingCategoryId):null,name=$('#categoryNameInput').value.trim(),value=Number($('#budgetLimitInput').value),plan=getPlan(),otherAllocated=state.categories.reduce((sum,item)=>sum+item.limit,0)-(cat?.limit||0),validation=MerCore.validateCategoryLimit(value,cat?.spent||0,otherAllocated,plan.plannedMonthlyBudget??plan.monthlyBudget);if(!name){showToast(t('categoryNameRequired'));return;}if(state.categories.some(item=>item.id!==editingCategoryId&&categoryName(item.id).toLocaleLowerCase(locale())===name.toLocaleLowerCase(locale()))){showToast(t('duplicateCategory'));return;}if(!validation.valid){showToast(t(validation.reason==='below-spent'?'limitTooLow':'allocationTooHigh'));return;}if(cat){if(cat.isCustom){cat.name=name;cat.icon=$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase();}cat.limit=value;}else{state.categories.push({id:uniqueId('custom-category'),name,icon:$('#categoryIconInput').value.trim().slice(0,2)||name.slice(0,1).toUpperCase(),spent:0,limit:value,isCustom:true});}save(cat?'category-edit':'category-add');closeModal($('#budgetModal'));showToast(t(cat?'categoryUpdated':'categoryCreated'));if(returnToBudgetManager){returnToBudgetManager=false;openBudgetCategoryManager();}});
 $('#deleteCategory').addEventListener('click',()=>{const cat=state.categories.find(item=>item.id===editingCategoryId);if(!cat?.isCustom)return;const fallback=fallbackCategory(cat.id);fallback.spent+=cat.spent;fallback.limit+=cat.limit;state.transactions.forEach(tx=>{if(tx.category===cat.id)tx.category=fallback.id;});(state.recurring||[]).forEach(rule=>{if(rule.category===cat.id)rule.category=fallback.id;});state.categories=state.categories.filter(item=>item.id!==cat.id);save('category-delete');closeModal($('#budgetModal'));showToast(t('categoryDeleted'));editingCategoryId=null;if(returnToBudgetManager){returnToBudgetManager=false;openBudgetCategoryManager();}});
 
 $('#savingsAmountInput').addEventListener('input',updateSavingsCheck);

@@ -15,7 +15,7 @@ class Element {
 function realHelp() {
   const modal=new Element('dialog'),helpBody=new Element(),helpFaqPanel=new Element(),calls=[],voiceCalls=[];
   modal.append(helpBody);helpBody.append(helpFaqPanel);
-  const context={document:{createElement:tag=>new Element(tag)},voice:{stopAll:()=>voiceCalls.push('stop')},helpBody,helpFaqPanel,modal,assistantWidget:{hidden:true},t:key=>key,svgIcon:()=>new Element('svg'),$$:()=>[],renderMessages:()=>calls.push('render'),selectFaqModule:()=>calls.push('faq'),closeAssistant:()=>calls.push('close-widget'),setTimeout:()=>{throw new Error('Opening tour Help must not schedule a request');},openModal:dialog=>{dialog.open=true;calls.push('open-help');},activeRequest:{abort:()=>calls.push('abort')},setAssistantBusy:()=>calls.push('idle')};
+  const context={document:{createElement:tag=>new Element(tag)},voice:{stopAll:()=>voiceCalls.push('stop')},helpBody,helpFaqPanel,modal,assistantWidget:{hidden:true},anomalyReadRoot:null,t:key=>key,svgIcon:()=>new Element('svg'),$$:()=>[],renderMessages:()=>calls.push('render'),selectFaqModule:()=>calls.push('faq'),closeAssistant:()=>calls.push('close-widget'),setTimeout:()=>{throw new Error('Opening tour Help must not schedule a request');},openModal:dialog=>{dialog.open=true;calls.push('open-help');},activeRequest:{abort:()=>calls.push('abort')},setAssistantBusy:()=>calls.push('idle')};
   vm.createContext(context);
   const panelStart=source.indexOf('    const aiPanel = document.createElement(');
   const panelEnd=source.indexOf('    helpBody.append(aiPanel);',panelStart)+'    helpBody.append(aiPanel);'.length;
@@ -41,6 +41,7 @@ test('step 9 opens the production Help mode with its real composer and no questi
   assert.equal(prompts.length,0);
   assert.equal(conversation.descendants().find(node=>node.id==='helpAssistantSend').type,'submit');
   assert.deepEqual(calls,['render','open-help'],'tour opens the real mode without sending a message or running a prompt');
+  assert.equal(context.anomalyReadRoot,null,'automatic tour opening cannot acknowledge an unread anomaly');
 });
 
 test('a queued native Help close event cannot reset reopened tour chat to FAQ or abort newer work',()=>{

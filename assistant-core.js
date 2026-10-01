@@ -80,16 +80,21 @@
   }
 
   function anomalyIntroduction(context, locale = 'hr', privateMode = false) {
-    const safe = sanitizeFinancialContext(context), anomaly = safe.spendingAnomalies?.[0];
-    if (!anomaly) return '';
+    const safe = sanitizeFinancialContext(context), anomalies = safe.spendingAnomalies || [];
+    if (!anomalies.length) return '';
     const english = locale === 'en';
     if (privateMode) return english
       ? 'A spending pattern changed this week. Amounts are hidden; when you are ready, we can review it together.'
       : 'Obrazac potrošnje promijenio se ovaj tjedan. Iznosi su skriveni; kad budete spremni, možemo ga zajedno pregledati.';
-    const percent = new Intl.NumberFormat(english ? 'en-IE' : 'hr-HR', {maximumFractionDigits:1}).format(anomaly.growthPercent);
+    const rows = anomalies.map(anomaly => {
+      const percent = new Intl.NumberFormat(english ? 'en-IE' : 'hr-HR', {maximumFractionDigits:1}).format(anomaly.growthPercent);
+      return english
+        ? `${anomaly.category}: +${percent}% (${amount(anomaly.current,safe.currency,'en')} vs. ${amount(anomaly.average,safe.currency,'en')}).`
+        : `${anomaly.category}: +${percent}% (${amount(anomaly.current,safe.currency,'hr')} prema ${amount(anomaly.average,safe.currency,'hr')}).`;
+    }).join(' ');
     return english
-      ? `${anomaly.category}: spending in the last 7 days is ${percent}% above the weekly average of the preceding 4 weeks (${amount(anomaly.current,safe.currency,'en')} vs. ${amount(anomaly.average,safe.currency,'en')}). It may be a one-off purchase. We can review the category together.`
-      : `${anomaly.category}: potrošnja u posljednjih 7 dana je ${percent}% iznad tjednog prosjeka prethodna 4 tjedna (${amount(anomaly.current,safe.currency,'hr')} prema ${amount(anomaly.average,safe.currency,'hr')}). Možda je riječ o jednokratnoj kupnji. Možemo zajedno pregledati kategoriju.`;
+      ? `Spending in the last 7 days exceeds the weekly average of the preceding 4 weeks: ${rows} It may be a one-off purchase. We can review these categories together.`
+      : `Potrošnja u posljednjih 7 dana veća je od tjednog prosjeka prethodna 4 tjedna: ${rows} Možda je riječ o jednokratnoj kupnji. Možemo zajedno pregledati ove kategorije.`;
   }
 
   function amount(value, currency, locale) {

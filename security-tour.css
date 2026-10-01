@@ -1,8 +1,11 @@
 /* Scoped tour presentation: original controls remain mounted, retain drafts and
    restore their ordinary layout as soon as the guide leaves the surface. */
-.onboarding-backdrop { position:fixed;inset:0;z-index:0;background:rgba(2,14,12,.72);pointer-events:none;transition:clip-path .5s ease-in-out; }
+.onboarding-backdrop { position:fixed;inset:0;z-index:0;background:rgba(2,14,12,.72);pointer-events:none;transition:none; }
 .onboarding-tour .onboarding-spotlight { box-shadow:0 0 0 5px rgba(0,169,228,.18),0 10px 30px rgba(0,0,0,.2); }
 .onboarding-tour .onboarding-context-spotlight { background:transparent; }
+/* A cutout identifies one real control; interpolating its coordinates briefly
+   illuminates unrelated navigation items when native dialog hosts change. */
+.onboarding-tour :is(.onboarding-spotlight,.onboarding-context-spotlight,.onboarding-popover) { transition:none; }
 [data-theme="dark"] .onboarding-backdrop { background:rgba(0,0,0,.78); }
 .tour-modal-host[data-tour-step] { isolation:isolate; }
 /* The tour owns dimming while a native dialog is open. A second backdrop would
@@ -13,6 +16,12 @@ body.tour-active dialog[open]::backdrop { background:transparent;backdrop-filter
 .tour-modal-host[data-tour-step="personal"] #personalDataForm { min-width:0; }
 /* Keep update prompts pending until the guide ends; never cover Next/Skip. */
 body.tour-active #merAppUpdate { display:none; }
+@media (min-width:1025px) {
+  /* Use the normal content-side tooltip, not a forced bottom-left overlay on
+     Uvidi. The geometry engine can reserve part of the chart on short screens. */
+  .onboarding-tour.is-dashboard-scope .onboarding-popover { width:min(350px,calc(100vw - 24px));max-width:350px;padding:18px; }
+  .onboarding-tour.is-dashboard-scope .onboarding-actions { align-items:center;flex-direction:row;gap:12px; }
+}
 @media (max-width:768px) {
   /* Only a normally hidden mobile drawer becomes a compact context rail.
      Tablet and desktop navigation must retain its original position in every

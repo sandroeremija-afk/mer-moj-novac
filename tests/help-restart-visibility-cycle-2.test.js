@@ -19,7 +19,7 @@ function fixture() {
   const helpUi = { faqMode, aiMode, restart:element(), input:element(), aiPanel:element() };
   const timers = [], calls = [];
   const context = {
-    document, helpUi, modal:{open:true}, helpFaqPanel:element(), helpBody:element(),
+    document, helpUi, modal:{open:true}, helpFaqPanel:element(), helpBody:element(), anomalyReadRoot:null,
     $$:() => [faqMode, aiMode], voice:{stopAll:() => calls.push('stop-voice')},
     renderMessages:() => calls.push('render'), setTimeout:callback => timers.push(callback)
   };

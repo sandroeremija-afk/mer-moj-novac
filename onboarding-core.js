@@ -87,6 +87,14 @@
     const size = options.popoverSize || {};
     const popoverWidth = Math.min(Math.max(1, finite(size.width, 340)), Math.max(1, viewport.width - edge * 2));
     const popoverHeight = Math.min(Math.max(1, finite(size.height, 240)), Math.max(1, viewport.height - edge * 2));
+    const contextInput = options.contextRect;
+    const contextRect = contextInput && finite(contextInput.width) > 0 && finite(contextInput.height) > 0
+      ? { left:finite(contextInput.left) - 4, top:finite(contextInput.top) - 4,
+        right:finite(contextInput.right, finite(contextInput.left) + finite(contextInput.width)) + 4,
+        bottom:finite(contextInput.bottom, finite(contextInput.top) + finite(contextInput.height)) + 4 } : null;
+    const contextOverlap = candidate => contextRect
+      ? Math.max(0, Math.min(candidate.left + candidate.width, contextRect.right) - Math.max(candidate.left, contextRect.left))
+        * Math.max(0, Math.min(candidate.top + candidate.height, contextRect.bottom) - Math.max(candidate.top, contextRect.top)) : 0;
     const spaces = {
       right:viewportRight - (spotlight.left + spotlight.width) - edge,
       left:spotlight.left - viewport.left - edge,
@@ -98,7 +106,7 @@
     const remaining = ['right', 'left', 'bottom', 'top'].filter(side => side !== preferred && side !== opposite[preferred]);
     const order = [preferred, opposite[preferred], ...remaining];
     const required = side => (side === 'left' || side === 'right' ? popoverWidth : popoverHeight) + gap;
-    const candidateFor = (placement, sizeOverride = {}) => {
+    const candidateFor = (placement, sizeOverride = {}, position = {}) => {
       const candidateWidth = Math.max(1, finite(sizeOverride.width, popoverWidth));
       const candidateHeight = Math.max(1, finite(sizeOverride.height, popoverHeight));
       let left;
@@ -116,20 +124,33 @@
         left = spotlight.left + spotlight.width / 2 - candidateWidth / 2;
         top = spotlight.top - candidateHeight - gap;
       }
-      left = clamp(left, viewport.left + edge, viewportRight - edge - candidateWidth);
-      top = clamp(top, viewport.top + edge, viewportBottom - edge - candidateHeight);
+      left = clamp(finite(position.left, left), viewport.left + edge, viewportRight - edge - candidateWidth);
+      top = clamp(finite(position.top, top), viewport.top + edge, viewportBottom - edge - candidateHeight);
       const right = left + candidateWidth;
       const bottom = top + candidateHeight;
       const overlapWidth = Math.max(0, Math.min(right, spotlight.left + spotlight.width) - Math.max(left, spotlight.left));
       const overlapHeight = Math.max(0, Math.min(bottom, spotlight.top + spotlight.height) - Math.max(top, spotlight.top));
-      return { placement, left, top, width:candidateWidth, height:candidateHeight, overlapArea:overlapWidth * overlapHeight };
+      const candidate = { placement, left, top, width:candidateWidth, height:candidateHeight, overlapArea:overlapWidth * overlapHeight };
+      return { ...candidate, contextOverlap:contextOverlap(candidate) };
     };
-    const candidates = order.map(candidateFor);
+    const candidates = order.flatMap(placement => {
+      const base = candidateFor(placement);
+      if (!contextRect || !base.contextOverlap) return [base];
+      // Keep the original navigation control visible as well as the feature.
+      // A centered left-side tooltip can otherwise cover account/Help at the
+      // bottom of the sidebar, making its contextual outline disappear.
+      return [base,
+        candidateFor(placement, {}, {left:base.left, top:contextRect.top - gap - base.height}),
+        candidateFor(placement, {}, {left:base.left, top:contextRect.bottom + gap}),
+        candidateFor(placement, {}, {left:contextRect.left - gap - base.width, top:base.top}),
+        candidateFor(placement, {}, {left:contextRect.right + gap, top:base.top})
+      ];
+    });
     const fittingSides = new Set(order.filter(side => spaces[side] >= required(side)));
-    const naturalCandidate = candidates.find(candidate => fittingSides.has(candidate.placement) && candidate.overlapArea === 0)
-      || candidates.find(candidate => candidate.overlapArea === 0);
+    const naturalCandidate = candidates.find(candidate => fittingSides.has(candidate.placement) && candidate.overlapArea === 0 && candidate.contextOverlap === 0)
+      || candidates.find(candidate => candidate.overlapArea === 0 && candidate.contextOverlap === 0);
     let selected = naturalCandidate
-      || [...candidates].sort((a,b) => a.overlapArea - b.overlapArea || spaces[b.placement] - spaces[a.placement])[0];
+      || [...candidates].sort((a,b) => a.contextOverlap - b.contextOverlap || a.overlapArea - b.overlapArea || spaces[b.placement] - spaces[a.placement])[0];
     // A long card may exceed a phone's viewport. Keep its visible content lit and
     // reserve a separate lane for the natural-height tooltip instead of covering
     // the card or shrinking its text. The actual target remains the full card.
@@ -159,7 +180,8 @@
         width:selected.width,
         height:selected.height,
         placement:selected.placement,
-        overlapsTarget:selected.overlapArea > 0
+        overlapsTarget:selected.overlapArea > 0,
+        overlapsContext:contextOverlap(selected) > 0
       })
     });
   }

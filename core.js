@@ -592,6 +592,7 @@
     const guard = Math.max(0, Math.min(1, financialAmount(profile?.guard)));
     const buffer = roundMoney(plannedIncome * guard);
     const protectedCommitments = roundMoney(bills + savingsTarget + buffer);
+    const plannedMonthlyBudget = Math.max(0, roundMoney(plannedIncome - protectedCommitments));
     const incomeAdjustment = roundMoney(monthly.income - plannedIncome);
     const spendablePool = roundMoney(monthly.income - protectedCommitments);
     const monthlyBudget = Math.max(0, spendablePool);
@@ -615,6 +616,7 @@
       openingBalance,
       savingsBalance,
       plannedIncome,
+      plannedMonthlyBudget,
       monthlyIncome:monthly.income,
       monthlyExpenses:monthly.expenses,
       cashFlowNet:monthly.net,

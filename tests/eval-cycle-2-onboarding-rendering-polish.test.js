@@ -35,7 +35,8 @@ test('evaluation cycle 2: context geometry uses only the actual control and neve
   assert.match(ui, /if \(!linkIsVisible\) return null/);
   assert.match(ui, /overlaps\(exact, targetRect\) \|\| overlaps\(exact, popoverRect\)/);
   assert.doesNotMatch(ui, /docked:true|renderedContextLink|contextSpotlight\.replaceChildren\(content\)/);
-  assert.match(tourCss, /\.onboarding-backdrop \{[^}]*transition:clip-path \.5s ease-in-out/);
+  assert.match(tourCss, /\.onboarding-backdrop \{[^}]*transition:none/);
+  assert.match(tourCss, /\.onboarding-tour :is\(\.onboarding-spotlight,\.onboarding-context-spotlight,\.onboarding-popover\) \{ transition:none;/);
 });
 
 test('evaluation cycle 2: popover has no visible uppercase context prefix or internal scrolling', () => {

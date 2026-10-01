@@ -826,3 +826,24 @@ test('cycle 2: hosted security and Help transitions keep mobile context mounted 
     assert.equal(removals.filter(name => name === 'data-tour-sidebar-context').length,1,'ordinary navigation returns only when the guide leaves its surface');
   }
 });
+
+test('cycle 2: steps five through nine keep exact navigation cutouts clear of the actual tooltip', () => {
+  for (const [width,height] of [[1280,600],[1280,720],[1440,900]]) {
+    const env = harness({minimal:true,width,height});
+    const popover = env.nodes.get('onboardingPopover');
+    popover.scrollHeight = height < 720 ? 280 : 386;
+    env.navLinks.insights.rect = {left:20,top:365.765,right:232,bottom:409.765,width:212,height:44};
+    env.start();env.next(4);
+    for (const contextId of ['insightsNav','openSettings','openSettings','openSettings','openHelpAssistant']) {
+      const expected = env.nodes.get(contextId).getBoundingClientRect();
+      const context = env.nodes.get('onboardingContextSpotlight');
+      assert.equal(context.classList.contains('is-visible'),true,`${width}/${height} ${contextId}`);
+      assert.equal(Number.parseFloat(context.style.left),expected.left-4);
+      assert.equal(Number.parseFloat(context.style.top),expected.top-4);
+      assert.equal(Number.parseFloat(context.style.width),expected.width+8);
+      const left=Number.parseFloat(popover.style.left),top=Number.parseFloat(popover.style.top),size=Number.parseFloat(popover.style.maxWidth);
+      assert.equal(left<expected.right+4&&left+size>expected.left-4&&top<expected.bottom+4&&top+popover.scrollHeight>expected.top-4,false,'tooltip must not cover the real context control');
+      env.next();
+    }
+  }
+});
