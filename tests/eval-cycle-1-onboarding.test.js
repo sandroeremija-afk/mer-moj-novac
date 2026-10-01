@@ -154,7 +154,8 @@ test('evaluation cycle 1: login and Help wire the controller while Settings stay
   assert.match(assistantUi, /MerOnboardingUi\?\.restart\?\.\(\$\('#openHelpAssistant'\)\)/);
   assert.match(onboardingUi, /getBoundingClientRect\(\)/);
   assert.match(onboardingUi, /ResizeObserver/);
-  assert.match(onboardingUi, /scrollIntoView/);
+  assert.match(onboardingUi, /revealTargetWithinContent\(\)/);
+  assert.match(onboardingUi, /container\.scrollTo\(/);
 });
 
 test('evaluation cycle 1: session auto-start is unforced, cached per user and has no idle reopen loop', () => {

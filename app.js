@@ -577,6 +577,24 @@ function bulkyListPageSize() {
   return window.innerWidth<=640?1:4;
 }
 
+function budgetListPageSize() {
+  if(window.innerWidth<=700)return 4;
+  const view=$('#budgetsView'),panel=view?.querySelector('.table-panel'),list=$('#budgetTable'),windowNode=$('#budgetTableWindow');
+  if(!panel||!list||!windowNode||view.hidden)return window.innerHeight<=680?3:4;
+  const row=list.querySelector('.budget-row:not([data-page-hidden="true"])')||list.querySelector('.budget-row');
+  if(!row)return 4;
+  const panelStyle=getComputedStyle(panel),rowStyle=getComputedStyle(row),windowStyle=getComputedStyle(windowNode);
+  const rowPadding=(parseFloat(rowStyle.paddingTop)||0)+(parseFloat(rowStyle.paddingBottom)||0)+(parseFloat(rowStyle.borderTopWidth)||0)+(parseFloat(rowStyle.borderBottomWidth)||0);
+  const rowContent=Math.max(...Array.from(row.children,child=>child.getBoundingClientRect().height));
+  const rowHeight=Math.max(64,parseFloat(rowStyle.minHeight)||0,rowContent+rowPadding);
+  const pager=windowNode.querySelector('.mer-pagination');
+  const pagerHeight=pager&&!pager.hidden?pager.getBoundingClientRect().height:56;
+  const bottom=panel.getBoundingClientRect().bottom-(parseFloat(panelStyle.paddingBottom)||0)-(parseFloat(panelStyle.borderBottomWidth)||0);
+  // Focus scrolling from a previous layout must not manufacture room for rows.
+  const available=bottom-windowNode.getBoundingClientRect().top-Math.max(0,panel.scrollTop||0)-pagerHeight-(parseFloat(windowStyle.paddingBottom)||0);
+  return Math.max(1,Math.min(4,Math.floor((available+1)/rowHeight)));
+}
+
 function renderListPagination(selector,{scopeKey='',itemSelector,label,pageSize=4}={}) {
   const list=$(selector);
   if(!list)return;
@@ -612,7 +630,6 @@ function renderBudgetView() {
   $('[data-layout-card="budget-allocation"]').classList.toggle('is-over-allocated',difference<0);
   $('#allocationStatus').textContent = t('allocationPercent',{percent:allocationPercent});
   $('#budgetTable').innerHTML = state.categories.map(cat => budgetCategoryRow(cat)).join('');
-  renderListPagination('#budgetTable',{itemSelector:'.budget-row',label:t('budgetCategoryList')});
   const overspent=state.categories.filter(cat=>cat.spent>cat.limit+.005),donors=state.categories.filter(cat=>cat.limit>cat.spent+.005),overAllocated=difference<-.005,recovery=$('#budgetRecovery');
   const recoveryFingerprint=notificationFingerprint([overAllocated?'allocation':'category',Math.round(Math.abs(difference)*100),...overspent.map(cat=>`${cat.id}:${Math.round(cat.spent*100)}:${Math.round(cat.limit*100)}`).sort()]);
   const recoveryItem={key:'budget-recovery',fingerprint:recoveryFingerprint};
@@ -623,6 +640,7 @@ function renderBudgetView() {
   $('#openBudgetTransfer').hidden=!overspent.length||!donors.length;
   if(overAllocated){$('#budgetRecoveryTitle').textContent=t('budgetRecoveryOverTitle');$('#budgetRecoveryCopy').textContent=t('budgetRecoveryOverCopy',{amount:currency(Math.abs(difference),true)});}
   else if(overspent.length){$('#budgetRecoveryTitle').textContent=t('budgetRecoveryCategoryTitle');$('#budgetRecoveryCopy').textContent=t('budgetRecoveryCategoryCopy');}
+  renderListPagination('#budgetTable',{pageSize:budgetListPageSize,itemSelector:'.budget-row',label:t('budgetCategoryList')});
   if($('#budgetCategoriesModal').open)renderBudgetCategoryManager();
 }
 
@@ -1485,6 +1503,7 @@ function showView(view) {
   renderModuleTitle();
   closeSidebar();
   const activePanel=$(`[data-view-panel="${activeView}"]`);if(activePanel)activePanel.scrollTop=0;
+  if(activeView==='budgets')window.MerPagination?.refreshAll();
 }
 
 function openSidebar() { $('#sidebar').classList.add('open'); $('#sidebarScrim').hidden=false; $('#menuToggle').setAttribute('aria-expanded','true'); $('#menuToggle').setAttribute('aria-label',t('closeNav')); }

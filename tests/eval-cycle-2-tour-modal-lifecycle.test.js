@@ -91,7 +91,7 @@ function harness({ width = 1440, height = 900, asynchronousClose = false, minima
     }
     getBoundingClientRect() {
       if (['openSettings','openHelpAssistant'].includes(this.id)) {
-        const compact = width <= 1024 && document.body.hasAttribute('data-tour-sidebar-context');
+        const compact = width <= 768 && document.body.hasAttribute('data-tour-sidebar-context');
         const top = height - (compact ? 76 : this.id === 'openSettings' ? 84 : 150);
         return {left:20, right:compact ? Math.min(304,width-20) : 240, top, bottom:top+56, width:compact ? Math.min(284,width-40) : 220, height:56};
       }
@@ -806,4 +806,23 @@ test('cycle 2: hidden sidebar context is not recreated as a misleading floating 
   assert.equal(context.classList.contains('is-docked'),false);
   assert.equal(context.children.length,0);
   assert.equal(env.nodes.get('insightsView').classList.contains('tour-target-active'),true);
+});
+
+test('cycle 2: hosted security and Help transitions keep mobile context mounted until tour exit', () => {
+  for (const width of [375, 768, 1024, 1440]) {
+    const env = harness({minimal:true,width,asynchronousClose:true});
+    env.start();env.next(5);
+    const removals = [];
+    const removeAttribute = env.document.body.removeAttribute.bind(env.document.body);
+    env.document.body.removeAttribute = name => { removals.push(name);removeAttribute(name); };
+    for (let index = 0; index < 3; index += 1) env.next();
+    assert.equal(env.document.body.getAttribute('data-tour-sidebar-context'),'help');
+    assert.equal(removals.includes('data-tour-sidebar-context'),false,'host transitions cannot restore the full sidebar between frames');
+    for (let index = 0; index < 3; index += 1) env.click('onboardingPrevious');
+    assert.equal(env.document.body.getAttribute('data-tour-sidebar-context'),'settings');
+    assert.equal(removals.includes('data-tour-sidebar-context'),false,'Back keeps the same original context rail mounted');
+    env.click('onboardingClose');
+    assert.equal(env.document.body.hasAttribute('data-tour-sidebar-context'),false);
+    assert.equal(removals.filter(name => name === 'data-tour-sidebar-context').length,1,'ordinary navigation returns only when the guide leaves its surface');
+  }
 });

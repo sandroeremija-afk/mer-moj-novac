@@ -29,7 +29,9 @@ test('space-filling stays desktop-only and does not alter dialogs, hidden rows, 
 });
 
 test('phone budget rows use two shrinkable tracks rather than clipping the inherited tablet grid', () => {
-  const mobile = css.slice(css.indexOf('@media (max-width:640px)'));
+  const mobileStart = css.indexOf('@media (max-width:640px)');
+  const nextMedia = css.indexOf('@media', mobileStart + 1);
+  const mobile = css.slice(mobileStart, nextMedia < 0 ? undefined : nextMedia);
   assert.match(mobile, /^@media \(max-width:640px\)/);
   assert.doesNotMatch(mobile, /overflow:\s*(?:hidden|clip)|display:none|flex:1|height:/);
   assert.match(declarations('#budgetsView #budgetTable .budget-row'), /grid-template-columns:minmax\(0,1fr\) 44px/);

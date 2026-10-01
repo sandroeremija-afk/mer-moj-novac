@@ -56,7 +56,8 @@ test('evaluation cycle 1: target and popover geometry react to scrolling, resizi
   assert.match(ui, /addEventListener\(['"]resize['"]/);
   assert.match(ui, /addEventListener\(['"]scroll['"]/);
   assert.match(ui, /visualViewport/);
-  assert.match(ui, /scrollIntoView/);
+  assert.match(ui, /revealTargetWithinContent\(\)/);
+  assert.match(ui, /container\.scrollTo\(/);
   assert.match(ui, /Math\.(?:min|max)/, 'placement is clamped to the viewport');
 });
 

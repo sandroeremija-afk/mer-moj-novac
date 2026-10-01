@@ -56,7 +56,7 @@
     if (event.currentTarget === ownedDialog && !ownedDialog.open && !tour.hidden) dismissTour();
   }
 
-  function releaseOwnedDialog({ keepSettingsOpen = false } = {}) {
+  function releaseOwnedDialog({ keepSettingsOpen = false, preserveSidebarContext = false } = {}) {
     const dialog = ownedDialog;
     if (!dialog) return;
     ownedDialog = null;
@@ -67,7 +67,7 @@
     dialog.removeAttribute('data-tour-step');
     dialog.style.removeProperty('--tour-panel-top');
     dialog.style.removeProperty('--tour-panel-height');
-    document.body.removeAttribute('data-tour-sidebar-context');
+    if (!preserveSidebarContext) document.body.removeAttribute('data-tour-sidebar-context');
     tour.classList.remove('is-hosted');
     popover.setAttribute('aria-modal', 'true');
     if (dialog.open && !(keepSettingsOpen && dialog.id === 'bankSettingsModal')) closeModal(dialog);
@@ -81,7 +81,11 @@
   function prepareSurface(step) {
     const settings = step.surface === 'settings' ? $('#bankSettingsModal') : null;
     const dialog = settings ? (step.settingsFlow ? $(`#settings-${step.settingsFlow}-flow`) : settings) : step.surface === 'help' ? $('#helpAssistantModal') : null;
-    if (ownedDialog !== dialog) releaseOwnedDialog({ keepSettingsOpen:Boolean(settings) });
+    const sidebarContext = step.contextTarget === '#openSettings' || step.contextTarget === '#openHelpAssistant';
+    // Keep the compact context rail mounted while changing its native host.
+    // Briefly restoring the full sidebar between security/help steps causes
+    // layout observers to measure the wrong navigation geometry.
+    if (ownedDialog !== dialog) releaseOwnedDialog({ keepSettingsOpen:Boolean(settings), preserveSidebarContext:Boolean(dialog && sidebarContext) });
     if (!dialog) return;
     if (ownedDialog !== dialog) {
       if (settings) {
@@ -99,7 +103,7 @@
       popover.setAttribute('aria-modal', 'false');
     } else if (step.surface === 'settings') window.MerSettings?.selectTab(step.settingsTab);
     dialog.setAttribute('data-tour-step', step.id);
-    if (step.contextTarget === '#openSettings' || step.contextTarget === '#openHelpAssistant') {
+    if (sidebarContext) {
       document.body.setAttribute('data-tour-sidebar-context', step.surface);
     }
     // The step explicitly selects its tab/child flow. A second target-based router
@@ -334,6 +338,43 @@
     return effectiveStep?.id === 'general' ? $('#settingsLanguage') : currentTarget;
   }
 
+  function revealTargetWithinContent() {
+    const target = scrollTarget();
+    if (!target || ownedDialog || effectiveStep?.preserveScroll || $('#sidebar')?.contains(target)) return;
+    // scrollIntoView also scrolls overflow:hidden ancestors. In particular the
+    // sidebar's highlighted button inherits a 96px scroll margin, which can
+    // shift the whole navigation. Move only an actual content scroll window,
+    // and leave already visible targets, the app shell and the sidebar alone.
+    let withinPage = false;
+    for (let container = target.parentElement; container && container !== appShell; container = container.parentElement) {
+      if (container.classList.contains('page')) withinPage = true;
+      if (!container.hasAttribute('data-view-panel') && !container.classList.contains('page')) continue;
+      const overflow = window.getComputedStyle(container).overflowY;
+      if (!['auto', 'scroll'].includes(overflow) || container.scrollHeight <= container.clientHeight + 1) continue;
+      const bounds = container.getBoundingClientRect();
+      const targetBounds = target.getBoundingClientRect();
+      const offset = targetBounds.top < bounds.top || targetBounds.height > bounds.height
+        ? targetBounds.top - bounds.top : Math.max(0, targetBounds.bottom - bounds.bottom);
+      const top = Math.max(0, Math.min(container.scrollHeight - container.clientHeight, container.scrollTop + offset));
+      if (Math.abs(top - container.scrollTop) > 1) container.scrollTo({ top, behavior:reducedMotion() ? 'auto':'smooth' });
+      return;
+    }
+    // Natural-flow phone/tablet pages scroll at the document, not inside .page.
+    // Reveal only page content there; fixed navigation must never be a target.
+    const scroller = document.scrollingElement;
+    if (!withinPage || !scroller || scroller.scrollHeight <= scroller.clientHeight + 1
+      || !['auto', 'scroll', 'visible'].includes(window.getComputedStyle(scroller).overflowY)) return;
+    const viewport = viewportBounds();
+    const headerBottom = $('#contextHeader')?.getBoundingClientRect().bottom || viewport.top;
+    const topEdge = Math.max(viewport.top + 12, Math.min(headerBottom + 12, viewport.top + viewport.height - 12));
+    const bottomEdge = viewport.top + viewport.height - 12;
+    const targetBounds = target.getBoundingClientRect();
+    const offset = targetBounds.top < topEdge || targetBounds.height > bottomEdge - topEdge
+      ? targetBounds.top - topEdge : Math.max(0, targetBounds.bottom - bottomEdge);
+    const top = Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight, scroller.scrollTop + offset));
+    if (Math.abs(top - scroller.scrollTop) > 1) scroller.scrollTo({ top, behavior:reducedMotion() ? 'auto':'smooth' });
+  }
+
   function previewStep(step) {
     releaseTarget({ preserveContext:Boolean(step.contextTarget) });
     tour.classList.add('is-positioning');
@@ -349,7 +390,7 @@
     previousDescription = currentTarget.getAttribute('aria-describedby');
     currentTarget.setAttribute('aria-describedby', 'onboardingBody');
     currentTarget.classList.add('tour-target-active');
-    if (!step.preserveScroll && !ownedDialog) scrollTarget().scrollIntoView({ behavior:reducedMotion() ? 'auto':'smooth', block:'nearest', inline:'nearest' });
+    revealTargetWithinContent();
     resizeObserver = new ResizeObserver(scheduleGeometry);
     resizeObserver.observe(currentTarget);
     if (currentContextLink && currentContextLink !== currentTarget) resizeObserver.observe(currentContextLink);

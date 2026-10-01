@@ -118,7 +118,8 @@ function budgetHarness(){
       return nodes.get(selector);
     }
   };
-  vm.createContext(context);vm.runInContext(source.slice(start,end),context);context.renderBudgetView();
+  const pageSize=source.slice(source.indexOf('function budgetListPageSize()'),source.indexOf('function renderListPagination('));
+  vm.createContext(context);vm.runInContext(pageSize+source.slice(start,end),context);context.renderBudgetView();
   return {
     context,profiles,table:nodes.get('#budgetTable'),
     rows:()=>[...nodes.get('#budgetTable').innerHTML.matchAll(/data-category="([^"]+)"/g)].map(match=>match[1]),

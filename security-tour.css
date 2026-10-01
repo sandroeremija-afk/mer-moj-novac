@@ -13,9 +13,10 @@ body.tour-active dialog[open]::backdrop { background:transparent;backdrop-filter
 .tour-modal-host[data-tour-step="personal"] #personalDataForm { min-width:0; }
 /* Keep update prompts pending until the guide ends; never cover Next/Skip. */
 body.tour-active #merAppUpdate { display:none; }
-@media (max-width:1024px) {
-  /* Reveal the original entry, never a copied profile label. The app shell stays
-     inert; this compact context rail cannot open menus behind the active dialog. */
+@media (max-width:768px) {
+  /* Only a normally hidden mobile drawer becomes a compact context rail.
+     Tablet and desktop navigation must retain its original position in every
+     step. The original mobile entry remains inert, never a copied label. */
   body[data-tour-sidebar-context] #sidebar {
     position:fixed;inset:auto auto 12px 12px;width:min(300px,calc(100vw - 24px));
     height:auto;min-height:0;padding:8px;border-radius:12px;transform:none;box-shadow:none;
@@ -27,6 +28,8 @@ body.tour-active #merAppUpdate { display:none; }
   body[data-tour-sidebar-context] #sidebar .sidebar-bottom { margin:0; }
   body[data-tour-sidebar-context] #sidebar :is(.profile-button,.help-assistant-trigger) { margin:0; }
   body[data-tour-sidebar-context] #sidebarScrim { display:none; }
+}
+@media (max-width:1024px) {
   .onboarding-tour.is-hosted .onboarding-popover { padding:12px; }
   .onboarding-tour.is-hosted .onboarding-popover #onboardingBody { font-size:14px;line-height:1.4; }
   .onboarding-tour.is-hosted .onboarding-popover h2 { font-size:18px;line-height:1.25;margin:4px 0 8px; }

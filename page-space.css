@@ -1,5 +1,5 @@
-/* Desktop pages share the bounded canvas; phones/tablets keep natural outer flow.
-   Only page content grows here. Dialogs and pagination state are not modified. */
+/* Desktop pages share the bounded canvas; phones keep natural outer flow and
+   the budget tablet canvas below reserves room for its adaptive pagination. */
 @media (min-width:1025px) {
   #overviewView > .dashboard-grid,
   #overviewView:has(.spending-anomaly-alert:not([hidden])) > .dashboard-grid {
@@ -10,6 +10,7 @@
   }
 
   /* The four visible category rows own spare space, not an empty panel tail. */
+  #budgetsView > .table-panel { overflow:clip; }
   #budgetsView #budgetTableWindow {
     display:flex;
     flex-direction:column;
@@ -28,6 +29,7 @@
     flex:0 0 auto;
     margin-top:auto;
     padding-top:10px;
+    padding-inline-end:48px;
   }
   /* Date headings stay compact while transaction rows use the available height. */
   #activityView #transactionList {
@@ -102,4 +104,43 @@
     min-width:0;
   }
   #budgetsView #budgetTable .edit-budget { grid-column:2; grid-row:1; }
+}
+
+/* Tablet summaries fit three columns. Reserve the remaining viewport for the
+   adaptive category page instead of sending its navigation below the screen. */
+@media (min-width:701px) and (max-width:1024px) {
+  .main:has(#budgetsView.active) { height:100dvh; min-height:0; overflow:hidden; }
+  .page:has(> #budgetsView.active) {
+    flex:1 1 0;
+    height:auto;
+    min-height:0;
+    padding:14px 24px 20px;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  #budgetsView:not([hidden]) { display:flex; flex-direction:column; height:100%; min-height:0; overflow:visible; }
+  #budgetsView > .page-heading { flex:0 0 auto; margin-bottom:10px; }
+  #budgetsView > .budget-summary {
+    display:grid;
+    flex:0 0 auto;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+    min-height:0;
+    margin-bottom:12px;
+  }
+  #budgetsView > .budget-summary > .summary-card { min-width:0; min-height:116px; padding:14px; gap:6px; }
+  #budgetsView > .budget-summary .card-label { font-size:13px; line-height:1.4; }
+  #budgetsView > .budget-summary .summary-value { margin-top:4px; font-size:24px; line-height:1.2; overflow-wrap:anywhere; }
+  #budgetsView > .budget-summary .budget-summary-foot { font-size:11px; line-height:1.4; padding-top:4px; }
+  #budgetsView > .table-panel { display:flex; flex:1 1 0; flex-direction:column; min-height:0; padding:14px 16px; overflow:visible; }
+  #budgetsView > .table-panel > :is(.panel-heading,.budget-recovery) { flex:0 0 auto; }
+  #budgetsView > .table-panel > .panel-heading { gap:8px; }
+  #budgetsView #budgetTableWindow { display:flex; flex:1 1 0; flex-direction:column; min-height:0; max-height:none; margin-top:10px; overflow:visible; }
+  #budgetsView #budgetTable { flex:1 1 0; min-height:0; grid-auto-rows:minmax(64px,1fr); }
+  #budgetsView #budgetTable .budget-row { min-height:64px; grid-template-columns:minmax(0,1.2fr) minmax(0,1.4fr) 44px; gap:12px; padding-block:9px; }
+  #budgetsView #budgetTable .budget-category { min-width:0; }
+  #budgetsView #budgetTable .budget-category strong { overflow-wrap:anywhere; }
+  #budgetsView #budgetTable .budget-row-progress { grid-column:auto; grid-row:auto; grid-template-columns:minmax(0,1fr) max-content; }
+  #budgetsView #budgetTable .edit-budget { grid-column:auto; grid-row:auto; }
+  #budgetsView #budgetTableWindow > .mer-pagination { flex:0 0 auto; margin-top:auto; padding-top:10px; padding-inline-end:48px; }
 }

@@ -184,7 +184,8 @@ test('evaluation cycle 1: proportional budget cents render no phantom zero-euro 
   context.notificationFingerprint=()=> 'test-budget-fingerprint';
   context.isNotificationResolved=()=>false;
   const render=source.slice(source.indexOf('function renderBudgetView('),source.indexOf('function budgetCategoryPercent('));
-  vm.runInContext(render,context);
+  const pageSize=source.slice(source.indexOf('function budgetListPageSize()'),source.indexOf('function renderListPagination('));
+  vm.runInContext(pageSize+render,context);
   context.renderBudgetView();
   assert.equal(elements.get('#unallocatedValue').textContent,'allocated');
   assert.equal(elements.get('[data-layout-card="budget-allocation"]').classList.contains('is-over-allocated'),false);

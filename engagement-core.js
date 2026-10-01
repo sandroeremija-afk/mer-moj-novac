@@ -35,12 +35,35 @@
     }
     const goals = new Set((profile.goalBuckets || []).filter(scope.matches).map(goal => goal.id));
     // Roundups are part of deposits, not an additional amount to add a second time.
-    let saved = 0, roundups = 0, vaults = 0;
-    for (const row of savings) { const amount = cents(row.amount); saved += amount; if (goals.has(row.goalId)) vaults += amount; if (row.sourceType === 'roundup' || row.sourceType === 'round-up' || String(row.automationType || '').includes('roundup') || String(row.id || '').startsWith('roundup-')) roundups += amount; }
+    let saved = 0, roundups = 0, vaults = 0, deposits = 0, withdrawals = 0;
+    for (const row of savings) { const amount = cents(row.amount); saved += amount; if (amount > 0) deposits += amount; else withdrawals -= amount; if (goals.has(row.goalId)) vaults += amount; if (row.sourceType === 'roundup' || row.sourceType === 'round-up' || String(row.automationType || '').includes('roundup') || String(row.id || '').startsWith('roundup-')) roundups += amount; }
     const categories = [...grouped].filter(([, amount]) => amount > 0).sort((a,b) => b[1] - a[1]);
     const hasData = transactions.length + savings.length > 0;
     const badge = !hasData ? 'start' : income > 0 && saved / income >= .2 ? 'saver' : income > 0 && expenses <= income * .8 ? 'disciplined' : 'aware';
-    return {month,profileId:scope.profileId,currency:scope.currency,incomeCents:income,expenseCents:expenses,netCents:income-expenses,savedCents:saved,vaultCents:vaults,roundupCents:roundups,topCategory:categories[0] ? {id:categories[0][0],amountCents:categories[0][1]} : null,biggest,hasData,badge,transactionCount:transactions.length};
+    return {month,profileId:scope.profileId,currency:scope.currency,incomeCents:income,expenseCents:expenses,netCents:income-expenses,savedCents:saved,depositsCents:deposits,withdrawalsCents:withdrawals,vaultCents:vaults,roundupCents:roundups,categories:categories.map(([id,amountCents])=>({id,amountCents})),topCategory:categories[0] ? {id:categories[0][0],amountCents:categories[0][1]} : null,biggest,hasData,badge,transactionCount:transactions.length};
+  }
+  function monthlyAnalytics(profile, options = {}) {
+    const current = monthlySummary(profile, options);
+    const priorMonth = previousMonth(`${current.month}-01`);
+    const previous = monthlySummary(profile, {...options,month:priorMonth});
+    const dayCount = new Date(Date.UTC(Number(current.month.slice(0,4)),Number(current.month.slice(5,7)),0)).getUTCDate();
+    // An empty preceding month is unavailable evidence, not a zero-spending baseline.
+    const comparable = current.transactionCount > 0 && previous.transactionCount > 0;
+    return {current,previous,dayCount,
+      dailyExpenseCents:Math.round(current.expenseCents/dayCount),
+      retainedIncomePercent:current.incomeCents > 0 ? current.netCents/current.incomeCents*100 : null,
+      expenseChangeCents:comparable ? current.expenseCents-previous.expenseCents : null,
+      expenseChangePercent:comparable && previous.expenseCents > 0 ? (current.expenseCents-previous.expenseCents)/previous.expenseCents*100 : null};
+  }
+  function summaryMonths(profile, options = {}) {
+    const scope = scoped(profile,options), latest = previousMonth(scope.reference), months = new Set();
+    let month = latest;
+    for (let index=0;index<12;index++) { months.add(month); month=previousMonth(`${month}-01`); }
+    for (const row of [...(profile.transactions||[]),...(profile.savingsEntries||[])]) {
+      const value=String(row.date||'').slice(0,7);
+      if (scope.effective(row) && value <= latest) months.add(value);
+    }
+    return [...months].sort().reverse();
   }
   function health(profile, options = {}) {
     const scope = scoped(profile, options), summary = monthlySummary(profile,{...options,month:scope.reference.slice(0,7)});
@@ -76,5 +99,5 @@
   }
   function wrappedKey(userId, profileId, reference) { return `${encodeURIComponent(userId)}:${encodeURIComponent(profileId)}:${previousMonth(reference)}`; }
   function shouldAutoOpen(profile, userId, options) { return Boolean(userId && options.referenceDate?.endsWith('-01') && !profile.engagement?.wrappedSeen?.[wrappedKey(userId,options.profileId,options.referenceDate)]); }
-  return {cents,previousMonth,monthlySummary,health,rebalance,applyRebalance,wrappedKey,shouldAutoOpen};
+  return {cents,previousMonth,monthlySummary,monthlyAnalytics,summaryMonths,health,rebalance,applyRebalance,wrappedKey,shouldAutoOpen};
 });

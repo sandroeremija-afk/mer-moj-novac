@@ -24,6 +24,18 @@ test('compact tour reserves room for the original bottom-left sidebar entry', ()
   assert.match(source,/appShell\.inert = true/);
 });
 
+test('tablet navigation stays in its normal fixed sidebar while only mobile gets a context rail', () => {
+  const mobileStart = css.indexOf('@media (max-width:768px)');
+  const tabletStart = css.indexOf('@media (max-width:1024px)',mobileStart);
+  assert.ok(mobileStart >= 0 && tabletStart > mobileStart);
+  const mobile = css.slice(mobileStart,tabletStart);
+  const tablet = css.slice(tabletStart);
+  assert.match(mobile,/body\[data-tour-sidebar-context\] #sidebar\s*\{[^}]*position:fixed;[^}]*height:auto/);
+  assert.match(mobile,/#sidebar > :not\(\.sidebar-bottom\):not\(#openHelpAssistant\) \{ display:none;/);
+  assert.doesNotMatch(tablet,/#sidebar(?:\s|[.:>{])/,'tablet guide must not relocate or hide existing navigation');
+  assert.match(tablet,/dialog\.settings-security-flow\.tour-modal-host/,'tablet native dialog lane still has responsive layout');
+});
+
 test('mobile settings preserve native context and bound content instead of cropping controls', () => {
   assert.match(css,/dialog\.tour-modal-host\[data-tour-step\]\s*\{[^}]*display:flex;[^}]*min-height:0;/);
   assert.match(css,/\.tour-modal-host\[data-tour-step\] > h2,[\s\S]*?display:block;[^}]*padding-right:40px/);

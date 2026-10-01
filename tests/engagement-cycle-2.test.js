@@ -79,10 +79,25 @@ async function main(){
   {
     const h=harness();assert.equal(h.get('openFinancialWrapped'),null,'the Insights toolbar has no extra monthly filter');h.window.MerEngagementUI.openWrapped();assert.equal(h.get('financialWrappedModal').open,true);assert.equal(h.get('wrappedStep').textContent,'1 od 4');assert.equal(h.get('wrappedBack').disabled,true);
     for(let step=2;step<=4;step++){await h.click('wrappedNext');assert.equal(h.get('wrappedStep').textContent,`${step} od 4`);}
-    assert.equal(h.get('wrappedNext').textContent,'Završi');await h.click('shareWrapped');assert.equal(h.shares.length,1);assert.ok(!h.shares[0].includes('€'));assert.ok(!h.shares[0].includes('SECRET'));await h.click('wrappedBack');assert.equal(h.get('wrappedStep').textContent,'3 od 4');await h.click('wrappedNext');await h.click('wrappedNext');assert.equal(h.get('financialWrappedModal').open,false);
+    assert.equal(h.get('wrappedNext').textContent,'Završi');assert.equal(h.get('shareWrapped'),null,'analytics replace sharing on the fourth page');assert.equal(h.shares.length,0);assert.match(h.get('wrappedStory').innerHTML,/Mjesec u brojkama/);assert.match(h.get('wrappedStory').innerHTML,/Nema dovoljno podataka za usporedbu/);await h.click('wrappedBack');assert.equal(h.get('wrappedStep').textContent,'3 od 4');await h.click('wrappedNext');await h.click('wrappedNext');assert.equal(h.get('financialWrappedModal').open,false);
     h.window.MerEngagementUI.openWrapped();h.get('financialWrappedModal').dismissBackdrop();assert.equal(h.get('financialWrappedModal').open,false);
     h.window.MerEngagementUI.openWrapped();assert.equal(h.get('financialWrappedModal').dispatch('cancel').event.defaultPrevented,true);assert.equal(h.get('financialWrappedModal').open,false);
     assert.ok(h.updates.every(reason=>reason==='wrapped-seen'));assert.equal(h.appState.accounts.business.engagement,undefined,'seen status is profile-scoped');
+  }
+  {
+    const h=harness();h.context.appReferenceDate='2026-10-01';
+    h.context.state.transactions.push({id:'prior-expense',profileId:'personal',date:'2026-08-12',amount:300,type:'expense',category:'food'});
+    h.window.MerEngagementUI.openWrapped();
+    assert.equal(h.get('wrappedMonth').tagName,'select','month names do not depend on native date-input language');
+    assert.equal(h.get('wrappedMonth').value,'2026-09');assert.match(h.get('wrappedMonth').innerHTML,/rujan 2026/);assert.doesNotMatch(h.get('wrappedMonth').innerHTML,/September/);
+    assert.match(h.get('wrappedStory').innerHTML,/Osobni račun · rujan 2026/);assert.doesNotMatch(h.get('wrappedStory').innerHTML,/2026-09/);
+    await h.click('wrappedNext');assert.match(h.get('wrappedStory').innerHTML,/wrapped-category-track/);assert.match(h.get('wrappedStory').innerHTML,/150\.00/);
+    await h.click('wrappedNext');assert.match(h.get('wrappedStory').innerHTML,/200\.00/);assert.match(h.get('wrappedStory').innerHTML,/Povlačenja iz štednje/);
+    await h.click('wrappedNext');assert.match(h.get('wrappedStory').innerHTML,/150\.00/);assert.match(h.get('wrappedStory').innerHTML,/50%/);assert.match(h.get('wrappedStory').innerHTML,/kolovoz 2026/);assert.match(h.get('wrappedStory').innerHTML,/data-money>95%/);
+    h.get('wrappedMonth').value='2026-08';h.get('wrappedMonth').dispatch('change');assert.equal(h.get('wrappedStep').textContent,'1 od 4');assert.match(h.get('wrappedStory').innerHTML,/kolovoz 2026/);
+    h.get('wrappedMonth').value='2026-10';h.get('wrappedMonth').dispatch('change');assert.match(h.get('wrappedStory').innerHTML,/kolovoz 2026/,'future or unlisted months cannot alter the story');
+    h.context.currentLang='en';h.render();assert.match(h.get('wrappedMonth').innerHTML,/September 2026/);assert.match(h.get('wrappedStory').innerHTML,/August 2026/);
+    h.switchProfile('business');assert.equal(h.get('financialWrappedModal').open,false,'profile switches close a personal summary');
   }
   {
     const h=harness();assert.equal(h.timers.length,0,'no automatic wrapped on September 8');h.context.appReferenceDate='2026-10-01';h.document.tour=true;h.render();assert.equal(h.timers.length,0,'an active tour suppresses the automatic story');h.document.tour=false;h.render();assert.equal(h.timers.length,1);
@@ -93,6 +108,6 @@ async function main(){
     const h=harness();h.context.appReferenceDate='2026-10-01';h.render();h.document.tour=true;h.timers.shift()();assert.equal(h.get('financialWrappedModal').open,false,'a tour starting after scheduling still cancels auto-open');
     h.document.tour=false;h.context.authenticated=false;h.render();assert.equal(h.timers.length,0,'signed-out state never schedules a story');
   }
-  process.stdout.write('Engagement cycle 2 passed: sanitized/consented health API, configured model, stale response guards, four wrapped steps, safe sharing, Escape/backdrop, first-day dashboard and tour gates.\n');
+  process.stdout.write('Engagement cycle 2 passed: sanitized/consented health API, configured model, stale response guards, four localized analytics steps, no sharing, Escape/backdrop, first-day dashboard and tour gates.\n');
 }
 main().catch(error=>{process.stderr.write(`${error.stack}\n`);process.exitCode=1;});

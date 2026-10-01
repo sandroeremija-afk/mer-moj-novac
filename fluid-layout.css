@@ -130,6 +130,9 @@
     min-height:64px;
     padding-block:calc(12px + var(--fluid-step) * .5);
   }
+  @media (max-height:760px) {
+    #budgetsView #budgetTable .budget-row { padding-block:9px; }
+  }
   #budgetsView #budgetTable .budget-category { min-width:0; }
   #budgetsView #budgetTable .budget-category strong { overflow-wrap:anywhere; }
   #budgetsView #budgetTable .budget-row-progress { min-width:0; grid-template-columns:minmax(0,1fr) max-content; }
